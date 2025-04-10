@@ -1,3 +1,6 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -13,16 +16,16 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 24 94% 53%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 40% 96.1%;
+    --secondary: 0 0% 96%;
     --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 210 40% 96.1%;
+    --muted: 240 5% 96%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 210 40% 96.1%;
+    --accent: 0 0% 96%;
     --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 84.2% 60.2%;
@@ -30,25 +33,9 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 24 94% 53%;
 
-    --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --radius: 1rem;
   }
 
   .dark {
@@ -61,8 +48,8 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 24 94% 53%;
+    --primary-foreground: 210 40% 98%;
 
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -78,15 +65,7 @@
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --ring: 24 94% 53%;
   }
 }
 
@@ -96,6 +75,50 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
+  }
+}
+
+@layer components {
+  .card-trilha {
+    @apply relative overflow-hidden rounded-2xl border bg-card shadow-sm transition-all hover:shadow-md;
+  }
+
+  .card-modulo {
+    @apply card-trilha flex flex-col items-center justify-between p-4 hover:scale-[1.02] hover:border-trilha-orange;
+  }
+
+  .card-fase {
+    @apply card-trilha p-4 hover:scale-[1.02] hover:border-trilha-orange;
+  }
+
+  .btn-trilha {
+    @apply rounded-full bg-trilha-orange px-6 py-3 font-semibold text-white shadow-md hover:bg-opacity-90 active:scale-95 transition-all;
+  }
+
+  .btn-secundario {
+    @apply rounded-full bg-white border-2 border-trilha-orange px-6 py-3 font-semibold text-trilha-orange shadow-sm hover:bg-trilha-orange/10 active:scale-95 transition-all;
+  }
+
+  .btn-icon {
+    @apply rounded-full bg-white p-2 shadow-md hover:scale-110 active:scale-95 transition-all;
+  }
+
+  .progress-bar {
+    @apply h-2 rounded-full bg-gray-200 overflow-hidden;
+  }
+
+  .progress-value {
+    @apply h-full rounded-full bg-trilha-orange transition-all duration-500 ease-out;
+  }
+
+  .badge-trilha {
+    @apply rounded-full bg-trilha-orange px-3 py-1 text-xs font-semibold text-white shadow-sm;
+  }
+
+  .animated-element {
+    @apply opacity-0;
+    animation-fill-mode: forwards;
+    animation-delay: calc(var(--delay, 0) * 0.1s);
   }
 }

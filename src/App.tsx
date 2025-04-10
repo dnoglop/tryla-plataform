@@ -1,9 +1,19 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
+
+// Páginas
+import LoginPage from "./pages/LoginPage";
+import DashboardPage from "./pages/DashboardPage";
+import ModulesPage from "./pages/ModulesPage";
+import ModuleDetailPage from "./pages/ModuleDetailPage";
+import PhaseDetailPage from "./pages/PhaseDetailPage";
+import RewardsPage from "./pages/RewardsPage";
+import CommunityPage from "./pages/CommunityPage";
+import ProfilePage from "./pages/ProfilePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -15,8 +25,14 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/" element={<LoginPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/modulos" element={<ModulesPage />} />
+          <Route path="/modulo/:id" element={<ModuleDetailPage />} />
+          <Route path="/modulo/:moduleId/fase/:phaseId" element={<PhaseDetailPage />} />
+          <Route path="/recompensas" element={<RewardsPage />} />
+          <Route path="/comunidade" element={<CommunityPage />} />
+          <Route path="/perfil" element={<ProfilePage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
