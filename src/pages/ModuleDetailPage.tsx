@@ -1,97 +1,86 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
 import PhaseCard from "@/components/PhaseCard";
 import ProgressBar from "@/components/ProgressBar";
 
+interface Module {
+  id: number;
+  name: string;
+  type?: "autoconhecimento" | "empatia" | "growth" | "comunicacao" | "futuro";
+  description?: string;
+  emoji?: string;
+}
+
+interface Phase {
+  id: number;
+  moduleId: number;
+  title: string;
+  type: "video" | "text" | "quiz";
+  content: string;
+  order: number;
+  status?: "completed" | "inProgress" | "available" | "locked";
+  duration?: number;
+}
+
 const ModuleDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const moduleId = parseInt(id || "1");
-  
-  // Dados do módulo baseados no ID
-  const moduleData = {
-    1: {
-      title: "Mestre de Si",
-      description: "Conheça suas forças, fraquezas e o que te move",
-      type: "autoconhecimento" as const,
-      progress: 75,
-      emoji: "🧠",
-      color: "bg-yellow-100",
-    },
-    2: {
-      title: "Olhar do Outro",
-      description: "Desenvolva a capacidade de entender pessoas",
-      type: "empatia" as const,
-      progress: 25,
-      emoji: "❤️",
-      color: "bg-red-100",
-    },
-    3: {
-      title: "Mente Infinita",
-      description: "Desbloqueie seu potencial de crescimento contínuo",
-      type: "growth" as const,
-      progress: 0,
-      emoji: "🌱",
-      color: "bg-green-100",
-    },
-    4: {
-      title: "Papo Reto",
-      description: "Aprenda a comunicação eficaz e persuasiva",
-      type: "comunicacao" as const,
-      progress: 0,
-      emoji: "💬",
-      color: "bg-blue-100",
-    },
-  }[moduleId] || {
-    title: "Módulo",
-    description: "Descrição do módulo",
-    type: "autoconhecimento" as const,
-    progress: 0,
-    emoji: "📚",
-    color: "bg-gray-100",
-  };
+  const [module, setModule] = useState<Module | null>(null);
+  const [phases, setPhases] = useState<Phase[]>([]);
 
-  // Fases do módulo
-  const phases = [
-    {
-      moduleId,
-      phaseId: 1,
-      title: "Raio-X da Personalidade",
-      description: "Descubra seus pontos fortes e fracos",
-      duration: 15,
-      status: "completed" as const,
-      iconType: "quiz" as const,
-    },
-    {
-      moduleId,
-      phaseId: 2,
-      title: "Potências e Limites",
-      description: "Conheça o que te impulsiona e te freia",
-      duration: 20,
-      status: "inProgress" as const,
-      iconType: "video" as const,
-    },
-    {
-      moduleId,
-      phaseId: 3,
-      title: "Valores e Propósitos",
-      description: "Identifique o que realmente importa para você",
-      duration: 15,
-      status: "available" as const,
-      iconType: "challenge" as const,
-    },
-    {
-      moduleId,
-      phaseId: 4,
-      title: "Plano de Desenvolvimento",
-      description: "Crie estratégias para evoluir continuamente",
-      duration: 15,
-      status: "locked" as const,
-      iconType: "game" as const,
-    },
-  ];
+  useEffect(() => {
+    // Carregar módulo do localStorage
+    const storedModules = localStorage.getItem("admin-modules");
+    if (storedModules) {
+      try {
+        const parsedModules = JSON.parse(storedModules);
+        const currentModule = parsedModules.find((m: Module) => m.id === moduleId);
+        if (currentModule) {
+          setModule(currentModule);
+        }
+      } catch (error) {
+        console.error("Error loading module:", error);
+      }
+    }
+
+    // Carregar fases do localStorage
+    const storedPhases = localStorage.getItem("admin-phases");
+    if (storedPhases) {
+      try {
+        const parsedPhases = JSON.parse(storedPhases);
+        const modulePhases = parsedPhases
+          .filter((p: Phase) => p.moduleId === moduleId)
+          .sort((a: Phase, b: Phase) => a.order - b.order)
+          .map((phase: Phase) => ({
+            ...phase,
+            status: "available" as const,
+            iconType: phase.type,
+            duration: 15 // Duração padrão em minutos
+          }));
+        setPhases(modulePhases);
+      } catch (error) {
+        console.error("Error loading phases:", error);
+      }
+    }
+  }, [moduleId]);
+
+  // Calcular progresso baseado nas fases completadas
+  const progress = phases.filter(p => p.status === "completed").length / (phases.length || 1) * 100;
+
+  // Determinar cor do módulo baseado no tipo
+  const getModuleColor = (type?: string) => {
+    switch(type) {
+      case "autoconhecimento": return "bg-yellow-100";
+      case "empatia": return "bg-red-100";
+      case "growth": return "bg-green-100";
+      case "comunicacao": return "bg-blue-100";
+      case "futuro": return "bg-purple-100";
+      default: return "bg-gray-100";
+    }
+  };
 
   // Detalhes visuais baseados no tipo
   const typeConfig = {
@@ -115,24 +104,24 @@ const ModuleDetailPage = () => {
 
   return (
     <div className="pb-16 min-h-screen bg-gray-50">
-      <Header title={moduleData.title} />
+      <Header title={module?.name || "Módulo"} />
 
-      <div className={`${moduleData.color} p-6`}>
+      <div className={`${getModuleColor(module?.type)} p-6`}>
         <div className="mb-4 flex items-center gap-3">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-3xl shadow-sm">
-            {moduleData.emoji}
+            {module?.emoji || "📚"}
           </div>
           <div>
-            <h2 className="text-xl font-bold">{moduleData.title}</h2>
-            <p className="text-sm text-gray-600">{moduleData.description}</p>
+            <h2 className="text-xl font-bold">{module?.name || "Módulo"}</h2>
+            <p className="text-sm text-gray-600">{module?.description || "Descrição do módulo"}</p>
           </div>
         </div>
 
         <div className="mb-1 flex justify-between">
           <span className="text-sm font-medium">Progresso</span>
-          <span className="text-sm">{moduleData.progress}%</span>
+          <span className="text-sm">{Math.round(progress)}%</span>
         </div>
-        <ProgressBar progress={moduleData.progress} />
+        <ProgressBar progress={progress} />
       </div>
 
       <div className="container px-4 py-6 space-y-4">
@@ -140,7 +129,7 @@ const ModuleDetailPage = () => {
         <div className="space-y-3">
           {phases.map((phase) => (
             <PhaseCard 
-              key={`${phase.moduleId}-${phase.phaseId}`}
+              key={`${phase.moduleId}-${phase.id}`}
               {...phase}
             />
           ))}
