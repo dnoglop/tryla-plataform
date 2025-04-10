@@ -14,6 +14,7 @@ import PhaseDetailPage from "./pages/PhaseDetailPage";
 import RewardsPage from "./pages/RewardsPage";
 import CommunityPage from "./pages/CommunityPage";
 import ProfilePage from "./pages/ProfilePage";
+import AdminPage from "./pages/AdminPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/recompensas" element={<RewardsPage />} />
           <Route path="/comunidade" element={<CommunityPage />} />
           <Route path="/perfil" element={<ProfilePage />} />
+          <Route path="/admin" element={<AdminPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

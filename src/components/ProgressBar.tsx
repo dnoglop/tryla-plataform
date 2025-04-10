@@ -6,9 +6,9 @@ interface ProgressBarProps {
 
 const ProgressBar = ({ progress, className = "" }: ProgressBarProps) => {
   return (
-    <div className={`progress-bar ${className}`}>
+    <div className={`h-2 w-full bg-gray-200 rounded-full overflow-hidden ${className}`}>
       <div 
-        className="progress-value"
+        className="h-full bg-trilha-orange transition-all duration-300"
         style={{ width: `${progress}%` }}
       />
     </div>

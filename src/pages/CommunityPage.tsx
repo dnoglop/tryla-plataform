@@ -4,6 +4,7 @@ import { Filter, Plus, Search } from "lucide-react";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
 import ForumThread from "@/components/ForumThread";
+import CommunityEvent from "@/components/CommunityEvent";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const CommunityPage = () => {
@@ -62,6 +63,33 @@ const CommunityPage = () => {
     },
   ];
 
+  const events = [
+    { 
+      id: 1, 
+      title: "Workshop de Comunicação", 
+      date: "2025-04-15", 
+      time: "15:00", 
+      description: "Aprenda técnicas para se comunicar melhor em entrevistas de emprego",
+      location: "Online (Zoom)"
+    },
+    { 
+      id: 2, 
+      title: "Roda de Conversa: Mercado de Trabalho", 
+      date: "2025-04-20", 
+      time: "16:30", 
+      description: "Vamos conversar sobre o mercado de trabalho para jovens",
+      location: "Centro Comunitário"
+    },
+    { 
+      id: 3, 
+      title: "Palestra: Inteligência Emocional", 
+      date: "2025-04-25", 
+      time: "14:00", 
+      description: "Como desenvolver inteligência emocional para o mundo profissional",
+      location: "Auditório da Escola"
+    }
+  ];
+
   const filteredThreads = threads.filter(
     (thread) =>
       thread.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -69,6 +97,13 @@ const CommunityPage = () => {
       thread.tags.some((tag) =>
         tag.toLowerCase().includes(searchTerm.toLowerCase())
       )
+  );
+
+  const filteredEvents = events.filter(
+    (event) =>
+      event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      event.location.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const topTags = ["Growth Mindset", "Empatia", "Comunicação", "Emprego", "Autoconhecimento"];
@@ -82,7 +117,7 @@ const CommunityPage = () => {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Buscar tópicos, pessoas ou tags..."
+            placeholder="Buscar tópicos, eventos ou pessoas..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full rounded-lg border border-gray-300 py-3 pl-10 pr-4 focus:border-trilha-orange focus:outline-none focus:ring-2 focus:ring-trilha-orange focus:ring-opacity-20"
@@ -101,38 +136,61 @@ const CommunityPage = () => {
           ))}
         </div>
 
-        <Tabs defaultValue="populares">
+        <Tabs defaultValue="forum">
           <div className="flex items-center justify-between">
             <TabsList>
-              <TabsTrigger value="populares">Populares</TabsTrigger>
-              <TabsTrigger value="recentes">Recentes</TabsTrigger>
-              <TabsTrigger value="seguindo">Seguindo</TabsTrigger>
+              <TabsTrigger value="forum">Fórum</TabsTrigger>
+              <TabsTrigger value="eventos">Eventos</TabsTrigger>
             </TabsList>
             <button className="flex items-center gap-1 rounded-full bg-gray-100 p-2">
               <Filter className="h-4 w-4" />
             </button>
           </div>
 
-          <TabsContent value="populares" className="mt-4 space-y-4">
-            {filteredThreads.map((thread) => (
-              <ForumThread key={thread.id} {...thread} />
-            ))}
+          <TabsContent value="forum" className="mt-4">
+            <Tabs defaultValue="populares">
+              <TabsList className="w-full mb-4">
+                <TabsTrigger value="populares" className="flex-1">Populares</TabsTrigger>
+                <TabsTrigger value="recentes" className="flex-1">Recentes</TabsTrigger>
+                <TabsTrigger value="seguindo" className="flex-1">Seguindo</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="populares" className="space-y-4">
+                {filteredThreads.map((thread) => (
+                  <ForumThread key={thread.id} {...thread} />
+                ))}
+              </TabsContent>
+              
+              <TabsContent value="recentes">
+                <div className="rounded-lg border bg-white p-6 text-center">
+                  <p className="text-gray-500">
+                    Os tópicos recentes aparecerão aqui.
+                  </p>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="seguindo">
+                <div className="rounded-lg border bg-white p-6 text-center">
+                  <p className="text-gray-500">
+                    Siga pessoas ou tópicos para vê-los aqui.
+                  </p>
+                </div>
+              </TabsContent>
+            </Tabs>
           </TabsContent>
           
-          <TabsContent value="recentes" className="mt-4">
-            <div className="rounded-lg border bg-white p-6 text-center">
-              <p className="text-gray-500">
-                Os tópicos recentes aparecerão aqui.
-              </p>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="seguindo" className="mt-4">
-            <div className="rounded-lg border bg-white p-6 text-center">
-              <p className="text-gray-500">
-                Siga pessoas ou tópicos para vê-los aqui.
-              </p>
-            </div>
+          <TabsContent value="eventos" className="mt-4 space-y-4">
+            {filteredEvents.length > 0 ? (
+              filteredEvents.map((event) => (
+                <CommunityEvent key={event.id} {...event} />
+              ))
+            ) : (
+              <div className="rounded-lg border bg-white p-6 text-center">
+                <p className="text-gray-500">
+                  Não há eventos que correspondam à sua pesquisa.
+                </p>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
