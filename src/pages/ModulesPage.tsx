@@ -1,16 +1,81 @@
 
 import { useState, useEffect } from "react";
-import { Search } from "lucide-react";
+import { Search, Video, FileText, HelpCircle } from "lucide-react";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
 import ModuleCard from "@/components/ModuleCard";
 import ProgressBar from "@/components/ProgressBar";
 
+// Import module types
+interface Module {
+  id: number;
+  name: string;
+  type?: "autoconhecimento" | "empatia" | "growth" | "comunicacao" | "futuro";
+  progress?: number;
+  completed?: boolean;
+  locked?: boolean;
+  description?: string;
+  emoji?: string;
+}
+
+interface Phase {
+  id: number;
+  moduleId: number;
+  title: string;
+  type: "video" | "text" | "quiz";
+  content: string;
+  order: number;
+}
+
 const ModulesPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [totalProgress, setTotalProgress] = useState(0);
+  const [modules, setModules] = useState<Module[]>([]);
+  const [phases, setPhases] = useState<Phase[]>([]);
   
-  const modules = [
+  // Fetch modules and phases from localStorage (simulating getting from admin)
+  useEffect(() => {
+    const storedModules = localStorage.getItem("admin-modules");
+    const storedPhases = localStorage.getItem("admin-phases");
+    
+    if (storedModules) {
+      try {
+        const parsedModules = JSON.parse(storedModules);
+        
+        // Map admin modules to the format expected by ModuleCard
+        const formattedModules = parsedModules.map((module: any, index: number) => ({
+          id: module.id,
+          title: module.name,
+          type: module.type || "autoconhecimento", 
+          progress: 0,
+          completed: false,
+          locked: index > 1, // Lock all except first two modules
+          description: module.description,
+          emoji: module.emoji
+        }));
+        
+        setModules(formattedModules);
+      } catch (error) {
+        console.error("Error parsing modules:", error);
+        // Fallback to default modules if there's an error
+        setModules(defaultModules);
+      }
+    } else {
+      setModules(defaultModules);
+    }
+    
+    if (storedPhases) {
+      try {
+        const parsedPhases = JSON.parse(storedPhases);
+        setPhases(parsedPhases);
+      } catch (error) {
+        console.error("Error parsing phases:", error);
+        setPhases([]);
+      }
+    }
+  }, []);
+
+  const defaultModules = [
     {
       id: 1,
       title: "Mestre de Si",
@@ -58,12 +123,17 @@ const ModulesPage = () => {
   // Calculate total progress
   useEffect(() => {
     const completedPercentage = modules.reduce(
-      (sum, module) => sum + module.progress, 
+      (sum, module) => sum + (module.progress || 0), 
       0
-    ) / modules.length;
+    ) / (modules.length || 1);
     
     setTotalProgress(Math.round(completedPercentage));
   }, [modules]);
+
+  // Group phases by module
+  const getModuleContent = (moduleId: number) => {
+    return phases.filter(phase => phase.moduleId === moduleId);
+  };
 
   return (
     <div className="pb-16 min-h-screen bg-gray-50">
@@ -89,7 +159,33 @@ const ModulesPage = () => {
 
         <div className="space-y-4">
           {filteredModules.map((module) => (
-            <ModuleCard key={module.id} {...module} />
+            <div key={module.id} className="space-y-2">
+              <ModuleCard key={module.id} {...module} />
+              
+              {/* Show content count for each module */}
+              {!module.locked && (
+                <div className="ml-4 flex space-x-3 text-xs text-gray-500">
+                  {getModuleContent(module.id).filter(p => p.type === 'video').length > 0 && (
+                    <div className="flex items-center">
+                      <Video className="h-3 w-3 mr-1" />
+                      {getModuleContent(module.id).filter(p => p.type === 'video').length} vídeos
+                    </div>
+                  )}
+                  {getModuleContent(module.id).filter(p => p.type === 'text').length > 0 && (
+                    <div className="flex items-center">
+                      <FileText className="h-3 w-3 mr-1" />
+                      {getModuleContent(module.id).filter(p => p.type === 'text').length} textos
+                    </div>
+                  )}
+                  {getModuleContent(module.id).filter(p => p.type === 'quiz').length > 0 && (
+                    <div className="flex items-center">
+                      <HelpCircle className="h-3 w-3 mr-1" />
+                      {getModuleContent(module.id).filter(p => p.type === 'quiz').length} quizes
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           ))}
         </div>
       </div>

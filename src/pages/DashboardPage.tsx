@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Zap } from "lucide-react";
 import Header from "@/components/Header";
@@ -9,22 +9,54 @@ import UserLevel from "@/components/UserLevel";
 import DailyTask from "@/components/DailyTask";
 import { useToast } from "@/components/ui/use-toast";
 
+interface Module {
+  id: number;
+  title: string;
+  type: "autoconhecimento" | "empatia" | "growth" | "comunicacao" | "futuro";
+  progress: number;
+  completed: boolean;
+  locked?: boolean;
+  description?: string;
+  emoji?: string;
+}
+
 const DashboardPage = () => {
   const { toast } = useToast();
   const [dailyCompleted, setDailyCompleted] = useState(false);
+  const [modules, setModules] = useState<Module[]>([]);
 
-  const handleDailyTask = () => {
-    if (!dailyCompleted) {
-      setDailyCompleted(true);
-      toast({
-        title: "Missão do Dia completada!",
-        description: "Você ganhou +50 XP! 🔥",
-        duration: 3000,
-      });
+  // Fetch modules from localStorage
+  useEffect(() => {
+    const storedModules = localStorage.getItem("admin-modules");
+    
+    if (storedModules) {
+      try {
+        const parsedModules = JSON.parse(storedModules);
+        
+        // Map admin modules to the format expected by ModuleCard
+        const formattedModules = parsedModules.map((module: any, index: number) => ({
+          id: module.id,
+          title: module.name,
+          type: module.type || "autoconhecimento", 
+          progress: 0,
+          completed: false,
+          locked: index > 1, // Lock all except first two modules
+          description: module.description,
+          emoji: module.emoji
+        }));
+        
+        setModules(formattedModules);
+      } catch (error) {
+        console.error("Error parsing modules:", error);
+        // Fallback to default modules if there's an error
+        setModules(defaultModules);
+      }
+    } else {
+      setModules(defaultModules);
     }
-  };
+  }, []);
 
-  const modules = [
+  const defaultModules = [
     {
       id: 1,
       title: "Mestre de Si",
@@ -65,6 +97,17 @@ const DashboardPage = () => {
     },
   ];
 
+  const handleDailyTask = () => {
+    if (!dailyCompleted) {
+      setDailyCompleted(true);
+      toast({
+        title: "Missão do Dia completada!",
+        description: "Você ganhou +50 XP! 🔥",
+        duration: 3000,
+      });
+    }
+  };
+
   return (
     <div className="pb-16 min-h-screen bg-gray-50">
       <Header title="🗺️ Painel da Jornada" showBackButton={false} />
@@ -103,7 +146,7 @@ const DashboardPage = () => {
           </div>
 
           <div className="grid gap-4">
-            {modules.map((module) => (
+            {modules.slice(0, 3).map((module) => (
               <ModuleCard key={module.id} {...module} />
             ))}
           </div>
