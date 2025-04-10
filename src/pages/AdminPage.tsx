@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -340,15 +339,31 @@ const AdminPage = () => {
     setModules(updatedModules);
     
     // Reset form
-    setEditingModule(null);
-    setModuleName("");
-    setModuleDescription("");
-    setModuleType("autoconhecimento");
-    setModuleEmoji("🧠");
+    clearModuleForm();
     
     toast({
       title: "Módulo atualizado",
       description: "O módulo foi atualizado com sucesso"
+    });
+  };
+  
+  const deleteModule = (id: number) => {
+    // Verificar se há fases associadas a este módulo
+    const hasPhases = phases.some(phase => phase.moduleId === id);
+    
+    if (hasPhases) {
+      toast({
+        title: "Não é possível excluir",
+        description: "Este módulo possui fases associadas. Remova as fases primeiro.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setModules(modules.filter(module => module.id !== id));
+    toast({
+      title: "Módulo removido",
+      description: "O módulo foi removido com sucesso"
     });
   };
   
@@ -466,6 +481,40 @@ const AdminPage = () => {
     });
   };
 
+  const clearModuleForm = () => {
+    setEditingModule(null);
+    setModuleName("");
+    setModuleDescription("");
+    setModuleType("autoconhecimento");
+    setModuleEmoji("🧠");
+  };
+
+  const handleAddModule = () => {
+    if (!moduleName || !moduleDescription) {
+      toast({
+        title: "Campos incompletos",
+        description: "Preencha pelo menos o nome e a descrição do módulo",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const newModule = {
+      id: modules.length > 0 ? Math.max(...modules.map(m => m.id)) + 1 : 1,
+      name: moduleName
+    };
+    
+    setModules([...modules, newModule]);
+    
+    // Reset form
+    clearModuleForm();
+    
+    toast({
+      title: "Módulo adicionado",
+      description: "O módulo foi adicionado com sucesso"
+    });
+  };
+
   const getModuleNameById = (id: number) => {
     return modules.find(m => m.id === id)?.name || "Módulo Desconhecido";
   };
@@ -484,7 +533,7 @@ const AdminPage = () => {
       </div>
       
       <Tabs defaultValue="dashboard" value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full mb-4 grid grid-cols-4">
+        <TabsList className="w-full mb-4 grid grid-cols-5">
           <TabsTrigger value="dashboard" className="flex gap-2 items-center">
             <BarChart3 className="h-4 w-4" /> Dashboard
           </TabsTrigger>
@@ -664,11 +713,21 @@ const AdminPage = () => {
                   </div>
                   
                   <Button 
-                    onClick={editingModule ? handleUpdateModule : handleUpdateModule} 
+                    onClick={editingModule ? handleUpdateModule : handleAddModule} 
                     className="w-full bg-trilha-orange hover:bg-trilha-orange/90"
                   >
                     {editingModule ? "Atualizar Módulo" : "Adicionar Módulo"}
                   </Button>
+                  
+                  {editingModule && (
+                    <Button 
+                      variant="outline"
+                      onClick={clearModuleForm}
+                      className="w-full"
+                    >
+                      Cancelar Edição
+                    </Button>
+                  )}
                 </div>
               </Card>
             </div>
@@ -730,6 +789,13 @@ const AdminPage = () => {
                                   onClick={() => navigate(`/modulo/${module.id}`)}
                                 >
                                   Visualizar
+                                </Button>
+                                <Button 
+                                  variant="destructive" 
+                                  size="sm" 
+                                  onClick={() => deleteModule(module.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
                                 </Button>
                               </div>
                             </TableCell>
