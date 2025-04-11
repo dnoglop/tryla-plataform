@@ -6,7 +6,7 @@ import BottomNavigation from "@/components/BottomNavigation";
 import PhaseCard from "@/components/PhaseCard";
 import ProgressBar from "@/components/ProgressBar";
 import { useQuery } from '@tanstack/react-query';
-import { getModuleById, getPhasesByModuleId } from "@/services/moduleService";
+import { getModuleById, getPhasesByModuleId, Phase } from "@/services/moduleService";
 
 type PhaseStatus = "available" | "inProgress" | "completed" | "locked";
 
@@ -24,12 +24,6 @@ const ModuleDetailPage = () => {
   const { data: phases = [], isLoading: isLoadingPhases } = useQuery({
     queryKey: ['phases', moduleId],
     queryFn: () => getPhasesByModuleId(moduleId),
-    select: (phases) => phases
-      .sort((a, b) => a.order_index - b.order_index)
-      .map((phase) => ({
-        ...phase,
-        status: "available" as PhaseStatus,
-      })),
   });
 
   // Calcular progresso baseado nas fases completadas
@@ -103,7 +97,7 @@ const ModuleDetailPage = () => {
               title={phase.name}
               description={phase.description}
               duration={phase.duration || 15}
-              status={phase.status || "available"}
+              status={phase.status as PhaseStatus || "available"}
               iconType={phase.icon_type || (phase.type === "quiz" ? "quiz" : 
                          phase.type === "video" ? "video" : "challenge")}
             />

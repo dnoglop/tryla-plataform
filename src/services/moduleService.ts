@@ -38,39 +38,16 @@ export interface Question {
   order_index: number;
 }
 
-// Mock implementation using local data until database is set up
-// These functions will be replaced with actual database calls once tables are created
-
 // Módulos
 export const getModules = async (): Promise<Module[]> => {
   try {
-    // For now, return mock data - this will be replaced with actual DB query
-    return [
-      {
-        id: 1,
-        name: "Autoconhecimento",
-        description: "Conheça a si mesmo e descubra seus superpoderes",
-        type: "autoconhecimento",
-        emoji: "🧠",
-        order_index: 0
-      },
-      {
-        id: 2,
-        name: "Empatia",
-        description: "Entenda melhor os outros e fortaleça suas relações",
-        type: "empatia",
-        emoji: "❤️",
-        order_index: 1
-      },
-      {
-        id: 3,
-        name: "Growth Mindset",
-        description: "Desenvolva uma mentalidade de crescimento",
-        type: "growth",
-        emoji: "🌱",
-        order_index: 2
-      }
-    ];
+    const { data, error } = await supabase
+      .from("modules")
+      .select("*")
+      .order("order_index");
+    
+    if (error) throw error;
+    return data || [];
   } catch (error) {
     console.error("Error fetching modules:", error);
     throw error;
@@ -79,9 +56,21 @@ export const getModules = async (): Promise<Module[]> => {
 
 export const getModuleById = async (id: number): Promise<Module | null> => {
   try {
-    // For now, return mock data - this will be replaced with actual DB query
-    const modules = await getModules();
-    return modules.find(module => module.id === id) || null;
+    const { data, error } = await supabase
+      .from("modules")
+      .select("*")
+      .eq("id", id)
+      .single();
+    
+    if (error) {
+      // Não lançar erro se for apenas um "not found"
+      if (error.code === 'PGRST116') {
+        return null;
+      }
+      throw error;
+    }
+    
+    return data;
   } catch (error) {
     console.error(`Error fetching module with id ${id}:`, error);
     return null;
@@ -90,19 +79,16 @@ export const getModuleById = async (id: number): Promise<Module | null> => {
 
 export const createModule = async (module: Omit<Module, "id" | "created_at" | "updated_at">): Promise<Module> => {
   try {
-    // Mock implementation - will be replaced with actual DB insert
-    const modules = await getModules();
-    const newId = Math.max(...modules.map(m => m.id)) + 1;
+    const { data, error } = await supabase
+      .from("modules")
+      .insert(module)
+      .select()
+      .single();
     
-    const newModule = {
-      id: newId,
-      ...module,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
+    if (error) throw error;
+    if (!data) throw new Error("No data returned after creating module");
     
-    console.log("Created module:", newModule);
-    return newModule;
+    return data;
   } catch (error) {
     console.error("Error creating module:", error);
     throw error;
@@ -111,21 +97,17 @@ export const createModule = async (module: Omit<Module, "id" | "created_at" | "u
 
 export const updateModule = async (id: number, module: Partial<Omit<Module, "id" | "created_at" | "updated_at">>): Promise<Module> => {
   try {
-    // Mock implementation - will be replaced with actual DB update
-    const existingModule = await getModuleById(id);
+    const { data, error } = await supabase
+      .from("modules")
+      .update(module)
+      .eq("id", id)
+      .select()
+      .single();
     
-    if (!existingModule) {
-      throw new Error(`Module with id ${id} not found`);
-    }
+    if (error) throw error;
+    if (!data) throw new Error(`Module with id ${id} not found`);
     
-    const updatedModule = {
-      ...existingModule,
-      ...module,
-      updated_at: new Date().toISOString()
-    };
-    
-    console.log("Updated module:", updatedModule);
-    return updatedModule;
+    return data;
   } catch (error) {
     console.error(`Error updating module with id ${id}:`, error);
     throw error;
@@ -134,8 +116,12 @@ export const updateModule = async (id: number, module: Partial<Omit<Module, "id"
 
 export const deleteModule = async (id: number): Promise<void> => {
   try {
-    // Mock implementation - will be replaced with actual DB delete
-    console.log(`Deleted module with id ${id}`);
+    const { error } = await supabase
+      .from("modules")
+      .delete()
+      .eq("id", id);
+    
+    if (error) throw error;
   } catch (error) {
     console.error(`Error deleting module with id ${id}:`, error);
     throw error;
@@ -145,42 +131,22 @@ export const deleteModule = async (id: number): Promise<void> => {
 // Fases
 export const getPhasesByModuleId = async (moduleId: number): Promise<Phase[]> => {
   try {
-    // For now, return mock data - this will be replaced with actual DB query
-    if (moduleId === 1) {
-      return [
-        {
-          id: 1,
-          module_id: 1,
-          name: "Descobrindo suas forças",
-          description: "Identifique seus pontos fortes e como usá-los",
-          type: "video",
-          icon_type: "video",
-          duration: 15,
-          order_index: 0
-        },
-        {
-          id: 2,
-          module_id: 1,
-          name: "Teste de personalidade",
-          description: "Descubra mais sobre seu perfil",
-          type: "quiz",
-          icon_type: "quiz",
-          duration: 10,
-          order_index: 1
-        },
-        {
-          id: 3,
-          module_id: 1,
-          name: "Diário de reflexão",
-          description: "Pratique o autoconhecimento diariamente",
-          type: "challenge",
-          icon_type: "challenge",
-          duration: 20,
-          order_index: 2
-        }
-      ];
-    }
-    return [];
+    const { data, error } = await supabase
+      .from("phases")
+      .select("*")
+      .eq("module_id", moduleId)
+      .order("order_index");
+    
+    if (error) throw error;
+    
+    // Processar dados para adicionar o status padrão como "available"
+    // Em uma implementação mais completa, buscaríamos o status real do user_phase_progress
+    const phasesWithStatus = (data || []).map(phase => ({
+      ...phase,
+      status: "available" as "available" | "inProgress" | "completed" | "locked" 
+    }));
+    
+    return phasesWithStatus;
   } catch (error) {
     console.error(`Error fetching phases for module ${moduleId}:`, error);
     throw error;
@@ -189,54 +155,58 @@ export const getPhasesByModuleId = async (moduleId: number): Promise<Phase[]> =>
 
 export const getPhaseById = async (id: number): Promise<Phase | null> => {
   try {
-    // Mock implementation
-    const moduleId = 1; // Hardcoded for now
-    const phases = await getPhasesByModuleId(moduleId);
-    return phases.find(p => p.id === id) || null;
+    const { data, error } = await supabase
+      .from("phases")
+      .select("*")
+      .eq("id", id)
+      .single();
+    
+    if (error) {
+      // Não lançar erro se for apenas um "not found"
+      if (error.code === 'PGRST116') {
+        return null;
+      }
+      throw error;
+    }
+    
+    return data;
   } catch (error) {
     console.error(`Error fetching phase with id ${id}:`, error);
     return null;
   }
 };
 
-export const createPhase = async (phase: Omit<Phase, "id" | "created_at" | "updated_at">): Promise<Phase> => {
+export const createPhase = async (phase: Omit<Phase, "id" | "created_at" | "updated_at" | "status">): Promise<Phase> => {
   try {
-    // Mock implementation - will be replaced with actual DB insert
-    const phases = await getPhasesByModuleId(phase.module_id);
-    const newId = phases.length > 0 ? Math.max(...phases.map(p => p.id)) + 1 : 1;
+    const { data, error } = await supabase
+      .from("phases")
+      .insert(phase)
+      .select()
+      .single();
     
-    const newPhase = {
-      id: newId,
-      ...phase,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
+    if (error) throw error;
+    if (!data) throw new Error("No data returned after creating phase");
     
-    console.log("Created phase:", newPhase);
-    return newPhase;
+    return data;
   } catch (error) {
     console.error("Error creating phase:", error);
     throw error;
   }
 };
 
-export const updatePhase = async (id: number, phase: Partial<Omit<Phase, "id" | "created_at" | "updated_at">>): Promise<Phase> => {
+export const updatePhase = async (id: number, phase: Partial<Omit<Phase, "id" | "created_at" | "updated_at" | "status">>): Promise<Phase> => {
   try {
-    // Mock implementation - will be replaced with actual DB update
-    const existingPhase = await getPhaseById(id);
+    const { data, error } = await supabase
+      .from("phases")
+      .update(phase)
+      .eq("id", id)
+      .select()
+      .single();
     
-    if (!existingPhase) {
-      throw new Error(`Phase with id ${id} not found`);
-    }
+    if (error) throw error;
+    if (!data) throw new Error(`Phase with id ${id} not found`);
     
-    const updatedPhase = {
-      ...existingPhase,
-      ...phase,
-      updated_at: new Date().toISOString()
-    };
-    
-    console.log("Updated phase:", updatedPhase);
-    return updatedPhase;
+    return data;
   } catch (error) {
     console.error(`Error updating phase with id ${id}:`, error);
     throw error;
@@ -245,8 +215,12 @@ export const updatePhase = async (id: number, phase: Partial<Omit<Phase, "id" | 
 
 export const deletePhase = async (id: number): Promise<void> => {
   try {
-    // Mock implementation - will be replaced with actual DB delete
-    console.log(`Deleted phase with id ${id}`);
+    const { error } = await supabase
+      .from("phases")
+      .delete()
+      .eq("id", id);
+    
+    if (error) throw error;
   } catch (error) {
     console.error(`Error deleting phase with id ${id}:`, error);
     throw error;
@@ -256,40 +230,244 @@ export const deletePhase = async (id: number): Promise<void> => {
 // Quizzes e Perguntas
 export const getQuestionsByPhaseId = async (phaseId: number): Promise<Question[]> => {
   try {
-    // Mock implementation
-    if (phaseId === 2) {
-      return [
-        {
-          id: 1,
-          quiz_id: 1,
-          question: "Qual desses é um traço de personalidade do Big Five?",
-          options: ["Introspecção", "Abertura a experiências", "Perfeição", "Ansiedade"],
-          correct_answer: 1,
-          order_index: 0
-        },
-        {
-          id: 2,
-          quiz_id: 1,
-          question: "Pessoas com alta extroversão geralmente:",
-          options: ["Preferem ficar sozinhas", "Ganham energia em ambientes sociais", "São sempre organizadas", "Têm dificuldade em se comunicar"],
-          correct_answer: 1,
-          order_index: 1
-        }
-      ];
+    // Primeiro, encontrar o quiz relacionado à fase
+    const { data: quizData, error: quizError } = await supabase
+      .from("quizzes")
+      .select("id")
+      .eq("phase_id", phaseId)
+      .single();
+    
+    if (quizError) {
+      // Se não encontrar o quiz, retorna array vazio
+      if (quizError.code === 'PGRST116') {
+        return [];
+      }
+      throw quizError;
     }
-    return [];
+    
+    if (!quizData) return [];
+    
+    // Depois, buscar todas as perguntas relacionadas ao quiz
+    const { data: questionsData, error: questionsError } = await supabase
+      .from("questions")
+      .select("*")
+      .eq("quiz_id", quizData.id)
+      .order("order_index");
+    
+    if (questionsError) throw questionsError;
+    
+    // Converter as opções do formato JSONB para array
+    const questions = questionsData?.map(q => ({
+      ...q,
+      options: Array.isArray(q.options) ? q.options : JSON.parse(q.options as unknown as string)
+    })) || [];
+    
+    return questions;
   } catch (error) {
     console.error(`Error fetching questions for phase ${phaseId}:`, error);
     throw error;
   }
 };
 
+export const createQuiz = async (phaseId: number): Promise<number | null> => {
+  try {
+    // Verificar se já existe um quiz para esta fase
+    const { data: existingQuiz, error: checkError } = await supabase
+      .from("quizzes")
+      .select("id")
+      .eq("phase_id", phaseId)
+      .maybeSingle();
+    
+    if (checkError) throw checkError;
+    
+    // Se já existe um quiz, retornar o id existente
+    if (existingQuiz) return existingQuiz.id;
+    
+    // Criar novo quiz
+    const { data: newQuiz, error } = await supabase
+      .from("quizzes")
+      .insert([{ phase_id: phaseId }])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    if (!newQuiz) throw new Error("No data returned after creating quiz");
+    
+    return newQuiz.id;
+  } catch (error) {
+    console.error(`Error creating quiz for phase ${phaseId}:`, error);
+    return null;
+  }
+};
+
 export const saveQuiz = async (phaseId: number, questions: Omit<Question, "id" | "quiz_id">[]): Promise<void> => {
   try {
-    // Mock implementation - will be replaced with actual DB operations
-    console.log(`Saving quiz for phase ${phaseId} with ${questions.length} questions`);
+    // Criar ou obter o quiz
+    const quizId = await createQuiz(phaseId);
+    if (!quizId) throw new Error("Failed to create or get quiz");
+    
+    // Preparar as perguntas com o quiz_id
+    const questionsToInsert = questions.map(q => ({
+      ...q,
+      quiz_id: quizId
+    }));
+    
+    // Primeiro, remover perguntas existentes
+    const { error: deleteError } = await supabase
+      .from("questions")
+      .delete()
+      .eq("quiz_id", quizId);
+    
+    if (deleteError) throw deleteError;
+    
+    // Inserir novas perguntas
+    if (questionsToInsert.length > 0) {
+      const { error: insertError } = await supabase
+        .from("questions")
+        .insert(questionsToInsert);
+      
+      if (insertError) throw insertError;
+    }
+    
+    console.log(`Quiz saved for phase ${phaseId} with ${questions.length} questions`);
   } catch (error) {
     console.error(`Error saving quiz for phase ${phaseId}:`, error);
     throw error;
+  }
+};
+
+// Funções para gerenciar progresso do usuário
+export const getUserModuleProgress = async (userId: string, moduleId: number) => {
+  try {
+    const { data, error } = await supabase
+      .from("user_module_progress")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("module_id", moduleId)
+      .maybeSingle();
+    
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error fetching user module progress:", error);
+    return null;
+  }
+};
+
+export const updateUserModuleProgress = async (userId: string, moduleId: number, progress: number, completed: boolean = false) => {
+  try {
+    const currentTime = new Date().toISOString();
+    const updateData: any = { progress };
+    
+    if (completed) {
+      updateData.completed = true;
+      updateData.completed_at = currentTime;
+    }
+    
+    // Verificar se já existe um registro de progresso
+    const { data: existingProgress } = await supabase
+      .from("user_module_progress")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("module_id", moduleId)
+      .maybeSingle();
+    
+    if (existingProgress) {
+      // Atualizar registro existente
+      const { error } = await supabase
+        .from("user_module_progress")
+        .update(updateData)
+        .eq("user_id", userId)
+        .eq("module_id", moduleId);
+      
+      if (error) throw error;
+    } else {
+      // Criar novo registro
+      const { error } = await supabase
+        .from("user_module_progress")
+        .insert({
+          user_id: userId,
+          module_id: moduleId,
+          progress,
+          completed,
+          completed_at: completed ? currentTime : null,
+          started_at: currentTime
+        });
+      
+      if (error) throw error;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error updating user module progress:", error);
+    return false;
+  }
+};
+
+export const getUserPhaseStatus = async (userId: string, phaseId: number) => {
+  try {
+    const { data, error } = await supabase
+      .from("user_phase_progress")
+      .select("status")
+      .eq("user_id", userId)
+      .eq("phase_id", phaseId)
+      .maybeSingle();
+    
+    if (error) throw error;
+    return data?.status || "available";
+  } catch (error) {
+    console.error("Error fetching user phase status:", error);
+    return "available";
+  }
+};
+
+export const updateUserPhaseStatus = async (userId: string, phaseId: number, status: "available" | "inProgress" | "completed" | "locked", rating?: number) => {
+  try {
+    const currentTime = new Date().toISOString();
+    const updateData: any = { status };
+    
+    if (status === "inProgress" && !updateData.started_at) {
+      updateData.started_at = currentTime;
+    }
+    
+    if (status === "completed") {
+      updateData.completed_at = currentTime;
+      if (rating) updateData.rating = rating;
+    }
+    
+    // Verificar se já existe um registro
+    const { data: existingProgress } = await supabase
+      .from("user_phase_progress")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("phase_id", phaseId)
+      .maybeSingle();
+    
+    if (existingProgress) {
+      // Atualizar registro existente
+      const { error } = await supabase
+        .from("user_phase_progress")
+        .update(updateData)
+        .eq("user_id", userId)
+        .eq("phase_id", phaseId);
+      
+      if (error) throw error;
+    } else {
+      // Criar novo registro
+      const { error } = await supabase
+        .from("user_phase_progress")
+        .insert({
+          user_id: userId,
+          phase_id: phaseId,
+          ...updateData
+        });
+      
+      if (error) throw error;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error updating user phase status:", error);
+    return false;
   }
 };
