@@ -47,11 +47,9 @@ const AdminPage = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const queryClient = useQueryClient();
   
-  // Estado para gerenciar os módulos e fases
   const [editingModule, setEditingModule] = useState<Module | null>(null);
   const [editingPhase, setEditingPhase] = useState<Phase | null>(null);
   
-  // Estado para gerenciar as fases em edição
   const [selectedModule, setSelectedModule] = useState<number>(1);
   const [phaseName, setPhaseName] = useState("");
   const [phaseDescription, setPhaseDescription] = useState("");
@@ -61,7 +59,6 @@ const AdminPage = () => {
   const [iconType, setIconType] = useState<"video" | "quiz" | "challenge" | "game">("video");
   const [phaseDuration, setPhaseDuration] = useState<number>(15);
   
-  // Estado para gerenciar os quizzes
   const [editingQuiz, setEditingQuiz] = useState<{
     phaseId: number;
     questions: {
@@ -73,7 +70,6 @@ const AdminPage = () => {
     }[];
   } | null>(null);
   
-  // Estado para gerenciar os eventos da comunidade
   const [communityEvents, setCommunityEvents] = useState([
     { 
       id: 1, 
@@ -93,7 +89,6 @@ const AdminPage = () => {
     }
   ]);
 
-  // Dados para os gráficos
   const usersData = [
     { name: "Jan", value: 150 },
     { name: "Fev", value: 220 },
@@ -124,20 +119,17 @@ const AdminPage = () => {
     { name: "Jul", value: 78 }
   ];
   
-  // Form states
   const [eventTitle, setEventTitle] = useState("");
   const [eventDate, setEventDate] = useState("");
   const [eventTime, setEventTime] = useState("");
   const [eventDescription, setEventDescription] = useState("");
   const [eventLocation, setEventLocation] = useState("");
 
-  // Módulo em edição
   const [moduleName, setModuleName] = useState("");
   const [moduleDescription, setModuleDescription] = useState("");
   const [moduleType, setModuleType] = useState("autoconhecimento");
   const [moduleEmoji, setModuleEmoji] = useState("🧠");
   
-  // Estado para destacar quais módulos e fases têm mais engajamento
   const [topModules, setTopModules] = useState([
     { id: 1, name: "Autoconhecimento", completions: 327, engagement: 85 },
     { id: 2, name: "Empatia", completions: 245, engagement: 72 },
@@ -152,7 +144,6 @@ const AdminPage = () => {
     { id: 3, moduleId: 2, name: "Entendendo o outro", completions: 135, rating: 4.5 },
   ]);
 
-  // Data fetching using React Query
   const { data: modules = [] } = useQuery({
     queryKey: ['modules'],
     queryFn: getModules,
@@ -164,7 +155,6 @@ const AdminPage = () => {
     enabled: !!selectedModule,
   });
 
-  // Mutations
   const createModuleMutation = useMutation({
     mutationFn: createModule,
     onSuccess: () => {
@@ -396,7 +386,6 @@ const AdminPage = () => {
     
     setCommunityEvents([...communityEvents, newEvent]);
     
-    // Reset form
     setEventTitle("");
     setEventDate("");
     setEventTime("");
@@ -484,7 +473,6 @@ const AdminPage = () => {
           questions
         });
       } else {
-        // Create a new quiz for the phase
         setEditingQuiz({
           phaseId,
           questions: [
@@ -512,7 +500,6 @@ const AdminPage = () => {
   const handleUpdateQuiz = () => {
     if (!editingQuiz) return;
     
-    // Validate questions
     const invalidQuestions = editingQuiz.questions.filter(
       q => !q.question || q.options.some(o => !o)
     );
@@ -628,10 +615,8 @@ const AdminPage = () => {
           </TabsTrigger>
         </TabsList>
         
-        {/* DASHBOARD TAB */}
         <TabsContent value="dashboard">
           <div className="space-y-6">
-            {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="p-4">
                 <div className="flex justify-between items-center">
@@ -667,7 +652,6 @@ const AdminPage = () => {
               </Card>
             </div>
             
-            {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <AdminChart 
                 data={usersData} 
@@ -691,7 +675,6 @@ const AdminPage = () => {
               />
             </div>
             
-            {/* Top Modules */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card className="p-4">
                 <h3 className="text-lg font-medium mb-4">Módulos Mais Populares</h3>
@@ -708,7 +691,6 @@ const AdminPage = () => {
                 </div>
               </Card>
               
-              {/* Top Phases */}
               <Card className="p-4">
                 <h3 className="text-lg font-medium mb-4">Fases Melhor Avaliadas</h3>
                 <div className="space-y-4">
@@ -733,7 +715,6 @@ const AdminPage = () => {
           </div>
         </TabsContent>
         
-        {/* MÓDULOS TAB */}
         <TabsContent value="modulos">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-1">
@@ -887,7 +868,6 @@ const AdminPage = () => {
           </div>
         </TabsContent>
         
-        {/* CONTEÚDOS TAB */}
         <TabsContent value="conteudo">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-1">
@@ -914,4 +894,448 @@ const AdminPage = () => {
                   <div>
                     <Label htmlFor="phaseName">Nome da Fase</Label>
                     <Input
-                      id="phaseName
+                      id="phaseName"
+                      placeholder="Ex: Introdução ao Autoconhecimento"
+                      value={phaseName}
+                      onChange={(e) => setPhaseName(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="phaseDescription">Descrição</Label>
+                    <Textarea
+                      id="phaseDescription"
+                      placeholder="Ex: Nesta fase você vai aprender sobre..."
+                      value={phaseDescription}
+                      onChange={(e) => setPhaseDescription(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="phaseType">Tipo de Conteúdo</Label>
+                    <select
+                      id="phaseType"
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                      value={phaseType}
+                      onChange={(e) => setPhaseType(e.target.value as "video" | "text" | "quiz" | "challenge")}
+                    >
+                      <option value="text">Texto</option>
+                      <option value="video">Vídeo</option>
+                      <option value="quiz">Quiz</option>
+                      <option value="challenge">Desafio</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="iconType">Tipo de Ícone</Label>
+                    <select
+                      id="iconType"
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                      value={iconType}
+                      onChange={(e) => setIconType(e.target.value as "video" | "quiz" | "challenge" | "game")}
+                    >
+                      <option value="video">Vídeo</option>
+                      <option value="quiz">Quiz</option>
+                      <option value="challenge">Desafio</option>
+                      <option value="game">Jogo</option>
+                    </select>
+                  </div>
+                  
+                  {phaseType === "video" && (
+                    <div>
+                      <Label htmlFor="videoUrl">URL do Vídeo</Label>
+                      <Input
+                        id="videoUrl"
+                        placeholder="Ex: https://www.youtube.com/watch?v=..."
+                        value={videoUrl}
+                        onChange={(e) => setVideoUrl(e.target.value)}
+                      />
+                    </div>
+                  )}
+                  
+                  {(phaseType === "text" || phaseType === "challenge") && (
+                    <div>
+                      <Label htmlFor="content">Conteúdo</Label>
+                      <Textarea
+                        id="content"
+                        placeholder="Insira o conteúdo aqui..."
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        rows={8}
+                      />
+                    </div>
+                  )}
+                  
+                  <div>
+                    <Label htmlFor="duration">Duração Estimada (minutos)</Label>
+                    <Input
+                      id="duration"
+                      type="number"
+                      min="1"
+                      placeholder="15"
+                      value={phaseDuration}
+                      onChange={(e) => setPhaseDuration(Number(e.target.value))}
+                    />
+                  </div>
+                  
+                  <Button 
+                    onClick={editingPhase ? handleUpdatePhase : handleAddPhase} 
+                    className="w-full bg-trilha-orange hover:bg-trilha-orange/90"
+                  >
+                    {editingPhase ? "Atualizar Fase" : "Adicionar Fase"}
+                  </Button>
+                  
+                  {editingPhase && (
+                    <Button 
+                      variant="outline"
+                      onClick={resetPhaseForm}
+                      className="w-full"
+                    >
+                      Cancelar Edição
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            </div>
+            
+            <div className="lg:col-span-2">
+              <Card className="p-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-semibold">Fases do Módulo</h2>
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Pesquisar fases..."
+                      className="pl-8"
+                    />
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Duração</TableHead>
+                        <TableHead>Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {phases.map((phase) => (
+                        <TableRow key={phase.id}>
+                          <TableCell>{phase.id}</TableCell>
+                          <TableCell className="font-medium">{phase.name}</TableCell>
+                          <TableCell>
+                            {phase.type === "text" ? "Texto" : 
+                             phase.type === "video" ? "Vídeo" : 
+                             phase.type === "quiz" ? "Quiz" : "Desafio"}
+                          </TableCell>
+                          <TableCell>{phase.duration || 15} min</TableCell>
+                          <TableCell>
+                            <div className="flex space-x-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleEditPhase(phase)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              
+                              {phase.type === "quiz" && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => handleQuizEdit(phase.id)}
+                                >
+                                  Editar Quiz
+                                </Button>
+                              )}
+                              
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => navigate(`/fase/${phase.module_id}/${phase.id}`)}
+                              >
+                                Visualizar
+                              </Button>
+                              
+                              <Button 
+                                variant="destructive" 
+                                size="sm" 
+                                onClick={() => deletePhaseMutation.mutate(phase.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="quizzes">
+          <div className="space-y-6">
+            {editingQuiz ? (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-xl font-semibold">
+                    Editar Quiz: {getPhaseNameById(editingQuiz.phaseId)}
+                  </h2>
+                  <Button onClick={() => setEditingQuiz(null)} variant="outline">
+                    Cancelar Edição
+                  </Button>
+                </div>
+                
+                {editingQuiz.questions.map((question, index) => (
+                  <Card key={index} className="p-6 space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-lg font-medium">Pergunta {index + 1}</h3>
+                      {editingQuiz.questions.length > 1 && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => removeQuestion(index)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor={`question-${index}`}>Pergunta</Label>
+                      <Textarea
+                        id={`question-${index}`}
+                        value={question.question}
+                        onChange={(e) => updateQuestion(index, "question", e.target.value)}
+                        placeholder="Digite a pergunta..."
+                      />
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <Label>Opções de Resposta</Label>
+                      {question.options.map((option, optIndex) => (
+                        <div key={optIndex} className="flex items-center gap-2">
+                          <Input
+                            value={option}
+                            onChange={(e) => updateQuestion(index, `option${optIndex}`, e.target.value)}
+                            placeholder={`Opção ${optIndex + 1}`}
+                          />
+                          <div className="flex items-center">
+                            <input
+                              type="radio"
+                              id={`correct-${index}-${optIndex}`}
+                              name={`correct-${index}`}
+                              checked={question.correct_answer === optIndex}
+                              onChange={() => updateQuestion(index, "correctAnswer", optIndex)}
+                              className="mr-2"
+                            />
+                            <Label htmlFor={`correct-${index}-${optIndex}`}>Correta</Label>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                ))}
+                
+                <div className="flex gap-4 justify-end">
+                  <Button onClick={addQuestion}>
+                    <PlusCircle className="h-4 w-4 mr-2" /> Adicionar Pergunta
+                  </Button>
+                  <Button onClick={handleUpdateQuiz} className="bg-trilha-orange hover:bg-trilha-orange/90">
+                    Salvar Quiz
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="p-6">
+                  <h2 className="text-xl font-semibold mb-4">Quizzes Disponíveis</h2>
+                  <p className="text-muted-foreground mb-6">
+                    Selecione uma fase do tipo "quiz" para editar suas perguntas e respostas.
+                  </p>
+                  
+                  <div className="space-y-2">
+                    {phases.filter(p => p.type === "quiz").map(phase => (
+                      <div key={phase.id} className="flex justify-between items-center border-b pb-2">
+                        <div>
+                          <p className="font-medium">{phase.name}</p>
+                          <p className="text-sm text-gray-500">{getModuleNameById(phase.module_id)}</p>
+                        </div>
+                        <Button 
+                          onClick={() => handleQuizEdit(phase.id)}
+                          variant="outline"
+                          size="sm"
+                        >
+                          <Edit className="h-4 w-4 mr-2" /> Editar Quiz
+                        </Button>
+                      </div>
+                    ))}
+                    
+                    {phases.filter(p => p.type === "quiz").length === 0 && (
+                      <div className="text-center py-8">
+                        <p className="text-muted-foreground">Nenhum quiz encontrado.</p>
+                        <p className="text-sm mt-2">Crie uma fase do tipo "quiz" primeiro.</p>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+                
+                <Card className="p-6">
+                  <h2 className="text-xl font-semibold mb-4">Como Criar um Quiz</h2>
+                  <ol className="list-decimal ml-5 space-y-2">
+                    <li>Vá para a aba "Conteúdos"</li>
+                    <li>Selecione um módulo</li>
+                    <li>Adicione uma nova fase e selecione o tipo "quiz"</li>
+                    <li>Salve a fase</li>
+                    <li>Volte para esta aba e edite o quiz</li>
+                  </ol>
+                  
+                  <div className="mt-6 border-t pt-4">
+                    <h3 className="font-medium mb-2">Dicas para bons quizzes:</h3>
+                    <ul className="list-disc ml-5 space-y-1 text-sm">
+                      <li>Crie perguntas claras e diretas</li>
+                      <li>Evite ambiguidades nas alternativas</li>
+                      <li>Inclua 4 opções de resposta por pergunta</li>
+                      <li>Mantenha o quiz curto (5-10 perguntas)</li>
+                    </ul>
+                  </div>
+                </Card>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="eventos">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-1">
+              <Card className="p-4">
+                <h2 className="text-lg font-semibold mb-4">Adicionar Evento</h2>
+                
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="eventTitle">Título do Evento</Label>
+                    <Input
+                      id="eventTitle"
+                      placeholder="Ex: Workshop de Comunicação"
+                      value={eventTitle}
+                      onChange={(e) => setEventTitle(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="eventDate">Data</Label>
+                    <Input
+                      id="eventDate"
+                      type="date"
+                      value={eventDate}
+                      onChange={(e) => setEventDate(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="eventTime">Horário</Label>
+                    <Input
+                      id="eventTime"
+                      type="time"
+                      value={eventTime}
+                      onChange={(e) => setEventTime(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="eventLocation">Local</Label>
+                    <Input
+                      id="eventLocation"
+                      placeholder="Ex: Online (Zoom) ou Endereço físico"
+                      value={eventLocation}
+                      onChange={(e) => setEventLocation(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="eventDescription">Descrição</Label>
+                    <Textarea
+                      id="eventDescription"
+                      placeholder="Descreva o evento brevemente..."
+                      value={eventDescription}
+                      onChange={(e) => setEventDescription(e.target.value)}
+                      rows={4}
+                    />
+                  </div>
+                  
+                  <Button 
+                    onClick={handleAddEvent} 
+                    className="w-full bg-trilha-orange hover:bg-trilha-orange/90"
+                  >
+                    Adicionar Evento
+                  </Button>
+                </div>
+              </Card>
+            </div>
+            
+            <div className="lg:col-span-2">
+              <Card className="p-4">
+                <h2 className="text-lg font-semibold mb-4">Eventos Agendados</h2>
+
+                <div className="space-y-4">
+                  {communityEvents.map((event) => (
+                    <div 
+                      key={event.id} 
+                      className="border rounded-md p-4 flex flex-col md:flex-row justify-between"
+                    >
+                      <div>
+                        <div className="flex items-center mb-2">
+                          <Calendar className="h-5 w-5 text-trilha-orange mr-2" />
+                          <h3 className="font-medium">{event.title}</h3>
+                        </div>
+                        
+                        <p className="text-sm text-gray-600 mb-1">
+                          Data: {new Date(event.date).toLocaleDateString('pt-BR')} às {event.time}
+                        </p>
+                        <p className="text-sm text-gray-600 mb-2">
+                          Local: {event.location}
+                        </p>
+                        <p className="text-sm">{event.description}</p>
+                      </div>
+                      
+                      <div className="mt-4 md:mt-0 flex md:flex-col gap-2 justify-end">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => deleteEvent(event.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {communityEvents.length === 0 && (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">Nenhum evento agendado.</p>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default AdminPage;
