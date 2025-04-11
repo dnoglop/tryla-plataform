@@ -8,94 +8,24 @@ import ModuleCard from "@/components/ModuleCard";
 import UserLevel from "@/components/UserLevel";
 import DailyTask from "@/components/DailyTask";
 import { useToast } from "@/components/ui/use-toast";
-
-interface Module {
-  id: number;
-  name: string;
-  type: "autoconhecimento" | "empatia" | "growth" | "comunicacao" | "futuro";
-  progress: number;
-  completed: boolean;
-  locked?: boolean;
-  description?: string;
-  emoji?: string;
-}
+import { useQuery } from '@tanstack/react-query';
+import { getModules, Module } from "@/services/moduleService";
 
 const DashboardPage = () => {
   const { toast } = useToast();
   const [dailyCompleted, setDailyCompleted] = useState(false);
-  const [modules, setModules] = useState<Module[]>([]);
 
-  // Fetch modules from localStorage
-  useEffect(() => {
-    const storedModules = localStorage.getItem("admin-modules");
-    
-    if (storedModules) {
-      try {
-        const parsedModules = JSON.parse(storedModules);
-        
-        // Map admin modules to the format expected by ModuleCard
-        const formattedModules = parsedModules.map((module: any, index: number) => ({
-          id: module.id,
-          name: module.name,
-          type: module.type || "autoconhecimento", 
-          progress: 0,
-          completed: false,
-          locked: index > 1, // Lock all except first two modules
-          description: module.description,
-          emoji: module.emoji
-        }));
-        
-        setModules(formattedModules);
-      } catch (error) {
-        console.error("Error parsing modules:", error);
-        // Fallback to default modules if there's an error
-        setModules(defaultModules);
-      }
-    } else {
-      setModules(defaultModules);
-    }
-  }, []);
-
-  const defaultModules: Module[] = [
-    {
-      id: 1,
-      name: "Mestre de Si",
-      type: "autoconhecimento",
-      progress: 75,
+  // Fetch modules from Supabase
+  const { data: modules = [], isLoading } = useQuery({
+    queryKey: ['modules'],
+    queryFn: getModules,
+    select: (data) => data.map((module, index) => ({
+      ...module,
+      progress: index === 0 ? 75 : index === 1 ? 25 : 0, // Example progress
       completed: false,
-    },
-    {
-      id: 2,
-      name: "Olhar do Outro",
-      type: "empatia",
-      progress: 25,
-      completed: false,
-    },
-    {
-      id: 3,
-      name: "Mente Infinita",
-      type: "growth",
-      progress: 0,
-      completed: false,
-      locked: true,
-    },
-    {
-      id: 4,
-      name: "Papo Reto",
-      type: "comunicacao",
-      progress: 0,
-      completed: false,
-      locked: true,
-    },
-    {
-      id: 5,
-      name: "??????????",
-      type: "futuro",
-      progress: 0,
-      completed: false,
-      locked: true,
-    },
-  ];
+      locked: index > 1, // Lock all except first two modules
+    })),
+  });
 
   const handleDailyTask = () => {
     if (!dailyCompleted) {
@@ -107,6 +37,14 @@ const DashboardPage = () => {
       });
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="pb-16 min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-pulse">Carregando...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="pb-16 min-h-screen bg-gray-50">
@@ -151,7 +89,7 @@ const DashboardPage = () => {
                 key={module.id}
                 id={module.id}
                 title={module.name}
-                type={module.type}
+                type={module.type || "autoconhecimento"}
                 progress={module.progress}
                 completed={module.completed}
                 locked={module.locked}

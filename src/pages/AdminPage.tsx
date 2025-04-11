@@ -25,77 +25,54 @@ import ProgressBar from "@/components/ProgressBar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import AdminChart from "@/components/AdminChart";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { 
+  createModule, 
+  updateModule, 
+  deleteModule, 
+  getModules,
+  createPhase,
+  updatePhase,
+  deletePhase,
+  getPhasesByModuleId,
+  saveQuiz,
+  getQuestionsByPhaseId,
+  Module,
+  Phase
+} from "@/services/moduleService";
 
 const AdminPage = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("dashboard");
+  const queryClient = useQueryClient();
   
-  // Estado para gerenciar os módulos
-  const [modules, setModules] = useState([
-    { id: 1, name: "Autoconhecimento" },
-    { id: 2, name: "Empatia" },
-    { id: 3, name: "Growth Mindset" },
-    { id: 4, name: "Comunicação" },
-    { id: 5, name: "Módulo Futuro" }
-  ]);
-  
-  // Estado para gerenciar as fases
-  const [phases, setPhases] = useState([
-    { id: 1, moduleId: 1, name: "Fase 1 - Quem sou eu?", videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", content: "Texto sobre autoconhecimento" },
-    { id: 2, moduleId: 1, name: "Fase 2 - Reconhecendo emoções", videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", content: "Texto sobre emoções" },
-    { id: 3, moduleId: 2, name: "Fase 1 - Entendendo o outro", videoUrl: "", content: "Texto sobre empatia" }
-  ]);
-
-  // Estado para gerenciar os módulos em edição
-  const [editingModule, setEditingModule] = useState<{
-    id: number;
-    name: string;
-    description: string;
-    type: string;
-    emoji: string;
-  } | null>(null);
+  // Estado para gerenciar os módulos e fases
+  const [editingModule, setEditingModule] = useState<Module | null>(null);
+  const [editingPhase, setEditingPhase] = useState<Phase | null>(null);
   
   // Estado para gerenciar as fases em edição
-  const [editingPhase, setEditingPhase] = useState<{
-    id: number;
-    moduleId: number;
-    name: string;
-    videoUrl: string;
-    content: string;
-  } | null>(null);
+  const [selectedModule, setSelectedModule] = useState<number>(1);
+  const [phaseName, setPhaseName] = useState("");
+  const [phaseDescription, setPhaseDescription] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
+  const [content, setContent] = useState("");
+  const [phaseType, setPhaseType] = useState<"video" | "text" | "quiz" | "challenge">("text");
+  const [iconType, setIconType] = useState<"video" | "quiz" | "challenge" | "game">("video");
+  const [phaseDuration, setPhaseDuration] = useState<number>(15);
   
   // Estado para gerenciar os quizzes
-  const [quizzes, setQuizzes] = useState([
-    { 
-      id: 1, 
-      phaseId: 1, 
-      questions: [
-        { 
-          question: "O que é autoconhecimento?", 
-          options: [
-            "Conhecer outras pessoas", 
-            "Entender seus próprios comportamentos e emoções", 
-            "Aprender sobre história", 
-            "Estudar geografia"
-          ],
-          correctAnswer: 1
-        }
-      ]
-    }
-  ]);
-
-  // Estado para gerenciar o quiz em edição
   const [editingQuiz, setEditingQuiz] = useState<{
-    id: number;
     phaseId: number;
     questions: {
+      id?: number;
       question: string;
       options: string[];
-      correctAnswer: number;
+      correct_answer: number;
+      order_index: number;
     }[];
   } | null>(null);
-
+  
   // Estado para gerenciar os eventos da comunidade
   const [communityEvents, setCommunityEvents] = useState([
     { 
@@ -148,11 +125,6 @@ const AdminPage = () => {
   ];
   
   // Form states
-  const [selectedModule, setSelectedModule] = useState(1);
-  const [phaseName, setPhaseName] = useState("");
-  const [videoUrl, setVideoUrl] = useState("");
-  const [content, setContent] = useState("");
-  
   const [eventTitle, setEventTitle] = useState("");
   const [eventDate, setEventDate] = useState("");
   const [eventTime, setEventTime] = useState("");
@@ -180,76 +152,229 @@ const AdminPage = () => {
     { id: 3, moduleId: 2, name: "Entendendo o outro", completions: 135, rating: 4.5 },
   ]);
 
+  // Data fetching using React Query
+  const { data: modules = [] } = useQuery({
+    queryKey: ['modules'],
+    queryFn: getModules,
+  });
+
+  const { data: phases = [], refetch: refetchPhases } = useQuery({
+    queryKey: ['phases', selectedModule],
+    queryFn: () => getPhasesByModuleId(selectedModule),
+    enabled: !!selectedModule,
+  });
+
+  // Mutations
+  const createModuleMutation = useMutation({
+    mutationFn: createModule,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['modules'] });
+      toast({
+        title: "Módulo adicionado",
+        description: "O módulo foi adicionado com sucesso"
+      });
+      clearModuleForm();
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao adicionar módulo",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const updateModuleMutation = useMutation({
+    mutationFn: ({ id, module }: { id: number; module: Partial<Module> }) => 
+      updateModule(id, module),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['modules'] });
+      toast({
+        title: "Módulo atualizado",
+        description: "O módulo foi atualizado com sucesso"
+      });
+      clearModuleForm();
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao atualizar módulo",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const deleteModuleMutation = useMutation({
+    mutationFn: deleteModule,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['modules'] });
+      toast({
+        title: "Módulo removido",
+        description: "O módulo foi removido com sucesso"
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao remover módulo",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const createPhaseMutation = useMutation({
+    mutationFn: createPhase,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['phases', selectedModule] });
+      toast({
+        title: "Fase adicionada",
+        description: "A fase foi adicionada com sucesso ao módulo selecionado"
+      });
+      resetPhaseForm();
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao adicionar fase",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const updatePhaseMutation = useMutation({
+    mutationFn: ({ id, phase }: { id: number; phase: Partial<Phase> }) => 
+      updatePhase(id, phase),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['phases'] });
+      toast({
+        title: "Fase atualizada",
+        description: "A fase foi atualizada com sucesso"
+      });
+      resetPhaseForm();
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao atualizar fase",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const deletePhaseMutation = useMutation({
+    mutationFn: deletePhase,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['phases'] });
+      toast({
+        title: "Fase removida",
+        description: "A fase foi removida com sucesso"
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao remover fase",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const saveQuizMutation = useMutation({
+    mutationFn: ({ phaseId, questions }: { phaseId: number; questions: any[] }) =>
+      saveQuiz(phaseId, questions),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['questions'] });
+      toast({
+        title: "Quiz salvo",
+        description: "O quiz foi salvo com sucesso"
+      });
+      setEditingQuiz(null);
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao salvar quiz",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
   const handleAddPhase = () => {
-    if (!phaseName || !content) {
+    if (!phaseName || !phaseDescription) {
       toast({
         title: "Campos incompletos",
-        description: "Preencha pelo menos o nome e o conteúdo da fase",
+        description: "Preencha pelo menos o nome e a descrição da fase",
         variant: "destructive"
       });
       return;
     }
     
     const newPhase = {
-      id: phases.length + 1,
-      moduleId: selectedModule,
+      module_id: selectedModule,
       name: phaseName,
-      videoUrl,
-      content
+      description: phaseDescription,
+      type: phaseType,
+      icon_type: iconType,
+      content: content,
+      video_url: videoUrl,
+      duration: phaseDuration,
+      order_index: phases.length
     };
     
-    setPhases([...phases, newPhase]);
-    
-    // Reset form
-    setPhaseName("");
-    setVideoUrl("");
-    setContent("");
-    
-    toast({
-      title: "Fase adicionada",
-      description: "A fase foi adicionada com sucesso ao módulo selecionado"
-    });
+    createPhaseMutation.mutate(newPhase);
   };
 
-  const handleEditPhase = (phase: any) => {
+  const handleEditPhase = (phase: Phase) => {
     setEditingPhase(phase);
-    setSelectedModule(phase.moduleId);
+    setSelectedModule(phase.module_id);
     setPhaseName(phase.name);
-    setVideoUrl(phase.videoUrl);
-    setContent(phase.content);
+    setPhaseDescription(phase.description || "");
+    setPhaseType(phase.type);
+    setIconType(phase.icon_type);
+    setVideoUrl(phase.video_url || "");
+    setContent(phase.content || "");
+    setPhaseDuration(phase.duration || 15);
     setActiveTab("conteudo");
   };
 
   const handleUpdatePhase = () => {
-    if (!editingPhase || !phaseName || !content) {
+    if (!editingPhase || !phaseName || !phaseDescription) {
       toast({
         title: "Campos incompletos",
-        description: "Preencha pelo menos o nome e o conteúdo da fase",
+        description: "Preencha pelo menos o nome e a descrição da fase",
         variant: "destructive"
       });
       return;
     }
     
-    const updatedPhases = phases.map(phase => 
-      phase.id === editingPhase.id 
-        ? { ...phase, moduleId: selectedModule, name: phaseName, videoUrl, content } 
-        : phase
-    );
+    const updatedPhase = {
+      module_id: selectedModule,
+      name: phaseName,
+      description: phaseDescription,
+      type: phaseType,
+      icon_type: iconType,
+      content: content,
+      video_url: videoUrl,
+      duration: phaseDuration,
+    };
     
-    setPhases(updatedPhases);
-    
-    // Reset form
-    setEditingPhase(null);
-    setPhaseName("");
-    setVideoUrl("");
-    setContent("");
-    
-    toast({
-      title: "Fase atualizada",
-      description: "A fase foi atualizada com sucesso"
+    updatePhaseMutation.mutate({
+      id: editingPhase.id,
+      phase: updatedPhase
     });
   };
   
+  const resetPhaseForm = () => {
+    setEditingPhase(null);
+    setPhaseName("");
+    setPhaseDescription("");
+    setVideoUrl("");
+    setContent("");
+    setPhaseType("text");
+    setIconType("video");
+    setPhaseDuration(15);
+  };
+
   const handleAddEvent = () => {
     if (!eventTitle || !eventDate || !eventDescription) {
       toast({
@@ -284,39 +409,12 @@ const AdminPage = () => {
     });
   };
 
-  const handleEditModule = (module: any) => {
-    const moduleDetails = {
-      id: module.id,
-      name: module.name,
-      description: "",
-      type: "autoconhecimento",
-      emoji: "🧠"
-    };
-    
-    // Para um caso real, você buscaria os detalhes completos do módulo do backend
-    if (module.id === 1) {
-      moduleDetails.description = "Conheça suas forças, fraquezas e o que te move";
-      moduleDetails.type = "autoconhecimento";
-      moduleDetails.emoji = "🧠";
-    } else if (module.id === 2) {
-      moduleDetails.description = "Desenvolva a capacidade de entender pessoas";
-      moduleDetails.type = "empatia";
-      moduleDetails.emoji = "❤️";
-    } else if (module.id === 3) {
-      moduleDetails.description = "Desbloqueie seu potencial de crescimento contínuo";
-      moduleDetails.type = "growth";
-      moduleDetails.emoji = "🌱";
-    } else if (module.id === 4) {
-      moduleDetails.description = "Aprenda a comunicação eficaz e persuasiva";
-      moduleDetails.type = "comunicacao";
-      moduleDetails.emoji = "💬";
-    }
-    
-    setEditingModule(moduleDetails);
-    setModuleName(moduleDetails.name);
-    setModuleDescription(moduleDetails.description);
-    setModuleType(moduleDetails.type);
-    setModuleEmoji(moduleDetails.emoji);
+  const handleEditModule = (module: Module) => {
+    setEditingModule(module);
+    setModuleName(module.name);
+    setModuleDescription(module.description || "");
+    setModuleType(module.type || "autoconhecimento");
+    setModuleEmoji(module.emoji || "🧠");
     setActiveTab("modulos");
   };
 
@@ -330,103 +428,107 @@ const AdminPage = () => {
       return;
     }
     
-    const updatedModules = modules.map(module => 
-      module.id === editingModule.id 
-        ? { ...module, name: moduleName } 
-        : module
-    );
+    const updatedModule = {
+      name: moduleName,
+      description: moduleDescription,
+      type: moduleType as "autoconhecimento" | "empatia" | "growth" | "comunicacao" | "futuro",
+      emoji: moduleEmoji
+    };
     
-    setModules(updatedModules);
-    
-    // Reset form
-    clearModuleForm();
-    
-    toast({
-      title: "Módulo atualizado",
-      description: "O módulo foi atualizado com sucesso"
+    updateModuleMutation.mutate({
+      id: editingModule.id,
+      module: updatedModule
     });
   };
-  
-  const deleteModule = (id: number) => {
-    // Verificar se há fases associadas a este módulo
-    const hasPhases = phases.some(phase => phase.moduleId === id);
-    
-    if (hasPhases) {
+
+  const clearModuleForm = () => {
+    setEditingModule(null);
+    setModuleName("");
+    setModuleDescription("");
+    setModuleType("autoconhecimento");
+    setModuleEmoji("🧠");
+  };
+
+  const handleAddModule = () => {
+    if (!moduleName || !moduleDescription) {
       toast({
-        title: "Não é possível excluir",
-        description: "Este módulo possui fases associadas. Remova as fases primeiro.",
+        title: "Campos incompletos",
+        description: "Preencha pelo menos o nome e a descrição do módulo",
         variant: "destructive"
       });
       return;
     }
     
-    setModules(modules.filter(module => module.id !== id));
-    toast({
-      title: "Módulo removido",
-      description: "O módulo foi removido com sucesso"
-    });
-  };
-  
-  const deletePhase = (id: number) => {
-    setPhases(phases.filter(phase => phase.id !== id));
-    toast({
-      title: "Fase removida",
-      description: "A fase foi removida com sucesso"
-    });
-  };
-  
-  const deleteEvent = (id: number) => {
-    setCommunityEvents(communityEvents.filter(event => event.id !== id));
-    toast({
-      title: "Evento removido",
-      description: "O evento foi removido com sucesso"
-    });
+    const lastOrderIndex = modules.length > 0 
+      ? Math.max(...modules.map(m => m.order_index || 0)) + 1 
+      : 0;
+    
+    const newModule = {
+      name: moduleName,
+      description: moduleDescription,
+      type: moduleType as "autoconhecimento" | "empatia" | "growth" | "comunicacao" | "futuro",
+      emoji: moduleEmoji,
+      order_index: lastOrderIndex
+    };
+    
+    createModuleMutation.mutate(newModule);
   };
 
-  const handleQuizEdit = (phaseId: number) => {
-    const existingQuiz = quizzes.find(q => q.phaseId === phaseId);
-    
-    if (existingQuiz) {
-      setEditingQuiz(existingQuiz);
-    } else {
-      // Criar um novo quiz para a fase
-      const newQuiz = {
-        id: quizzes.length + 1,
-        phaseId,
-        questions: [
-          {
-            question: "",
-            options: ["", "", "", ""],
-            correctAnswer: 0
-          }
-        ]
-      };
-      setEditingQuiz(newQuiz);
+  const handleQuizEdit = async (phaseId: number) => {
+    try {
+      const questions = await getQuestionsByPhaseId(phaseId);
+      
+      if (questions.length > 0) {
+        setEditingQuiz({
+          phaseId,
+          questions
+        });
+      } else {
+        // Create a new quiz for the phase
+        setEditingQuiz({
+          phaseId,
+          questions: [
+            {
+              question: "",
+              options: ["", "", "", ""],
+              correct_answer: 0,
+              order_index: 0
+            }
+          ]
+        });
+      }
+      
+      setActiveTab("quizzes");
+    } catch (error) {
+      console.error("Error fetching quiz questions:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar as perguntas do quiz",
+        variant: "destructive"
+      });
     }
-    
-    setActiveTab("quizzes");
   };
 
   const handleUpdateQuiz = () => {
     if (!editingQuiz) return;
     
-    const quizIndex = quizzes.findIndex(q => q.id === editingQuiz.id);
+    // Validate questions
+    const invalidQuestions = editingQuiz.questions.filter(
+      q => !q.question || q.options.some(o => !o)
+    );
     
-    if (quizIndex >= 0) {
-      // Atualizar quiz existente
-      const updatedQuizzes = [...quizzes];
-      updatedQuizzes[quizIndex] = editingQuiz;
-      setQuizzes(updatedQuizzes);
-    } else {
-      // Adicionar novo quiz
-      setQuizzes([...quizzes, editingQuiz]);
+    if (invalidQuestions.length > 0) {
+      toast({
+        title: "Dados inválidos",
+        description: "Preencha todas as perguntas e opções",
+        variant: "destructive"
+      });
+      return;
     }
     
-    setEditingQuiz(null);
-    
-    toast({
-      title: "Quiz salvo",
-      description: "O quiz foi salvo com sucesso"
+    saveQuizMutation.mutate({
+      phaseId: editingQuiz.phaseId,
+      questions: editingQuiz.questions
     });
   };
 
@@ -436,7 +538,8 @@ const AdminPage = () => {
     const newQuestion = {
       question: "",
       options: ["", "", "", ""],
-      correctAnswer: 0
+      correct_answer: 0,
+      order_index: editingQuiz.questions.length
     };
     
     setEditingQuiz({
@@ -453,7 +556,7 @@ const AdminPage = () => {
         if (field === "question") {
           return { ...q, question: value as string };
         } else if (field === "correctAnswer") {
-          return { ...q, correctAnswer: value as number };
+          return { ...q, correct_answer: value as number };
         } else if (field.startsWith("option")) {
           const optionIndex = parseInt(field.replace("option", ""));
           const newOptions = [...q.options];
@@ -481,37 +584,11 @@ const AdminPage = () => {
     });
   };
 
-  const clearModuleForm = () => {
-    setEditingModule(null);
-    setModuleName("");
-    setModuleDescription("");
-    setModuleType("autoconhecimento");
-    setModuleEmoji("🧠");
-  };
-
-  const handleAddModule = () => {
-    if (!moduleName || !moduleDescription) {
-      toast({
-        title: "Campos incompletos",
-        description: "Preencha pelo menos o nome e a descrição do módulo",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    const newModule = {
-      id: modules.length > 0 ? Math.max(...modules.map(m => m.id)) + 1 : 1,
-      name: moduleName
-    };
-    
-    setModules([...modules, newModule]);
-    
-    // Reset form
-    clearModuleForm();
-    
+  const deleteEvent = (id: number) => {
+    setCommunityEvents(communityEvents.filter(event => event.id !== id));
     toast({
-      title: "Módulo adicionado",
-      description: "O módulo foi adicionado com sucesso"
+      title: "Evento removido",
+      description: "O evento foi removido com sucesso"
     });
   };
 
@@ -758,7 +835,7 @@ const AdminPage = () => {
                     </TableHeader>
                     <TableBody>
                       {modules.map((module) => {
-                        const modulePhases = phases.filter(phase => phase.moduleId === module.id);
+                        const modulePhases = phases.filter(phase => phase.module_id === module.id);
                         const avgProgress = topModules.find(m => m.id === module.id)?.engagement || 0;
                         
                         return (
@@ -793,7 +870,7 @@ const AdminPage = () => {
                                 <Button 
                                   variant="destructive" 
                                   size="sm" 
-                                  onClick={() => deleteModule(module.id)}
+                                  onClick={() => deleteModuleMutation.mutate(module.id)}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -837,440 +914,4 @@ const AdminPage = () => {
                   <div>
                     <Label htmlFor="phaseName">Nome da Fase</Label>
                     <Input
-                      id="phaseName"
-                      placeholder="Ex: Fase 1 - Descobrindo habilidades"
-                      value={phaseName}
-                      onChange={(e) => setPhaseName(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="videoUrl">URL do Vídeo (YouTube embed)</Label>
-                    <Input
-                      id="videoUrl"
-                      placeholder="Ex: https://www.youtube.com/embed/XXXX"
-                      value={videoUrl}
-                      onChange={(e) => setVideoUrl(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="content">Conteúdo/Texto</Label>
-                    <Textarea
-                      id="content"
-                      placeholder="Digite o conteúdo textual da fase aqui..."
-                      rows={5}
-                      value={content}
-                      onChange={(e) => setContent(e.target.value)}
-                    />
-                  </div>
-                  
-                  <Button 
-                    onClick={editingPhase ? handleUpdatePhase : handleAddPhase} 
-                    className="w-full bg-trilha-orange hover:bg-trilha-orange/90"
-                  >
-                    {editingPhase ? "Atualizar Fase" : "Adicionar Fase"}
-                  </Button>
-
-                  {editingPhase && (
-                    <Button 
-                      variant="outline"
-                      onClick={() => {
-                        setEditingPhase(null);
-                        setPhaseName("");
-                        setVideoUrl("");
-                        setContent("");
-                      }}
-                      className="w-full"
-                    >
-                      Cancelar Edição
-                    </Button>
-                  )}
-                </div>
-              </Card>
-            </div>
-            
-            <div className="lg:col-span-2">
-              <Card className="p-4">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-semibold">Fases Cadastradas</h2>
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="Pesquisar fases..."
-                      className="pl-8"
-                    />
-                  </div>
-                </div>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Módulo</TableHead>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Vídeo</TableHead>
-                        <TableHead>Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {phases.map((phase) => {
-                        const moduleName = modules.find(m => m.id === phase.moduleId)?.name || "";
-                        
-                        return (
-                          <TableRow key={phase.id}>
-                            <TableCell>{phase.id}</TableCell>
-                            <TableCell>{moduleName}</TableCell>
-                            <TableCell>{phase.name}</TableCell>
-                            <TableCell>
-                              {phase.videoUrl ? <Video className="h-4 w-4 text-green-500" /> : "Sem vídeo"}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex space-x-2">
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => handleEditPhase(phase)}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => handleQuizEdit(phase.id)}
-                                >
-                                  Quiz
-                                </Button>
-                                <Button 
-                                  variant="destructive" 
-                                  size="sm" 
-                                  onClick={() => deletePhase(phase.id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              </Card>
-            </div>
-          </div>
-        </TabsContent>
-        
-        {/* QUIZZES TAB */}
-        <TabsContent value="quizzes">
-          {editingQuiz ? (
-            <Card className="p-6">
-              <div className="mb-6 flex justify-between items-center">
-                <h2 className="text-lg font-semibold">
-                  Editar Quiz: {getPhaseNameById(editingQuiz.phaseId)}
-                </h2>
-                <Button 
-                  variant="outline"
-                  onClick={() => setEditingQuiz(null)}
-                >
-                  Cancelar Edição
-                </Button>
-              </div>
-              
-              {editingQuiz.questions.map((question, index) => (
-                <div key={index} className="mb-8 p-4 border rounded-lg">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-medium">Pergunta {index + 1}</h3>
-                    <Button 
-                      variant="destructive" 
-                      size="sm"
-                      onClick={() => removeQuestion(index)}
-                      disabled={editingQuiz.questions.length <= 1}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor={`question-${index}`}>Pergunta</Label>
-                      <Input
-                        id={`question-${index}`}
-                        value={question.question}
-                        onChange={(e) => updateQuestion(index, "question", e.target.value)}
-                        placeholder="Digite a pergunta aqui"
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {question.options.map((option, optIndex) => (
-                        <div key={optIndex}>
-                          <Label htmlFor={`option-${index}-${optIndex}`}>
-                            Opção {optIndex + 1}
-                            {question.correctAnswer === optIndex && (
-                              <span className="ml-2 text-green-500 text-xs">
-                                (Resposta correta)
-                              </span>
-                            )}
-                          </Label>
-                          <div className="flex gap-2">
-                            <Input
-                              id={`option-${index}-${optIndex}`}
-                              value={option}
-                              onChange={(e) => updateQuestion(index, `option${optIndex}`, e.target.value)}
-                              placeholder={`Opção ${optIndex + 1}`}
-                            />
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant={question.correctAnswer === optIndex ? "default" : "outline"}
-                              onClick={() => updateQuestion(index, "correctAnswer", optIndex)}
-                              className={question.correctAnswer === optIndex ? "bg-green-500 hover:bg-green-600" : ""}
-                            >
-                              ✓
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              
-              <div className="flex justify-between mt-6">
-                <Button 
-                  variant="outline" 
-                  onClick={addQuestion}
-                >
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Adicionar pergunta
-                </Button>
-                
-                <Button 
-                  onClick={handleUpdateQuiz}
-                  className="bg-trilha-orange hover:bg-trilha-orange/90"
-                >
-                  Salvar Quiz
-                </Button>
-              </div>
-            </Card>
-          ) : (
-            <div>
-              <Card className="p-4 mb-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-semibold">Quizzes Cadastrados</h2>
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="Pesquisar quizzes..."
-                      className="pl-8"
-                    />
-                  </div>
-                </div>
-                
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Fase</TableHead>
-                        <TableHead>Módulo</TableHead>
-                        <TableHead>Perguntas</TableHead>
-                        <TableHead>Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {quizzes.map((quiz) => {
-                        const phase = phases.find(p => p.id === quiz.phaseId);
-                        const moduleName = phase 
-                          ? modules.find(m => m.id === phase.moduleId)?.name || "" 
-                          : "";
-                        
-                        return (
-                          <TableRow key={quiz.id}>
-                            <TableCell>{quiz.id}</TableCell>
-                            <TableCell>{phase?.name || "Fase Removida"}</TableCell>
-                            <TableCell>{moduleName}</TableCell>
-                            <TableCell>{quiz.questions.length}</TableCell>
-                            <TableCell>
-                              <div className="flex space-x-2">
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => setEditingQuiz(quiz)}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              </Card>
-              
-              <Card className="p-4">
-                <h3 className="text-lg font-semibold mb-4">Fases sem Quiz</h3>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Fase</TableHead>
-                        <TableHead>Módulo</TableHead>
-                        <TableHead>Ação</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {phases
-                        .filter(phase => !quizzes.some(q => q.phaseId === phase.id))
-                        .map(phase => {
-                          const moduleName = modules.find(m => m.id === phase.moduleId)?.name || "";
-                          
-                          return (
-                            <TableRow key={`no-quiz-${phase.id}`}>
-                              <TableCell>{phase.name}</TableCell>
-                              <TableCell>{moduleName}</TableCell>
-                              <TableCell>
-                                <Button 
-                                  size="sm"
-                                  onClick={() => handleQuizEdit(phase.id)}
-                                >
-                                  Criar Quiz
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })
-                      }
-                    </TableBody>
-                  </Table>
-                </div>
-              </Card>
-            </div>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="eventos">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1">
-              <Card className="p-4 mb-6">
-                <h2 className="text-lg font-semibold mb-4">Adicionar Novo Evento</h2>
-                
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="eventTitle">Título do Evento</Label>
-                    <Input
-                      id="eventTitle"
-                      placeholder="Ex: Workshop de Soft Skills"
-                      value={eventTitle}
-                      onChange={(e) => setEventTitle(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="eventDate">Data</Label>
-                      <Input
-                        id="eventDate"
-                        type="date"
-                        value={eventDate}
-                        onChange={(e) => setEventDate(e.target.value)}
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="eventTime">Horário</Label>
-                      <Input
-                        id="eventTime"
-                        type="time"
-                        value={eventTime}
-                        onChange={(e) => setEventTime(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="eventDescription">Descrição</Label>
-                    <Textarea
-                      id="eventDescription"
-                      placeholder="Descreva o evento aqui..."
-                      rows={3}
-                      value={eventDescription}
-                      onChange={(e) => setEventDescription(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="eventLocation">Local</Label>
-                    <Input
-                      id="eventLocation"
-                      placeholder="Ex: Online (Zoom) ou Centro Cultural"
-                      value={eventLocation}
-                      onChange={(e) => setEventLocation(e.target.value)}
-                    />
-                  </div>
-                  
-                  <Button onClick={handleAddEvent} className="w-full bg-trilha-orange hover:bg-trilha-orange/90">
-                    <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Evento
-                  </Button>
-                </div>
-              </Card>
-            </div>
-            
-            <div className="lg:col-span-2">
-              <Card className="p-4">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-semibold">Eventos Cadastrados</h2>
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="Pesquisar eventos..."
-                      className="pl-8"
-                    />
-                  </div>
-                </div>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Título</TableHead>
-                        <TableHead>Data</TableHead>
-                        <TableHead>Horário</TableHead>
-                        <TableHead>Local</TableHead>
-                        <TableHead>Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {communityEvents.map((event) => (
-                        <TableRow key={event.id}>
-                          <TableCell>{event.title}</TableCell>
-                          <TableCell>{new Date(event.date).toLocaleDateString('pt-BR')}</TableCell>
-                          <TableCell>{event.time}</TableCell>
-                          <TableCell>{event.location}</TableCell>
-                          <TableCell>
-                            <div className="flex space-x-2">
-                              <Button variant="outline" size="sm">
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button variant="destructive" size="sm" onClick={() => deleteEvent(event.id)}>
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </Card>
-            </div>
-          </div>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-};
-
-export default AdminPage;
+                      id="phaseName

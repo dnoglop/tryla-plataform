@@ -5,70 +5,30 @@ import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
 import PhaseCard from "@/components/PhaseCard";
 import ProgressBar from "@/components/ProgressBar";
-
-interface Module {
-  id: number;
-  name: string;
-  type?: "autoconhecimento" | "empatia" | "growth" | "comunicacao" | "futuro";
-  description?: string;
-  emoji?: string;
-}
-
-interface Phase {
-  id: number;
-  moduleId: number;
-  title: string;
-  description: string;
-  type: "video" | "text" | "quiz";
-  content: string;
-  order: number;
-  status?: "completed" | "inProgress" | "available" | "locked";
-  duration?: number;
-  iconType?: "video" | "quiz" | "challenge" | "game";
-}
+import { useQuery } from '@tanstack/react-query';
+import { getModuleById, getPhasesByModuleId } from "@/services/moduleService";
 
 const ModuleDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const moduleId = parseInt(id || "1");
-  const [module, setModule] = useState<Module | null>(null);
-  const [phases, setPhases] = useState<Phase[]>([]);
 
-  useEffect(() => {
-    // Carregar módulo do localStorage
-    const storedModules = localStorage.getItem("admin-modules");
-    if (storedModules) {
-      try {
-        const parsedModules = JSON.parse(storedModules);
-        const currentModule = parsedModules.find((m: Module) => m.id === moduleId);
-        if (currentModule) {
-          setModule(currentModule);
-        }
-      } catch (error) {
-        console.error("Error loading module:", error);
-      }
-    }
+  // Fetch module data from Supabase
+  const { data: module, isLoading: isLoadingModule } = useQuery({
+    queryKey: ['module', moduleId],
+    queryFn: () => getModuleById(moduleId),
+  });
 
-    // Carregar fases do localStorage
-    const storedPhases = localStorage.getItem("admin-phases");
-    if (storedPhases) {
-      try {
-        const parsedPhases = JSON.parse(storedPhases);
-        const modulePhases = parsedPhases
-          .filter((p: Phase) => p.moduleId === moduleId)
-          .sort((a: Phase, b: Phase) => a.order - b.order)
-          .map((phase: Phase) => ({
-            ...phase,
-            status: "available" as const,
-            iconType: phase.type === "quiz" ? "quiz" : phase.type === "video" ? "video" : "challenge",
-            description: phase.title, // Use title as description if not provided
-            duration: 15 // Duração padrão em minutos
-          }));
-        setPhases(modulePhases);
-      } catch (error) {
-        console.error("Error loading phases:", error);
-      }
-    }
-  }, [moduleId]);
+  // Fetch phases data from Supabase
+  const { data: phases = [], isLoading: isLoadingPhases } = useQuery({
+    queryKey: ['phases', moduleId],
+    queryFn: () => getPhasesByModuleId(moduleId),
+    select: (phases) => phases
+      .sort((a, b) => a.order_index - b.order_index)
+      .map((phase) => ({
+        ...phase,
+        status: "available" as const,
+      })),
+  });
 
   // Calcular progresso baseado nas fases completadas
   const progress = phases.filter(p => p.status === "completed").length / (phases.length || 1) * 100;
@@ -85,38 +45,40 @@ const ModuleDetailPage = () => {
     }
   };
 
-  // Detalhes visuais baseados no tipo
-  const typeConfig = {
-    autoconhecimento: {
-      color: "yellow",
-      icon: "🧠",
-    },
-    empatia: {
-      color: "red",
-      icon: "❤️",
-    },
-    growth: {
-      color: "green",
-      icon: "🌱",
-    },
-    comunicacao: {
-      color: "blue",
-      icon: "💬",
-    },
-  };
+  if (isLoadingModule || isLoadingPhases) {
+    return (
+      <div className="pb-16 min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-pulse">Carregando...</div>
+      </div>
+    );
+  }
+
+  if (!module) {
+    return (
+      <div className="pb-16 min-h-screen bg-gray-50">
+        <Header title="Módulo não encontrado" />
+        <div className="container px-4 py-6">
+          <div className="text-center py-8">
+            <p className="text-gray-500">Módulo não encontrado ou foi removido.</p>
+          </div>
+        </div>
+        <BottomNavigation />
+      </div>
+    );
+  }
 
   return (
     <div className="pb-16 min-h-screen bg-gray-50">
-      <Header title={module?.name || "Módulo"} />
+      <Header title={module.name || "Módulo"} />
 
-      <div className={`${getModuleColor(module?.type)} p-6`}>
+      <div className={`${getModuleColor(module.type)} p-6`}>
         <div className="mb-4 flex items-center gap-3">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-3xl shadow-sm">
-            {module?.emoji || "📚"}
+            {module.emoji || "📚"}
           </div>
           <div>
-            <h2 className="text-xl font-bold">{module?.name || "Módulo"}</h2>
-            <p className="text-sm text-gray-600">{module?.description || "Descrição do módulo"}</p>
+            <h2 className="text-xl font-bold">{module.name || "Módulo"}</h2>
+            <p className="text-sm text-gray-600">{module.description || "Descrição do módulo"}</p>
           </div>
         </div>
 
@@ -132,14 +94,14 @@ const ModuleDetailPage = () => {
         <div className="space-y-3">
           {phases.map((phase) => (
             <PhaseCard 
-              key={`${phase.moduleId}-${phase.id}`}
-              moduleId={phase.moduleId}
+              key={`${phase.module_id}-${phase.id}`}
+              moduleId={phase.module_id}
               phaseId={phase.id}
-              title={phase.title}
-              description={phase.description || phase.title}
+              title={phase.name}
+              description={phase.description}
               duration={phase.duration || 15}
               status={phase.status || "available"}
-              iconType={phase.iconType || (phase.type === "quiz" ? "quiz" : 
+              iconType={phase.icon_type || (phase.type === "quiz" ? "quiz" : 
                          phase.type === "video" ? "video" : "challenge")}
             />
           ))}

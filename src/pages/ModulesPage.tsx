@@ -5,120 +5,24 @@ import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
 import ModuleCard from "@/components/ModuleCard";
 import ProgressBar from "@/components/ProgressBar";
-
-// Import module types
-interface Module {
-  id: number;
-  name: string;
-  type?: "autoconhecimento" | "empatia" | "growth" | "comunicacao" | "futuro";
-  progress?: number;
-  completed?: boolean;
-  locked?: boolean;
-  description?: string;
-  emoji?: string;
-}
-
-interface Phase {
-  id: number;
-  moduleId: number;
-  title: string;
-  type: "video" | "text" | "quiz";
-  content: string;
-  order: number;
-}
+import { useQuery } from '@tanstack/react-query';
+import { getModules, getPhasesByModuleId, Module, Phase } from "@/services/moduleService";
 
 const ModulesPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [totalProgress, setTotalProgress] = useState(0);
-  const [modules, setModules] = useState<Module[]>([]);
-  const [phases, setPhases] = useState<Phase[]>([]);
+  const [modulePhases, setModulePhases] = useState<Record<number, Phase[]>>({});
   
-  // Fetch modules and phases from localStorage (simulating getting from admin)
-  useEffect(() => {
-    const storedModules = localStorage.getItem("admin-modules");
-    const storedPhases = localStorage.getItem("admin-phases");
-    
-    if (storedModules) {
-      try {
-        const parsedModules = JSON.parse(storedModules);
-        
-        // Map admin modules to the format expected by ModuleCard
-        const formattedModules = parsedModules.map((module: any, index: number) => ({
-          id: module.id,
-          name: module.name,
-          type: module.type || "autoconhecimento", 
-          progress: 0,
-          completed: false,
-          locked: index > 1, // Lock all except first two modules
-          description: module.description,
-          emoji: module.emoji
-        }));
-        
-        setModules(formattedModules);
-      } catch (error) {
-        console.error("Error parsing modules:", error);
-        // Fallback to default modules if there's an error
-        setModules(defaultModules);
-      }
-    } else {
-      setModules(defaultModules);
-    }
-    
-    if (storedPhases) {
-      try {
-        const parsedPhases = JSON.parse(storedPhases);
-        setPhases(parsedPhases);
-      } catch (error) {
-        console.error("Error parsing phases:", error);
-        setPhases([]);
-      }
-    }
-  }, []);
-
-  const defaultModules: Module[] = [
-    {
-      id: 1,
-      name: "Mestre de Si",
-      type: "autoconhecimento",
-      progress: 75,
-      completed: false,
-    },
-    {
-      id: 2,
-      name: "Olhar do Outro",
-      type: "empatia",
-      progress: 25,
-      completed: false,
-    },
-    {
-      id: 3,
-      name: "Mente Infinita",
-      type: "growth",
-      progress: 0,
-      completed: false,
-      locked: true,
-    },
-    {
-      id: 4,
-      name: "Papo Reto",
-      type: "comunicacao",
-      progress: 0,
-      completed: false,
-      locked: true,
-    },
-    {
-      id: 5,
-      name: "??????????",
-      type: "futuro",
-      progress: 0,
-      completed: false,
-      locked: true,
-    },
-  ];
-
-  const filteredModules = modules.filter((module) =>
-    module.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Fetch modules from Supabase
+  const { data: modules = [], isLoading: isLoadingModules } = useQuery({
+    queryKey: ['modules'],
+    queryFn: getModules,
+    select: (data) => data.map((module) => ({
+      ...module,
+      progress: 0, // Default progress, will be updated later if needed
+      completed: false
+    })),
+  });
 
   // Calculate total progress
   useEffect(() => {
@@ -130,10 +34,48 @@ const ModulesPage = () => {
     setTotalProgress(Math.round(completedPercentage));
   }, [modules]);
 
-  // Group phases by module
+  // Filtrar módulos com base na busca
+  const filteredModules = modules.filter((module) =>
+    module.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Load phases for each module
+  useEffect(() => {
+    const fetchAllPhases = async () => {
+      const phasesObj: Record<number, Phase[]> = {};
+      
+      for (const module of modules) {
+        try {
+          const phases = await getPhasesByModuleId(module.id);
+          phasesObj[module.id] = phases;
+        } catch (error) {
+          console.error(`Error loading phases for module ${module.id}:`, error);
+        }
+      }
+      
+      setModulePhases(phasesObj);
+    };
+    
+    if (modules.length > 0) {
+      fetchAllPhases();
+    }
+  }, [modules]);
+
+  // Helper function to get module content
   const getModuleContent = (moduleId: number) => {
-    return phases.filter(phase => phase.moduleId === moduleId);
+    return modulePhases[moduleId] || [];
   };
+
+  // Determine if a module should be locked (for this example: lock all after the 2nd)
+  const isModuleLocked = (index: number) => index > 1;
+
+  if (isLoadingModules) {
+    return (
+      <div className="pb-16 min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-pulse">Carregando...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="pb-16 min-h-screen bg-gray-50">
@@ -158,22 +100,21 @@ const ModulesPage = () => {
         </div>
 
         <div className="space-y-4">
-          {filteredModules.map((module) => (
+          {filteredModules.map((module, index) => (
             <div key={module.id} className="space-y-2">
               <ModuleCard 
-                key={module.id} 
                 id={module.id}
-                title={module.name} 
+                title={module.name}
                 type={module.type || "autoconhecimento"}
                 progress={module.progress || 0}
                 completed={module.completed || false}
-                locked={module.locked}
+                locked={isModuleLocked(index)}
                 description={module.description}
                 emoji={module.emoji}
               />
               
               {/* Show content count for each module */}
-              {!module.locked && (
+              {!isModuleLocked(index) && (
                 <div className="ml-4 flex space-x-3 text-xs text-gray-500">
                   {getModuleContent(module.id).filter(p => p.type === 'video').length > 0 && (
                     <div className="flex items-center">
