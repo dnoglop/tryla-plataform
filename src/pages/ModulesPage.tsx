@@ -45,7 +45,7 @@ const ModulesPage = () => {
         // Map admin modules to the format expected by ModuleCard
         const formattedModules = parsedModules.map((module: any, index: number) => ({
           id: module.id,
-          title: module.name,
+          name: module.name,
           type: module.type || "autoconhecimento", 
           progress: 0,
           completed: false,
@@ -75,41 +75,41 @@ const ModulesPage = () => {
     }
   }, []);
 
-  const defaultModules = [
+  const defaultModules: Module[] = [
     {
       id: 1,
-      title: "Mestre de Si",
-      type: "autoconhecimento" as const,
+      name: "Mestre de Si",
+      type: "autoconhecimento",
       progress: 75,
       completed: false,
     },
     {
       id: 2,
-      title: "Olhar do Outro",
-      type: "empatia" as const,
+      name: "Olhar do Outro",
+      type: "empatia",
       progress: 25,
       completed: false,
     },
     {
       id: 3,
-      title: "Mente Infinita",
-      type: "growth" as const,
+      name: "Mente Infinita",
+      type: "growth",
       progress: 0,
       completed: false,
       locked: true,
     },
     {
       id: 4,
-      title: "Papo Reto",
-      type: "comunicacao" as const,
+      name: "Papo Reto",
+      type: "comunicacao",
       progress: 0,
       completed: false,
       locked: true,
     },
     {
       id: 5,
-      title: "??????????",
-      type: "futuro" as const,
+      name: "??????????",
+      type: "futuro",
       progress: 0,
       completed: false,
       locked: true,
@@ -117,7 +117,7 @@ const ModulesPage = () => {
   ];
 
   const filteredModules = modules.filter((module) =>
-    module.title.toLowerCase().includes(searchTerm.toLowerCase())
+    module.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Calculate total progress
@@ -160,7 +160,17 @@ const ModulesPage = () => {
         <div className="space-y-4">
           {filteredModules.map((module) => (
             <div key={module.id} className="space-y-2">
-              <ModuleCard key={module.id} {...module} />
+              <ModuleCard 
+                key={module.id} 
+                id={module.id}
+                title={module.name} 
+                type={module.type || "autoconhecimento"}
+                progress={module.progress || 0}
+                completed={module.completed || false}
+                locked={module.locked}
+                description={module.description}
+                emoji={module.emoji}
+              />
               
               {/* Show content count for each module */}
               {!module.locked && (

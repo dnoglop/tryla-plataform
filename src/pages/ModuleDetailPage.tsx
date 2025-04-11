@@ -18,11 +18,13 @@ interface Phase {
   id: number;
   moduleId: number;
   title: string;
+  description: string;
   type: "video" | "text" | "quiz";
   content: string;
   order: number;
   status?: "completed" | "inProgress" | "available" | "locked";
   duration?: number;
+  iconType?: "video" | "quiz" | "challenge" | "game";
 }
 
 const ModuleDetailPage = () => {
@@ -57,7 +59,8 @@ const ModuleDetailPage = () => {
           .map((phase: Phase) => ({
             ...phase,
             status: "available" as const,
-            iconType: phase.type,
+            iconType: phase.type === "quiz" ? "quiz" : phase.type === "video" ? "video" : "challenge",
+            description: phase.title, // Use title as description if not provided
             duration: 15 // Duração padrão em minutos
           }));
         setPhases(modulePhases);
@@ -130,7 +133,14 @@ const ModuleDetailPage = () => {
           {phases.map((phase) => (
             <PhaseCard 
               key={`${phase.moduleId}-${phase.id}`}
-              {...phase}
+              moduleId={phase.moduleId}
+              phaseId={phase.id}
+              title={phase.title}
+              description={phase.description || phase.title}
+              duration={phase.duration || 15}
+              status={phase.status || "available"}
+              iconType={phase.iconType || (phase.type === "quiz" ? "quiz" : 
+                         phase.type === "video" ? "video" : "challenge")}
             />
           ))}
         </div>

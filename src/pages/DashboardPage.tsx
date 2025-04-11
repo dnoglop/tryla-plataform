@@ -11,7 +11,7 @@ import { useToast } from "@/components/ui/use-toast";
 
 interface Module {
   id: number;
-  title: string;
+  name: string;
   type: "autoconhecimento" | "empatia" | "growth" | "comunicacao" | "futuro";
   progress: number;
   completed: boolean;
@@ -36,7 +36,7 @@ const DashboardPage = () => {
         // Map admin modules to the format expected by ModuleCard
         const formattedModules = parsedModules.map((module: any, index: number) => ({
           id: module.id,
-          title: module.name,
+          name: module.name,
           type: module.type || "autoconhecimento", 
           progress: 0,
           completed: false,
@@ -56,41 +56,41 @@ const DashboardPage = () => {
     }
   }, []);
 
-  const defaultModules = [
+  const defaultModules: Module[] = [
     {
       id: 1,
-      title: "Mestre de Si",
-      type: "autoconhecimento" as const,
+      name: "Mestre de Si",
+      type: "autoconhecimento",
       progress: 75,
       completed: false,
     },
     {
       id: 2,
-      title: "Olhar do Outro",
-      type: "empatia" as const,
+      name: "Olhar do Outro",
+      type: "empatia",
       progress: 25,
       completed: false,
     },
     {
       id: 3,
-      title: "Mente Infinita",
-      type: "growth" as const,
+      name: "Mente Infinita",
+      type: "growth",
       progress: 0,
       completed: false,
       locked: true,
     },
     {
       id: 4,
-      title: "Papo Reto",
-      type: "comunicacao" as const,
+      name: "Papo Reto",
+      type: "comunicacao",
       progress: 0,
       completed: false,
       locked: true,
     },
     {
       id: 5,
-      title: "??????????",
-      type: "futuro" as const,
+      name: "??????????",
+      type: "futuro",
       progress: 0,
       completed: false,
       locked: true,
@@ -147,7 +147,17 @@ const DashboardPage = () => {
 
           <div className="grid gap-4">
             {modules.slice(0, 3).map((module) => (
-              <ModuleCard key={module.id} {...module} />
+              <ModuleCard 
+                key={module.id}
+                id={module.id}
+                title={module.name}
+                type={module.type}
+                progress={module.progress}
+                completed={module.completed}
+                locked={module.locked}
+                description={module.description}
+                emoji={module.emoji}
+              />
             ))}
           </div>
         </div>
