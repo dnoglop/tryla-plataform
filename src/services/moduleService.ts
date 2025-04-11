@@ -13,20 +13,25 @@ export interface Module {
   updated_at?: string;
 }
 
+export type ModuleType = "autoconhecimento" | "empatia" | "growth" | "comunicacao" | "futuro";
+export type PhaseType = "video" | "text" | "quiz" | "challenge";
+export type IconType = "video" | "quiz" | "challenge" | "game";
+export type PhaseStatus = "completed" | "inProgress" | "available" | "locked";
+
 export interface Phase {
   id: number;
   module_id: number;
   name: string;
   description: string;
-  type: "video" | "text" | "quiz" | "challenge";
-  icon_type: "video" | "quiz" | "challenge" | "game";
+  type: PhaseType;
+  icon_type: IconType;
   content?: string;
   video_url?: string;
   duration?: number;
   order_index: number;
   created_at?: string;
   updated_at?: string;
-  status?: "completed" | "inProgress" | "available" | "locked";
+  status?: PhaseStatus;
 }
 
 export interface Question {
@@ -149,7 +154,7 @@ export const getPhasesByModuleId = async (moduleId: number): Promise<Phase[]> =>
     // Em uma implementação mais completa, buscaríamos o status real do user_phase_progress
     const phasesWithStatus = (data || []).map(phase => ({
       ...phase,
-      status: "available" as "available" | "inProgress" | "completed" | "locked" 
+      status: "available" as PhaseStatus
     }));
     
     // Cast para garantir o tipo correto
