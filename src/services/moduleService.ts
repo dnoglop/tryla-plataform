@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 // Define module and phase types
@@ -67,7 +68,7 @@ export const getModuleById = async (id: number): Promise<Module | null> => {
       .from("modules")
       .select("*")
       .eq("id", id)
-      .single();
+      .maybeSingle();
     
     if (error) {
       // Não lançar erro se for apenas um "not found"
@@ -91,9 +92,15 @@ export const createModule = async (module: Omit<Module, "id" | "created_at" | "u
       .from("modules")
       .insert(module)
       .select()
-      .single();
+      .maybeSingle();
     
-    if (error) throw error;
+    if (error) {
+      if (error.message.includes("violates row-level security policy")) {
+        throw new Error("Erro de permissão: Você não tem autorização para criar módulos. Verifique suas permissões.");
+      }
+      throw error;
+    }
+    
     if (!data) throw new Error("No data returned after creating module");
     
     // Cast para garantir o tipo correto
@@ -113,7 +120,13 @@ export const updateModule = async (id: number, module: Partial<Omit<Module, "id"
       .select()
       .maybeSingle();
     
-    if (error) throw error;
+    if (error) {
+      if (error.message.includes("violates row-level security policy")) {
+        throw new Error("Erro de permissão: Você não tem autorização para atualizar módulos. Verifique suas permissões.");
+      }
+      throw error;
+    }
+    
     if (!data) throw new Error(`Module with id ${id} not found`);
     
     // Cast para garantir o tipo correto
@@ -131,7 +144,12 @@ export const deleteModule = async (id: number): Promise<void> => {
       .delete()
       .eq("id", id);
     
-    if (error) throw error;
+    if (error) {
+      if (error.message.includes("violates row-level security policy")) {
+        throw new Error("Erro de permissão: Você não tem autorização para excluir módulos. Verifique suas permissões.");
+      }
+      throw error;
+    }
   } catch (error) {
     console.error(`Error deleting module with id ${id}:`, error);
     throw error;
@@ -170,7 +188,7 @@ export const getPhaseById = async (id: number): Promise<Phase | null> => {
       .from("phases")
       .select("*")
       .eq("id", id)
-      .single();
+      .maybeSingle();
     
     if (error) {
       // Não lançar erro se for apenas um "not found"
@@ -194,9 +212,15 @@ export const createPhase = async (phase: Omit<Phase, "id" | "created_at" | "upda
       .from("phases")
       .insert(phase)
       .select()
-      .single();
+      .maybeSingle();
     
-    if (error) throw error;
+    if (error) {
+      if (error.message.includes("violates row-level security policy")) {
+        throw new Error("Erro de permissão: Você não tem autorização para criar fases. Verifique suas permissões.");
+      }
+      throw error;
+    }
+    
     if (!data) throw new Error("No data returned after creating phase");
     
     // Cast para garantir o tipo correto
@@ -217,7 +241,13 @@ export const updatePhase = async (id: number, phase: Partial<Omit<Phase, "id" | 
       .select()
       .maybeSingle();
     
-    if (error) throw error;
+    if (error) {
+      if (error.message.includes("violates row-level security policy")) {
+        throw new Error("Erro de permissão: Você não tem autorização para atualizar fases. Verifique suas permissões.");
+      }
+      throw error;
+    }
+    
     if (!data) throw new Error(`Phase with id ${id} not found`);
     
     // Cast para garantir o tipo correto
@@ -235,7 +265,12 @@ export const deletePhase = async (id: number): Promise<void> => {
       .delete()
       .eq("id", id);
     
-    if (error) throw error;
+    if (error) {
+      if (error.message.includes("violates row-level security policy")) {
+        throw new Error("Erro de permissão: Você não tem autorização para excluir fases. Verifique suas permissões.");
+      }
+      throw error;
+    }
   } catch (error) {
     console.error(`Error deleting phase with id ${id}:`, error);
     throw error;
