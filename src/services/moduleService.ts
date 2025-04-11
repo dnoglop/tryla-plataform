@@ -47,7 +47,10 @@ export const getModules = async (): Promise<Module[]> => {
       .order("order_index");
     
     if (error) throw error;
-    return data || [];
+    
+    // Cast para garantir o tipo correto
+    const typedData = data as unknown as Module[];
+    return typedData || [];
   } catch (error) {
     console.error("Error fetching modules:", error);
     throw error;
@@ -70,7 +73,8 @@ export const getModuleById = async (id: number): Promise<Module | null> => {
       throw error;
     }
     
-    return data;
+    // Cast para garantir o tipo correto
+    return data as unknown as Module;
   } catch (error) {
     console.error(`Error fetching module with id ${id}:`, error);
     return null;
@@ -88,7 +92,8 @@ export const createModule = async (module: Omit<Module, "id" | "created_at" | "u
     if (error) throw error;
     if (!data) throw new Error("No data returned after creating module");
     
-    return data;
+    // Cast para garantir o tipo correto
+    return data as unknown as Module;
   } catch (error) {
     console.error("Error creating module:", error);
     throw error;
@@ -107,7 +112,8 @@ export const updateModule = async (id: number, module: Partial<Omit<Module, "id"
     if (error) throw error;
     if (!data) throw new Error(`Module with id ${id} not found`);
     
-    return data;
+    // Cast para garantir o tipo correto
+    return data as unknown as Module;
   } catch (error) {
     console.error(`Error updating module with id ${id}:`, error);
     throw error;
@@ -146,7 +152,8 @@ export const getPhasesByModuleId = async (moduleId: number): Promise<Phase[]> =>
       status: "available" as "available" | "inProgress" | "completed" | "locked" 
     }));
     
-    return phasesWithStatus;
+    // Cast para garantir o tipo correto
+    return phasesWithStatus as unknown as Phase[];
   } catch (error) {
     console.error(`Error fetching phases for module ${moduleId}:`, error);
     throw error;
@@ -169,7 +176,8 @@ export const getPhaseById = async (id: number): Promise<Phase | null> => {
       throw error;
     }
     
-    return data;
+    // Cast para garantir o tipo correto
+    return data as unknown as Phase;
   } catch (error) {
     console.error(`Error fetching phase with id ${id}:`, error);
     return null;
@@ -187,7 +195,8 @@ export const createPhase = async (phase: Omit<Phase, "id" | "created_at" | "upda
     if (error) throw error;
     if (!data) throw new Error("No data returned after creating phase");
     
-    return data;
+    // Cast para garantir o tipo correto
+    return data as unknown as Phase;
   } catch (error) {
     console.error("Error creating phase:", error);
     throw error;
@@ -206,7 +215,8 @@ export const updatePhase = async (id: number, phase: Partial<Omit<Phase, "id" | 
     if (error) throw error;
     if (!data) throw new Error(`Phase with id ${id} not found`);
     
-    return data;
+    // Cast para garantir o tipo correto
+    return data as unknown as Phase;
   } catch (error) {
     console.error(`Error updating phase with id ${id}:`, error);
     throw error;
@@ -262,7 +272,7 @@ export const getQuestionsByPhaseId = async (phaseId: number): Promise<Question[]
       options: Array.isArray(q.options) ? q.options : JSON.parse(q.options as unknown as string)
     })) || [];
     
-    return questions;
+    return questions as Question[];
   } catch (error) {
     console.error(`Error fetching questions for phase ${phaseId}:`, error);
     throw error;
