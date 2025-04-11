@@ -14,6 +14,7 @@ import ProfilePage from "@/pages/ProfilePage";
 import AdminPage from "@/pages/AdminPage";
 import NotFound from "@/pages/NotFound";
 import LoginPage from "@/pages/LoginPage";
+import SignupPage from "@/pages/SignupPage";
 import { QueryProvider } from "@/providers/QueryProvider";
 
 import "./App.css";
@@ -25,6 +26,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/cadastro" element={<SignupPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/modulos" element={<ModulesPage />} />
           <Route path="/modulo/:id" element={<ModuleDetailPage />} />

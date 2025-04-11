@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import Header from "@/components/Header";
@@ -7,6 +6,7 @@ import BottomNavigation from "@/components/BottomNavigation";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Play } from "lucide-react";
 import QuizQuestion from "@/components/QuizQuestion";
+import { getPhaseById, getQuestionsByPhaseId, Phase } from "@/services/moduleService";
 
 const PhaseDetailPage = () => {
   const { moduleId, phaseId } = useParams<{ moduleId: string; phaseId: string }>();
@@ -17,9 +17,148 @@ const PhaseDetailPage = () => {
   const [videoWatched, setVideoWatched] = useState(false);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [phaseData, setPhaseData] = useState<Phase | null>(null);
+  const [questions, setQuestions] = useState<any[]>([]);
   
-  // Dados da fase baseados nos IDs
-  const phase = {
+  // Buscar dados da fase do backend
+  useEffect(() => {
+    const fetchPhaseData = async () => {
+      if (!moduleId || !phaseId) return;
+      
+      try {
+        setLoading(true);
+        const phaseResult = await getPhaseById(parseInt(phaseId));
+        
+        if (phaseResult) {
+          setPhaseData(phaseResult);
+          
+          // Se a fase for do tipo quiz, buscar as perguntas
+          if (phaseResult.type === 'quiz') {
+            const questionsResult = await getQuestionsByPhaseId(parseInt(phaseId));
+            setQuestions(questionsResult);
+          }
+        } else {
+          toast({
+            title: "Erro",
+            description: "Fase não encontrada",
+            variant: "destructive"
+          });
+          navigate(`/modulo/${moduleId}`);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar dados da fase:", error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar os dados da fase",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchPhaseData();
+  }, [moduleId, phaseId, navigate, toast]);
+  
+  // Estrutura de dados para a fase baseada nos dados do backend
+  const phase = phaseData ? {
+    title: phaseData.name,
+    steps: [
+      // Se tiver vídeo
+      ...(phaseData.video_url ? [{
+        type: "video",
+        title: "Separamos um vídeo para você assistir",
+        text_video: "Muita atenção aos detalhes dele, segredos serão compartilhados.",
+        videoId: extractYoutubeId(phaseData.video_url) || "",
+      }] : []),
+      
+      // Se tiver conteúdo de texto
+      ...(phaseData.content ? [{
+        type: "content",
+        title: phaseData.description,
+        text: phaseData.content,
+        Images: phaseData.image_urls,
+      }] : []),
+      
+      // Se for quiz e tiver perguntas
+      ...(phaseData.type === 'quiz' && questions.length > 0 ? [{
+        type: "quiz",
+        title: "Teste seus conhecimentos",
+        questions: questions.map(q => ({
+          question: q.question,
+          options: q.options,
+          correctAnswer: q.correct_answer,
+        })),
+      }] : []),
+      
+      // Se for desafio
+      ...(phaseData.type === 'challenge' ? [{
+        type: "challenge",
+        title: "Desafio Prático",
+        description: phaseData.content || "Complete este desafio para avançar.",
+        reflection: "O que você aprendeu com este desafio?"
+      }] : []),
+      
+      // Sempre adicionar a etapa de conclusão
+      {
+        type: "completion",
+        title: "Fase completa!",
+        xpGained: 100,
+      }
+    ]
+  } : {
+    // Dados padrão enquanto carrega
+    title: "Carregando...",
+    steps: []
+  };
+  
+  // Função para extrair o ID do vídeo do YouTube de uma URL
+  function extractYoutubeId(url: string | undefined): string | null {
+    if (!url) return null;
+    
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    
+    return (match && match[2].length === 11) ? match[2] : null;
+  }
+  
+  // Função para renderizar conteúdo com imagens
+  function renderContentWithImages(text: string, images?: string[]) {
+    if (!text) return null;
+    
+    // Se não houver imagens, apenas retornar o texto
+    if (!images || images.length === 0) {
+      return <p>{text}</p>;
+    }
+    
+    // Dividir o texto em parágrafos
+    const paragraphs = text.split('\n\n');
+    
+    // Renderizar parágrafos com imagens intercaladas
+    return (
+      <div className="space-y-4">
+        {paragraphs.map((paragraph, index) => (
+          <div key={index}>
+            <p>{paragraph}</p>
+            {/* Inserir imagem após alguns parágrafos, se disponível */}
+            {images[index] && index < images.length && (
+              <div className="my-4">
+                <img 
+                  src={images[index]} 
+                  alt={`Imagem ${index + 1}`} 
+                  className="rounded-lg w-full object-cover"
+                />
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  }
+  
+  // Dados da fase baseados nos IDs (fallback para desenvolvimento)
+  const fallbackPhase = !loading && !phaseData ? {
     title: "Raio-X da Personalidade",
     steps: [
       {
@@ -80,13 +219,15 @@ Entender esses aspectos ajuda a conhecer seus pontos fortes e áreas para desenv
         xpGained: 100,
       }
     ]
-  };
+  } : phase;
 
-  const currentStep = phase.steps[step];
+  // Usar os dados da fase do backend ou o fallback
+  const phaseToUse = phaseData ? phase : fallbackPhase;
+  const currentStep = phaseToUse.steps[step] || null;
 
   // Controladores de navegação
   const goToNextStep = () => {
-    if (step < phase.steps.length - 1) {
+    if (step < phaseToUse.steps.length - 1) {
       setStep(step + 1);
     } else {
       completePhase();
@@ -111,7 +252,7 @@ Entender esses aspectos ajuda a conhecer seus pontos fortes e áreas para desenv
   // Ao completar uma pergunta do quiz
   const handleAnswerQuestion = (index: number, correct: boolean) => {
     // Se for a última pergunta, marca o quiz como completo
-    if (index === currentStep.questions.length - 1) {
+    if (currentStep && currentStep.type === "quiz" && index === currentStep.questions.length - 1) {
       handleQuizComplete();
     }
   };
@@ -121,7 +262,7 @@ Entender esses aspectos ajuda a conhecer seus pontos fortes e áreas para desenv
     setShowConfetti(true);
     toast({
       title: "Fase concluída! 🎉",
-      description: `Você ganhou +${phase.steps[phase.steps.length - 1].xpGained} XP!`,
+      description: `Você ganhou +${phaseToUse.steps[phaseToUse.steps.length - 1]?.xpGained || 100} XP!`,
     });
     
     setTimeout(() => {
@@ -131,11 +272,37 @@ Entender esses aspectos ajuda a conhecer seus pontos fortes e áreas para desenv
 
   // Renderiza o conteúdo com base no tipo do passo atual
   const renderStepContent = () => {
+    // Mostrar indicador de carregamento
+    if (loading) {
+      return (
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-trilha-orange border-t-transparent"></div>
+          <p className="mt-4 text-gray-600">Carregando conteúdo...</p>
+        </div>
+      );
+    }
+    
+    // Se não houver dados ou passos
+    if (!currentStep) {
+      return (
+        <div className="flex flex-col items-center justify-center py-12">
+          <p className="text-gray-600">Nenhum conteúdo disponível para esta fase.</p>
+          <Button 
+            onClick={() => navigate(`/modulo/${moduleId}`)}
+            className="mt-4 bg-trilha-orange text-white hover:bg-trilha-orange/90"
+          >
+            Voltar ao Módulo
+          </Button>
+        </div>
+      );
+    }
+    
     switch (currentStep.type) {
       case "video":
         return (
           <div className="space-y-4">
             <h2 className="text-lg font-bold">{currentStep.title}</h2>
+            <p className="text-sm text-gray-800">{currentStep.text_video}</p>
             <div className="aspect-video overflow-hidden rounded-lg bg-black">
               <iframe
                 width="100%"
@@ -162,7 +329,9 @@ Entender esses aspectos ajuda a conhecer seus pontos fortes e áreas para desenv
           <div className="space-y-4">
             <h2 className="text-lg font-bold">{currentStep.title}</h2>
             <div className="rounded-lg border bg-white p-4">
-              <div className="whitespace-pre-line">{currentStep.text}</div>
+              <div className="whitespace-pre-line">
+                {currentStep.text && renderContentWithImages(currentStep.text, currentStep.images)}
+              </div>
             </div>
             <Button 
               onClick={goToNextStep}
@@ -283,35 +452,37 @@ Entender esses aspectos ajuda a conhecer seus pontos fortes e áreas para desenv
 
   return (
     <div className="pb-16 min-h-screen bg-gray-50">
-      <Header title={phase.title} />
+      <Header title={loading ? "Carregando..." : phaseToUse.title} />
 
-      {/* Barra de progresso */}
-      <div className="bg-white py-2">
-        <div className="container px-4">
-          <div className="flex items-center justify-between text-xs text-gray-500">
-            <span>Passo {step + 1} de {phase.steps.length}</span>
-            <div className="flex items-center gap-1">
-              <Play className="h-3 w-3" />
-              <span>15 min</span>
+      {/* Barra de progresso - só mostrar se não estiver carregando e tiver passos */}
+      {!loading && phaseToUse.steps.length > 0 && (
+        <div className="bg-white py-2">
+          <div className="container px-4">
+            <div className="flex items-center justify-between text-xs text-gray-500">
+              <span>Passo {step + 1} de {phaseToUse.steps.length}</span>
+              <div className="flex items-center gap-1">
+                <Play className="h-3 w-3" />
+                <span>{phaseData?.duration || 15} min</span>
+              </div>
+            </div>
+            <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-gray-200">
+              <div
+                className="h-full rounded-full bg-trilha-orange transition-all"
+                style={{
+                  width: `${((step + 1) / phaseToUse.steps.length) * 100}%`,
+                }}
+              ></div>
             </div>
           </div>
-          <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-gray-200">
-            <div
-              className="h-full rounded-full bg-trilha-orange transition-all"
-              style={{
-                width: `${((step + 1) / phase.steps.length) * 100}%`,
-              }}
-            ></div>
-          </div>
         </div>
-      </div>
+      )}
 
       <div className="container px-4 py-6">
         {renderStepContent()}
       </div>
 
-      {/* Navegação entre passos */}
-      {currentStep.type !== "completion" && currentStep.type !== "quiz" && (
+      {/* Navegação entre passos - só mostrar se não estiver carregando, tiver passos e não for um passo especial */}
+      {!loading && phaseToUse.steps.length > 0 && currentStep && currentStep.type !== "completion" && currentStep.type !== "quiz" && (
         <div className="fixed bottom-20 left-0 right-0 flex justify-between px-4">
           <Button
             variant="outline"

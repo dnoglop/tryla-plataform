@@ -114,7 +114,7 @@ const PhaseCard = ({
   }
 
   return (
-    <Link to={`/modulo/${moduleId}/fase/${phaseId}`}>
+    <Link to={`/fase/${moduleId}/${phaseId}`}>
       {card}
     </Link>
   );

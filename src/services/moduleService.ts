@@ -27,6 +27,7 @@ export interface Phase {
   icon_type: IconType;
   content?: string;
   video_url?: string;
+  image_urls?: string[];
   duration?: number;
   order_index: number;
   created_at?: string;

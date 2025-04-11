@@ -1,45 +1,70 @@
-
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-const LoginPage = () => {
+const SignupPage = () => {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validação básica
+    if (password !== confirmPassword) {
+      toast({
+        title: "Erro",
+        description: "As senhas não coincidem",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      toast({
+        title: "Erro",
+        description: "A senha deve ter pelo menos 6 caracteres",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setIsLoading(true);
       
-      // Login com Supabase
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // Registrar usuário no Supabase
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            name,
+          },
+        },
       });
 
       if (error) throw error;
 
-      // Sucesso no login
+      // Sucesso no cadastro
       toast({
-        title: "Login realizado!",
-        description: "Bem-vindo(a) de volta!",
+        title: "Cadastro realizado!",
+        description: "Verifique seu email para confirmar sua conta",
       });
       
-      // Redirecionar para o dashboard
+      // Redirecionar para o dashboard (ou login, dependendo do fluxo desejado)
       navigate("/dashboard");
     } catch (error: any) {
       toast({
-        title: "Erro no login",
-        description: error.message || "Ocorreu um erro ao fazer login",
+        title: "Erro no cadastro",
+        description: error.message || "Ocorreu um erro ao criar sua conta",
         variant: "destructive",
       });
     } finally {
@@ -47,7 +72,7 @@ const LoginPage = () => {
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleSignup = async () => {
     try {
       setIsLoading(true);
       const { error } = await supabase.auth.signInWithOAuth({
@@ -68,27 +93,6 @@ const LoginPage = () => {
     }
   };
 
-  const handleLinkedInLogin = async () => {
-    try {
-      setIsLoading(true);
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "linkedin",
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`,
-        },
-      });
-
-      if (error) throw error;
-    } catch (error: any) {
-      toast({
-        title: "Erro",
-        description: error.message || "Ocorreu um erro ao tentar entrar com LinkedIn",
-        variant: "destructive",
-      });
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="flex min-h-screen flex-col bg-white">
       <div className="flex-1 px-6 py-12 md:px-12">
@@ -96,13 +100,13 @@ const LoginPage = () => {
           <h1 className="mb-2 text-4xl font-extrabold tracking-tight">
             Na <span className="text-trilha-orange">Trilha</span>
           </h1>
-          <p className="text-lg text-gray-600">Chega mais, explorador(a)!</p>
+          <p className="text-lg text-gray-600">Crie sua conta de explorador(a)!</p>
         </div>
 
         <div className="mx-auto w-full max-w-md space-y-6">
           <div className="grid grid-cols-1 gap-3">
             <Button 
-              onClick={handleGoogleLogin} 
+              onClick={handleGoogleSignup} 
               variant="outline"
               className="flex items-center gap-2 h-12"
               disabled={isLoading}
@@ -114,18 +118,6 @@ const LoginPage = () => {
               />
               <span>Continuar com Google</span>
             </Button>
-
-            <Button 
-              onClick={handleLinkedInLogin}
-              variant="outline"
-              className="flex items-center gap-2 h-12"
-              disabled={isLoading}
-            >
-              <svg className="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-              </svg>
-              <span>Continuar com LinkedIn</span>
-            </Button>
           </div>
 
           <div className="relative flex items-center py-2">
@@ -134,7 +126,23 @@ const LoginPage = () => {
             <Separator className="flex-1" />
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleSignup} className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="name" className="text-sm font-medium">
+                Nome completo
+              </label>
+              <input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 p-3 focus:border-trilha-orange focus:outline-none focus:ring-2 focus:ring-trilha-orange focus:ring-opacity-20"
+                placeholder="Seu nome completo"
+                required
+                disabled={isLoading}
+              />
+            </div>
+            
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium">
                 Email
@@ -152,19 +160,30 @@ const LoginPage = () => {
             </div>
             
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label htmlFor="password" className="text-sm font-medium">
-                  Senha
-                </label>
-                <Link to="/esqueci-senha" className="text-xs text-trilha-orange hover:underline">
-                  Esqueceu?
-                </Link>
-              </div>
+              <label htmlFor="password" className="text-sm font-medium">
+                Senha
+              </label>
               <input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 p-3 focus:border-trilha-orange focus:outline-none focus:ring-2 focus:ring-trilha-orange focus:ring-opacity-20"
+                placeholder="••••••••"
+                required
+                disabled={isLoading}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label htmlFor="confirmPassword" className="text-sm font-medium">
+                Confirmar senha
+              </label>
+              <input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 p-3 focus:border-trilha-orange focus:outline-none focus:ring-2 focus:ring-trilha-orange focus:ring-opacity-20"
                 placeholder="••••••••"
                 required
@@ -177,26 +196,28 @@ const LoginPage = () => {
               className="w-full h-12 bg-trilha-orange text-white hover:bg-trilha-orange/90"
               disabled={isLoading}
             >
-              {isLoading ? "Entrando..." : "Entrar"}
+              {isLoading ? "Criando conta..." : "Criar conta"}
             </Button>
           </form>
 
           <div className="text-center text-sm">
             <p>
-              Ainda não tem conta?{" "}
-              <Link to="/cadastro" className="font-semibold text-trilha-orange hover:underline">
-                Cadastre-se
+              Já tem uma conta?{" "}
+              <Link to="/login" className="font-semibold text-trilha-orange hover:underline">
+                Faça login
               </Link>
             </p>
             
             <Button 
-              onClick={() => navigate("/dashboard")} 
+              asChild
               variant="link" 
               className="mt-4 text-gray-500"
               disabled={isLoading}
             >
-              <span>Ver uma prévia</span>
-              <ArrowRight className="ml-1 h-4 w-4" />
+              <Link to="/login">
+                <ArrowLeft className="mr-1 h-4 w-4" />
+                <span>Voltar ao login</span>
+              </Link>
             </Button>
           </div>
         </div>
@@ -207,4 +228,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default SignupPage;
