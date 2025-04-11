@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 // Define module and phase types
@@ -112,7 +111,7 @@ export const updateModule = async (id: number, module: Partial<Omit<Module, "id"
       .update(module)
       .eq("id", id)
       .select()
-      .single();
+      .maybeSingle();
     
     if (error) throw error;
     if (!data) throw new Error(`Module with id ${id} not found`);
@@ -210,12 +209,13 @@ export const createPhase = async (phase: Omit<Phase, "id" | "created_at" | "upda
 
 export const updatePhase = async (id: number, phase: Partial<Omit<Phase, "id" | "created_at" | "updated_at" | "status">>): Promise<Phase> => {
   try {
+    // Use maybeSingle() instead of single() to avoid the error
     const { data, error } = await supabase
       .from("phases")
       .update(phase)
       .eq("id", id)
       .select()
-      .single();
+      .maybeSingle();
     
     if (error) throw error;
     if (!data) throw new Error(`Phase with id ${id} not found`);
