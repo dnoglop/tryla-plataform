@@ -8,6 +8,8 @@ import ProgressBar from "@/components/ProgressBar";
 import { useQuery } from '@tanstack/react-query';
 import { getModuleById, getPhasesByModuleId } from "@/services/moduleService";
 
+type PhaseStatus = "available" | "inProgress" | "completed" | "locked";
+
 const ModuleDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const moduleId = parseInt(id || "1");
@@ -26,12 +28,13 @@ const ModuleDetailPage = () => {
       .sort((a, b) => a.order_index - b.order_index)
       .map((phase) => ({
         ...phase,
-        status: "available" as const,
+        status: "available" as PhaseStatus,
       })),
   });
 
   // Calcular progresso baseado nas fases completadas
-  const progress = phases.filter(p => p.status === "completed").length / (phases.length || 1) * 100;
+  const completedPhases = phases.filter(p => p.status === "completed");
+  const progress = phases.length > 0 ? (completedPhases.length / phases.length) * 100 : 0;
 
   // Determinar cor do módulo baseado no tipo
   const getModuleColor = (type?: string) => {
