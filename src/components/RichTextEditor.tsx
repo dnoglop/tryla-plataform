@@ -12,11 +12,11 @@ const RichTextEditor = ({ value, onChange, height = 400 }: RichTextEditorProps) 
   const editorRef = useRef<any>(null);
   
   // Get the API key from environment variables
-  const apiKey = import.meta.env.VITE_TINYMCE_API_KEY || "no-api-key";
+  //const apiKey = import.meta.env.VITE_TINYMCE_API_KEY || "no-api-key";
   
   return (
     <Editor
-      apiKey={apiKey}
+      apiKey='9pqha5x0hrrjyuhp1xozn3kpw44dyzlhv2z1jv2ghypts5bh'
       onInit={(evt, editor) => (editorRef.current = editor)}
       initialValue={value}
       value={value}
