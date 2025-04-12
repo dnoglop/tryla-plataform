@@ -197,7 +197,16 @@ const PhaseForm = ({ moduleId, phase, onSuccess, onCancel }: PhaseFormProps) => 
         {phaseType === "text" && (
           <div>
             <Label htmlFor="content">Conteúdo</Label>
-            <div className="mt-1">
+            <div className="mt-1 border rounded-md">
+              <RichTextEditor value={content} onChange={setContent} />
+            </div>
+          </div>
+        )}
+
+        {phaseType === "challenge" && (
+          <div>
+            <Label htmlFor="content">Conteúdo do Desafio</Label>
+            <div className="mt-1 border rounded-md">
               <RichTextEditor value={content} onChange={setContent} />
             </div>
           </div>
@@ -217,12 +226,9 @@ const PhaseForm = ({ moduleId, phase, onSuccess, onCancel }: PhaseFormProps) => 
 
             <div>
               <Label htmlFor="video_notes">Anotações sobre o vídeo</Label>
-              <Textarea
-                id="video_notes"
-                placeholder="Observações sobre o vídeo"
-                {...register("video_notes")}
-                rows={4}
-              />
+              <div className="mt-1 border rounded-md">
+                <RichTextEditor value={content} onChange={setContent} height={250} />
+              </div>
             </div>
           </>
         )}
