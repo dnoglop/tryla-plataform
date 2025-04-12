@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import YoutubeEmbed from "@/components/YoutubeEmbed";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
-import { getPhase, Phase } from "@/services/moduleService";
+import { getPhaseById, Phase } from "@/services/moduleService";
 
 const PhaseDetailPage = () => {
   const { moduleId, phaseId } = useParams<{ moduleId: string; phaseId: string }>();
@@ -17,7 +17,7 @@ const PhaseDetailPage = () => {
       if (moduleId && phaseId) {
         setLoading(true);
         try {
-          const phase = await getPhase(Number(phaseId));
+          const phase = await getPhaseById(Number(phaseId));
           if (phase) {
             setSelectedPhase(phase);
           } else {
@@ -72,8 +72,8 @@ const PhaseDetailPage = () => {
         <div className="mt-6">
           <h3 className="text-lg font-medium mb-3">Observações sobre o vídeo</h3>
           <div className="bg-gray-50 p-4 rounded-lg border">
-            {selectedPhase.videoNotes ? (
-              <p className="text-sm text-gray-700 whitespace-pre-line">{selectedPhase.videoNotes}</p>
+            {selectedPhase.video_notes ? (
+              <p className="text-sm text-gray-700 whitespace-pre-line">{selectedPhase.video_notes}</p>
             ) : (
               <p className="text-sm text-gray-500 italic">Sem observações para este vídeo</p>
             )}

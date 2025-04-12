@@ -5,7 +5,7 @@ interface YoutubeEmbedProps {
   videoId: string;
 }
 
-export const YoutubeEmbed = ({ videoId }: YoutubeEmbedProps) => {
+const YoutubeEmbed = ({ videoId }: YoutubeEmbedProps) => {
   const embedUrl = `https://www.youtube.com/embed/${videoId}`;
   
   return (
