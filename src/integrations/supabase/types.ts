@@ -124,6 +124,7 @@ export type Database = {
           order_index: number
           type: string | null
           updated_at: string | null
+          video_notes: string | null
           video_url: string | null
         }
         Insert: {
@@ -138,6 +139,7 @@ export type Database = {
           order_index: number
           type?: string | null
           updated_at?: string | null
+          video_notes?: string | null
           video_url?: string | null
         }
         Update: {
@@ -152,6 +154,7 @@ export type Database = {
           order_index?: number
           type?: string | null
           updated_at?: string | null
+          video_notes?: string | null
           video_url?: string | null
         }
         Relationships: [
@@ -172,6 +175,7 @@ export type Database = {
           full_name: string | null
           id: string
           level: number | null
+          linkedin_url: string | null
           updated_at: string | null
           username: string | null
           xp: number | null
@@ -183,6 +187,7 @@ export type Database = {
           full_name?: string | null
           id: string
           level?: number | null
+          linkedin_url?: string | null
           updated_at?: string | null
           username?: string | null
           xp?: number | null
@@ -194,6 +199,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           level?: number | null
+          linkedin_url?: string | null
           updated_at?: string | null
           username?: string | null
           xp?: number | null

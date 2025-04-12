@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 // Define module and phase types
 export interface Module {
@@ -27,6 +28,7 @@ export interface Phase {
   icon_type: IconType;
   content?: string;
   video_url?: string;
+  video_notes?: string;
   image_urls?: string[];
   duration?: number;
   order_index: number;
@@ -52,7 +54,10 @@ export const getModules = async (): Promise<Module[]> => {
       .select("*")
       .order("order_index");
     
-    if (error) throw error;
+    if (error) {
+      toast.error(`Erro ao buscar módulos: ${error.message}`);
+      throw error;
+    }
     
     // Cast para garantir o tipo correto
     const typedData = data as unknown as Module[];
@@ -76,6 +81,7 @@ export const getModuleById = async (id: number): Promise<Module | null> => {
       if (error.code === 'PGRST116') {
         return null;
       }
+      toast.error(`Erro ao buscar módulo: ${error.message}`);
       throw error;
     }
     
@@ -97,12 +103,19 @@ export const createModule = async (module: Omit<Module, "id" | "created_at" | "u
     
     if (error) {
       if (error.message.includes("violates row-level security policy")) {
+        toast.error("Erro de permissão: Você não tem autorização para criar módulos.");
         throw new Error("Erro de permissão: Você não tem autorização para criar módulos. Verifique suas permissões.");
       }
+      toast.error(`Erro ao criar módulo: ${error.message}`);
       throw error;
     }
     
-    if (!data) throw new Error("No data returned after creating module");
+    if (!data) {
+      toast.error("Nenhum dado retornado após criar módulo");
+      throw new Error("No data returned after creating module");
+    }
+    
+    toast.success("Módulo criado com sucesso!");
     
     // Cast para garantir o tipo correto
     return data as unknown as Module;
@@ -123,12 +136,19 @@ export const updateModule = async (id: number, module: Partial<Omit<Module, "id"
     
     if (error) {
       if (error.message.includes("violates row-level security policy")) {
+        toast.error("Erro de permissão: Você não tem autorização para atualizar módulos.");
         throw new Error("Erro de permissão: Você não tem autorização para atualizar módulos. Verifique suas permissões.");
       }
+      toast.error(`Erro ao atualizar módulo: ${error.message}`);
       throw error;
     }
     
-    if (!data) throw new Error(`Module with id ${id} not found`);
+    if (!data) {
+      toast.error(`Módulo com ID ${id} não encontrado`);
+      throw new Error(`Module with id ${id} not found`);
+    }
+    
+    toast.success("Módulo atualizado com sucesso!");
     
     // Cast para garantir o tipo correto
     return data as unknown as Module;
@@ -147,10 +167,14 @@ export const deleteModule = async (id: number): Promise<void> => {
     
     if (error) {
       if (error.message.includes("violates row-level security policy")) {
+        toast.error("Erro de permissão: Você não tem autorização para excluir módulos.");
         throw new Error("Erro de permissão: Você não tem autorização para excluir módulos. Verifique suas permissões.");
       }
+      toast.error(`Erro ao excluir módulo: ${error.message}`);
       throw error;
     }
+    
+    toast.success("Módulo excluído com sucesso!");
   } catch (error) {
     console.error(`Error deleting module with id ${id}:`, error);
     throw error;
@@ -166,7 +190,10 @@ export const getPhasesByModuleId = async (moduleId: number): Promise<Phase[]> =>
       .eq("module_id", moduleId)
       .order("order_index");
     
-    if (error) throw error;
+    if (error) {
+      toast.error(`Erro ao buscar fases: ${error.message}`);
+      throw error;
+    }
     
     // Processar dados para adicionar o status padrão como "available"
     // Em uma implementação mais completa, buscaríamos o status real do user_phase_progress
@@ -196,6 +223,7 @@ export const getPhaseById = async (id: number): Promise<Phase | null> => {
       if (error.code === 'PGRST116') {
         return null;
       }
+      toast.error(`Erro ao buscar fase: ${error.message}`);
       throw error;
     }
     
@@ -217,12 +245,19 @@ export const createPhase = async (phase: Omit<Phase, "id" | "created_at" | "upda
     
     if (error) {
       if (error.message.includes("violates row-level security policy")) {
+        toast.error("Erro de permissão: Você não tem autorização para criar fases.");
         throw new Error("Erro de permissão: Você não tem autorização para criar fases. Verifique suas permissões.");
       }
+      toast.error(`Erro ao criar fase: ${error.message}`);
       throw error;
     }
     
-    if (!data) throw new Error("No data returned after creating phase");
+    if (!data) {
+      toast.error("Nenhum dado retornado após criar fase");
+      throw new Error("No data returned after creating phase");
+    }
+    
+    toast.success("Fase criada com sucesso!");
     
     // Cast para garantir o tipo correto
     return data as unknown as Phase;

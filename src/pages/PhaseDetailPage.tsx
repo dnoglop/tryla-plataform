@@ -1,6 +1,8 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
 import { Button } from "@/components/ui/button";
@@ -11,11 +13,12 @@ import { getPhaseById, getQuestionsByPhaseId, Phase } from "@/services/moduleSer
 const PhaseDetailPage = () => {
   const { moduleId, phaseId } = useParams<{ moduleId: string; phaseId: string }>();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
   
   const [step, setStep] = useState(0);
   const [videoWatched, setVideoWatched] = useState(false);
   const [quizCompleted, setQuizCompleted] = useState(false);
+  const [currentQuizQuestion, setCurrentQuizQuestion] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
   const [loading, setLoading] = useState(true);
   const [phaseData, setPhaseData] = useState<Phase | null>(null);
@@ -39,7 +42,7 @@ const PhaseDetailPage = () => {
             setQuestions(questionsResult);
           }
         } else {
-          toast({
+          uiToast({
             title: "Erro",
             description: "Fase não encontrada",
             variant: "destructive"
@@ -48,7 +51,7 @@ const PhaseDetailPage = () => {
         }
       } catch (error) {
         console.error("Erro ao buscar dados da fase:", error);
-        toast({
+        uiToast({
           title: "Erro",
           description: "Não foi possível carregar os dados da fase",
           variant: "destructive"
@@ -59,7 +62,7 @@ const PhaseDetailPage = () => {
     };
     
     fetchPhaseData();
-  }, [moduleId, phaseId, navigate, toast]);
+  }, [moduleId, phaseId, navigate, uiToast]);
   
   // Estrutura de dados para a fase baseada nos dados do backend
   const phase = phaseData ? {
@@ -71,6 +74,7 @@ const PhaseDetailPage = () => {
         title: "Separamos um vídeo para você assistir",
         text_video: "Muita atenção aos detalhes dele, segredos serão compartilhados.",
         videoId: extractYoutubeId(phaseData.video_url) || "",
+        video_notes: phaseData.video_notes || "",
       }] : []),
       
       // Se tiver conteúdo de texto
@@ -229,6 +233,8 @@ Entender esses aspectos ajuda a conhecer seus pontos fortes e áreas para desenv
   const goToNextStep = () => {
     if (step < phaseToUse.steps.length - 1) {
       setStep(step + 1);
+      // Resetar o índice da pergunta do quiz quando mudar de etapa
+      setCurrentQuizQuestion(0);
     } else {
       completePhase();
     }
@@ -237,30 +243,39 @@ Entender esses aspectos ajuda a conhecer seus pontos fortes e áreas para desenv
   const goToPreviousStep = () => {
     if (step > 0) {
       setStep(step - 1);
+      setCurrentQuizQuestion(0);
     }
   };
 
-  // Ao completar todas as perguntas do quiz
-  const handleQuizComplete = () => {
-    setQuizCompleted(true);
-    toast({
-      title: "Quiz completado!",
-      description: "Você ganhou +25 XP! 🧠",
-    });
+  // Avançar para a próxima pergunta do quiz
+  const goToNextQuestion = () => {
+    if (currentStep && currentStep.type === "quiz" && currentQuizQuestion < currentStep.questions.length - 1) {
+      setCurrentQuizQuestion(prevQuestion => prevQuestion + 1);
+    } else {
+      // Se for a última pergunta, marcar o quiz como completo
+      setQuizCompleted(true);
+    }
   };
 
   // Ao completar uma pergunta do quiz
-  const handleAnswerQuestion = (index: number, correct: boolean) => {
-    // Se for a última pergunta, marca o quiz como completo
-    if (currentStep && currentStep.type === "quiz" && index === currentStep.questions.length - 1) {
-      handleQuizComplete();
+  const handleAnswerQuestion = (questionIndex: number, correct: boolean) => {
+    // Exibir feedback sobre a resposta
+    if (correct) {
+      toast.success("Resposta correta! 🎉");
+    } else {
+      toast.error("Resposta incorreta. Tente aprender mais sobre o assunto.");
     }
+    
+    // Aguardar um momento antes de avançar para a próxima pergunta
+    setTimeout(() => {
+      goToNextQuestion();
+    }, 1000);
   };
 
   // Ao completar a fase
   const completePhase = () => {
     setShowConfetti(true);
-    toast({
+    uiToast({
       title: "Fase concluída! 🎉",
       description: `Você ganhou +${phaseToUse.steps[phaseToUse.steps.length - 1]?.xpGained || 100} XP!`,
     });
@@ -315,6 +330,17 @@ Entender esses aspectos ajuda a conhecer seus pontos fortes e áreas para desenv
                 onPlay={() => setVideoWatched(true)}
               ></iframe>
             </div>
+            
+            {/* Observações do vídeo */}
+            {currentStep.video_notes && (
+              <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+                <h3 className="font-medium text-amber-800 mb-2">📝 Observações importantes:</h3>
+                <div className="text-sm text-amber-700 whitespace-pre-line">
+                  {currentStep.video_notes}
+                </div>
+              </div>
+            )}
+            
             <Button 
               onClick={goToNextStep}
               className="w-full bg-trilha-orange text-white hover:bg-trilha-orange/90"
@@ -350,8 +376,11 @@ Entender esses aspectos ajuda a conhecer seus pontos fortes e áreas para desenv
               {currentStep.questions.map((question, index) => (
                 <div 
                   key={index} 
-                  className={index === 0 || quizCompleted ? "block" : "hidden"}
+                  className={index === currentQuizQuestion ? "block" : "hidden"}
                 >
+                  <div className="mb-2 text-sm text-gray-500">
+                    Pergunta {index + 1} de {currentStep.questions.length}
+                  </div>
                   <QuizQuestion
                     question={question.question}
                     options={question.options}
