@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -15,7 +14,7 @@ export interface Module {
 }
 
 export type ModuleType = "autoconhecimento" | "empatia" | "growth" | "comunicacao" | "futuro";
-export type PhaseType = "video" | "text" | "quiz" | "challenge";
+export type PhaseType = 'video' | 'text' | 'quiz' | 'challenge' | string;
 export type IconType = "video" | "quiz" | "challenge" | "game";
 export type PhaseStatus = "completed" | "inProgress" | "available" | "locked";
 
@@ -23,18 +22,18 @@ export interface Phase {
   id: number;
   module_id: number;
   name: string;
-  description: string;
-  type: PhaseType;
-  icon_type: IconType;
+  description?: string;
   content?: string;
-  video_url?: string;
-  video_notes?: string;
-  image_urls?: string[];
   duration?: number;
   order_index: number;
   created_at?: string;
   updated_at?: string;
-  status?: PhaseStatus;
+  video_url?: string;
+  video_notes?: string;
+  icon_type?: string;
+  type: PhaseType;
+  image_urls?: string[];
+  status?: string;
 }
 
 export interface Question {

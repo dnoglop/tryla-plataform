@@ -1,5 +1,4 @@
-
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 
@@ -102,27 +101,25 @@ const AuthRoute = ({ children }: { children: React.ReactNode }) => {
 function App() {
   return (
     <QueryProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/login" element={<AuthRoute><LoginPage /></AuthRoute>} />
-          <Route path="/cadastro" element={<AuthRoute><SignupPage /></AuthRoute>} />
-          
-          {/* Rotas protegidas */}
-          <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-          <Route path="/modulos" element={<ProtectedRoute><ModulesPage /></ProtectedRoute>} />
-          <Route path="/modulo/:id" element={<ProtectedRoute><ModuleDetailPage /></ProtectedRoute>} />
-          <Route path="/fase/:moduleId/:phaseId" element={<ProtectedRoute><PhaseDetailPage /></ProtectedRoute>} />
-          <Route path="/recompensas" element={<ProtectedRoute><RewardsPage /></ProtectedRoute>} />
-          <Route path="/comunidade" element={<ProtectedRoute><CommunityPage /></ProtectedRoute>} />
-          <Route path="/perfil" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-          <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
-          
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        <Toaster />
-        <SonnerToaster />
-      </Router>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/login" element={<AuthRoute><LoginPage /></AuthRoute>} />
+        <Route path="/cadastro" element={<AuthRoute><SignupPage /></AuthRoute>} />
+        
+        {/* Rotas protegidas */}
+        <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+        <Route path="/modulos" element={<ProtectedRoute><ModulesPage /></ProtectedRoute>} />
+        <Route path="/modulo/:id" element={<ProtectedRoute><ModuleDetailPage /></ProtectedRoute>} />
+        <Route path="/fase/:moduleId/:phaseId" element={<ProtectedRoute><PhaseDetailPage /></ProtectedRoute>} />
+        <Route path="/recompensas" element={<ProtectedRoute><RewardsPage /></ProtectedRoute>} />
+        <Route path="/comunidade" element={<ProtectedRoute><CommunityPage /></ProtectedRoute>} />
+        <Route path="/perfil" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
+        
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+      <Toaster />
+      <SonnerToaster />
     </QueryProvider>
   );
 }

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -72,9 +71,9 @@ const PhaseDetailPage = () => {
       ...(phaseData.video_url ? [{
         type: "video",
         title: "Separamos um vídeo para você assistir",
-        text_video: "Muita atenção aos detalhes dele, segredos serão compartilhados.",
+        text: "Muita atenção aos detalhes dele, segredos serão compartilhados.",
         videoId: extractYoutubeId(phaseData.video_url) || "",
-        video_notes: phaseData.video_notes || "",
+        videoNotes: phaseData.video_notes || "",
       }] : []),
       
       // Se tiver conteúdo de texto
@@ -82,7 +81,7 @@ const PhaseDetailPage = () => {
         type: "content",
         title: phaseData.description,
         text: phaseData.content,
-        Images: phaseData.image_urls,
+        images: phaseData.image_urls,
       }] : []),
       
       // Se for quiz e tiver perguntas
@@ -317,7 +316,7 @@ Entender esses aspectos ajuda a conhecer seus pontos fortes e áreas para desenv
         return (
           <div className="space-y-4">
             <h2 className="text-lg font-bold">{currentStep.title}</h2>
-            <p className="text-sm text-gray-800">{currentStep.text_video}</p>
+            <p className="text-sm text-gray-800">{currentStep.text}</p>
             <div className="aspect-video overflow-hidden rounded-lg bg-black">
               <iframe
                 width="100%"
@@ -332,11 +331,11 @@ Entender esses aspectos ajuda a conhecer seus pontos fortes e áreas para desenv
             </div>
             
             {/* Observações do vídeo */}
-            {currentStep.video_notes && (
+            {currentStep.videoNotes && (
               <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
                 <h3 className="font-medium text-amber-800 mb-2">📝 Observações importantes:</h3>
                 <div className="text-sm text-amber-700 whitespace-pre-line">
-                  {currentStep.video_notes}
+                  {currentStep.videoNotes}
                 </div>
               </div>
             )}
