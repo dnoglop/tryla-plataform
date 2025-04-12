@@ -14,26 +14,24 @@ export interface Module {
 }
 
 export type ModuleType = "autoconhecimento" | "empatia" | "growth" | "comunicacao" | "futuro";
-export type PhaseType = 'video' | 'text' | 'quiz' | 'challenge' | string;
+export type PhaseType = "video" | "text" | "quiz" | "challenge";
 export type IconType = "video" | "quiz" | "challenge" | "game";
 export type PhaseStatus = "completed" | "inProgress" | "available" | "locked";
 
 export interface Phase {
   id: number;
-  module_id: number;
   name: string;
   description?: string;
+  type?: PhaseType;
+  icon_type?: IconType;
   content?: string;
-  duration?: number;
-  order_index: number;
-  created_at?: string;
-  updated_at?: string;
   video_url?: string;
   video_notes?: string;
-  icon_type?: string;
-  type: PhaseType;
-  image_urls?: string[];
-  status?: string;
+  duration?: number;
+  order_index: number;
+  module_id?: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Question {

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -217,10 +216,20 @@ const PhaseForm = ({ moduleId, phase, isOpen, onClose, onSave }: PhaseFormProps)
 
           <div className="space-y-2">
             <Label htmlFor="content">Conteúdo</Label>
-            <RichTextEditor 
-              value={formData.content} 
-              onChange={handleContentChange} 
-            />
+            {formData.type === "text" || formData.type === "quiz" || formData.type === "challenge" ? (
+              <RichTextEditor 
+                value={formData.content} 
+                onChange={handleContentChange} 
+              />
+            ) : (
+              <Textarea
+                id="content"
+                name="content"
+                value={formData.content}
+                onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+                rows={4}
+              />
+            )}
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">

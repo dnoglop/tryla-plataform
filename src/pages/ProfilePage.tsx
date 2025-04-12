@@ -1,25 +1,22 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
-
-interface Profile {
-  id: string;
-  name: string;
-  email: string;
-  // created_at: string; // Assuming you don't need this, or it's handled elsewhere
-  // Add other profile properties as needed
-}
+import { Profile } from "@/services/profileService";
 
 const ProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [username, setUsername] = useState("");
+  const [bio, setBio] = useState("");
+  const [linkedinUrl, setLinkedinUrl] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -32,7 +29,7 @@ const ProfilePage = () => {
         if (user) {
           const { data: profileData, error } = await supabase
             .from('profiles')
-            .select(`name, email`)
+            .select(`full_name, username, bio, avatar_url, linkedin_url`)
             .eq('id', user.id)
             .single();
 
@@ -42,17 +39,24 @@ const ProfilePage = () => {
 
           setProfile({
             id: user.id,
-            name: profileData?.name || "",
-            email: profileData?.email || user.email || "",
-            // created_at: profileData?.created_at || "", // If you have created_at
+            full_name: profileData?.full_name || "",
+            username: profileData?.username || user.email?.split('@')[0] || "",
+            avatar_url: profileData?.avatar_url,
+            bio: profileData?.bio || "",
+            linkedin_url: profileData?.linkedin_url || "",
+            level: profileData?.level || 1,
+            xp: profileData?.xp || 0,
           });
-          setName(profileData?.name || user.email?.split('@')[0] || "");
-          setEmail(profileData?.email || user.email || "");
+          
+          setFullName(profileData?.full_name || "");
+          setUsername(profileData?.username || user.email?.split('@')[0] || "");
+          setBio(profileData?.bio || "");
+          setLinkedinUrl(profileData?.linkedin_url || "");
         }
       } catch (error: any) {
         console.error("Error fetching profile:", error);
         toast({
-          title: "Error",
+          title: "Erro",
           description: error.message,
           variant: "destructive",
         });
@@ -73,9 +77,11 @@ const ProfilePage = () => {
       if (user) {
         const updates = {
           id: user.id,
-          name: name,
-          email: email,
-          updated_at: new Date(),
+          full_name: fullName,
+          username: username,
+          bio: bio,
+          linkedin_url: linkedinUrl,
+          updated_at: new Date().toISOString(),
         };
 
         const { error } = await supabase.from('profiles').upsert(updates, {
@@ -86,17 +92,23 @@ const ProfilePage = () => {
           throw error;
         }
 
-        setProfile({ ...profile, name: name, email: email });
+        setProfile(prev => ({ 
+          ...prev!, 
+          full_name: fullName, 
+          username: username,
+          bio: bio,
+          linkedin_url: linkedinUrl
+        }));
 
         toast({
-          title: "Success",
-          description: "Profile updated successfully!",
+          title: "Sucesso",
+          description: "Perfil atualizado com sucesso!",
         });
       }
     } catch (error: any) {
       console.error("Error updating profile:", error);
       toast({
-        title: "Error",
+        title: "Erro",
         description: error.message,
         variant: "destructive",
       });
@@ -117,32 +129,48 @@ const ProfilePage = () => {
         ) : (
           <div className="space-y-6">
             <div className="space-y-1">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="username">Nome de usuário</Label>
               <Input
-                id="email"
-                type="email"
-                value={email}
-                disabled={true}
-                onChange={(e) => setEmail(e.target.value)}
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Seu nome de usuário"
               />
             </div>
 
             <div className="space-y-1">
-              <Label htmlFor="name">Nome</Label>
+              <Label htmlFor="fullName">Nome completo</Label>
               <Input
-                id="name"
+                id="fullName"
                 type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Seu nome completo"
               />
             </div>
 
-            {/* Display the profile creation date if needed */}
-            {/* {profile && (
-              <p className="text-sm text-gray-500">
-                Membro desde: {new Date(profile.created_at).toLocaleDateString()}
-              </p>
-            )} */}
+            <div className="space-y-1">
+              <Label htmlFor="bio">Sobre você</Label>
+              <Textarea
+                id="bio"
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder="Compartilhe um pouco sobre você"
+                rows={4}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="linkedin">LinkedIn URL</Label>
+              <Input
+                id="linkedin"
+                type="url"
+                value={linkedinUrl}
+                onChange={(e) => setLinkedinUrl(e.target.value)}
+                placeholder="https://linkedin.com/in/seuperfil"
+              />
+            </div>
 
             <Button onClick={updateProfile} disabled={loading} className="w-full bg-trilha-orange text-white hover:bg-trilha-orange/90">
               {loading ? (

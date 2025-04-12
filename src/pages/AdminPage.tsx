@@ -319,8 +319,8 @@ const AdminPage = () => {
     setSelectedModule(phase.module_id);
     setPhaseName(phase.name);
     setPhaseDescription(phase.description || "");
-    setPhaseType(phase.type);
-    setIconType(phase.icon_type);
+    setType(phase.type as PhaseType || "video");
+    setIconType(phase.icon_type as IconType || "video");
     setVideoUrl(phase.video_url || "");
     setContent(phase.content || "");
     setPhaseDuration(phase.duration || 15);

@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const motivationalPhrases = [
   "Seja a mudança que você quer ver no mundo.",
@@ -14,7 +16,6 @@ const motivationalPhrases = [
 const Index = () => {
   const navigate = useNavigate();
   const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
-  const [showLogo, setShowLogo] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Verificar autenticação do usuário
@@ -37,46 +38,35 @@ const Index = () => {
     };
   }, []);
 
-  // Efeito para animação de frases motivacionais
-  useEffect(() => {
-    const logoTimeout = setTimeout(() => {
-      setShowLogo(false);
-    }, 2000);
+  const handleNextPhrase = () => {
+    setCurrentPhraseIndex((prevIndex) => 
+      prevIndex >= motivationalPhrases.length - 1 ? 0 : prevIndex + 1
+    );
+  };
 
-    const interval = setInterval(() => {
-      setCurrentPhraseIndex((prevIndex) => 
-        prevIndex >= motivationalPhrases.length - 1 ? 0 : prevIndex + 1
-      );
-    }, 3000);
-
-    const navigationTimeout = setTimeout(() => {
-      if (isAuthenticated) {
-        navigate("/dashboard");
-      } else {
-        navigate("/login");
-      }
-    }, 8000);
-
-    return () => {
-      clearTimeout(logoTimeout);
-      clearInterval(interval);
-      clearTimeout(navigationTimeout);
-    };
-  }, [navigate, isAuthenticated]);
+  const handleGetStarted = () => {
+    if (isAuthenticated) {
+      navigate("/dashboard");
+    } else {
+      navigate("/login");
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-amber-50 to-white p-6 text-center">
-      <div className={`transition-all duration-1000 ${showLogo ? "opacity-100 scale-100" : "opacity-0 scale-95"}`}>
+      {/* Logo sempre visível */}
+      <div className="mb-8">
         <div className="text-6xl mb-3">🔶</div>
         <h1 className="text-3xl font-bold text-trilha-orange mb-2">Na Trilha</h1>
         <p className="text-gray-500">Sua jornada de desenvolvimento pessoal</p>
       </div>
       
-      <div className={`transition-all duration-1000 h-60 flex items-center justify-center ${showLogo ? "opacity-0" : "opacity-100"}`}>
+      {/* Frases motivacionais com altura fixa */}
+      <div className="h-32 flex items-center justify-center mb-8">
         {motivationalPhrases.map((phrase, index) => (
           <p 
             key={index} 
-            className={`absolute transition-all duration-1000 text-xl text-center max-w-xs text-gray-700 font-medium
+            className={`absolute transition-all duration-500 text-xl text-center max-w-xs text-gray-700 font-medium
               ${currentPhraseIndex === index ? "opacity-100 transform-none" : "opacity-0 translate-y-8"}
             `}
           >
@@ -85,15 +75,34 @@ const Index = () => {
         ))}
       </div>
       
-      <div className={`mt-8 transition-all duration-1000 ${showLogo ? "opacity-0" : "opacity-100"}`}>
-        <div className="flex justify-center space-x-2">
-          {[...Array(3)].map((_, i) => (
+      <div className="flex flex-col items-center gap-4">
+        {/* Botão para navegar entre frases */}
+        <Button 
+          onClick={handleNextPhrase} 
+          variant="outline" 
+          size="icon"
+          className="rounded-full"
+        >
+          <ChevronRight className="h-5 w-5" />
+        </Button>
+
+        {/* Indicadores */}
+        <div className="flex justify-center space-x-2 mb-8">
+          {motivationalPhrases.map((_, i) => (
             <div 
               key={i} 
-              className={`h-2 w-2 rounded-full transition-all ${currentPhraseIndex % 3 === i ? 'bg-trilha-orange' : 'bg-gray-300'}`}
+              className={`h-2 w-2 rounded-full transition-all ${currentPhraseIndex === i ? 'bg-trilha-orange' : 'bg-gray-300'}`}
             />
           ))}
         </div>
+
+        {/* Botão para começar */}
+        <Button 
+          onClick={handleGetStarted}
+          className="bg-trilha-orange hover:bg-trilha-orange/90 text-white"
+        >
+          Começar
+        </Button>
       </div>
     </div>
   );
