@@ -245,6 +245,8 @@ export const getPhaseById = async (id: number): Promise<Phase | null> => {
       images: [],
       // Ensure type is properly cast as PhaseType
       type: data.type as PhaseType,
+      // Ensure icon_type is properly cast as IconType
+      icon_type: (data.icon_type as IconType) || "challenge",
     };
     
     return processedPhase;
