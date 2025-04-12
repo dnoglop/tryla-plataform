@@ -1,33 +1,25 @@
 
-interface UserLevelProps {
+import React from 'react';
+
+export interface UserLevelProps {
   level: number;
-  currentXP: number;
-  nextLevelXP: number;
-  showLevel?: boolean;
+  xp: number;
 }
 
-const UserLevel = ({ 
-  level, 
-  currentXP, 
-  nextLevelXP,
-  showLevel = true 
-}: UserLevelProps) => {
-  const progress = Math.round((currentXP / nextLevelXP) * 100);
-  
+const UserLevel: React.FC<UserLevelProps> = ({ level, xp }) => {
+  // Calculate progress to next level (example: 75% progress)
+  const nextLevelXp = level * 100; // Example calculation
+  const progress = Math.min(Math.floor((xp / nextLevelXp) * 100), 100);
+
   return (
-    <div className="w-full">
-      <div className="flex justify-between items-center mb-1">
-        {showLevel && (
-          <div className="flex items-center gap-1">
-            <span className="text-sm font-bold">Nível {level}</span>
-            <span className="text-xs text-gray-500">Explorador</span>
-          </div>
-        )}
-        <div className="text-xs text-gray-500">{currentXP}/{nextLevelXP} XP</div>
+    <div className="mt-2">
+      <div className="flex justify-between items-center text-xs text-gray-600">
+        <span>Nível {level}</span>
+        <span>{xp} XP</span>
       </div>
-      <div className="progress-bar">
+      <div className="w-full h-2 bg-gray-200 rounded-full mt-1">
         <div 
-          className="progress-value"
+          className="h-full bg-trilha-orange rounded-full"
           style={{ width: `${progress}%` }}
         />
       </div>

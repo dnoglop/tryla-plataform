@@ -203,7 +203,7 @@ export const getPhasesByModuleId = async (moduleId: number): Promise<Phase[]> =>
       // Process video_url to extract videoId if present
       videoId: phase.video_url ? extractVideoId(phase.video_url) : undefined,
       // Convert video_notes to videoNotes for consistency
-      videoNotes: phase.video_notes,
+      video_notes: phase.video_notes,
       // For now, no images in the database, so we'll leave it undefined
       images: []
     }));
@@ -242,7 +242,7 @@ export const getPhaseById = async (id: number): Promise<Phase | null> => {
       // Process video_url to extract videoId if present
       videoId: data.video_url ? extractVideoId(data.video_url) : undefined,
       // Convert video_notes to videoNotes for consistency
-      videoNotes: data.video_notes,
+      video_notes: data.video_notes,
       // For now, no images in the database, so we'll leave it as an empty array
       images: []
     };

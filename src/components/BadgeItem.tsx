@@ -1,38 +1,32 @@
 
-import { Trophy } from "lucide-react";
+import React from 'react';
 
-interface BadgeItemProps {
-  title: string;
+export interface BadgeItemProps {
+  name: string;
   description: string;
-  earned: boolean;
-  icon?: string;
+  isUnlocked: boolean;
 }
 
-const BadgeItem = ({
-  title,
-  description,
-  earned,
-  icon = "🏆",
-}: BadgeItemProps) => {
+const BadgeItem: React.FC<BadgeItemProps> = ({ name, description, isUnlocked }) => {
   return (
-    <div className={`card-trilha p-4 ${earned ? "" : "opacity-60 grayscale"}`}>
-      <div className="flex items-center gap-4">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-trilha-orange/10 text-3xl shadow-inner">
-          {icon}
-        </div>
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="font-bold">{title}</h3>
-            {earned && (
-              <div className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">
-                <Trophy className="h-3 w-3" />
-                <span>Conquistado</span>
-              </div>
-            )}
-          </div>
-          <p className="text-sm text-gray-600">{description}</p>
-        </div>
+    <div className={`rounded-lg p-3 text-center ${isUnlocked ? 'bg-white shadow' : 'bg-gray-100'}`}>
+      <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-2 ${
+        isUnlocked ? 'bg-trilha-orange text-white' : 'bg-gray-200 text-gray-400'
+      }`}>
+        {/* Badge icon or emoji */}
+        <span className="text-lg">🏆</span>
       </div>
+      <h4 className={`text-sm font-medium ${isUnlocked ? 'text-gray-800' : 'text-gray-500'}`}>
+        {name}
+      </h4>
+      <p className="text-xs mt-1 text-gray-500">
+        {description}
+      </p>
+      {!isUnlocked && (
+        <span className="inline-block mt-2 text-xs bg-gray-200 px-2 py-1 rounded">
+          Bloqueado
+        </span>
+      )}
     </div>
   );
 };

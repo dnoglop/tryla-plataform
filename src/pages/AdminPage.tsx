@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,11 +11,52 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import PhaseForm from "@/components/PhaseForm";
-import { getModules, getPhasesByModuleId, createModule, updateModule, deleteModule, deletePhase, Phase, PhaseType, IconType, ModuleType } from "@/services/moduleService";
-import { Plus, Edit2, Trash2, AlertCircle } from "lucide-react";
+import { 
+  getModules, 
+  getPhasesByModuleId, 
+  createModule, 
+  updateModule, 
+  deleteModule, 
+  createPhase as createPhaseFunc, 
+  updatePhase as updatePhaseFunc, 
+  deletePhase, 
+  saveQuiz as saveQuizFunc,
+  getQuestionsByPhaseId as getQuestionsByPhaseIdFunc,
+  Phase,
+  PhaseType,
+  IconType,
+  ModuleType,
+  Module
+} from "@/services/moduleService";
+import { 
+  BarChart3, 
+  BrainCircuit, 
+  FilePlus, 
+  FileText, 
+  Calendar, 
+  Users, 
+  Star, 
+  Edit, 
+  Trash2, 
+  AlertCircle, 
+  Search, 
+  PlusCircle, 
+  Edit2
+} from "lucide-react";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
+import { useToast } from "@/hooks/use-toast";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import ProgressBar from "@/components/ProgressBar";
 
 const ModuleForm = ({ module, onSuccess }: {
   module?: {
@@ -156,7 +198,7 @@ const ModuleForm = ({ module, onSuccess }: {
 };
 
 const AdminPage = () => {
-  const { toast } = useToast();
+  const { toast: toastHook } = useToast();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("dashboard");
   const queryClient = useQueryClient();
@@ -169,8 +211,8 @@ const AdminPage = () => {
   const [phaseDescription, setPhaseDescription] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [content, setContent] = useState("");
-  const [phaseType, setPhaseType] = useState<"video" | "text" | "quiz" | "challenge">("text");
-  const [iconType, setIconType] = useState<"video" | "quiz" | "challenge" | "game">("video");
+  const [phaseType, setPhaseType] = useState<PhaseType>("text");
+  const [iconType, setIconType] = useState<IconType>("video");
   const [phaseDuration, setPhaseDuration] = useState<number>(15);
   
   const [editingQuiz, setEditingQuiz] = useState<{
@@ -273,14 +315,14 @@ const AdminPage = () => {
     mutationFn: createModule,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['modules'] });
-      toast({
+      toastHook({
         title: "Módulo adicionado",
         description: "O módulo foi adicionado com sucesso"
       });
       clearModuleForm();
     },
     onError: (error) => {
-      toast({
+      toastHook({
         title: "Erro ao adicionar módulo",
         description: error.message,
         variant: "destructive"
@@ -293,14 +335,14 @@ const AdminPage = () => {
       updateModule(id, module),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['modules'] });
-      toast({
+      toastHook({
         title: "Módulo atualizado",
         description: "O módulo foi atualizado com sucesso"
       });
       clearModuleForm();
     },
     onError: (error) => {
-      toast({
+      toastHook({
         title: "Erro ao atualizar módulo",
         description: error.message,
         variant: "destructive"
@@ -312,13 +354,13 @@ const AdminPage = () => {
     mutationFn: deleteModule,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['modules'] });
-      toast({
+      toastHook({
         title: "Módulo removido",
         description: "O módulo foi removido com sucesso"
       });
     },
     onError: (error) => {
-      toast({
+      toastHook({
         title: "Erro ao remover módulo",
         description: error.message,
         variant: "destructive"
@@ -327,17 +369,17 @@ const AdminPage = () => {
   });
 
   const createPhaseMutation = useMutation({
-    mutationFn: createPhase,
+    mutationFn: createPhaseFunc,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['phases', selectedModule] });
-      toast({
+      toastHook({
         title: "Fase adicionada",
         description: "A fase foi adicionada com sucesso ao módulo selecionado"
       });
       resetPhaseForm();
     },
     onError: (error) => {
-      toast({
+      toastHook({
         title: "Erro ao adicionar fase",
         description: error.message,
         variant: "destructive"
@@ -347,17 +389,17 @@ const AdminPage = () => {
 
   const updatePhaseMutation = useMutation({
     mutationFn: ({ id, phase }: { id: number; phase: Partial<Phase> }) => 
-      updatePhase(id, phase),
+      updatePhaseFunc(id, phase),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['phases'] });
-      toast({
+      toastHook({
         title: "Fase atualizada",
         description: "A fase foi atualizada com sucesso"
       });
       resetPhaseForm();
     },
     onError: (error) => {
-      toast({
+      toastHook({
         title: "Erro ao atualizar fase",
         description: error.message,
         variant: "destructive"
@@ -369,13 +411,13 @@ const AdminPage = () => {
     mutationFn: deletePhase,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['phases'] });
-      toast({
+      toastHook({
         title: "Fase removida",
         description: "A fase foi removida com sucesso"
       });
     },
     onError: (error) => {
-      toast({
+      toastHook({
         title: "Erro ao remover fase",
         description: error.message,
         variant: "destructive"
@@ -385,17 +427,17 @@ const AdminPage = () => {
 
   const saveQuizMutation = useMutation({
     mutationFn: ({ phaseId, questions }: { phaseId: number; questions: any[] }) =>
-      saveQuiz(phaseId, questions),
+      saveQuizFunc(phaseId, questions),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['questions'] });
-      toast({
+      toastHook({
         title: "Quiz salvo",
         description: "O quiz foi salvo com sucesso"
       });
       setEditingQuiz(null);
     },
     onError: (error) => {
-      toast({
+      toastHook({
         title: "Erro ao salvar quiz",
         description: error.message,
         variant: "destructive"
@@ -405,7 +447,7 @@ const AdminPage = () => {
 
   const handleAddPhase = () => {
     if (!phaseName || !phaseDescription) {
-      toast({
+      toastHook({
         title: "Campos incompletos",
         description: "Preencha pelo menos o nome e a descrição da fase",
         variant: "destructive"
@@ -425,15 +467,15 @@ const AdminPage = () => {
       order_index: phases.length
     };
     
-    createPhaseMutation.mutate(newPhase);
+    createPhaseMutation.mutate(newPhase as any);
   };
 
   const handleEditPhase = (phase: Phase) => {
     setEditingPhase(phase);
-    setSelectedModule(phase.module_id);
+    setSelectedModule(phase.module_id || 0);
     setPhaseName(phase.name);
     setPhaseDescription(phase.description || "");
-    setType(phase.type as PhaseType || "video");
+    setPhaseType(phase.type as PhaseType || "video");
     setIconType(phase.icon_type as IconType || "video");
     setVideoUrl(phase.video_url || "");
     setContent(phase.content || "");
@@ -443,7 +485,7 @@ const AdminPage = () => {
 
   const handleUpdatePhase = () => {
     if (!editingPhase || !phaseName || !phaseDescription) {
-      toast({
+      toastHook({
         title: "Campos incompletos",
         description: "Preencha pelo menos o nome e a descrição da fase",
         variant: "destructive"
@@ -481,7 +523,7 @@ const AdminPage = () => {
 
   const handleAddEvent = () => {
     if (!eventTitle || !eventDate || !eventDescription) {
-      toast({
+      toastHook({
         title: "Campos incompletos",
         description: "Preencha pelo menos o título, data e descrição do evento",
         variant: "destructive"
@@ -506,7 +548,7 @@ const AdminPage = () => {
     setEventDescription("");
     setEventLocation("");
     
-    toast({
+    toastHook({
       title: "Evento adicionado",
       description: "O evento foi adicionado com sucesso à comunidade"
     });
@@ -523,7 +565,7 @@ const AdminPage = () => {
 
   const handleUpdateModule = () => {
     if (!editingModule || !moduleName || !moduleDescription) {
-      toast({
+      toastHook({
         title: "Campos incompletos",
         description: "Preencha pelo menos o nome e a descrição do módulo",
         variant: "destructive"
@@ -554,7 +596,7 @@ const AdminPage = () => {
 
   const handleAddModule = () => {
     if (!moduleName || !moduleDescription) {
-      toast({
+      toastHook({
         title: "Campos incompletos",
         description: "Preencha pelo menos o nome e a descrição do módulo",
         variant: "destructive"
@@ -579,7 +621,7 @@ const AdminPage = () => {
 
   const handleQuizEdit = async (phaseId: number) => {
     try {
-      const questions = await getQuestionsByPhaseId(phaseId);
+      const questions = await getQuestionsByPhaseIdFunc(phaseId);
       
       if (questions.length > 0) {
         setEditingQuiz({
@@ -603,7 +645,7 @@ const AdminPage = () => {
       setActiveTab("quizzes");
     } catch (error) {
       console.error("Error fetching quiz questions:", error);
-      toast({
+      toastHook({
         title: "Erro",
         description: "Não foi possível carregar as perguntas do quiz",
         variant: "destructive"
@@ -619,7 +661,7 @@ const AdminPage = () => {
     );
     
     if (invalidQuestions.length > 0) {
-      toast({
+      toastHook({
         title: "Dados inválidos",
         description: "Preencha todas as perguntas e opções",
         variant: "destructive"
@@ -687,7 +729,7 @@ const AdminPage = () => {
 
   const deleteEvent = (id: number) => {
     setCommunityEvents(communityEvents.filter(event => event.id !== id));
-    toast({
+    toastHook({
       title: "Evento removido",
       description: "O evento foi removido com sucesso"
     });

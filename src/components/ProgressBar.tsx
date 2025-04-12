@@ -1,14 +1,16 @@
 
+import React from 'react';
+
 interface ProgressBarProps {
   progress: number;
   className?: string;
 }
 
-const ProgressBar = ({ progress, className = "" }: ProgressBarProps) => {
+const ProgressBar: React.FC<ProgressBarProps> = ({ progress, className = '' }) => {
   return (
-    <div className={`h-2 w-full bg-gray-200 rounded-full overflow-hidden ${className}`}>
-      <div 
-        className="h-full bg-trilha-orange transition-all duration-300"
+    <div className={`w-full bg-gray-200 rounded-full ${className}`}>
+      <div
+        className="bg-trilha-orange rounded-full h-full"
         style={{ width: `${progress}%` }}
       />
     </div>
