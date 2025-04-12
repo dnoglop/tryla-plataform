@@ -1,185 +1,249 @@
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
+import React, { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
-import { Profile } from "@/services/profileService";
+import UserLevel from "@/components/UserLevel";
+import BadgeItem from "@/components/BadgeItem";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { getProfile, updateProfile, Profile } from "@/services/profileService";
+import { toast } from "sonner";
 
 const ProfilePage = () => {
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [fullName, setFullName] = useState("");
-  const [username, setUsername] = useState("");
-  const [bio, setBio] = useState("");
-  const [linkedinUrl, setLinkedinUrl] = useState("");
-  const { toast } = useToast();
+  const [formData, setFormData] = useState({
+    full_name: "",
+    username: "",
+    bio: "",
+    avatar_url: "",
+    linkedin_url: ""
+  });
 
   useEffect(() => {
-    const getProfile = async () => {
+    const fetchUserProfile = async () => {
+      setIsLoading(true);
       try {
-        setLoading(true);
-        const { data: session } = await supabase.auth.getSession();
-        const user = session?.session?.user;
-
-        if (user) {
-          const { data: profileData, error } = await supabase
-            .from('profiles')
-            .select(`full_name, username, bio, avatar_url, linkedin_url`)
-            .eq('id', user.id)
-            .single();
-
-          if (error) {
-            throw error;
-          }
-
-          setProfile({
-            id: user.id,
-            full_name: profileData?.full_name || "",
-            username: profileData?.username || user.email?.split('@')[0] || "",
-            avatar_url: profileData?.avatar_url,
-            bio: profileData?.bio || "",
-            linkedin_url: profileData?.linkedin_url || "",
-            level: profileData?.level || 1,
-            xp: profileData?.xp || 0,
-          });
+        const session = await supabase.auth.getSession();
+        
+        if (session?.data?.session?.user?.id) {
+          const userId = session.data.session.user.id;
+          const userProfile = await getProfile(userId);
           
-          setFullName(profileData?.full_name || "");
-          setUsername(profileData?.username || user.email?.split('@')[0] || "");
-          setBio(profileData?.bio || "");
-          setLinkedinUrl(profileData?.linkedin_url || "");
+          if (userProfile) {
+            setProfile(userProfile);
+            setFormData({
+              full_name: userProfile.full_name || "",
+              username: userProfile.username || "",
+              bio: userProfile.bio || "",
+              avatar_url: userProfile.avatar_url || "",
+              linkedin_url: userProfile.linkedin_url || ""
+            });
+          }
         }
-      } catch (error: any) {
+      } catch (error) {
         console.error("Error fetching profile:", error);
-        toast({
-          title: "Erro",
-          description: error.message,
-          variant: "destructive",
-        });
+        toast.error("Não foi possível carregar seu perfil");
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
-    getProfile();
-  }, [toast]);
+    fetchUserProfile();
+  }, []);
 
-  const updateProfile = async () => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!profile) return;
+    
     try {
-      setLoading(true);
-      const { data: session } = await supabase.auth.getSession();
-      const user = session?.session?.user;
-
-      if (user) {
-        const updates = {
-          id: user.id,
-          full_name: fullName,
-          username: username,
-          bio: bio,
-          linkedin_url: linkedinUrl,
-          updated_at: new Date().toISOString(),
-        };
-
-        const { error } = await supabase.from('profiles').upsert(updates, {
-          returning: 'minimal', // Do not return the value after inserting
-        });
-
-        if (error) {
-          throw error;
-        }
-
-        setProfile(prev => ({ 
-          ...prev!, 
-          full_name: fullName, 
-          username: username,
-          bio: bio,
-          linkedin_url: linkedinUrl
-        }));
-
-        toast({
-          title: "Sucesso",
-          description: "Perfil atualizado com sucesso!",
-        });
+      const updatedProfile: Profile = {
+        ...profile,
+        full_name: formData.full_name,
+        username: formData.username,
+        bio: formData.bio,
+        linkedin_url: formData.linkedin_url
+      };
+      
+      const success = await updateProfile(updatedProfile);
+      
+      if (success) {
+        setProfile(updatedProfile);
+        setIsEditing(false);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error updating profile:", error);
-      toast({
-        title: "Erro",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+      toast.error("Falha ao atualizar perfil");
     }
   };
 
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      // Redirect will be handled by auth listeners in App.tsx
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast.error("Falha ao sair da conta");
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-trilha-orange border-t-transparent"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className="pb-16 min-h-screen bg-gray-50">
-      <Header title="Perfil" />
+    <div className="min-h-screen bg-gray-50 pb-16">
+      <Header title="Perfil" showBackButton={false} />
 
       <div className="container px-4 py-6">
-        {loading ? (
-          <div className="flex items-center justify-center h-48">
-            <div className="animate-spin rounded-full h-8 w-8 border-4 border-trilha-orange border-t-transparent"></div>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            <div className="space-y-1">
-              <Label htmlFor="username">Nome de usuário</Label>
-              <Input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Seu nome de usuário"
+        <div className="mb-6 text-center">
+          <div className="w-24 h-24 rounded-full mx-auto mb-3 bg-gray-300 overflow-hidden">
+            {profile?.avatar_url ? (
+              <img 
+                src={profile.avatar_url} 
+                alt="Foto de perfil" 
+                className="w-full h-full object-cover"
               />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-500 text-3xl">
+                👤
+              </div>
+            )}
+          </div>
+          <h2 className="text-xl font-bold">{profile?.full_name || "Usuário"}</h2>
+          <p className="text-gray-600 text-sm">@{profile?.username || "username"}</p>
+          
+          {profile?.level !== undefined && profile?.xp !== undefined && (
+            <UserLevel level={profile.level} xp={profile.xp} />
+          )}
+          
+          {!isEditing && (
+            <div className="mt-4">
+              <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                Editar Perfil
+              </Button>
             </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="fullName">Nome completo</Label>
+          )}
+        </div>
+        
+        {isEditing ? (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="full_name" className="block text-sm font-medium text-gray-700">
+                Nome completo
+              </label>
               <Input
-                id="fullName"
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
+                id="full_name"
+                name="full_name"
+                value={formData.full_name}
+                onChange={handleInputChange}
                 placeholder="Seu nome completo"
               />
             </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="bio">Sobre você</Label>
+            
+            <div>
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+                Nome de usuário
+              </label>
+              <Input
+                id="username"
+                name="username"
+                value={formData.username}
+                onChange={handleInputChange}
+                placeholder="Seu username"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="bio" className="block text-sm font-medium text-gray-700">
+                Biografia
+              </label>
               <Textarea
                 id="bio"
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                placeholder="Compartilhe um pouco sobre você"
-                rows={4}
+                name="bio"
+                value={formData.bio || ""}
+                onChange={handleInputChange}
+                placeholder="Conte um pouco sobre você"
+                rows={3}
               />
             </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="linkedin">LinkedIn URL</Label>
+            
+            <div>
+              <label htmlFor="linkedin_url" className="block text-sm font-medium text-gray-700">
+                LinkedIn URL
+              </label>
               <Input
-                id="linkedin"
-                type="url"
-                value={linkedinUrl}
-                onChange={(e) => setLinkedinUrl(e.target.value)}
-                placeholder="https://linkedin.com/in/seuperfil"
+                id="linkedin_url"
+                name="linkedin_url"
+                value={formData.linkedin_url || ""}
+                onChange={handleInputChange}
+                placeholder="https://linkedin.com/in/seu-perfil"
               />
             </div>
-
-            <Button onClick={updateProfile} disabled={loading} className="w-full bg-trilha-orange text-white hover:bg-trilha-orange/90">
-              {loading ? (
-                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-              ) : (
-                "Atualizar Perfil"
-              )}
-            </Button>
-          </div>
+            
+            <div className="flex gap-2 justify-end pt-4">
+              <Button type="button" variant="outline" onClick={() => setIsEditing(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit">
+                Salvar
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <>
+            {profile?.bio && (
+              <div className="mb-6">
+                <h3 className="font-medium mb-2">Sobre mim</h3>
+                <p className="text-gray-700">{profile.bio}</p>
+              </div>
+            )}
+            
+            {/* Achievements section */}
+            <div className="mb-6">
+              <h3 className="font-medium mb-3">Conquistas</h3>
+              <div className="grid grid-cols-3 gap-3">
+                <BadgeItem 
+                  name="Iniciante" 
+                  description="Completou a primeira fase" 
+                  isUnlocked={true} 
+                />
+                <BadgeItem 
+                  name="Consistente" 
+                  description="Acessou o app por 5 dias seguidos" 
+                  isUnlocked={false} 
+                />
+                <BadgeItem 
+                  name="Social" 
+                  description="Compartilhou progresso" 
+                  isUnlocked={false} 
+                />
+              </div>
+            </div>
+            
+            {/* Settings and logout */}
+            <div className="border-t pt-4">
+              <Button variant="outline" className="w-full justify-start text-red-500" onClick={handleSignOut}>
+                Sair da conta
+              </Button>
+            </div>
+          </>
         )}
       </div>
 

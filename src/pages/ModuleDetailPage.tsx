@@ -6,9 +6,7 @@ import BottomNavigation from "@/components/BottomNavigation";
 import PhaseCard from "@/components/PhaseCard";
 import ProgressBar from "@/components/ProgressBar";
 import { useQuery } from '@tanstack/react-query';
-import { getModuleById, getPhasesByModuleId, Phase } from "@/services/moduleService";
-
-type PhaseStatus = "available" | "inProgress" | "completed" | "locked";
+import { getModuleById, getPhasesByModuleId, Phase, PhaseStatus } from "@/services/moduleService";
 
 const ModuleDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -92,12 +90,12 @@ const ModuleDetailPage = () => {
           {phases.map((phase) => (
             <PhaseCard 
               key={`${phase.module_id}-${phase.id}`}
-              moduleId={phase.module_id}
+              moduleId={phase.module_id || moduleId}
               phaseId={phase.id}
               title={phase.name}
               description={phase.description}
               duration={phase.duration || 15}
-              status={phase.status as PhaseStatus || "available"}
+              status={phase.status || "available"}
               iconType={phase.icon_type || (phase.type === "quiz" ? "quiz" : 
                          phase.type === "video" ? "video" : "challenge")}
             />

@@ -1,45 +1,159 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useToast } from "@/components/ui/use-toast";
-import { 
-  Calendar, 
-  Edit, 
-  FilePlus, 
-  PlusCircle, 
-  Trash2, 
-  Video, 
-  Search,
-  BarChart3,
-  Users,
-  FileText,
-  BrainCircuit,
-  Star
-} from "lucide-react";
-import ProgressBar from "@/components/ProgressBar";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import AdminChart from "@/components/AdminChart";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  createModule, 
-  updateModule, 
-  deleteModule, 
-  getModules,
-  createPhase,
-  updatePhase,
-  deletePhase,
-  getPhasesByModuleId,
-  saveQuiz,
-  getQuestionsByPhaseId,
-  Module,
-  Phase
-} from "@/services/moduleService";
+import AdminChart from "@/components/AdminChart";
+import Header from "@/components/Header";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import PhaseForm from "@/components/PhaseForm";
+import { getModules, getPhasesByModuleId, createModule, updateModule, deleteModule, deletePhase, Phase, PhaseType, IconType, ModuleType } from "@/services/moduleService";
+import { Plus, Edit2, Trash2, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
+import { useForm } from "react-hook-form";
+
+const ModuleForm = ({ module, onSuccess }: {
+  module?: {
+    id: number;
+    name: string;
+    description?: string;
+    type?: string;
+    emoji?: string;
+    order_index: number;
+  };
+  onSuccess?: () => void;
+}) => {
+  const queryClient = useQueryClient();
+  const isEditing = !!module;
+  const [moduleType, setModuleType] = useState<ModuleType>(
+    (module?.type as ModuleType) || "autoconhecimento"
+  );
+
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
+    defaultValues: {
+      name: module?.name || "",
+      description: module?.description || "",
+      emoji: module?.emoji || "📚",
+      order_index: module?.order_index || 0
+    }
+  });
+
+  const createModuleMutation = useMutation({
+    mutationFn: createModule,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['modules'] });
+      toast.success("Módulo criado com sucesso!");
+      if (onSuccess) onSuccess();
+    },
+    onError: (error) => {
+      toast.error(`Erro ao criar módulo: ${error.message}`);
+    }
+  });
+
+  const updateModuleMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) => updateModule(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['modules'] });
+      toast.success("Módulo atualizado com sucesso!");
+      if (onSuccess) onSuccess();
+    },
+    onError: (error) => {
+      toast.error(`Erro ao atualizar módulo: ${error.message}`);
+    }
+  });
+
+  const onSubmit = async (data: any) => {
+    const moduleData = {
+      ...data,
+      type: moduleType
+    };
+
+    if (isEditing && module) {
+      updateModuleMutation.mutate({ id: module.id, data: moduleData });
+    } else {
+      createModuleMutation.mutate(moduleData as any);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div>
+        <Label htmlFor="name">Nome do módulo *</Label>
+        <Input
+          id="name"
+          placeholder="Digite o nome do módulo"
+          {...register("name", { required: "Nome é obrigatório" })}
+          className={errors.name ? "border-red-500" : ""}
+        />
+        {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message as string}</p>}
+      </div>
+
+      <div>
+        <Label htmlFor="description">Descrição</Label>
+        <Textarea
+          id="description"
+          placeholder="Breve descrição sobre o módulo"
+          {...register("description")}
+        />
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <div>
+          <Label htmlFor="emoji">Emoji</Label>
+          <Input
+            id="emoji"
+            placeholder="📚"
+            {...register("emoji")}
+          />
+          <p className="text-gray-500 text-xs mt-1">Um emoji representativo</p>
+        </div>
+
+        <div>
+          <Label htmlFor="type">Tipo de módulo</Label>
+          <Select 
+            value={moduleType} 
+            onValueChange={(value: ModuleType) => setModuleType(value)}
+          >
+            <SelectTrigger id="type">
+              <SelectValue placeholder="Selecione o tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="autoconhecimento">Autoconhecimento</SelectItem>
+              <SelectItem value="empatia">Empatia</SelectItem>
+              <SelectItem value="growth">Crescimento</SelectItem>
+              <SelectItem value="comunicacao">Comunicação</SelectItem>
+              <SelectItem value="futuro">Futuro</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label htmlFor="order_index">Ordem</Label>
+          <Input
+            id="order_index"
+            type="number"
+            placeholder="0"
+            {...register("order_index", { 
+              valueAsNumber: true,
+              min: { value: 0, message: "Ordem mínima de 0" },
+            })}
+          />
+          {errors.order_index && <p className="text-red-500 text-sm mt-1">{errors.order_index.message as string}</p>}
+        </div>
+      </div>
+
+      <div className="flex justify-end space-x-2 pt-4">
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Salvando..." : isEditing ? "Atualizar" : "Criar Módulo"}
+        </Button>
+      </div>
+    </form>
+  );
+};
 
 const AdminPage = () => {
   const { toast } = useToast();
@@ -586,7 +700,15 @@ const AdminPage = () => {
   const getPhaseNameById = (id: number) => {
     return phases.find(p => p.id === id)?.name || "Fase Desconhecida";
   };
-  
+
+  const handlePhaseTypeChange = (value: PhaseType) => {
+    setPhaseType(value);
+  };
+
+  const handleIconTypeChange = (value: IconType) => {
+    setIconType(value);
+  };
+
   return (
     <div className="container px-4 py-6 min-h-screen bg-gray-50">
       <div className="flex justify-between items-center mb-6">
@@ -723,70 +845,13 @@ const AdminPage = () => {
                   {editingModule ? "Editar Módulo" : "Adicionar Módulo"}
                 </h2>
                 
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="moduleName">Nome do Módulo</Label>
-                    <Input
-                      id="moduleName"
-                      placeholder="Ex: Autoconhecimento"
-                      value={moduleName}
-                      onChange={(e) => setModuleName(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="moduleDescription">Descrição</Label>
-                    <Textarea
-                      id="moduleDescription"
-                      placeholder="Ex: Conheça suas forças, fraquezas e o que te move"
-                      value={moduleDescription}
-                      onChange={(e) => setModuleDescription(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="moduleType">Tipo</Label>
-                    <select
-                      id="moduleType"
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                      value={moduleType}
-                      onChange={(e) => setModuleType(e.target.value)}
-                    >
-                      <option value="autoconhecimento">Autoconhecimento</option>
-                      <option value="empatia">Empatia</option>
-                      <option value="growth">Growth Mindset</option>
-                      <option value="comunicacao">Comunicação</option>
-                      <option value="futuro">Módulo Futuro</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="moduleEmoji">Emoji</Label>
-                    <Input
-                      id="moduleEmoji"
-                      placeholder="Ex: 🧠"
-                      value={moduleEmoji}
-                      onChange={(e) => setModuleEmoji(e.target.value)}
-                    />
-                  </div>
-                  
-                  <Button 
-                    onClick={editingModule ? handleUpdateModule : handleAddModule} 
-                    className="w-full bg-trilha-orange hover:bg-trilha-orange/90"
-                  >
-                    {editingModule ? "Atualizar Módulo" : "Adicionar Módulo"}
-                  </Button>
-                  
-                  {editingModule && (
-                    <Button 
-                      variant="outline"
-                      onClick={clearModuleForm}
-                      className="w-full"
-                    >
-                      Cancelar Edição
-                    </Button>
-                  )}
-                </div>
+                <ModuleForm
+                  module={editingModule}
+                  onSuccess={() => {
+                    setActiveTab("modulos");
+                    clearModuleForm();
+                  }}
+                />
               </Card>
             </div>
             
@@ -917,7 +982,7 @@ const AdminPage = () => {
                       id="phaseType"
                       className="w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                       value={phaseType}
-                      onChange={(e) => setPhaseType(e.target.value as "video" | "text" | "quiz" | "challenge")}
+                      onChange={(e) => handlePhaseTypeChange(e.target.value as PhaseType)}
                     >
                       <option value="text">Texto</option>
                       <option value="video">Vídeo</option>
@@ -932,7 +997,7 @@ const AdminPage = () => {
                       id="iconType"
                       className="w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                       value={iconType}
-                      onChange={(e) => setIconType(e.target.value as "video" | "quiz" | "challenge" | "game")}
+                      onChange={(e) => handleIconTypeChange(e.target.value as IconType)}
                     >
                       <option value="video">Vídeo</option>
                       <option value="quiz">Quiz</option>

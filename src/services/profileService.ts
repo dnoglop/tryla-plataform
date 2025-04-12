@@ -4,28 +4,24 @@ import { toast } from "sonner";
 
 export interface Profile {
   id: string;
-  username: string;
   full_name: string;
-  avatar_url: string | null;
-  bio: string | null;
-  level: number;
-  xp: number;
-  linkedin_url: string | null;
+  username: string;
+  bio: string;
+  avatar_url: string;
+  linkedin_url: string;
+  level?: number;
+  xp?: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
-export const getCurrentProfile = async (): Promise<Profile | null> => {
+export const getProfile = async (userId: string): Promise<Profile | null> => {
   try {
-    const { data: session } = await supabase.auth.getSession();
-    
-    if (!session.session?.user) {
-      return null;
-    }
-    
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
-      .eq("id", session.session.user.id)
-      .maybeSingle();
+      .eq("id", userId)
+      .single();
     
     if (error) {
       console.error("Error fetching profile:", error);
@@ -34,86 +30,71 @@ export const getCurrentProfile = async (): Promise<Profile | null> => {
     
     return data as Profile;
   } catch (error) {
-    console.error("Error in getCurrentProfile:", error);
+    console.error("Exception while fetching profile:", error);
     return null;
   }
 };
 
-export const updateProfile = async (profile: Partial<Profile>): Promise<boolean> => {
+export const updateProfile = async (profile: Profile): Promise<boolean> => {
   try {
-    const { data: session } = await supabase.auth.getSession();
-    
-    if (!session.session?.user) {
-      toast.error("Usuário não autenticado");
-      return false;
-    }
-    
     const { error } = await supabase
       .from("profiles")
-      .update(profile)
-      .eq("id", session.session.user.id);
+      .update({
+        full_name: profile.full_name,
+        username: profile.username,
+        bio: profile.bio,
+        avatar_url: profile.avatar_url,
+        linkedin_url: profile.linkedin_url,
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", profile.id);
     
     if (error) {
-      console.error("Error updating profile:", error);
-      toast.error("Erro ao atualizar perfil: " + error.message);
+      toast.error(`Erro ao atualizar perfil: ${error.message}`);
       return false;
     }
     
     toast.success("Perfil atualizado com sucesso!");
     return true;
   } catch (error) {
-    console.error("Error in updateProfile:", error);
-    toast.error("Erro ao atualizar perfil");
+    console.error("Exception while updating profile:", error);
+    toast.error("Falha ao atualizar perfil. Tente novamente.");
     return false;
   }
 };
 
-export const uploadAvatar = async (file: File): Promise<string | null> => {
+export const uploadAvatar = async (userId: string, file: File): Promise<string | null> => {
   try {
-    const { data: session } = await supabase.auth.getSession();
-    
-    if (!session.session?.user) {
-      toast.error("Usuário não autenticado");
-      return null;
-    }
-    
-    const userId = session.session.user.id;
     const fileExt = file.name.split('.').pop();
-    const fileName = `${userId}-${Date.now()}.${fileExt}`;
+    const fileName = `${userId}-${Math.random()}.${fileExt}`;
     const filePath = `avatars/${fileName}`;
     
-    // Fazer upload para o Storage
     const { error: uploadError } = await supabase.storage
-      .from("avatars")
+      .from('profiles')
       .upload(filePath, file);
     
     if (uploadError) {
-      console.error("Error uploading avatar:", uploadError);
-      toast.error("Erro ao fazer upload da imagem");
+      toast.error(`Erro ao fazer upload da imagem: ${uploadError.message}`);
       return null;
     }
     
-    // Obter a URL pública da imagem
-    const { data: urlData } = supabase.storage
-      .from("avatars")
+    // Get public URL
+    const { data } = supabase.storage
+      .from('profiles')
       .getPublicUrl(filePath);
     
-    // Atualizar o perfil com a nova URL do avatar
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({ avatar_url: urlData.publicUrl })
-      .eq("id", userId);
+    if (!data) return null;
     
-    if (updateError) {
-      console.error("Error updating profile with avatar:", updateError);
-      toast.error("Erro ao atualizar foto de perfil");
-      return null;
-    }
-    
-    return urlData.publicUrl;
+    return data.publicUrl;
   } catch (error) {
-    console.error("Error in uploadAvatar:", error);
-    toast.error("Erro ao fazer upload da imagem");
+    console.error("Exception while uploading avatar:", error);
+    toast.error("Falha ao fazer upload da imagem. Tente novamente.");
     return null;
   }
+};
+
+export default {
+  getProfile,
+  updateProfile,
+  uploadAvatar
 };

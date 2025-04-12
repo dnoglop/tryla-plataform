@@ -27,11 +27,14 @@ export interface Phase {
   content?: string;
   video_url?: string;
   video_notes?: string;
+  videoId?: string;
+  images?: string[];
   duration?: number;
   order_index: number;
   module_id?: number;
   created_at?: string;
   updated_at?: string;
+  status?: PhaseStatus;
 }
 
 export interface Question {
@@ -196,7 +199,13 @@ export const getPhasesByModuleId = async (moduleId: number): Promise<Phase[]> =>
     // Em uma implementação mais completa, buscaríamos o status real do user_phase_progress
     const phasesWithStatus = (data || []).map(phase => ({
       ...phase,
-      status: "available" as PhaseStatus
+      status: "available" as PhaseStatus,
+      // Process video_url to extract videoId if present
+      videoId: phase.video_url ? extractVideoId(phase.video_url) : undefined,
+      // Convert video_notes to videoNotes for consistency
+      videoNotes: phase.video_notes,
+      // For now, no images in the database, so we'll leave it undefined
+      images: []
     }));
     
     // Cast para garantir o tipo correto
@@ -224,8 +233,21 @@ export const getPhaseById = async (id: number): Promise<Phase | null> => {
       throw error;
     }
     
-    // Cast para garantir o tipo correto
-    return data as unknown as Phase;
+    if (!data) return null;
+    
+    // Process the phase data to match our expected Phase interface
+    const processedPhase: Phase = {
+      ...data,
+      status: "available" as PhaseStatus,
+      // Process video_url to extract videoId if present
+      videoId: data.video_url ? extractVideoId(data.video_url) : undefined,
+      // Convert video_notes to videoNotes for consistency
+      videoNotes: data.video_notes,
+      // For now, no images in the database, so we'll leave it as an empty array
+      images: []
+    };
+    
+    return processedPhase;
   } catch (error) {
     console.error(`Error fetching phase with id ${id}:`, error);
     return null;
@@ -554,3 +576,18 @@ export const updateUserPhaseStatus = async (userId: string, phaseId: number, sta
     return false;
   }
 };
+
+// Helper function to extract YouTube video ID from a URL
+function extractVideoId(url: string): string | undefined {
+  if (!url) return undefined;
+  
+  // Handle youtu.be format
+  if (url.includes('youtu.be/')) {
+    const id = url.split('youtu.be/')[1];
+    return id.split('?')[0].split('&')[0];
+  }
+  
+  // Handle youtube.com format
+  const videoIdMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+  return videoIdMatch ? videoIdMatch[1] : undefined;
+}

@@ -1,30 +1,13 @@
+
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { YoutubeEmbed } from "@/components/YoutubeEmbed";
+import YoutubeEmbed from "@/components/YoutubeEmbed";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
-import { getPhase } from "@/services/moduleService";
-
-interface PhaseDetailPageParams {
-  moduleId: string;
-  phaseId: string;
-}
-
-interface Phase {
-  id: number;
-  name: string;
-  description?: string;
-  type?: string;
-  icon_type?: string;
-  content?: string;
-  videoUrl?: string;
-  videoNotes?: string;
-  videoId?: string;
-  images?: string[];
-}
+import { getPhase, Phase } from "@/services/moduleService";
 
 const PhaseDetailPage = () => {
-  const { moduleId, phaseId } = useParams<PhaseDetailPageParams>();
+  const { moduleId, phaseId } = useParams<{ moduleId: string; phaseId: string }>();
   const navigate = useNavigate();
   const [selectedPhase, setSelectedPhase] = useState<Phase | null>(null);
   const [loading, setLoading] = useState(true);
