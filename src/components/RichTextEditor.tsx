@@ -10,7 +10,9 @@ interface RichTextEditorProps {
 
 const RichTextEditor = ({ value, onChange, height = 400 }: RichTextEditorProps) => {
   const editorRef = useRef<any>(null);
-  const apiKey = process.env.VITE_TINYMCE_API_KEY || "no-api-key";
+  
+  // Get the API key from environment variables
+  const apiKey = import.meta.env.VITE_TINYMCE_API_KEY || "no-api-key";
   
   return (
     <Editor
@@ -18,7 +20,7 @@ const RichTextEditor = ({ value, onChange, height = 400 }: RichTextEditorProps) 
       onInit={(evt, editor) => (editorRef.current = editor)}
       initialValue={value}
       value={value}
-      onEditorChange={onChange}
+      onEditorChange={(newContent) => onChange(newContent)}
       init={{
         height,
         menubar: true,
@@ -35,8 +37,8 @@ const RichTextEditor = ({ value, onChange, height = 400 }: RichTextEditorProps) 
         file_picker_types: "image",
         automatic_uploads: true,
         images_upload_handler: async function (blobInfo) {
-          // Em uma implementação real, você enviaria esta imagem para o Supabase Storage
-          // e retornaria a URL. Para este exemplo, convertemos para base64.
+          // In a real implementation, you would upload this image to Supabase Storage
+          // and return the URL. For this example, we convert to base64.
           return new Promise((resolve) => {
             const reader = new FileReader();
             reader.onloadend = () => {

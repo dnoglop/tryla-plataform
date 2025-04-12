@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { createPhase, updatePhase, PhaseType, IconType } from "@/services/moduleService";
 import RichTextEditor from "./RichTextEditor";
+import YoutubeEmbed from "./YoutubeEmbed";
 
 interface PhaseFormProps {
   moduleId: number;
@@ -38,6 +39,7 @@ const PhaseForm = ({ moduleId, phase, onSuccess, onCancel }: PhaseFormProps) => 
   const [iconType, setIconType] = useState<IconType>(
     (phase?.icon_type as IconType) || "challenge"
   );
+  const [videoUrl, setVideoUrl] = useState(phase?.video_url || "");
 
   const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm({
     defaultValues: {
@@ -46,12 +48,14 @@ const PhaseForm = ({ moduleId, phase, onSuccess, onCancel }: PhaseFormProps) => 
       type: phase?.type || "text",
       icon_type: phase?.icon_type || "challenge",
       video_url: phase?.video_url || "",
-      video_notes: phase?.video_notes || "",
       duration: phase?.duration || 15,
       order_index: phase?.order_index || 0
     }
   });
 
+  // Update watched video URL for preview
+  const watchedVideoUrl = watch("video_url");
+  
   useEffect(() => {
     if (phase) {
       setValue("name", phase.name || "");
@@ -59,15 +63,19 @@ const PhaseForm = ({ moduleId, phase, onSuccess, onCancel }: PhaseFormProps) => 
       setValue("type", phase.type || "text");
       setValue("icon_type", phase.icon_type || "challenge");
       setValue("video_url", phase.video_url || "");
-      setValue("video_notes", phase.video_notes || "");
       setValue("duration", phase.duration || 15);
       setValue("order_index", phase.order_index || 0);
       setContent(phase.content || "");
       setVideoNotes(phase.video_notes || "");
       setPhaseType((phase.type as PhaseType) || "text");
       setIconType((phase.icon_type as IconType) || "challenge");
+      setVideoUrl(phase.video_url || "");
     }
   }, [phase, setValue]);
+
+  useEffect(() => {
+    setVideoUrl(watchedVideoUrl);
+  }, [watchedVideoUrl]);
 
   const onSubmit = async (data: any) => {
     try {
@@ -225,6 +233,15 @@ const PhaseForm = ({ moduleId, phase, onSuccess, onCancel }: PhaseFormProps) => 
               />
               <p className="text-gray-500 text-xs mt-1">Coloque o link completo do YouTube</p>
             </div>
+            
+            {videoUrl && (
+              <div className="mt-4">
+                <Label>Pré-visualização:</Label>
+                <div className="mt-2">
+                  <YoutubeEmbed videoId={videoUrl} />
+                </div>
+              </div>
+            )}
 
             <div>
               <Label htmlFor="video_notes">Anotações sobre o vídeo</Label>

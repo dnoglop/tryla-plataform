@@ -10,24 +10,38 @@ const YoutubeEmbed = ({ videoId, className = "" }: YoutubeEmbedProps) => {
   const [id, setId] = useState<string>(videoId);
 
   useEffect(() => {
+    // Don't process if the videoId is empty
+    if (!videoId) return;
+    
     // Parse video ID from different YouTube URL formats
     if (videoId.includes("youtube.com") || videoId.includes("youtu.be")) {
-      const url = new URL(videoId);
-      
-      if (videoId.includes("youtube.com/watch")) {
-        // Format: https://www.youtube.com/watch?v=VIDEO_ID
-        const params = new URLSearchParams(url.search);
-        const extractedId = params.get("v");
-        if (extractedId) setId(extractedId);
-      } else if (videoId.includes("youtu.be")) {
-        // Format: https://youtu.be/VIDEO_ID
-        setId(url.pathname.substring(1));
-      } else if (videoId.includes("youtube.com/embed")) {
-        // Format: https://www.youtube.com/embed/VIDEO_ID
-        setId(url.pathname.split("/").pop() || "");
+      try {
+        const url = new URL(videoId);
+        
+        if (videoId.includes("youtube.com/watch")) {
+          // Format: https://www.youtube.com/watch?v=VIDEO_ID
+          const params = new URLSearchParams(url.search);
+          const extractedId = params.get("v");
+          if (extractedId) setId(extractedId);
+        } else if (videoId.includes("youtu.be")) {
+          // Format: https://youtu.be/VIDEO_ID
+          setId(url.pathname.substring(1));
+        } else if (videoId.includes("youtube.com/embed")) {
+          // Format: https://www.youtube.com/embed/VIDEO_ID
+          setId(url.pathname.split("/").pop() || "");
+        }
+      } catch (error) {
+        console.error("Error parsing YouTube URL:", error);
+        // If URL parsing fails, use the original ID
+        setId(videoId);
       }
+    } else {
+      // If not a URL, assume it's the video ID directly
+      setId(videoId);
     }
   }, [videoId]);
+
+  if (!id) return null;
 
   const embedUrl = `https://www.youtube.com/embed/${id}`;
   
