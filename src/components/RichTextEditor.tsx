@@ -10,10 +10,11 @@ interface RichTextEditorProps {
 
 const RichTextEditor = ({ value, onChange, height = 400 }: RichTextEditorProps) => {
   const editorRef = useRef<any>(null);
-
+  const apiKey = process.env.VITE_TINYMCE_API_KEY || "no-api-key";
+  
   return (
     <Editor
-      apiKey="no-api-key"
+      apiKey={apiKey}
       onInit={(evt, editor) => (editorRef.current = editor)}
       initialValue={value}
       value={value}

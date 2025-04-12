@@ -31,6 +31,7 @@ interface PhaseFormProps {
 const PhaseForm = ({ moduleId, phase, onSuccess, onCancel }: PhaseFormProps) => {
   const isEditing = !!phase;
   const [content, setContent] = useState(phase?.content || "");
+  const [videoNotes, setVideoNotes] = useState(phase?.video_notes || "");
   const [phaseType, setPhaseType] = useState<PhaseType>(
     (phase?.type as PhaseType) || "text"
   );
@@ -62,6 +63,7 @@ const PhaseForm = ({ moduleId, phase, onSuccess, onCancel }: PhaseFormProps) => 
       setValue("duration", phase.duration || 15);
       setValue("order_index", phase.order_index || 0);
       setContent(phase.content || "");
+      setVideoNotes(phase.video_notes || "");
       setPhaseType((phase.type as PhaseType) || "text");
       setIconType((phase.icon_type as IconType) || "challenge");
     }
@@ -77,7 +79,7 @@ const PhaseForm = ({ moduleId, phase, onSuccess, onCancel }: PhaseFormProps) => 
         icon_type: iconType,
         content,
         video_url: data.video_url,
-        video_notes: data.video_notes,
+        video_notes: videoNotes,
         duration: Number(data.duration),
         order_index: Number(data.order_index),
       };
@@ -227,7 +229,7 @@ const PhaseForm = ({ moduleId, phase, onSuccess, onCancel }: PhaseFormProps) => 
             <div>
               <Label htmlFor="video_notes">Anotações sobre o vídeo</Label>
               <div className="mt-1 border rounded-md">
-                <RichTextEditor value={content} onChange={setContent} height={250} />
+                <RichTextEditor value={videoNotes} onChange={setVideoNotes} height={250} />
               </div>
             </div>
           </>
