@@ -241,10 +241,10 @@ export const getPhaseById = async (id: number): Promise<Phase | null> => {
       status: "available" as PhaseStatus,
       // Process video_url to extract videoId if present
       videoId: data.video_url ? extractVideoId(data.video_url) : undefined,
-      // Convert video_notes to videoNotes for consistency
-      video_notes: data.video_notes,
       // For now, no images in the database, so we'll leave it as an empty array
-      images: []
+      images: [],
+      // Ensure type is properly cast as PhaseType
+      type: data.type as PhaseType,
     };
     
     return processedPhase;

@@ -125,7 +125,13 @@ const RewardsPage = () => {
           <TabsContent value="badges" className="space-y-4">
             <div className="grid grid-cols-1 gap-4">
               {badges.map((badge) => (
-                <BadgeItem key={badge.id} {...badge} />
+                <BadgeItem 
+                  key={badge.id} 
+                  title={badge.title}
+                  description={badge.description}
+                  earned={badge.earned}
+                  icon={badge.icon}
+                />
               ))}
             </div>
           </TabsContent>

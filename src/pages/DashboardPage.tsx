@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Zap } from "lucide-react";
@@ -15,15 +14,14 @@ const DashboardPage = () => {
   const { toast } = useToast();
   const [dailyCompleted, setDailyCompleted] = useState(false);
 
-  // Fetch modules from Supabase
   const { data: modules = [], isLoading } = useQuery({
     queryKey: ['modules'],
     queryFn: getModules,
     select: (data) => data.map((module, index) => ({
       ...module,
-      progress: index === 0 ? 75 : index === 1 ? 25 : 0, // Example progress
+      progress: index === 0 ? 75 : index === 1 ? 25 : 0,
       completed: false,
-      locked: index > 1, // Lock all except first two modules
+      locked: index > 1,
     })),
   });
 
@@ -65,7 +63,7 @@ const DashboardPage = () => {
 
           <div className="flex-1">
             <h2 className="font-bold">Olá, Explorador(a)!</h2>
-            <UserLevel level={5} currentXP={350} nextLevelXP={500} />
+            <UserLevel level={5} xp={350} nextLevelXp={500} />
           </div>
         </div>
 

@@ -4,12 +4,13 @@ import React from 'react';
 export interface UserLevelProps {
   level: number;
   xp: number;
+  nextLevelXp?: number; // Make this optional with a default calculation
 }
 
-const UserLevel: React.FC<UserLevelProps> = ({ level, xp }) => {
+const UserLevel: React.FC<UserLevelProps> = ({ level, xp, nextLevelXp }) => {
   // Calculate progress to next level (example: 75% progress)
-  const nextLevelXp = level * 100; // Example calculation
-  const progress = Math.min(Math.floor((xp / nextLevelXp) * 100), 100);
+  const calculatedNextLevelXp = nextLevelXp || level * 100; // Use provided value or calculate
+  const progress = Math.min(Math.floor((xp / calculatedNextLevelXp) * 100), 100);
 
   return (
     <div className="mt-2">
