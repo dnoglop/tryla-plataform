@@ -34,11 +34,16 @@ const RichTextEditor = ({ value, onChange, height = 400 }: RichTextEditorProps) 
         file_picker_types: "image",
         automatic_uploads: true,
         images_upload_handler: async (blobInfo, success, failure) => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            success(reader.result as string);
-          };
-          reader.readAsDataURL(blobInfo.blob());
+          try {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              success(reader.result as string);
+            };
+            reader.readAsDataURL(blobInfo.blob());
+          } catch (error) {
+            console.error('Error uploading image:', error);
+            failure('Image upload failed');
+          }
         },
       }}
     />

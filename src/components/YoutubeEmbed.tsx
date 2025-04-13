@@ -7,11 +7,14 @@ interface YoutubeEmbedProps {
 }
 
 const YoutubeEmbed = ({ videoId, className = "" }: YoutubeEmbedProps) => {
-  const [id, setId] = useState<string>(videoId);
+  const [id, setId] = useState<string>("");
 
   useEffect(() => {
     // Don't process if the videoId is empty
-    if (!videoId) return;
+    if (!videoId) {
+      setId("");
+      return;
+    }
     
     // Parse video ID from different YouTube URL formats
     if (videoId.includes("youtube.com") || videoId.includes("youtu.be")) {
@@ -33,7 +36,11 @@ const YoutubeEmbed = ({ videoId, className = "" }: YoutubeEmbedProps) => {
       } catch (error) {
         console.error("Error parsing YouTube URL:", error);
         // If URL parsing fails, use the original ID
-        setId(videoId);
+        if (!videoId.includes("http")) {
+          setId(videoId);
+        } else {
+          setId("");
+        }
       }
     } else {
       // If not a URL, assume it's the video ID directly
@@ -41,7 +48,7 @@ const YoutubeEmbed = ({ videoId, className = "" }: YoutubeEmbedProps) => {
     }
   }, [videoId]);
 
-  if (!id) return null;
+  if (!id) return <div className="p-4 text-center text-gray-500">Digite uma URL válida do YouTube</div>;
 
   const embedUrl = `https://www.youtube.com/embed/${id}`;
   

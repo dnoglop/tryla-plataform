@@ -207,7 +207,7 @@ const PhaseForm = ({ moduleId, phase, onSuccess, onCancel }: PhaseFormProps) => 
         {phaseType === "text" && (
           <div>
             <Label htmlFor="content">Conteúdo</Label>
-            <div className="mt-1 border rounded-md">
+            <div className="mt-1 border rounded-md overflow-hidden">
               <RichTextEditor value={content} onChange={setContent} />
             </div>
           </div>
@@ -216,7 +216,7 @@ const PhaseForm = ({ moduleId, phase, onSuccess, onCancel }: PhaseFormProps) => 
         {phaseType === "challenge" && (
           <div>
             <Label htmlFor="content">Conteúdo do Desafio</Label>
-            <div className="mt-1 border rounded-md">
+            <div className="mt-1 border rounded-md overflow-hidden">
               <RichTextEditor value={content} onChange={setContent} />
             </div>
           </div>
@@ -245,7 +245,7 @@ const PhaseForm = ({ moduleId, phase, onSuccess, onCancel }: PhaseFormProps) => 
 
             <div>
               <Label htmlFor="video_notes">Anotações sobre o vídeo</Label>
-              <div className="mt-1 border rounded-md">
+              <div className="mt-1 border rounded-md overflow-hidden">
                 <RichTextEditor value={videoNotes} onChange={setVideoNotes} height={250} />
               </div>
             </div>

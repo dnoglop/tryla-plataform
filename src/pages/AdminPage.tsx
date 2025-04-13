@@ -983,125 +983,15 @@ const AdminPage = () => {
                   {editingPhase ? "Editar Fase" : "Adicionar Nova Fase"}
                 </h2>
                 
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="module">Módulo</Label>
-                    <select
-                      id="module"
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                      value={selectedModule}
-                      onChange={(e) => setSelectedModule(Number(e.target.value))}
-                    >
-                      {modules.map((module) => (
-                        <option key={module.id} value={module.id}>{module.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="phaseName">Nome da Fase</Label>
-                    <Input
-                      id="phaseName"
-                      placeholder="Ex: Introdução ao Autoconhecimento"
-                      value={phaseName}
-                      onChange={(e) => setPhaseName(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="phaseDescription">Descrição</Label>
-                    <Textarea
-                      id="phaseDescription"
-                      placeholder="Ex: Nesta fase você vai aprender sobre..."
-                      value={phaseDescription}
-                      onChange={(e) => setPhaseDescription(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="phaseType">Tipo de Conteúdo</Label>
-                    <select
-                      id="phaseType"
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                      value={phaseType}
-                      onChange={(e) => handlePhaseTypeChange(e.target.value as PhaseType)}
-                    >
-                      <option value="text">Texto</option>
-                      <option value="video">Vídeo</option>
-                      <option value="quiz">Quiz</option>
-                      <option value="challenge">Desafio</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="iconType">Tipo de Ícone</Label>
-                    <select
-                      id="iconType"
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                      value={iconType}
-                      onChange={(e) => handleIconTypeChange(e.target.value as IconType)}
-                    >
-                      <option value="video">Vídeo</option>
-                      <option value="quiz">Quiz</option>
-                      <option value="challenge">Desafio</option>
-                      <option value="game">Jogo</option>
-                    </select>
-                  </div>
-                  
-                  {phaseType === "video" && (
-                    <div>
-                      <Label htmlFor="videoUrl">URL do Vídeo</Label>
-                      <Input
-                        id="videoUrl"
-                        placeholder="Ex: https://www.youtube.com/watch?v=..."
-                        value={videoUrl}
-                        onChange={(e) => setVideoUrl(e.target.value)}
-                      />
-                    </div>
-                  )}
-                  
-                  {(phaseType === "text" || phaseType === "challenge") && (
-                    <div>
-                      <Label htmlFor="content">Conteúdo</Label>
-                      <Textarea
-                        id="content"
-                        placeholder="Insira o conteúdo aqui..."
-                        value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                        rows={8}
-                      />
-                    </div>
-                  )}
-                  
-                  <div>
-                    <Label htmlFor="duration">Duração Estimada (minutos)</Label>
-                    <Input
-                      id="duration"
-                      type="number"
-                      min="1"
-                      placeholder="15"
-                      value={phaseDuration}
-                      onChange={(e) => setPhaseDuration(Number(e.target.value))}
-                    />
-                  </div>
-                  
-                  <Button 
-                    onClick={editingPhase ? handleUpdatePhase : handleAddPhase} 
-                    className="w-full bg-trilha-orange hover:bg-trilha-orange/90"
-                  >
-                    {editingPhase ? "Atualizar Fase" : "Adicionar Fase"}
-                  </Button>
-                  
-                  {editingPhase && (
-                    <Button 
-                      variant="outline"
-                      onClick={resetPhaseForm}
-                      className="w-full"
-                    >
-                      Cancelar Edição
-                    </Button>
-                  )}
-                </div>
+                <PhaseForm
+                  moduleId={selectedModule}
+                  phase={editingPhase || undefined}
+                  onSuccess={() => {
+                    refetchPhases();
+                    resetPhaseForm();
+                  }}
+                  onCancel={resetPhaseForm}
+                />
               </Card>
             </div>
             
