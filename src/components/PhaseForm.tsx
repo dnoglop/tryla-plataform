@@ -1,15 +1,12 @@
 
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { createPhase, updatePhase, PhaseType, IconType } from "@/services/moduleService";
-import RichTextEditor from "./RichTextEditor";
-import YoutubeEmbed from "./YoutubeEmbed";
+import FormHeader from "./phase-form/FormHeader";
+import TextContent from "./phase-form/TextContent";
+import VideoContent from "./phase-form/VideoContent";
+import FormFooter from "./phase-form/FormFooter";
 
 interface PhaseFormProps {
   moduleId: number;
@@ -107,158 +104,66 @@ const PhaseForm = ({ moduleId, phase, onSuccess, onCancel }: PhaseFormProps) => 
     }
   };
 
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setValue("name", e.target.value);
+  };
+
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setValue("description", e.target.value);
+  };
+
+  const handleDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setValue("duration", parseInt(e.target.value) || 15);
+  };
+
+  const handleOrderIndexChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setValue("order_index", parseInt(e.target.value) || 0);
+  };
+
+  const handleVideoUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setValue("video_url", e.target.value);
+  };
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="space-y-4">
-        <div>
-          <Label htmlFor="name">Nome da fase *</Label>
-          <Input
-            id="name"
-            placeholder="Digite o nome da fase"
-            {...register("name", { required: "Nome é obrigatório" })}
-            className={errors.name ? "border-red-500" : ""}
-          />
-          {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message as string}</p>}
-        </div>
+      <FormHeader
+        name={watch("name")}
+        description={watch("description")}
+        phaseType={phaseType}
+        iconType={iconType}
+        duration={watch("duration")}
+        orderIndex={watch("order_index")}
+        onNameChange={handleNameChange}
+        onDescriptionChange={handleDescriptionChange}
+        onPhaseTypeChange={setPhaseType}
+        onIconTypeChange={setIconType}
+        onDurationChange={handleDurationChange}
+        onOrderIndexChange={handleOrderIndexChange}
+        errors={errors}
+      />
 
-        <div>
-          <Label htmlFor="description">Descrição</Label>
-          <Textarea
-            id="description"
-            placeholder="Breve descrição sobre a fase"
-            {...register("description")}
-          />
-        </div>
+      {phaseType === "text" && (
+        <TextContent content={content} onChange={setContent} />
+      )}
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="type">Tipo de fase *</Label>
-            <Select 
-              value={phaseType} 
-              onValueChange={(value: PhaseType) => {
-                setPhaseType(value);
-                setValue("type", value);
-              }}
-            >
-              <SelectTrigger id="type">
-                <SelectValue placeholder="Selecione o tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="text">Conteúdo de texto</SelectItem>
-                <SelectItem value="video">Vídeo</SelectItem>
-                <SelectItem value="quiz">Quiz</SelectItem>
-                <SelectItem value="challenge">Desafio</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+      {phaseType === "challenge" && (
+        <TextContent content={content} onChange={setContent} />
+      )}
 
-          <div>
-            <Label htmlFor="icon_type">Tipo de ícone</Label>
-            <Select 
-              value={iconType} 
-              onValueChange={(value: IconType) => {
-                setIconType(value);
-                setValue("icon_type", value);
-              }}
-            >
-              <SelectTrigger id="icon_type">
-                <SelectValue placeholder="Selecione o ícone" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="video">Vídeo</SelectItem>
-                <SelectItem value="quiz">Quiz</SelectItem>
-                <SelectItem value="challenge">Desafio</SelectItem>
-                <SelectItem value="game">Jogo</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+      {phaseType === "video" && (
+        <VideoContent
+          videoUrl={videoUrl}
+          videoNotes={videoNotes}
+          onVideoUrlChange={handleVideoUrlChange}
+          onVideoNotesChange={setVideoNotes}
+        />
+      )}
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="duration">Duração (minutos)</Label>
-            <Input
-              id="duration"
-              type="number"
-              placeholder="15"
-              {...register("duration", { 
-                valueAsNumber: true,
-                min: { value: 1, message: "Duração mínima de 1 minuto" },
-              })}
-            />
-            {errors.duration && <p className="text-red-500 text-sm mt-1">{errors.duration.message as string}</p>}
-          </div>
-
-          <div>
-            <Label htmlFor="order_index">Ordem</Label>
-            <Input
-              id="order_index"
-              type="number"
-              placeholder="0"
-              {...register("order_index", { 
-                valueAsNumber: true,
-                min: { value: 0, message: "Ordem mínima de 0" },
-              })}
-            />
-            {errors.order_index && <p className="text-red-500 text-sm mt-1">{errors.order_index.message as string}</p>}
-          </div>
-        </div>
-
-        {phaseType === "text" && (
-          <div>
-            <Label htmlFor="content">Conteúdo</Label>
-            <div className="mt-1 border rounded-md overflow-hidden">
-              <RichTextEditor value={content} onChange={setContent} />
-            </div>
-          </div>
-        )}
-
-        {phaseType === "challenge" && (
-          <div>
-            <Label htmlFor="content">Conteúdo do Desafio</Label>
-            <div className="mt-1 border rounded-md overflow-hidden">
-              <RichTextEditor value={content} onChange={setContent} />
-            </div>
-          </div>
-        )}
-
-        {phaseType === "video" && (
-          <>
-            <div>
-              <Label htmlFor="video_url">URL do Vídeo (YouTube)</Label>
-              <Input
-                id="video_url"
-                placeholder="https://www.youtube.com/watch?v=..."
-                {...register("video_url")}
-              />
-              <p className="text-gray-500 text-xs mt-1">Coloque o link completo do YouTube</p>
-            </div>
-            
-            {videoUrl && (
-              <div className="mt-4">
-                <Label>Pré-visualização:</Label>
-                <div className="mt-2">
-                  <YoutubeEmbed videoId={videoUrl} />
-                </div>
-              </div>
-            )}
-
-            <div>
-              <Label htmlFor="video_notes">Anotações sobre o vídeo</Label>
-              <div className="mt-1 border rounded-md overflow-hidden">
-                <RichTextEditor value={videoNotes} onChange={setVideoNotes} height={250} />
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-
-      <div className="flex justify-end gap-3">
-        {onCancel && <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>}
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Salvando..." : isEditing ? "Atualizar" : "Salvar"}
-        </Button>
-      </div>
+      <FormFooter
+        isSubmitting={isSubmitting}
+        isEditing={isEditing}
+        onCancel={onCancel}
+      />
     </form>
   );
 };

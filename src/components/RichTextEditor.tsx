@@ -33,7 +33,7 @@ const RichTextEditor = ({ value, onChange, height = 400 }: RichTextEditorProps) 
           "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
         file_picker_types: "image",
         automatic_uploads: true,
-        images_upload_handler: async (blobInfo, success, failure) => {
+        images_upload_handler: async (blobInfo, success, failure, progress) => {
           try {
             const reader = new FileReader();
             reader.onloadend = () => {
@@ -42,7 +42,7 @@ const RichTextEditor = ({ value, onChange, height = 400 }: RichTextEditorProps) 
             reader.readAsDataURL(blobInfo.blob());
           } catch (error) {
             console.error('Error uploading image:', error);
-            failure('Image upload failed');
+            failure('Image upload failed', { remove: true });
           }
         },
       }}
