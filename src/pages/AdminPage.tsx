@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Card } from "@/components/ui/card";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import AdminChart from "@/components/AdminChart";
 import Header from "@/components/Header";
@@ -13,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import PhaseForm from "@/components/PhaseForm";
+import ModuleForm from "@/components/ModuleForm";
 import { 
   getModules, 
   getPhasesByModuleId, 
@@ -57,145 +57,6 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import ProgressBar from "@/components/ProgressBar";
-
-const ModuleForm = ({ module, onSuccess }: {
-  module?: {
-    id: number;
-    name: string;
-    description?: string;
-    type?: string;
-    emoji?: string;
-    order_index: number;
-  };
-  onSuccess?: () => void;
-}) => {
-  const queryClient = useQueryClient();
-  const isEditing = !!module;
-  const [moduleType, setModuleType] = useState<ModuleType>(
-    (module?.type as ModuleType) || "autoconhecimento"
-  );
-
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
-    defaultValues: {
-      name: module?.name || "",
-      description: module?.description || "",
-      emoji: module?.emoji || "📚",
-      order_index: module?.order_index || 0
-    }
-  });
-
-  const createModuleMutation = useMutation({
-    mutationFn: createModule,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['modules'] });
-      toast.success("Módulo criado com sucesso!");
-      if (onSuccess) onSuccess();
-    },
-    onError: (error) => {
-      toast.error(`Erro ao criar módulo: ${error.message}`);
-    }
-  });
-
-  const updateModuleMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) => updateModule(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['modules'] });
-      toast.success("Módulo atualizado com sucesso!");
-      if (onSuccess) onSuccess();
-    },
-    onError: (error) => {
-      toast.error(`Erro ao atualizar módulo: ${error.message}`);
-    }
-  });
-
-  const onSubmit = async (data: any) => {
-    const moduleData = {
-      ...data,
-      type: moduleType
-    };
-
-    if (isEditing && module) {
-      updateModuleMutation.mutate({ id: module.id, data: moduleData });
-    } else {
-      createModuleMutation.mutate(moduleData as any);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div>
-        <Label htmlFor="name">Nome do módulo *</Label>
-        <Input
-          id="name"
-          placeholder="Digite o nome do módulo"
-          {...register("name", { required: "Nome é obrigatório" })}
-          className={errors.name ? "border-red-500" : ""}
-        />
-        {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message as string}</p>}
-      </div>
-
-      <div>
-        <Label htmlFor="description">Descrição</Label>
-        <Textarea
-          id="description"
-          placeholder="Breve descrição sobre o módulo"
-          {...register("description")}
-        />
-      </div>
-
-      <div className="grid grid-cols-3 gap-4">
-        <div>
-          <Label htmlFor="emoji">Emoji</Label>
-          <Input
-            id="emoji"
-            placeholder="📚"
-            {...register("emoji")}
-          />
-          <p className="text-gray-500 text-xs mt-1">Um emoji representativo</p>
-        </div>
-
-        <div>
-          <Label htmlFor="type">Tipo de módulo</Label>
-          <Select 
-            value={moduleType} 
-            onValueChange={(value: ModuleType) => setModuleType(value)}
-          >
-            <SelectTrigger id="type">
-              <SelectValue placeholder="Selecione o tipo" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="autoconhecimento">Autoconhecimento</SelectItem>
-              <SelectItem value="empatia">Empatia</SelectItem>
-              <SelectItem value="growth">Crescimento</SelectItem>
-              <SelectItem value="comunicacao">Comunicação</SelectItem>
-              <SelectItem value="futuro">Futuro</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
-          <Label htmlFor="order_index">Ordem</Label>
-          <Input
-            id="order_index"
-            type="number"
-            placeholder="0"
-            {...register("order_index", { 
-              valueAsNumber: true,
-              min: { value: 0, message: "Ordem mínima de 0" },
-            })}
-          />
-          {errors.order_index && <p className="text-red-500 text-sm mt-1">{errors.order_index.message as string}</p>}
-        </div>
-      </div>
-
-      <div className="flex justify-end space-x-2 pt-4">
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Salvando..." : isEditing ? "Atualizar" : "Criar Módulo"}
-        </Button>
-      </div>
-    </form>
-  );
-};
 
 const AdminPage = () => {
   const { toast: toastHook } = useToast();
@@ -281,11 +142,6 @@ const AdminPage = () => {
   const [eventDescription, setEventDescription] = useState("");
   const [eventLocation, setEventLocation] = useState("");
 
-  const [moduleName, setModuleName] = useState("");
-  const [moduleDescription, setModuleDescription] = useState("");
-  const [moduleType, setModuleType] = useState("autoconhecimento");
-  const [moduleEmoji, setModuleEmoji] = useState("🧠");
-  
   const [topModules, setTopModules] = useState([
     { id: 1, name: "Autoconhecimento", completions: 327, engagement: 85 },
     { id: 2, name: "Empatia", completions: 245, engagement: 72 },
@@ -751,6 +607,11 @@ const AdminPage = () => {
     setIconType(value);
   };
 
+  const [moduleName, setModuleName] = useState("");
+  const [moduleDescription, setModuleDescription] = useState("");
+  const [moduleType, setModuleType] = useState("autoconhecimento");
+  const [moduleEmoji, setModuleEmoji] = useState("🧠");
+
   return (
     <div className="container px-4 py-6 min-h-screen bg-gray-50">
       <div className="flex justify-between items-center mb-6">
@@ -983,6 +844,29 @@ const AdminPage = () => {
                   {editingPhase ? "Editar Fase" : "Adicionar Nova Fase"}
                 </h2>
                 
+                {/* Adicionar o seletor de módulos para filtrar fases */}
+                <div className="mb-4">
+                  <Label htmlFor="module-selector">Selecionar Módulo</Label>
+                  <Select 
+                    value={selectedModule.toString()} 
+                    onValueChange={(value) => setSelectedModule(parseInt(value))}
+                  >
+                    <SelectTrigger id="module-selector">
+                      <SelectValue placeholder="Selecione um módulo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {modules.map(module => (
+                        <SelectItem key={module.id} value={module.id.toString()}>
+                          {module.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Selecione o módulo ao qual deseja adicionar novas fases
+                  </p>
+                </div>
+                
                 <PhaseForm
                   moduleId={selectedModule}
                   phase={editingPhase || undefined}
@@ -998,7 +882,9 @@ const AdminPage = () => {
             <div className="lg:col-span-2">
               <Card className="p-4">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-semibold">Fases do Módulo</h2>
+                  <h2 className="text-lg font-semibold">
+                    Fases do Módulo: {getModuleNameById(selectedModule)}
+                  </h2>
                   <div className="relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
                     <Input
@@ -1047,292 +933,4 @@ const AdminPage = () => {
                                   onClick={() => handleQuizEdit(phase.id)}
                                 >
                                   Editar Quiz
-                                </Button>
-                              )}
-                              
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => navigate(`/fase/${phase.module_id}/${phase.id}`)}
-                              >
-                                Visualizar
-                              </Button>
-                              
-                              <Button 
-                                variant="destructive" 
-                                size="sm" 
-                                onClick={() => deletePhaseMutation.mutate(phase.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </Card>
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="quizzes">
-          <div className="space-y-6">
-            {editingQuiz ? (
-              <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-xl font-semibold">
-                    Editar Quiz: {getPhaseNameById(editingQuiz.phaseId)}
-                  </h2>
-                  <Button onClick={() => setEditingQuiz(null)} variant="outline">
-                    Cancelar Edição
-                  </Button>
-                </div>
-                
-                {editingQuiz.questions.map((question, index) => (
-                  <Card key={index} className="p-6 space-y-4">
-                    <div className="flex justify-between items-center">
-                      <h3 className="text-lg font-medium">Pergunta {index + 1}</h3>
-                      {editingQuiz.questions.length > 1 && (
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => removeQuestion(index)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor={`question-${index}`}>Pergunta</Label>
-                      <Textarea
-                        id={`question-${index}`}
-                        value={question.question}
-                        onChange={(e) => updateQuestion(index, "question", e.target.value)}
-                        placeholder="Digite a pergunta..."
-                      />
-                    </div>
-                    
-                    <div className="space-y-3">
-                      <Label>Opções de Resposta</Label>
-                      {question.options.map((option, optIndex) => (
-                        <div key={optIndex} className="flex items-center gap-2">
-                          <Input
-                            value={option}
-                            onChange={(e) => updateQuestion(index, `option${optIndex}`, e.target.value)}
-                            placeholder={`Opção ${optIndex + 1}`}
-                          />
-                          <div className="flex items-center">
-                            <input
-                              type="radio"
-                              id={`correct-${index}-${optIndex}`}
-                              name={`correct-${index}`}
-                              checked={question.correct_answer === optIndex}
-                              onChange={() => updateQuestion(index, "correctAnswer", optIndex)}
-                              className="mr-2"
-                            />
-                            <Label htmlFor={`correct-${index}-${optIndex}`}>Correta</Label>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </Card>
-                ))}
-                
-                <div className="flex gap-4 justify-end">
-                  <Button onClick={addQuestion}>
-                    <PlusCircle className="h-4 w-4 mr-2" /> Adicionar Pergunta
-                  </Button>
-                  <Button onClick={handleUpdateQuiz} className="bg-trilha-orange hover:bg-trilha-orange/90">
-                    Salvar Quiz
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="p-6">
-                  <h2 className="text-xl font-semibold mb-4">Quizzes Disponíveis</h2>
-                  <p className="text-muted-foreground mb-6">
-                    Selecione uma fase do tipo "quiz" para editar suas perguntas e respostas.
-                  </p>
-                  
-                  <div className="space-y-2">
-                    {phases.filter(p => p.type === "quiz").map(phase => (
-                      <div key={phase.id} className="flex justify-between items-center border-b pb-2">
-                        <div>
-                          <p className="font-medium">{phase.name}</p>
-                          <p className="text-sm text-gray-500">{getModuleNameById(phase.module_id)}</p>
-                        </div>
-                        <Button 
-                          onClick={() => handleQuizEdit(phase.id)}
-                          variant="outline"
-                          size="sm"
-                        >
-                          <Edit className="h-4 w-4 mr-2" /> Editar Quiz
-                        </Button>
-                      </div>
-                    ))}
-                    
-                    {phases.filter(p => p.type === "quiz").length === 0 && (
-                      <div className="text-center py-8">
-                        <p className="text-muted-foreground">Nenhum quiz encontrado.</p>
-                        <p className="text-sm mt-2">Crie uma fase do tipo "quiz" primeiro.</p>
-                      </div>
-                    )}
-                  </div>
-                </Card>
-                
-                <Card className="p-6">
-                  <h2 className="text-xl font-semibold mb-4">Como Criar um Quiz</h2>
-                  <ol className="list-decimal ml-5 space-y-2">
-                    <li>Vá para a aba "Conteúdos"</li>
-                    <li>Selecione um módulo</li>
-                    <li>Adicione uma nova fase e selecione o tipo "quiz"</li>
-                    <li>Salve a fase</li>
-                    <li>Volte para esta aba e edite o quiz</li>
-                  </ol>
-                  
-                  <div className="mt-6 border-t pt-4">
-                    <h3 className="font-medium mb-2">Dicas para bons quizzes:</h3>
-                    <ul className="list-disc ml-5 space-y-1 text-sm">
-                      <li>Crie perguntas claras e diretas</li>
-                      <li>Evite ambiguidades nas alternativas</li>
-                      <li>Inclua 4 opções de resposta por pergunta</li>
-                      <li>Mantenha o quiz curto (5-10 perguntas)</li>
-                    </ul>
-                  </div>
-                </Card>
-              </div>
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="eventos">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1">
-              <Card className="p-4">
-                <h2 className="text-lg font-semibold mb-4">Adicionar Evento</h2>
-                
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="eventTitle">Título do Evento</Label>
-                    <Input
-                      id="eventTitle"
-                      placeholder="Ex: Workshop de Comunicação"
-                      value={eventTitle}
-                      onChange={(e) => setEventTitle(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="eventDate">Data</Label>
-                    <Input
-                      id="eventDate"
-                      type="date"
-                      value={eventDate}
-                      onChange={(e) => setEventDate(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="eventTime">Horário</Label>
-                    <Input
-                      id="eventTime"
-                      type="time"
-                      value={eventTime}
-                      onChange={(e) => setEventTime(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="eventLocation">Local</Label>
-                    <Input
-                      id="eventLocation"
-                      placeholder="Ex: Online (Zoom) ou Endereço físico"
-                      value={eventLocation}
-                      onChange={(e) => setEventLocation(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="eventDescription">Descrição</Label>
-                    <Textarea
-                      id="eventDescription"
-                      placeholder="Descreva o evento brevemente..."
-                      value={eventDescription}
-                      onChange={(e) => setEventDescription(e.target.value)}
-                      rows={4}
-                    />
-                  </div>
-                  
-                  <Button 
-                    onClick={handleAddEvent} 
-                    className="w-full bg-trilha-orange hover:bg-trilha-orange/90"
-                  >
-                    Adicionar Evento
-                  </Button>
-                </div>
-              </Card>
-            </div>
-            
-            <div className="lg:col-span-2">
-              <Card className="p-4">
-                <h2 className="text-lg font-semibold mb-4">Eventos Agendados</h2>
-
-                <div className="space-y-4">
-                  {communityEvents.map((event) => (
-                    <div 
-                      key={event.id} 
-                      className="border rounded-md p-4 flex flex-col md:flex-row justify-between"
-                    >
-                      <div>
-                        <div className="flex items-center mb-2">
-                          <Calendar className="h-5 w-5 text-trilha-orange mr-2" />
-                          <h3 className="font-medium">{event.title}</h3>
-                        </div>
-                        
-                        <p className="text-sm text-gray-600 mb-1">
-                          Data: {new Date(event.date).toLocaleDateString('pt-BR')} às {event.time}
-                        </p>
-                        <p className="text-sm text-gray-600 mb-2">
-                          Local: {event.location}
-                        </p>
-                        <p className="text-sm">{event.description}</p>
-                      </div>
-                      
-                      <div className="mt-4 md:mt-0 flex md:flex-col gap-2 justify-end">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="destructive" 
-                          size="sm"
-                          onClick={() => deleteEvent(event.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {communityEvents.length === 0 && (
-                    <div className="text-center py-8">
-                      <p className="text-muted-foreground">Nenhum evento agendado.</p>
-                    </div>
-                  )}
-                </div>
-              </Card>
-            </div>
-          </div>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-};
-
-export default AdminPage;
+                                </Button
