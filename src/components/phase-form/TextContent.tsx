@@ -12,7 +12,7 @@ const TextContent = ({ content, onChange }: TextContentProps) => {
   return (
     <div>
       <Label htmlFor="content">Conteúdo</Label>
-      <div className="mt-1 border rounded-md overflow-hidden">
+      <div className="mt-1">
         <RichTextEditor value={content} onChange={onChange} />
       </div>
     </div>

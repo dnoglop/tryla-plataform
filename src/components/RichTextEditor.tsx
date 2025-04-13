@@ -1,7 +1,7 @@
 
-import React, { useRef } from "react";
-import { Editor } from "@tinymce/tinymce-react";
-import { Editor as TinyMCEEditor } from "tinymce";
+import React from "react";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 
 interface RichTextEditorProps {
   value: string;
@@ -10,47 +10,74 @@ interface RichTextEditorProps {
 }
 
 const RichTextEditor = ({ value, onChange, height = 400 }: RichTextEditorProps) => {
-  const editorRef = useRef<TinyMCEEditor | null>(null);
+  const modules = {
+    toolbar: [
+      [{ header: [1, 2, 3, 4, 5, 6, false] }],
+      ["bold", "italic", "underline", "strike"],
+      [{ color: [] }, { background: [] }],
+      [{ list: "ordered" }, { list: "bullet" }],
+      [{ indent: "-1" }, { indent: "+1" }],
+      [{ align: [] }],
+      ["link", "image", "video"],
+      ["clean"],
+    ],
+  };
+
+  const formats = [
+    "header",
+    "bold", 
+    "italic", 
+    "underline", 
+    "strike",
+    "color", 
+    "background",
+    "list", 
+    "bullet",
+    "indent",
+    "align",
+    "link", 
+    "image", 
+    "video",
+  ];
+
+  // Para lidar com uploads de imagem, podemos adicionar esse recurso posteriormente
+  // usando o módulo quill-image-upload se necessário
+
+  const handleImageUpload = () => {
+    const input = document.createElement("input");
+    input.setAttribute("type", "file");
+    input.setAttribute("accept", "image/*");
+    input.click();
+
+    input.onchange = () => {
+      if (input.files) {
+        const file = input.files[0];
+        const reader = new FileReader();
+        reader.onload = () => {
+          const imageUrl = reader.result as string;
+          // Aqui inserimos a imagem no editor
+          const quill = ReactQuill.Quill;
+          const range = quill.find(document.querySelector(".quill")).getSelection();
+          if (range) {
+            quill.find(document.querySelector(".quill")).insertEmbed(range.index, "image", imageUrl);
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+  };
 
   return (
-    <Editor
-      apiKey="9pqha5x0hrrjyuhp1xozn3kpw44dyzlhv2z1jv2ghypts5bh"
-      onInit={(evt, editor) => (editorRef.current = editor)}
-      value={value}
-      onEditorChange={onChange}
-      init={{
-        height,
-        menubar: true,
-        plugins: [
-          'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'image', 'link', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount',
-        ],
-        toolbar:
-          "undo redo | formatselect | " +
-          "bold italic backcolor | alignleft aligncenter " +
-          "alignright alignjustify | bullist numlist outdent indent | " +
-          "removeformat | image media link emoticons | help",
-        content_style:
-          "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
-        file_picker_types: "image",
-        automatic_uploads: true,
-        /* Fix for the TypeScript error - correct upload handler signature */
-        images_upload_handler: (blobInfo, progress) => new Promise((resolve, reject) => {
-          try {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              resolve(reader.result as string);
-            };
-            reader.onerror = () => {
-              reject('Error reading file');
-            };
-            reader.readAsDataURL(blobInfo.blob());
-          } catch (error) {
-            console.error('Error uploading image:', error);
-            reject('Image upload failed');
-          }
-        }),
-      }}
-    />
+    <div style={{ height: height }}>
+      <ReactQuill
+        theme="snow"
+        value={value}
+        onChange={onChange}
+        modules={modules}
+        formats={formats}
+        style={{ height: height - 42, overflow: "auto" }}
+      />
+    </div>
   );
 };
 
