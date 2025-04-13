@@ -11,6 +11,7 @@ import { getModuleById, getPhasesByModuleId, Phase, PhaseStatus } from "@/servic
 const ModuleDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const moduleId = parseInt(id || "1");
+  const [activeTab, setActiveTab] = useState<'intro' | 'phases'>('intro');
 
   // Fetch module data from Supabase
   const { data: module, isLoading: isLoadingModule } = useQuery({
@@ -84,23 +85,63 @@ const ModuleDetailPage = () => {
         <ProgressBar progress={progress} />
       </div>
 
-      <div className="container px-4 py-6 space-y-4">
-        <h3 className="font-bold">Fases da Jornada</h3>
-        <div className="space-y-3">
-          {phases.map((phase) => (
-            <PhaseCard 
-              key={`${phase.module_id}-${phase.id}`}
-              moduleId={phase.module_id || moduleId}
-              phaseId={phase.id}
-              title={phase.name}
-              description={phase.description}
-              duration={phase.duration || 15}
-              status={phase.status || "available"}
-              iconType={phase.icon_type || (phase.type === "quiz" ? "quiz" : 
-                         phase.type === "video" ? "video" : "challenge")}
-            />
-          ))}
+      <div className="container px-4 py-6">
+        {/* Tabs para alternar entre introdução e fases */}
+        <div className="border-b mb-4">
+          <div className="flex space-x-6">
+            <button
+              className={`pb-2 font-medium text-sm ${
+                activeTab === 'intro' 
+                  ? 'border-b-2 border-trilha-orange text-trilha-orange' 
+                  : 'text-gray-500'
+              }`}
+              onClick={() => setActiveTab('intro')}
+            >
+              Introdução
+            </button>
+            <button
+              className={`pb-2 font-medium text-sm ${
+                activeTab === 'phases' 
+                  ? 'border-b-2 border-trilha-orange text-trilha-orange' 
+                  : 'text-gray-500'
+              }`}
+              onClick={() => setActiveTab('phases')}
+            >
+              Fases da Jornada
+            </button>
+          </div>
         </div>
+
+        {activeTab === 'intro' && (
+          <div className="prose max-w-none mb-6">
+            {module.content ? (
+              <div dangerouslySetInnerHTML={{ __html: module.content }} />
+            ) : (
+              <div className="py-4 text-center text-gray-500">
+                <p>Nenhum conteúdo introdutório disponível para este módulo.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'phases' && (
+          <div className="space-y-3">
+            <h3 className="font-bold">Fases da Jornada</h3>
+            {phases.map((phase) => (
+              <PhaseCard 
+                key={`${phase.module_id}-${phase.id}`}
+                moduleId={phase.module_id || moduleId}
+                phaseId={phase.id}
+                title={phase.name}
+                description={phase.description}
+                duration={phase.duration || 15}
+                status={phase.status || "available"}
+                iconType={phase.icon_type || (phase.type === "quiz" ? "quiz" : 
+                          phase.type === "video" ? "video" : "challenge")}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       <BottomNavigation />

@@ -9,6 +9,7 @@ export interface Module {
   type?: "autoconhecimento" | "empatia" | "growth" | "comunicacao" | "futuro";
   emoji?: string;
   order_index: number;
+  content?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -204,7 +205,7 @@ export const getPhasesByModuleId = async (moduleId: number): Promise<Phase[]> =>
       videoId: phase.video_url ? extractVideoId(phase.video_url) : undefined,
       // Convert video_notes to videoNotes for consistency
       video_notes: phase.video_notes,
-      // For now, no images in the database, so we'll leave it undefined
+      // For now, no images in the database, so we'll leave it as an empty array
       images: []
     }));
     
