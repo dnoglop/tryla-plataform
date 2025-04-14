@@ -62,6 +62,7 @@ const PhaseDetailPage = () => {
   });
 
   console.log("Quiz questions loaded:", questions);
+  console.log("Current phase type:", phase?.type);
 
   // Update loading state based on data fetching status
   useEffect(() => {
@@ -241,7 +242,18 @@ const PhaseDetailPage = () => {
         {phase.type === "challenge" && (
           <div className="mt-6">
             <h3 className="text-lg font-medium mb-3">Desafio</h3>
-            <p>Em breve...</p>
+            {phase.content ? (
+              <div className="p-6 bg-white rounded-lg shadow-sm border">
+                <div 
+                  className="prose max-w-none"
+                  dangerouslySetInnerHTML={{ __html: phase.content || "" }} 
+                />
+              </div>
+            ) : (
+              <div className="p-6 bg-white rounded-lg shadow-sm border text-center">
+                <p className="text-lg text-gray-500">Conteúdo do desafio não disponível.</p>
+              </div>
+            )}
           </div>
         )}
 
