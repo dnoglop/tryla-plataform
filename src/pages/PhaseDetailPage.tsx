@@ -1,7 +1,6 @@
-
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Trash2 } from "lucide-react";
 import YoutubeEmbed from "@/components/YoutubeEmbed";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
@@ -13,11 +12,13 @@ import {
   getQuestionsByPhaseId,
   Phase, 
   Question, 
-  updateUserPhaseStatus 
+  updateUserPhaseStatus,
+  deletePhase as deletePhaseFunc
 } from "@/services/moduleService";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import RichTextEditor from "@/components/RichTextEditor";
 
 const PhaseDetailPage = () => {
   const { moduleId, phaseId } = useParams<{ moduleId: string; phaseId: string }>();
@@ -27,8 +28,11 @@ const PhaseDetailPage = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [correctAnswers, setCorrectAnswers] = useState(0);
+  const [isEditing, setIsEditing] = useState(false);
+  const [videoNotes, setVideoNotes] = useState("");
 
-  // Get current user
+  const queryClient = useQueryClient();
+
   useEffect(() => {
     const getUser = async () => {
       const { data } = await supabase.auth.getUser();
@@ -40,90 +44,84 @@ const PhaseDetailPage = () => {
     getUser();
   }, []);
 
-  // Fetch current phase data
   const { data: phase, isLoading: isLoadingPhase } = useQuery({
     queryKey: ['phase', Number(phaseId)],
     queryFn: () => getPhaseById(Number(phaseId)),
     enabled: !!phaseId,
   });
 
-  // Fetch all phases from the module to determine next/prev
   const { data: phases = [], isLoading: isLoadingPhases } = useQuery({
     queryKey: ['phases', Number(moduleId)],
     queryFn: () => getPhasesByModuleId(Number(moduleId)),
     enabled: !!moduleId,
   });
 
-  // Fetch quiz questions for this phase
   const { data: questions = [], isLoading: isLoadingQuestions } = useQuery({
     queryKey: ['questions', Number(phaseId)],
     queryFn: () => getQuestionsByPhaseId(Number(phaseId)),
     enabled: !!phaseId && phase?.type === 'quiz',
   });
 
-  console.log("Quiz questions loaded:", questions);
-  console.log("Current phase type:", phase?.type);
-
-  // Update loading state based on data fetching status
   useEffect(() => {
     if (!isLoadingPhase && !isLoadingPhases && (!isLoadingQuestions || phase?.type !== 'quiz')) {
       setLoading(false);
     }
   }, [isLoadingPhase, isLoadingPhases, isLoadingQuestions, phase]);
 
-  // Find current phase index and next/prev phases
   const currentPhaseIndex = phases.findIndex(p => p.id === Number(phaseId));
   const prevPhase = currentPhaseIndex > 0 ? phases[currentPhaseIndex - 1] : null;
   const nextPhase = currentPhaseIndex < phases.length - 1 ? phases[currentPhaseIndex + 1] : null;
 
-  // Mark phase as in progress when visited
   useEffect(() => {
-    const markPhaseInProgress = async () => {
-      if (phase && user) {
-        try {
-          await updateUserPhaseStatus(user.id, Number(phaseId), "inProgress");
-        } catch (error) {
-          console.error("Error updating phase status:", error);
-        }
-      }
-    };
-
-    if (phase && user) {
-      markPhaseInProgress();
+    if (phase?.video_notes) {
+      setVideoNotes(phase.video_notes);
     }
-  }, [phase, phaseId, user]);
+  }, [phase]);
 
-  // Handle completing the phase
-  const handleCompletePhase = async () => {
-    if (user) {
-      try {
-        await updateUserPhaseStatus(user.id, Number(phaseId), "completed");
-        toast.success("Fase concluída com sucesso!");
-        
-        // Navigate to next phase if available
-        if (nextPhase) {
-          navigate(`/fase/${moduleId}/${nextPhase.id}`);
-        } else {
-          navigate(`/modulo/${moduleId}`);
-        }
-      } catch (error) {
-        toast.error("Erro ao marcar fase como concluída");
-        console.error("Error completing phase:", error);
-      }
+  const deletePhaseMutation = useMutation({
+    mutationFn: (phaseId: number) => deletePhaseFunc(phaseId),
+    onSuccess: () => {
+      toast.success("Fase excluída com sucesso!");
+      navigate(`/modulo/${moduleId}`);
+    },
+    onError: (error) => {
+      toast.error("Erro ao excluir fase");
+      console.error("Error deleting phase:", error);
+    }
+  });
+
+  const updatePhaseVideoNotesMutation = useMutation({
+    mutationFn: async ({ phaseId, notes }: { phaseId: number; notes: string }) => {
+      const { error } = await supabase
+        .from('phases')
+        .update({ video_notes: notes })
+        .eq('id', phaseId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Observações atualizadas com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ['phase'] });
+      setIsEditing(false);
+    },
+    onError: (error) => {
+      toast.error("Erro ao atualizar observações");
+      console.error("Error updating video notes:", error);
+    }
+  });
+
+  const handleDelete = async () => {
+    if (window.confirm("Tem certeza que deseja excluir esta fase?")) {
+      deletePhaseMutation.mutate(Number(phaseId));
     }
   };
 
-  // Handle quiz answer
-  const handleQuizAnswer = (correct: boolean) => {
-    if (correct) {
-      setCorrectAnswers(prev => prev + 1);
-    }
-
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-    } else {
-      setQuizCompleted(true);
-    }
+  const handleSaveVideoNotes = () => {
+    if (!phaseId) return;
+    updatePhaseVideoNotesMutation.mutate({
+      phaseId: Number(phaseId),
+      notes: videoNotes
+    });
   };
 
   if (loading) {
@@ -144,7 +142,22 @@ const PhaseDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-16">
-      <Header title={phase.name} showBackButton={true} />
+      <Header 
+        title={phase.name} 
+        showBackButton={true}
+        rightContent={
+          user && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-red-500 hover:text-red-700"
+              onClick={handleDelete}
+            >
+              <Trash2 className="h-5 w-5" />
+            </Button>
+          )
+        }
+      />
 
       <div className="container px-4 py-6">
         <div className="mb-6">
@@ -158,11 +171,34 @@ const PhaseDetailPage = () => {
           <YoutubeEmbed videoId={phase.videoId} />
         )}
 
-        {phase.type === "video" && phase.video_notes && (
+        {phase.type === "video" && (
           <div className="mt-6">
-            <h3 className="text-lg font-medium mb-3">Observações sobre o vídeo</h3>
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-lg font-medium">Observações sobre o vídeo</h3>
+              {isEditing ? (
+                <div className="space-x-2">
+                  <Button size="sm" variant="outline" onClick={() => setIsEditing(false)}>
+                    Cancelar
+                  </Button>
+                  <Button size="sm" onClick={handleSaveVideoNotes}>
+                    Salvar
+                  </Button>
+                </div>
+              ) : (
+                <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>
+                  Editar
+                </Button>
+              )}
+            </div>
             <div className="bg-gray-50 p-4 rounded-lg border">
-              <p className="text-sm text-gray-700 whitespace-pre-line">{phase.video_notes}</p>
+              {isEditing ? (
+                <RichTextEditor value={videoNotes} onChange={setVideoNotes} />
+              ) : (
+                <div 
+                  className="prose max-w-none"
+                  dangerouslySetInnerHTML={{ __html: phase.video_notes || "" }}
+                />
+              )}
             </div>
           </div>
         )}
@@ -258,7 +294,6 @@ const PhaseDetailPage = () => {
         )}
 
         <div className="mt-8">
-          {/* Navigation and Complete button */}
           <div className="flex items-center justify-between border-t pt-4">
             <div>
               {prevPhase && (
