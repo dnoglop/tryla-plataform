@@ -49,6 +49,7 @@ const ModuleForm = ({ module, onSuccess }: ModuleFormProps) => {
       if (onSuccess) onSuccess();
     },
     onError: (error) => {
+      console.error("Error creating module:", error);
       toast.error(`Erro ao criar módulo: ${error.message}`);
     }
   });
@@ -61,6 +62,7 @@ const ModuleForm = ({ module, onSuccess }: ModuleFormProps) => {
       if (onSuccess) onSuccess();
     },
     onError: (error) => {
+      console.error("Error updating module:", error);
       toast.error(`Erro ao atualizar módulo: ${error.message}`);
     }
   });
@@ -72,10 +74,14 @@ const ModuleForm = ({ module, onSuccess }: ModuleFormProps) => {
       content: content
     };
 
-    if (isEditing && module) {
-      updateModuleMutation.mutate({ id: module.id, data: moduleData });
-    } else {
-      createModuleMutation.mutate(moduleData as any);
+    try {
+      if (isEditing && module) {
+        updateModuleMutation.mutate({ id: module.id, data: moduleData });
+      } else {
+        createModuleMutation.mutate(moduleData as any);
+      }
+    } catch (error) {
+      console.error("Error in form submission:", error);
     }
   };
 

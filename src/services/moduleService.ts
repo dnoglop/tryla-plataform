@@ -96,6 +96,7 @@ export const getModuleById = async (id: number): Promise<Module | null> => {
 
 export const createModule = async (module: Omit<Module, "id" | "created_at" | "updated_at">): Promise<Module> => {
   try {
+    console.log("Creating module with data:", module);
     const { data, error } = await supabase
       .from("modules")
       .insert(module)
@@ -128,6 +129,7 @@ export const createModule = async (module: Omit<Module, "id" | "created_at" | "u
 
 export const updateModule = async (id: number, module: Partial<Omit<Module, "id" | "created_at" | "updated_at">>): Promise<Module> => {
   try {
+    console.log("Updating module:", id, "with data:", module);
     const { data, error } = await supabase
       .from("modules")
       .update(module)
@@ -343,13 +345,14 @@ export const getQuestionsByPhaseId = async (phaseId: number): Promise<Question[]
       .from("quizzes")
       .select("id")
       .eq("phase_id", phaseId)
-      .single();
+      .maybeSingle();
     
     if (quizError) {
       // Se não encontrar o quiz, retorna array vazio
       if (quizError.code === 'PGRST116') {
         return [];
       }
+      console.error("Error finding quiz for phase:", quizError);
       throw quizError;
     }
     
@@ -362,7 +365,12 @@ export const getQuestionsByPhaseId = async (phaseId: number): Promise<Question[]
       .eq("quiz_id", quizData.id)
       .order("order_index");
     
-    if (questionsError) throw questionsError;
+    if (questionsError) {
+      console.error("Error fetching questions:", questionsError);
+      throw questionsError;
+    }
+    
+    console.log("Fetched questions for phase", phaseId, ":", questionsData);
     
     // Converter as opções do formato JSONB para array
     const questions = questionsData?.map(q => ({
@@ -386,7 +394,10 @@ export const createQuiz = async (phaseId: number): Promise<number | null> => {
       .eq("phase_id", phaseId)
       .maybeSingle();
     
-    if (checkError) throw checkError;
+    if (checkError) {
+      console.error("Error checking existing quiz:", checkError);
+      throw checkError;
+    }
     
     // Se já existe um quiz, retornar o id existente
     if (existingQuiz) return existingQuiz.id;
@@ -398,9 +409,13 @@ export const createQuiz = async (phaseId: number): Promise<number | null> => {
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error("Error creating new quiz:", error);
+      throw error;
+    }
     if (!newQuiz) throw new Error("No data returned after creating quiz");
     
+    console.log("Created new quiz for phase", phaseId, ":", newQuiz);
     return newQuiz.id;
   } catch (error) {
     console.error(`Error creating quiz for phase ${phaseId}:`, error);
@@ -410,6 +425,8 @@ export const createQuiz = async (phaseId: number): Promise<number | null> => {
 
 export const saveQuiz = async (phaseId: number, questions: Omit<Question, "id" | "quiz_id">[]): Promise<void> => {
   try {
+    console.log("Saving quiz for phase", phaseId, "with questions:", questions);
+    
     // Criar ou obter o quiz
     const quizId = await createQuiz(phaseId);
     if (!quizId) throw new Error("Failed to create or get quiz");
@@ -426,15 +443,46 @@ export const saveQuiz = async (phaseId: number, questions: Omit<Question, "id" |
       .delete()
       .eq("quiz_id", quizId);
     
-    if (deleteError) throw deleteError;
+    if (deleteError) {
+      console.error("Error deleting existing questions:", deleteError);
+      throw deleteError;
+    }
     
     // Inserir novas perguntas
     if (questionsToInsert.length > 0) {
-      const { error: insertError } = await supabase
+      const { data: insertedData, error: insertError } = await supabase
         .from("questions")
-        .insert(questionsToInsert);
+        .insert(questionsToInsert)
+        .select();
       
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error("Error inserting questions:", insertError);
+        throw insertError;
+      }
+      
+      console.log("Inserted questions:", insertedData);
+    }
+    
+    // Update the phase type to quiz if it's not already
+    const { data: phase, error: phaseError } = await supabase
+      .from("phases")
+      .select("type")
+      .eq("id", phaseId)
+      .maybeSingle();
+    
+    if (phaseError) {
+      console.error("Error fetching phase:", phaseError);
+    } else if (phase && phase.type !== "quiz") {
+      const { error: updateError } = await supabase
+        .from("phases")
+        .update({ type: "quiz" })
+        .eq("id", phaseId);
+      
+      if (updateError) {
+        console.error("Error updating phase type to quiz:", updateError);
+      } else {
+        console.log("Updated phase type to quiz");
+      }
     }
     
     console.log(`Quiz saved for phase ${phaseId} with ${questions.length} questions`);
