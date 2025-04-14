@@ -1,12 +1,12 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface QuizQuestionProps {
   question: string;
   options: string[];
   correctAnswer: number;
   onAnswer: (correct: boolean) => void;
-  questionId?: number; // Added to help with debugging
+  questionId?: number;
 }
 
 const QuizQuestion = ({
@@ -19,7 +19,19 @@ const QuizQuestion = ({
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
 
+  useEffect(() => {
+    // Reset state when question changes
+    setSelectedOption(null);
+    setShowFeedback(false);
+  }, [question, questionId]);
+
   console.log(`Rendering question "${question}" (ID: ${questionId}) with correct answer: ${correctAnswer} and options:`, options);
+  
+  // Check if options is a valid array
+  if (!Array.isArray(options) || options.length === 0) {
+    console.error("Invalid options provided for question:", question, "Options:", options);
+    return <div>Erro ao carregar as opções desta pergunta.</div>;
+  }
 
   const handleOptionClick = (index: number) => {
     if (selectedOption !== null || showFeedback) return;

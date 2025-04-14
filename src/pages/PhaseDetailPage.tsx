@@ -6,7 +6,15 @@ import YoutubeEmbed from "@/components/YoutubeEmbed";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
 import { Button } from "@/components/ui/button";
-import { getPhaseById, getPhasesByModuleId, Phase, updateUserPhaseStatus } from "@/services/moduleService";
+import QuizQuestion from "@/components/QuizQuestion";
+import { 
+  getPhaseById, 
+  getPhasesByModuleId, 
+  getQuestionsByPhaseId,
+  Phase, 
+  Question, 
+  updateUserPhaseStatus 
+} from "@/services/moduleService";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -16,6 +24,9 @@ const PhaseDetailPage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [quizCompleted, setQuizCompleted] = useState(false);
+  const [correctAnswers, setCorrectAnswers] = useState(0);
 
   // Get current user
   useEffect(() => {
@@ -43,12 +54,21 @@ const PhaseDetailPage = () => {
     enabled: !!moduleId,
   });
 
+  // Fetch quiz questions for this phase
+  const { data: questions = [], isLoading: isLoadingQuestions } = useQuery({
+    queryKey: ['questions', Number(phaseId)],
+    queryFn: () => getQuestionsByPhaseId(Number(phaseId)),
+    enabled: !!phaseId && phase?.type === 'quiz',
+  });
+
+  console.log("Quiz questions loaded:", questions);
+
   // Update loading state based on data fetching status
   useEffect(() => {
-    if (!isLoadingPhase && !isLoadingPhases) {
+    if (!isLoadingPhase && !isLoadingPhases && (!isLoadingQuestions || phase?.type !== 'quiz')) {
       setLoading(false);
     }
-  }, [isLoadingPhase, isLoadingPhases]);
+  }, [isLoadingPhase, isLoadingPhases, isLoadingQuestions, phase]);
 
   // Find current phase index and next/prev phases
   const currentPhaseIndex = phases.findIndex(p => p.id === Number(phaseId));
@@ -89,6 +109,19 @@ const PhaseDetailPage = () => {
         toast.error("Erro ao marcar fase como concluída");
         console.error("Error completing phase:", error);
       }
+    }
+  };
+
+  // Handle quiz answer
+  const handleQuizAnswer = (correct: boolean) => {
+    if (correct) {
+      setCorrectAnswers(prev => prev + 1);
+    }
+
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+    } else {
+      setQuizCompleted(true);
     }
   };
 
@@ -160,7 +193,48 @@ const PhaseDetailPage = () => {
         {phase.type === "quiz" && (
           <div className="mt-6">
             <h3 className="text-lg font-medium mb-3">Quiz</h3>
-            <p>Em breve...</p>
+            
+            {questions.length === 0 ? (
+              <p>Não há perguntas disponíveis para este quiz.</p>
+            ) : quizCompleted ? (
+              <div className="p-6 bg-white rounded-lg shadow-sm border text-center">
+                <h4 className="text-xl font-bold mb-4">Resultado do Quiz</h4>
+                <p className="text-lg">
+                  Você acertou {correctAnswers} de {questions.length} perguntas!
+                </p>
+                <p className="text-lg mt-4">
+                  {correctAnswers === questions.length ? 
+                    "Parabéns! Você acertou todas as perguntas!" : 
+                    "Continue praticando para melhorar seus conhecimentos!"}
+                </p>
+              </div>
+            ) : (
+              <div className="p-6 bg-white rounded-lg shadow-sm border">
+                <div className="flex justify-between mb-4">
+                  <span className="text-sm font-medium">
+                    Pergunta {currentQuestionIndex + 1} de {questions.length}
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    {Math.round(((currentQuestionIndex) / questions.length) * 100)}% completo
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2 mb-6">
+                  <div 
+                    className="bg-trilha-orange h-2 rounded-full" 
+                    style={{ width: `${Math.round(((currentQuestionIndex) / questions.length) * 100)}%` }}
+                  ></div>
+                </div>
+                {questions[currentQuestionIndex] && (
+                  <QuizQuestion
+                    questionId={questions[currentQuestionIndex].id}
+                    question={questions[currentQuestionIndex].question}
+                    options={questions[currentQuestionIndex].options}
+                    correctAnswer={questions[currentQuestionIndex].correct_answer}
+                    onAnswer={handleQuizAnswer}
+                  />
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -186,9 +260,11 @@ const PhaseDetailPage = () => {
               )}
             </div>
             
-            <Button onClick={handleCompletePhase} className="bg-trilha-orange hover:bg-trilha-orange/90">
-              Concluir
-            </Button>
+            {(phase.type !== 'quiz' || quizCompleted) && (
+              <Button onClick={handleCompletePhase} className="bg-trilha-orange hover:bg-trilha-orange/90">
+                Concluir
+              </Button>
+            )}
             
             <div>
               {nextPhase && (
