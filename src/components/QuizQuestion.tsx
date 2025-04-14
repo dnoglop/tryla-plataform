@@ -6,6 +6,7 @@ interface QuizQuestionProps {
   options: string[];
   correctAnswer: number;
   onAnswer: (correct: boolean) => void;
+  questionId?: number; // Added to help with debugging
 }
 
 const QuizQuestion = ({
@@ -13,9 +14,12 @@ const QuizQuestion = ({
   options,
   correctAnswer,
   onAnswer,
+  questionId
 }: QuizQuestionProps) => {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
+
+  console.log(`Rendering question "${question}" (ID: ${questionId}) with correct answer: ${correctAnswer} and options:`, options);
 
   const handleOptionClick = (index: number) => {
     if (selectedOption !== null || showFeedback) return;
@@ -24,6 +28,8 @@ const QuizQuestion = ({
     setShowFeedback(true);
     
     const isCorrect = index === correctAnswer;
+    console.log(`User selected option ${index}, correct answer is ${correctAnswer}, isCorrect: ${isCorrect}`);
+    
     setTimeout(() => {
       onAnswer(isCorrect);
       setSelectedOption(null);

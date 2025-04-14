@@ -340,6 +340,8 @@ export const deletePhase = async (id: number): Promise<void> => {
 // Quizzes e Perguntas
 export const getQuestionsByPhaseId = async (phaseId: number): Promise<Question[]> => {
   try {
+    console.log(`Fetching questions for phase ${phaseId}`);
+    
     // Primeiro, encontrar o quiz relacionado à fase
     const { data: quizData, error: quizError } = await supabase
       .from("quizzes")
@@ -350,13 +352,19 @@ export const getQuestionsByPhaseId = async (phaseId: number): Promise<Question[]
     if (quizError) {
       // Se não encontrar o quiz, retorna array vazio
       if (quizError.code === 'PGRST116') {
+        console.log(`No quiz found for phase ${phaseId}`);
         return [];
       }
       console.error("Error finding quiz for phase:", quizError);
       throw quizError;
     }
     
-    if (!quizData) return [];
+    if (!quizData) {
+      console.log(`No quiz found for phase ${phaseId}`);
+      return [];
+    }
+    
+    console.log(`Found quiz ID ${quizData.id} for phase ${phaseId}`);
     
     // Depois, buscar todas as perguntas relacionadas ao quiz
     const { data: questionsData, error: questionsError } = await supabase
@@ -370,13 +378,23 @@ export const getQuestionsByPhaseId = async (phaseId: number): Promise<Question[]
       throw questionsError;
     }
     
-    console.log("Fetched questions for phase", phaseId, ":", questionsData);
+    console.log(`Raw questions data for phase ${phaseId}:`, questionsData);
+    
+    if (!questionsData || questionsData.length === 0) {
+      console.log(`No questions found for quiz ${quizData.id} (phase ${phaseId})`);
+      return [];
+    }
     
     // Converter as opções do formato JSONB para array
-    const questions = questionsData?.map(q => ({
-      ...q,
-      options: Array.isArray(q.options) ? q.options : JSON.parse(q.options as unknown as string)
-    })) || [];
+    const questions = questionsData.map(q => {
+      const options = Array.isArray(q.options) ? q.options : JSON.parse(q.options as unknown as string);
+      console.log(`Processed question ${q.id}: "${q.question}" with options:`, options, `and correct answer: ${q.correct_answer}`);
+      
+      return {
+        ...q,
+        options: options
+      };
+    });
     
     return questions as Question[];
   } catch (error) {
@@ -463,28 +481,21 @@ export const saveQuiz = async (phaseId: number, questions: Omit<Question, "id" |
       console.log("Inserted questions:", insertedData);
     }
     
-    // Update the phase type to quiz if it's not already
+    // IMPORTANT: Update the phase type to quiz
+    console.log("Updating phase type to quiz for phase ID:", phaseId);
     const { data: phase, error: phaseError } = await supabase
       .from("phases")
-      .select("type")
+      .update({ type: "quiz" })
       .eq("id", phaseId)
-      .maybeSingle();
+      .select()
+      .single();
     
     if (phaseError) {
-      console.error("Error fetching phase:", phaseError);
-    } else if (phase && phase.type !== "quiz") {
-      const { error: updateError } = await supabase
-        .from("phases")
-        .update({ type: "quiz" })
-        .eq("id", phaseId);
-      
-      if (updateError) {
-        console.error("Error updating phase type to quiz:", updateError);
-      } else {
-        console.log("Updated phase type to quiz");
-      }
+      console.error("Error updating phase type to quiz:", phaseError);
+      throw phaseError;
     }
     
+    console.log("Updated phase:", phase);
     console.log(`Quiz saved for phase ${phaseId} with ${questions.length} questions`);
   } catch (error) {
     console.error(`Error saving quiz for phase ${phaseId}:`, error);
