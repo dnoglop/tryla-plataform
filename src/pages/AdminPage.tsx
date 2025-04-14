@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -933,4 +934,280 @@ const AdminPage = () => {
                                   onClick={() => handleQuizEdit(phase.id)}
                                 >
                                   Editar Quiz
-                                </Button
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="quizzes">
+          {/* Quiz content goes here */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-1">
+              <Card className="p-4">
+                <h2 className="text-lg font-semibold mb-4">
+                  {editingQuiz ? `Editar Quiz: ${getPhaseNameById(editingQuiz.phaseId)}` : "Selecione uma fase para editar o quiz"}
+                </h2>
+                
+                {/* Seletor de módulo para filtrar fases com quiz */}
+                <div className="mb-4">
+                  <Label htmlFor="quiz-module-selector">Filtrar por Módulo</Label>
+                  <Select 
+                    value={selectedModule.toString()} 
+                    onValueChange={(value) => setSelectedModule(parseInt(value))}
+                  >
+                    <SelectTrigger id="quiz-module-selector">
+                      <SelectValue placeholder="Selecione um módulo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {modules.map(module => (
+                        <SelectItem key={module.id} value={module.id.toString()}>
+                          {module.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {/* Lista de fases tipo quiz do módulo selecionado */}
+                <div className="space-y-4 mt-4">
+                  <h3 className="font-medium">Fases com Quiz</h3>
+                  {phases
+                    .filter(phase => phase.type === "quiz" && phase.module_id === selectedModule)
+                    .map(phase => (
+                      <Card key={phase.id} className="p-3">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="font-medium">{phase.name}</p>
+                            <p className="text-sm text-gray-500">{getModuleNameById(phase.module_id || 0)}</p>
+                          </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleQuizEdit(phase.id)}
+                          >
+                            Editar Quiz
+                          </Button>
+                        </div>
+                      </Card>
+                    ))}
+                </div>
+              </Card>
+            </div>
+            
+            <div className="lg:col-span-2">
+              {editingQuiz ? (
+                <Card className="p-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-lg font-semibold">
+                      Perguntas do Quiz
+                    </h2>
+                    <Button 
+                      variant="outline"
+                      onClick={addQuestion}
+                    >
+                      <PlusCircle className="h-4 w-4 mr-2" />
+                      Adicionar Pergunta
+                    </Button>
+                  </div>
+                  
+                  {editingQuiz.questions.map((question, index) => (
+                    <div key={index} className="mb-6 p-4 border rounded-lg">
+                      <div className="flex justify-between mb-2">
+                        <h3 className="font-medium">Pergunta {index + 1}</h3>
+                        {editingQuiz.questions.length > 1 && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => removeQuestion(index)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            Remover
+                          </Button>
+                        )}
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor={`question-${index}`}>Pergunta</Label>
+                          <Input
+                            id={`question-${index}`}
+                            value={question.question}
+                            onChange={(e) => updateQuestion(index, "question", e.target.value)}
+                            placeholder="Digite a pergunta"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label>Opções</Label>
+                          {question.options.map((option, optionIndex) => (
+                            <div key={optionIndex} className="flex items-center space-x-2">
+                              <Input
+                                value={option}
+                                onChange={(e) => updateQuestion(index, `option${optionIndex}`, e.target.value)}
+                                placeholder={`Opção ${optionIndex + 1}`}
+                                className={optionIndex === question.correct_answer ? "border-green-500" : ""}
+                              />
+                              <Button
+                                type="button"
+                                variant={optionIndex === question.correct_answer ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => updateQuestion(index, "correctAnswer", optionIndex)}
+                              >
+                                {optionIndex === question.correct_answer ? "Correta" : "Marcar"}
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  <div className="flex justify-end space-x-2 mt-4">
+                    <Button variant="outline" onClick={() => setEditingQuiz(null)}>
+                      Cancelar
+                    </Button>
+                    <Button onClick={handleUpdateQuiz}>
+                      Salvar Quiz
+                    </Button>
+                  </div>
+                </Card>
+              ) : (
+                <div className="flex items-center justify-center h-full min-h-[300px]">
+                  <div className="text-center">
+                    <FileText className="h-16 w-16 mx-auto text-gray-400 mb-2" />
+                    <h3 className="text-lg font-medium">Selecione um Quiz para Editar</h3>
+                    <p className="text-gray-500 mt-1">
+                      Clique em "Editar Quiz" em uma das fases disponíveis
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="eventos">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-1">
+              <Card className="p-4">
+                <h2 className="text-lg font-semibold mb-4">Adicionar Evento</h2>
+                
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="event-title">Título do Evento</Label>
+                    <Input
+                      id="event-title"
+                      placeholder="Digite o título do evento"
+                      value={eventTitle}
+                      onChange={(e) => setEventTitle(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label htmlFor="event-date">Data</Label>
+                      <Input
+                        id="event-date"
+                        type="date"
+                        value={eventDate}
+                        onChange={(e) => setEventDate(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="event-time">Horário</Label>
+                      <Input
+                        id="event-time"
+                        type="time"
+                        value={eventTime}
+                        onChange={(e) => setEventTime(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="event-location">Local</Label>
+                    <Input
+                      id="event-location"
+                      placeholder="Local do evento (presencial ou online)"
+                      value={eventLocation}
+                      onChange={(e) => setEventLocation(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="event-description">Descrição</Label>
+                    <Textarea
+                      id="event-description"
+                      placeholder="Descreva detalhes sobre o evento"
+                      value={eventDescription}
+                      onChange={(e) => setEventDescription(e.target.value)}
+                    />
+                  </div>
+                  
+                  <Button 
+                    className="w-full mt-2"
+                    onClick={handleAddEvent}
+                  >
+                    Adicionar Evento
+                  </Button>
+                </div>
+              </Card>
+            </div>
+            
+            <div className="lg:col-span-2">
+              <Card className="p-4">
+                <h2 className="text-lg font-semibold mb-4">Eventos Cadastrados</h2>
+                
+                <div className="space-y-4">
+                  {communityEvents.length > 0 ? (
+                    communityEvents.map((event) => (
+                      <Card key={event.id} className="p-4">
+                        <div className="flex justify-between">
+                          <div>
+                            <h3 className="font-medium">{event.title}</h3>
+                            <p className="text-sm text-gray-500">{event.date} às {event.time}</p>
+                            <p className="text-sm mt-1">{event.description}</p>
+                            <p className="text-sm text-gray-500 mt-2">
+                              <span className="font-medium">Local:</span> {event.location}
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-500 h-8 w-8 p-0"
+                            onClick={() => deleteEvent(event.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </Card>
+                    ))
+                  ) : (
+                    <div className="text-center py-8">
+                      <Calendar className="h-12 w-12 mx-auto text-gray-400 mb-2" />
+                      <h3 className="text-lg font-medium">Nenhum Evento Cadastrado</h3>
+                      <p className="text-gray-500 mt-1">
+                        Adicione eventos para a comunidade no formulário ao lado
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default AdminPage;
