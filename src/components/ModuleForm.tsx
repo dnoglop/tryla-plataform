@@ -149,7 +149,10 @@ const ModuleForm = ({ module, onSuccess }: ModuleFormProps) => {
       <div>
         <Label htmlFor="content">Conteúdo Introdutório</Label>
         <div className="mt-2 border rounded-md">
-          <RichTextEditor content={content} onContentChange={setContent} />
+          <RichTextEditor
+            value={content}
+            onChange={setContent}
+          />
         </div>
         <p className="text-gray-500 text-xs mt-1">Este conteúdo será exibido na aba Introdução do módulo</p>
       </div>
