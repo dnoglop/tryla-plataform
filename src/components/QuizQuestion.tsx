@@ -28,9 +28,20 @@ const QuizQuestion = ({
   console.log(`Rendering question "${question}" (ID: ${questionId}) with correct answer: ${correctAnswer} and options:`, options);
   
   // Check if options is a valid array
-  if (!Array.isArray(options) || options.length === 0) {
+  if (!Array.isArray(options)) {
     console.error("Invalid options provided for question:", question, "Options:", options);
-    return <div>Erro ao carregar as opções desta pergunta.</div>;
+    return <div>Erro ao carregar as opções desta pergunta. As opções não são um array válido.</div>;
+  }
+  
+  if (options.length === 0) {
+    console.error("Empty options array for question:", question);
+    return <div>Erro ao carregar as opções desta pergunta. Nenhuma opção disponível.</div>;
+  }
+  
+  // Ensure correctAnswer is a valid index
+  if (correctAnswer === undefined || correctAnswer === null || correctAnswer < 0 || correctAnswer >= options.length) {
+    console.error("Invalid correct answer index:", correctAnswer, "for question:", question);
+    return <div>Erro ao carregar a resposta correta desta pergunta.</div>;
   }
 
   const handleOptionClick = (index: number) => {

@@ -478,14 +478,39 @@ const AdminPage = () => {
 
   const handleQuizEdit = async (phaseId: number) => {
     try {
+      console.log("Buscando perguntas para a fase:", phaseId);
       const questions = await getQuestionsByPhaseIdFunc(phaseId);
+      console.log("Perguntas recebidas:", questions);
       
-      if (questions.length > 0) {
+      // Verifica se questions é um array válido
+      if (Array.isArray(questions) && questions.length > 0) {
+        // Verifica se cada pergunta tem opções válidas
+        const validQuestions = questions.map(q => {
+          // Se options não for um array, converte para array
+          if (!Array.isArray(q.options)) {
+            console.log("Convertendo opções para array:", q.options);
+            // Tenta converter string JSON para array se for string
+            try {
+              if (typeof q.options === 'string') {
+                q.options = JSON.parse(q.options);
+              } else {
+                // Fallback para array vazio se não for possível converter
+                q.options = ["", "", "", ""];
+              }
+            } catch (e) {
+              console.error("Erro ao converter opções:", e);
+              q.options = ["", "", "", ""];
+            }
+          }
+          return q;
+        });
+        
         setEditingQuiz({
           phaseId,
-          questions
+          questions: validQuestions
         });
       } else {
+        // Cria um quiz vazio se não houver perguntas
         setEditingQuiz({
           phaseId,
           questions: [
@@ -507,6 +532,20 @@ const AdminPage = () => {
         description: "Não foi possível carregar as perguntas do quiz",
         variant: "destructive"
       });
+      
+      // Mesmo com erro, cria um quiz vazio para permitir edição
+      setEditingQuiz({
+        phaseId,
+        questions: [
+          {
+            question: "",
+            options: ["", "", "", ""],
+            correct_answer: 0,
+            order_index: 0
+          }
+        ]
+      });
+      setActiveTab("quizzes");
     }
   };
 

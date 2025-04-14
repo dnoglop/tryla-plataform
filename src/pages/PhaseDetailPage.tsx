@@ -30,6 +30,72 @@ const PhaseDetailPage = () => {
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const [videoNotes, setVideoNotes] = useState("");
+  
+  // Função para lidar com as respostas do quiz
+  const handleQuizAnswer = (isCorrect: boolean) => {
+    if (isCorrect) {
+      setCorrectAnswers(prev => prev + 1);
+    }
+    
+    console.log('Respondendo questão:', { currentQuestionIndex, totalQuestions: questions.length, isCorrect });
+    
+    if (questions && currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+    } else {
+      setQuizCompleted(true);
+    }
+  };
+  
+  // Função para marcar a fase como concluída
+  const handleCompletePhase = async () => {
+    if (!user) {
+      console.error("Usuário não autenticado");
+      toast.error("Você precisa estar logado para concluir esta fase.");
+      return;
+    }
+    
+    if (!phaseId) {
+      console.error("ID da fase não disponível");
+      toast.error("Erro ao identificar a fase. Tente novamente.");
+      return;
+    }
+    
+    try {
+      setLoading(true); // Adiciona loading enquanto processa
+      console.log("Atualizando status da fase:", { userId: user.id, phaseId: Number(phaseId) });
+      
+      // Verifica se o ID do usuário é válido
+      if (!user.id) {
+        throw new Error("ID do usuário não disponível");
+      }
+      
+      // Utiliza a função do serviço para atualizar o status da fase
+      const result = await updateUserPhaseStatus(user.id, Number(phaseId), "completed");
+      
+      if (!result) {
+        throw new Error("Falha ao atualizar status da fase");
+      }
+      
+      toast.success("Fase concluída com sucesso!");
+      
+      // Atualiza o cache do React Query para garantir que os dados estejam atualizados
+      queryClient.invalidateQueries({ queryKey: ['phases'] });
+      queryClient.invalidateQueries({ queryKey: ['phase'] });
+      
+      // Se houver uma próxima fase, navega para ela, senão volta para a página do módulo
+      if (nextPhase) {
+        navigate(`/fase/${moduleId}/${nextPhase.id}`);
+      } else {
+        navigate(`/modulo/${moduleId}`);
+      }
+    } catch (error: any) {
+      console.error("Erro ao concluir fase:", error);
+      const errorMessage = error.message || "Erro ao concluir fase. Tente novamente.";
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const queryClient = useQueryClient();
 
@@ -56,11 +122,34 @@ const PhaseDetailPage = () => {
     enabled: !!moduleId,
   });
 
-  const { data: questions = [], isLoading: isLoadingQuestions } = useQuery({
+  const { data: questions = [], isLoading: isLoadingQuestions, refetch: refetchQuestions } = useQuery({
     queryKey: ['questions', Number(phaseId)],
     queryFn: () => getQuestionsByPhaseId(Number(phaseId)),
     enabled: !!phaseId && phase?.type === 'quiz',
+    staleTime: 0, // Sempre busca dados frescos
+    refetchOnMount: true, // Refaz a consulta quando o componente é montado
+    retry: 3, // Tenta 3 vezes em caso de falha
+    retryDelay: 1000, // Espera 1 segundo entre as tentativas
   });
+  
+  // Log para debug das questões carregadas
+  useEffect(() => {
+    if (phase?.type === 'quiz') {
+      console.log('Questões carregadas:', questions);
+      console.log('Índice atual da questão:', currentQuestionIndex);
+      console.log('Questão atual:', questions[currentQuestionIndex]);
+      
+      // Verificar se há questões válidas
+      if (questions.length === 0) {
+        console.warn('Nenhuma questão encontrada para este quiz');
+      }
+      
+      // Verificar se a questão atual tem opções válidas
+      if (questions[currentQuestionIndex] && (!questions[currentQuestionIndex].options || !Array.isArray(questions[currentQuestionIndex].options))) {
+        console.error('Opções inválidas para a questão atual:', questions[currentQuestionIndex]);
+      }
+    }
+  }, [questions, currentQuestionIndex, phase]);
 
   useEffect(() => {
     if (!isLoadingPhase && !isLoadingPhases && (!isLoadingQuestions || phase?.type !== 'quiz')) {
@@ -167,8 +256,8 @@ const PhaseDetailPage = () => {
           )}
         </div>
 
-        {phase.type === "video" && phase.videoId && (
-          <YoutubeEmbed videoId={phase.videoId} />
+        {phase.type === "video" && phase.video_url && (
+          <YoutubeEmbed videoId={phase.video_url} />
         )}
 
         {phase.type === "video" && (
@@ -230,8 +319,22 @@ const PhaseDetailPage = () => {
         {phase.type === "quiz" && (
           <div className="mt-6">
             <h3 className="text-lg font-medium mb-3">Quiz</h3>
+            <div className="mb-3">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => refetchQuestions()}
+                className="mb-3"
+              >
+                Recarregar Perguntas
+              </Button>
+            </div>
             
-            {questions.length === 0 ? (
+            {isLoadingQuestions ? (
+              <div className="flex items-center justify-center p-6">
+                <div className="animate-spin rounded-full h-8 w-8 border-4 border-trilha-orange border-t-transparent"></div>
+              </div>
+            ) : questions.length === 0 ? (
               <p>Não há perguntas disponíveis para este quiz.</p>
             ) : quizCompleted ? (
               <div className="p-6 bg-white rounded-lg shadow-sm border text-center">
@@ -252,23 +355,28 @@ const PhaseDetailPage = () => {
                     Pergunta {currentQuestionIndex + 1} de {questions.length}
                   </span>
                   <span className="text-sm text-gray-500">
-                    {Math.round(((currentQuestionIndex) / questions.length) * 100)}% completo
+                    {Math.round(((currentQuestionIndex + 1) / questions.length) * 100)}% completo
                   </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2 mb-6">
                   <div 
                     className="bg-trilha-orange h-2 rounded-full" 
-                    style={{ width: `${Math.round(((currentQuestionIndex) / questions.length) * 100)}%` }}
+                    style={{ width: `${Math.round(((currentQuestionIndex + 1) / questions.length) * 100)}%` }}
                   ></div>
                 </div>
-                {questions[currentQuestionIndex] && (
+                {questions && questions.length > 0 && currentQuestionIndex < questions.length ? (
                   <QuizQuestion
+                    key={`question-${questions[currentQuestionIndex].id}-${currentQuestionIndex}`}
                     questionId={questions[currentQuestionIndex].id}
                     question={questions[currentQuestionIndex].question}
-                    options={questions[currentQuestionIndex].options}
+                    options={Array.isArray(questions[currentQuestionIndex].options) ? questions[currentQuestionIndex].options : []}
                     correctAnswer={questions[currentQuestionIndex].correct_answer}
                     onAnswer={handleQuizAnswer}
                   />
+                ) : (
+                  <div className="text-center p-4">
+                    <p>Carregando questão... {isLoadingQuestions ? "(Aguarde)" : "(Clique em Recarregar Perguntas)"}</p>
+                  </div>
                 )}
               </div>
             )}

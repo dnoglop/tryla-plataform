@@ -49,6 +49,8 @@ const YoutubeEmbed = ({ videoId, className = "" }: YoutubeEmbedProps) => {
   }, [videoId]);
 
   if (!id) return <div className="p-4 text-center text-gray-500">Digite uma URL válida do YouTube</div>;
+  
+  console.log("Rendering YouTube video with ID:", id);
 
   const embedUrl = `https://www.youtube.com/embed/${id}`;
   
