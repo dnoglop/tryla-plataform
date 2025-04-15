@@ -387,6 +387,41 @@ export type Database = {
           },
         ]
       }
+      user_phases: {
+        Row: {
+          completed_at: string | null
+          id: string
+          phase_id: number
+          started_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          id?: string
+          phase_id: number
+          started_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          id?: string
+          phase_id?: number
+          started_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_phases_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "phases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_quiz_answers: {
         Row: {
           answered_at: string | null

@@ -1,8 +1,9 @@
 import { supabase } from "@/integrations/supabase/client";
 
+export type PhaseStatus = "notStarted" | "inProgress" | "completed";
 export type ModuleType = "autoconhecimento" | "empatia" | "growth" | "comunicacao" | "futuro";
 export type PhaseType = "text" | "video" | "quiz" | "challenge";
-export type IconType = "video" | "text" | "challenge" | "quiz";
+export type IconType = "video" | "text" | "challenge" | "quiz" | "game";
 
 export interface Module {
   id: number;
@@ -12,6 +13,7 @@ export interface Module {
   type: ModuleType;
   emoji: string;
   order_index: number | null;
+  content: string | null;
 }
 
 export interface Phase {
@@ -28,6 +30,7 @@ export interface Phase {
   duration: number | null;
   order_index: number | null;
   images: string[] | null;
+  status?: PhaseStatus;
 }
 
 export interface Question {
@@ -223,23 +226,20 @@ export const deletePhase = async (phaseId: number) => {
 
 export const getQuestionsByPhaseId = async (phaseId: number): Promise<Question[]> => {
   try {
-    // Primeiro, buscar o quiz associado à fase
     const { data: quiz, error: quizError } = await supabase
       .from('quizzes')
       .select('id')
       .eq('phase_id', phaseId)
       .single();
 
-    if (quizError && quizError.code !== 'PGRST116') { // PGRST116 é o código para 'não encontrado'
+    if (quizError && quizError.code !== 'PGRST116') {
       throw quizError;
     }
 
-    // Se não houver quiz para esta fase, retornar array vazio
     if (!quiz) {
       return [];
     }
 
-    // Buscar as questões associadas ao quiz
     let { data: questions, error } = await supabase
       .from('questions')
       .select('*')
@@ -250,24 +250,19 @@ export const getQuestionsByPhaseId = async (phaseId: number): Promise<Question[]
       throw error;
     }
     
-    // Garantir que as opções sejam sempre um array válido
     const processedQuestions = (questions || []).map(question => {
       let options = question.options;
       
-      // Se options não for um array, tenta converter
       if (!Array.isArray(options)) {
         try {
-          // Tenta converter de string JSON para array
           if (typeof options === 'string') {
             options = JSON.parse(options);
           }
         } catch (e) {
           console.error(`Erro ao processar opções da pergunta ${question.id}:`, e);
-          // Fallback para array vazio
           options = [];
         }
         
-        // Se ainda não for array ou for vazio, cria opções padrão
         if (!Array.isArray(options) || options.length === 0) {
           options = ["", "", "", ""];
         }
@@ -288,24 +283,21 @@ export const getQuestionsByPhaseId = async (phaseId: number): Promise<Question[]
 
 export const saveQuiz = async (phaseId: number, questions: any[]): Promise<boolean> => {
   try {
-    // Primeiro, verificamos se já existe um quiz para esta fase
     let quizId: number;
     
-    // Buscar quiz existente para a fase
     const { data: existingQuiz, error: quizError } = await supabase
       .from('quizzes')
       .select('id')
       .eq('phase_id', phaseId)
       .single();
     
-    if (quizError && quizError.code !== 'PGRST116') { // PGRST116 é o código para 'não encontrado'
+    if (quizError && quizError.code !== 'PGRST116') {
       throw quizError;
     }
     
     if (existingQuiz) {
       quizId = existingQuiz.id;
       
-      // Delete existing questions for the quiz
       const { error: deleteError } = await supabase
         .from('questions')
         .delete()
@@ -315,7 +307,6 @@ export const saveQuiz = async (phaseId: number, questions: any[]): Promise<boole
         throw deleteError;
       }
     } else {
-      // Criar um novo quiz para esta fase
       const { data: newQuiz, error: createError } = await supabase
         .from('quizzes')
         .insert([{ phase_id: phaseId }])
@@ -329,7 +320,6 @@ export const saveQuiz = async (phaseId: number, questions: any[]): Promise<boole
       quizId = newQuiz.id;
     }
 
-    // Insert the new questions
     const { error: insertError } = await supabase
       .from('questions')
       .insert(
@@ -353,69 +343,64 @@ export const saveQuiz = async (phaseId: number, questions: any[]): Promise<boole
   }
 };
 
-export const updateUserPhaseStatus = async (userId: string, phaseId: number, status: "notStarted" | "inProgress" | "completed") => {
+export const updateUserPhaseStatus = async (userId: string, phaseId: number, status: PhaseStatus): Promise<boolean> => {
   try {
-    // Validação de parâmetros
     if (!userId || !phaseId) {
-      console.error("Parâmetros inválidos:", { userId, phaseId });
-      throw new Error("Parâmetros inválidos: userId e phaseId são obrigatórios");
+      console.error("Invalid parameters:", { userId, phaseId });
+      throw new Error("Invalid parameters: userId and phaseId are required");
     }
 
-    // Check if the user phase status already exists
-    let { data: existingStatus, error: selectError } = await supabase
+    const { data: existingStatus, error: selectError } = await supabase
       .from('user_phases')
       .select('*')
       .eq('user_id', userId)
-      .eq('phase_id', phaseId);
+      .eq('phase_id', phaseId)
+      .single();
 
-    if (selectError) {
-      console.error("Erro ao verificar status existente:", selectError);
+    if (selectError && selectError.code !== 'PGRST116') {
+      console.error("Error checking existing status:", selectError);
       throw selectError;
     }
 
-    if (existingStatus && existingStatus.length > 0) {
-      // Update the existing status
-      const { data: updateData, error: updateError } = await supabase
+    const timestamp = new Date().toISOString();
+    const updateData = {
+      status,
+      completed_at: status === 'completed' ? timestamp : null
+    };
+
+    if (existingStatus) {
+      const { error: updateError } = await supabase
         .from('user_phases')
-        .update({ status })
+        .update(updateData)
         .eq('user_id', userId)
-        .eq('phase_id', phaseId)
-        .select();
+        .eq('phase_id', phaseId);
 
       if (updateError) {
-        console.error("Erro ao atualizar status existente:", updateError);
+        console.error("Error updating status:", updateError);
         throw updateError;
       }
-      
-      return true;
     } else {
-      // Insert a new status
-      const { data: insertData, error: insertError } = await supabase
+      const { error: insertError } = await supabase
         .from('user_phases')
-        .insert([
-          {
-            user_id: userId,
-            phase_id: phaseId,
-            status,
-          },
-        ])
-        .select();
+        .insert([{
+          user_id: userId,
+          phase_id: phaseId,
+          ...updateData
+        }]);
 
       if (insertError) {
-        console.error("Erro ao inserir novo status:", insertError);
+        console.error("Error inserting status:", insertError);
         throw insertError;
       }
-      
-      return true;
     }
+
+    return true;
   } catch (error) {
     console.error("Error updating user phase status:", error);
-    // Retorna false em caso de erro para que o componente saiba que a operação falhou
     return false;
   }
 };
 
-// Função auxiliar para verificar o status atual da fase do usuário
 export const getUserPhaseStatus = async (userId: string, phaseId: number): Promise<string | null> => {
   try {
     const { data, error } = await supabase
@@ -425,7 +410,7 @@ export const getUserPhaseStatus = async (userId: string, phaseId: number): Promi
       .eq('phase_id', phaseId)
       .single();
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 é o código para 'não encontrado'
+    if (error && error.code !== 'PGRST116') {
       throw error;
     }
 

@@ -6,12 +6,14 @@ interface HeaderProps {
   title: string;
   showBackButton?: boolean;
   showNotifications?: boolean;
+  rightContent?: React.ReactNode;
 }
 
 const Header = ({ 
   title, 
   showBackButton = true,
-  showNotifications = true 
+  showNotifications = true,
+  rightContent
 }: HeaderProps) => {
   const navigate = useNavigate();
 
@@ -29,13 +31,15 @@ const Header = ({
           )}
           <h1 className="text-xl font-bold">{title}</h1>
         </div>
-        {showNotifications && (
-          <button className="relative rounded-full p-2 hover:bg-gray-100">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-1 right-1 flex h-3 w-3 items-center justify-center rounded-full bg-trilha-orange text-[8px] text-white">
-              3
-            </span>
-          </button>
+        {rightContent ? rightContent : (
+          showNotifications && (
+            <button className="relative rounded-full p-2 hover:bg-gray-100">
+              <Bell className="h-5 w-5" />
+              <span className="absolute top-1 right-1 flex h-3 w-3 items-center justify-center rounded-full bg-trilha-orange text-[8px] text-white">
+                3
+              </span>
+            </button>
+          )
         )}
       </div>
     </header>

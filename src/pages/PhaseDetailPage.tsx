@@ -31,67 +31,55 @@ const PhaseDetailPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [videoNotes, setVideoNotes] = useState("");
   
-  // Função para lidar com as respostas do quiz
-  const handleQuizAnswer = (isCorrect: boolean) => {
+  const handleQuizAnswer = async (isCorrect: boolean) => {
     if (isCorrect) {
       setCorrectAnswers(prev => prev + 1);
     }
-    
-    console.log('Respondendo questão:', { currentQuestionIndex, totalQuestions: questions.length, isCorrect });
     
     if (questions && currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
     } else {
       setQuizCompleted(true);
+      if (user) {
+        await handleCompletePhase();
+      }
     }
   };
   
-  // Função para marcar a fase como concluída
   const handleCompletePhase = async () => {
     if (!user) {
-      console.error("Usuário não autenticado");
-      toast.error("Você precisa estar logado para concluir esta fase.");
+      console.error("User not authenticated");
+      toast.error("You must be logged in to complete this phase.");
       return;
     }
     
     if (!phaseId) {
-      console.error("ID da fase não disponível");
-      toast.error("Erro ao identificar a fase. Tente novamente.");
+      console.error("Phase ID not available");
+      toast.error("Error identifying phase. Please try again.");
       return;
     }
     
     try {
-      setLoading(true); // Adiciona loading enquanto processa
-      console.log("Atualizando status da fase:", { userId: user.id, phaseId: Number(phaseId) });
+      setLoading(true);
+      console.log("Updating phase status:", { userId: user.id, phaseId: Number(phaseId) });
       
-      // Verifica se o ID do usuário é válido
-      if (!user.id) {
-        throw new Error("ID do usuário não disponível");
-      }
-      
-      // Utiliza a função do serviço para atualizar o status da fase
       const result = await updateUserPhaseStatus(user.id, Number(phaseId), "completed");
       
       if (!result) {
-        throw new Error("Falha ao atualizar status da fase");
+        throw new Error("Failed to update phase status");
       }
       
-      toast.success("Fase concluída com sucesso!");
-      
-      // Atualiza o cache do React Query para garantir que os dados estejam atualizados
+      toast.success("Phase completed successfully!");
       queryClient.invalidateQueries({ queryKey: ['phases'] });
-      queryClient.invalidateQueries({ queryKey: ['phase'] });
       
-      // Se houver uma próxima fase, navega para ela, senão volta para a página do módulo
       if (nextPhase) {
         navigate(`/fase/${moduleId}/${nextPhase.id}`);
       } else {
         navigate(`/modulo/${moduleId}`);
       }
     } catch (error: any) {
-      console.error("Erro ao concluir fase:", error);
-      const errorMessage = error.message || "Erro ao concluir fase. Tente novamente.";
-      toast.error(errorMessage);
+      console.error("Error completing phase:", error);
+      toast.error(error.message || "Error completing phase. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -126,25 +114,22 @@ const PhaseDetailPage = () => {
     queryKey: ['questions', Number(phaseId)],
     queryFn: () => getQuestionsByPhaseId(Number(phaseId)),
     enabled: !!phaseId && phase?.type === 'quiz',
-    staleTime: 0, // Sempre busca dados frescos
-    refetchOnMount: true, // Refaz a consulta quando o componente é montado
-    retry: 3, // Tenta 3 vezes em caso de falha
-    retryDelay: 1000, // Espera 1 segundo entre as tentativas
+    staleTime: 0,
+    refetchOnMount: true,
+    retry: 3,
+    retryDelay: 1000,
   });
-  
-  // Log para debug das questões carregadas
+
   useEffect(() => {
     if (phase?.type === 'quiz') {
       console.log('Questões carregadas:', questions);
       console.log('Índice atual da questão:', currentQuestionIndex);
       console.log('Questão atual:', questions[currentQuestionIndex]);
       
-      // Verificar se há questões válidas
       if (questions.length === 0) {
         console.warn('Nenhuma questão encontrada para este quiz');
       }
       
-      // Verificar se a questão atual tem opções válidas
       if (questions[currentQuestionIndex] && (!questions[currentQuestionIndex].options || !Array.isArray(questions[currentQuestionIndex].options))) {
         console.error('Opções inválidas para a questão atual:', questions[currentQuestionIndex]);
       }
@@ -170,11 +155,11 @@ const PhaseDetailPage = () => {
   const deletePhaseMutation = useMutation({
     mutationFn: (phaseId: number) => deletePhaseFunc(phaseId),
     onSuccess: () => {
-      toast.success("Fase excluída com sucesso!");
+      toast.success("Phase deleted successfully!");
       navigate(`/modulo/${moduleId}`);
     },
     onError: (error) => {
-      toast.error("Erro ao excluir fase");
+      toast.error("Error deleting phase");
       console.error("Error deleting phase:", error);
     }
   });
@@ -189,18 +174,18 @@ const PhaseDetailPage = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Observações atualizadas com sucesso!");
+      toast.success("Observations updated successfully!");
       queryClient.invalidateQueries({ queryKey: ['phase'] });
       setIsEditing(false);
     },
     onError: (error) => {
-      toast.error("Erro ao atualizar observações");
+      toast.error("Error updating observations");
       console.error("Error updating video notes:", error);
     }
   });
 
   const handleDelete = async () => {
-    if (window.confirm("Tem certeza que deseja excluir esta fase?")) {
+    if (window.confirm("Are you sure you want to delete this phase?")) {
       deletePhaseMutation.mutate(Number(phaseId));
     }
   };
@@ -224,7 +209,7 @@ const PhaseDetailPage = () => {
   if (!phase) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <p className="text-gray-500">Fase não encontrada.</p>
+        <p className="text-gray-500">Phase not found.</p>
       </div>
     );
   }
@@ -263,19 +248,19 @@ const PhaseDetailPage = () => {
         {phase.type === "video" && (
           <div className="mt-6">
             <div className="flex justify-between items-center mb-3">
-              <h3 className="text-lg font-medium">Observações sobre o vídeo</h3>
+              <h3 className="text-lg font-medium">Observations about the video</h3>
               {isEditing ? (
                 <div className="space-x-2">
                   <Button size="sm" variant="outline" onClick={() => setIsEditing(false)}>
-                    Cancelar
+                    Cancel
                   </Button>
                   <Button size="sm" onClick={handleSaveVideoNotes}>
-                    Salvar
+                    Save
                   </Button>
                 </div>
               ) : (
                 <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>
-                  Editar
+                  Edit
                 </Button>
               )}
             </div>
@@ -301,13 +286,13 @@ const PhaseDetailPage = () => {
 
         {phase.type === "text" && phase.images && phase.images.length > 0 && (
           <div className="mt-6">
-            <h3 className="text-lg font-medium mb-3">Imagens</h3>
+            <h3 className="text-lg font-medium mb-3">Images</h3>
             <div className="flex flex-wrap gap-4">
               {phase.images.map((image, index) => (
                 <img
                   key={index}
                   src={image}
-                  alt={`Imagem ${index + 1}`}
+                  alt={`Image ${index + 1}`}
                   className="rounded-lg shadow-md"
                   style={{ maxWidth: '200px', maxHeight: '200px', objectFit: 'cover' }}
                 />
@@ -326,7 +311,7 @@ const PhaseDetailPage = () => {
                 onClick={() => refetchQuestions()}
                 className="mb-3"
               >
-                Recarregar Perguntas
+                Reload Questions
               </Button>
             </div>
             
@@ -335,27 +320,27 @@ const PhaseDetailPage = () => {
                 <div className="animate-spin rounded-full h-8 w-8 border-4 border-trilha-orange border-t-transparent"></div>
               </div>
             ) : questions.length === 0 ? (
-              <p>Não há perguntas disponíveis para este quiz.</p>
+              <p>No questions available for this quiz.</p>
             ) : quizCompleted ? (
               <div className="p-6 bg-white rounded-lg shadow-sm border text-center">
-                <h4 className="text-xl font-bold mb-4">Resultado do Quiz</h4>
+                <h4 className="text-xl font-bold mb-4">Quiz Result</h4>
                 <p className="text-lg">
-                  Você acertou {correctAnswers} de {questions.length} perguntas!
+                  You answered {correctAnswers} out of {questions.length} questions correctly!
                 </p>
                 <p className="text-lg mt-4">
                   {correctAnswers === questions.length ? 
-                    "Parabéns! Você acertou todas as perguntas!" : 
-                    "Continue praticando para melhorar seus conhecimentos!"}
+                    "Congratulations! You answered all questions correctly!" : 
+                    "Keep practicing to improve your knowledge!"}
                 </p>
               </div>
             ) : (
               <div className="p-6 bg-white rounded-lg shadow-sm border">
                 <div className="flex justify-between mb-4">
                   <span className="text-sm font-medium">
-                    Pergunta {currentQuestionIndex + 1} de {questions.length}
+                    Question {currentQuestionIndex + 1} of {questions.length}
                   </span>
                   <span className="text-sm text-gray-500">
-                    {Math.round(((currentQuestionIndex + 1) / questions.length) * 100)}% completo
+                    {Math.round(((currentQuestionIndex + 1) / questions.length) * 100)}% complete
                   </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2 mb-6">
@@ -375,7 +360,7 @@ const PhaseDetailPage = () => {
                   />
                 ) : (
                   <div className="text-center p-4">
-                    <p>Carregando questão... {isLoadingQuestions ? "(Aguarde)" : "(Clique em Recarregar Perguntas)"}</p>
+                    <p>Loading question... {isLoadingQuestions ? "(Wait)" : "(Click Reload Questions)"}</p>
                   </div>
                 )}
               </div>
@@ -385,7 +370,7 @@ const PhaseDetailPage = () => {
 
         {phase.type === "challenge" && (
           <div className="mt-6">
-            <h3 className="text-lg font-medium mb-3">Desafio</h3>
+            <h3 className="text-lg font-medium mb-3">Challenge</h3>
             {phase.content ? (
               <div className="p-6 bg-white rounded-lg shadow-sm border">
                 <div 
@@ -395,7 +380,7 @@ const PhaseDetailPage = () => {
               </div>
             ) : (
               <div className="p-6 bg-white rounded-lg shadow-sm border text-center">
-                <p className="text-lg text-gray-500">Conteúdo do desafio não disponível.</p>
+                <p className="text-lg text-gray-500">Challenge content not available.</p>
               </div>
             )}
           </div>
@@ -410,14 +395,14 @@ const PhaseDetailPage = () => {
                   className="flex items-center text-gray-600 hover:text-trilha-orange"
                 >
                   <ArrowLeft className="h-4 w-4 mr-1" />
-                  <span className="text-sm">Anterior</span>
+                  <span className="text-sm">Previous</span>
                 </Link>
               )}
             </div>
             
             {(phase.type !== 'quiz' || quizCompleted) && (
               <Button onClick={handleCompletePhase} className="bg-trilha-orange hover:bg-trilha-orange/90">
-                Concluir
+                Complete
               </Button>
             )}
             
@@ -427,7 +412,7 @@ const PhaseDetailPage = () => {
                   to={`/fase/${moduleId}/${nextPhase.id}`} 
                   className="flex items-center text-gray-600 hover:text-trilha-orange"
                 >
-                  <span className="text-sm">Próximo</span>
+                  <span className="text-sm">Next</span>
                   <ArrowRight className="h-4 w-4 ml-1" />
                 </Link>
               )}
