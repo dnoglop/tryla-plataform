@@ -63,6 +63,24 @@ const ModuleDetailPage = () => {
     );
   }
 
+  // Function to map PhaseStatus to PhaseCard status
+  const mapPhaseStatus = (status?: PhaseStatus): "inProgress" | "completed" | "locked" | "available" => {
+    if (status === "completed") return "completed";
+    if (status === "inProgress") return "inProgress";
+    if (status === "notStarted") return "available";
+    return "available";
+  };
+
+  // Function to map PhaseType to IconType that PhaseCard can use
+  const mapIconType = (iconType: string | null): "video" | "quiz" | "challenge" | "game" => {
+    if (iconType === "text") return "challenge";
+    if (iconType === "video") return "video";
+    if (iconType === "quiz") return "quiz";
+    if (iconType === "challenge") return "challenge";
+    if (iconType === "game") return "game";
+    return "challenge";
+  };
+
   return (
     <div className="pb-16 min-h-screen bg-gray-50">
       <Header title={module.name || "Módulo"} />
@@ -135,9 +153,8 @@ const ModuleDetailPage = () => {
                 title={phase.name}
                 description={phase.description}
                 duration={phase.duration || 15}
-                status={phase.status || "available"}
-                iconType={phase.icon_type || (phase.type === "quiz" ? "quiz" : 
-                          phase.type === "video" ? "video" : "challenge")}
+                status={mapPhaseStatus(phase.status)}
+                iconType={mapIconType(phase.icon_type)}
               />
             ))}
           </div>

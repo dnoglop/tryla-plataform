@@ -36,7 +36,8 @@ export interface Phase {
 export interface Question {
   id: number;
   created_at: string;
-  phase_id: number | null;
+  quiz_id: number | null;
+  phase_id?: number | null;
   question: string;
   options: string[];
   correct_answer: number;
@@ -54,7 +55,7 @@ export const getModules = async (): Promise<Module[]> => {
       throw error;
     }
 
-    return modules || [];
+    return modules as Module[] || [];
   } catch (error) {
     console.error("Error fetching modules:", error);
     throw error;
@@ -73,7 +74,7 @@ export const getModuleById = async (id: number): Promise<Module | null> => {
       throw error;
     }
 
-    return module;
+    return module as Module;
   } catch (error) {
     console.error("Error fetching module:", error);
     throw error;
@@ -92,7 +93,7 @@ export const createModule = async (module: Omit<Module, 'id' | 'created_at'>): P
       throw error;
     }
 
-    return data;
+    return data as Module;
   } catch (error) {
     console.error("Error creating module:", error);
     throw error;
@@ -112,7 +113,7 @@ export const updateModule = async (id: number, module: Partial<Module>): Promise
       throw error;
     }
 
-    return data;
+    return data as Module;
   } catch (error) {
     console.error("Error updating module:", error);
     throw error;
@@ -149,7 +150,12 @@ export const getPhasesByModuleId = async (moduleId: number): Promise<Phase[]> =>
       throw error;
     }
 
-    return phases || [];
+    const processedPhases = (phases || []).map(phase => ({
+      ...phase,
+      images: phase.images || null
+    }));
+
+    return processedPhases as Phase[];
   } catch (error) {
     console.error("Error fetching phases:", error);
     throw error;
@@ -168,7 +174,7 @@ export const getPhaseById = async (id: number): Promise<Phase | null> => {
       throw error;
     }
 
-    return phase;
+    return phase ? { ...phase, images: phase.images || null } as Phase : null;
   } catch (error) {
     console.error("Error fetching phase:", error);
     throw error;
@@ -177,9 +183,14 @@ export const getPhaseById = async (id: number): Promise<Phase | null> => {
 
 export const createPhase = async (phase: Omit<Phase, 'id' | 'created_at' | 'images'>): Promise<Phase> => {
   try {
+    const phaseToCreate = {
+      ...phase,
+      images: null
+    };
+    
     const { data, error } = await supabase
       .from('phases')
-      .insert([phase])
+      .insert([phaseToCreate])
       .select()
       .single();
 
@@ -187,7 +198,7 @@ export const createPhase = async (phase: Omit<Phase, 'id' | 'created_at' | 'imag
       throw error;
     }
 
-    return data;
+    return data as Phase;
   } catch (error) {
     console.error("Error creating phase:", error);
     throw error;
@@ -207,7 +218,7 @@ export const updatePhase = async (id: number, phase: Partial<Omit<Phase, 'id' | 
       throw error;
     }
 
-    return data;
+    return { ...data, images: data.images || null } as Phase;
   } catch (error) {
     console.error("Error updating phase:", error);
     throw error;
@@ -270,11 +281,12 @@ export const getQuestionsByPhaseId = async (phaseId: number): Promise<Question[]
       
       return {
         ...question,
-        options
+        options,
+        phase_id: phaseId
       };
     });
 
-    return processedQuestions;
+    return processedQuestions as Question[];
   } catch (error) {
     console.error("Error fetching questions:", error);
     throw error;

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -470,7 +469,8 @@ const AdminPage = () => {
       description: moduleDescription,
       type: moduleType as "autoconhecimento" | "empatia" | "growth" | "comunicacao" | "futuro",
       emoji: moduleEmoji,
-      order_index: lastOrderIndex
+      order_index: lastOrderIndex,
+      content: ""
     };
     
     createModuleMutation.mutate(newModule);
