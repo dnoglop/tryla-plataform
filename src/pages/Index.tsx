@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const motivationalPhrases = [
@@ -84,15 +83,6 @@ const Index = () => {
       </div>
       
       <div className="flex flex-col items-center gap-4">
-        <Button 
-          onClick={handleNextPhrase} 
-          variant="outline" 
-          size="icon"
-          className="rounded-full hover:bg-trilha-orange/10"
-        >
-          <ChevronRight className="h-5 w-5" />
-        </Button>
-
         <div className="flex justify-center space-x-2 mb-8">
           {motivationalPhrases.map((_, i) => (
             <div 
