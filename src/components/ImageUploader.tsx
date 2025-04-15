@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -27,35 +28,41 @@ const ImageUploader = ({
     const file = e.target.files[0];
     const fileExt = file.name.split('.').pop();
     const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-    const filePath = `content-images/${fileName}`;
+    const filePath = `${fileName}`;
     
     setUploading(true);
     setError(null);
     
     try {
-      // Upload da imagem para o bucket do Supabase
+      // Get current user
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("Usuário não autenticado");
+      }
+      
+      // Upload the image to the Supabase storage
       const { error: uploadError } = await supabase.storage
-        .from('images')
+        .from('profiles')
         .upload(filePath, file);
         
       if (uploadError) {
         throw uploadError;
       }
       
-      // Obter a URL pública da imagem
+      // Get the public URL of the image
       const { data } = supabase.storage
-        .from('images')
+        .from('profiles')
         .getPublicUrl(filePath);
       
       if (data && data.publicUrl) {
         onImageUpload(data.publicUrl);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao fazer upload da imagem:', error);
-      setError('Falha ao fazer upload da imagem. Tente novamente.');
+      setError(`Falha ao fazer upload da imagem: ${error.message || 'Tente novamente.'}`);
     } finally {
       setUploading(false);
-      // Limpar o input de arquivo
+      // Clear the file input
       if (e.target) {
         e.target.value = '';
       }
