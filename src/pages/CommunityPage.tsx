@@ -110,7 +110,7 @@ const CommunityPage = () => {
 
   return (
     <div className="pb-16 min-h-screen bg-gray-50">
-      <Header title="👥 Tribo da Trilha" />
+      <Header title="👥 Comunidade da Trilha" />
 
       <div className="container px-4 py-6 space-y-6">
         <div className="relative">

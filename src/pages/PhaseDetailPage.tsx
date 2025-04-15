@@ -48,14 +48,14 @@ const PhaseDetailPage = () => {
   
   const handleCompletePhase = async () => {
     if (!user) {
-      console.error("User not authenticated");
-      toast.error("You must be logged in to complete this phase.");
+      console.error("Usuário não autenticado");
+      toast.error("Você precisa estar logado para completar esta fase.");
       return;
     }
     
     if (!phaseId) {
-      console.error("Phase ID not available");
-      toast.error("Error identifying phase. Please try again.");
+      console.error("ID da fase não disponível");
+      toast.error("Erro ao identificar a fase. Por favor, tente novamente.");
       return;
     }
     
@@ -66,10 +66,10 @@ const PhaseDetailPage = () => {
       const result = await updateUserPhaseStatus(user.id, Number(phaseId), "completed");
       
       if (!result) {
-        throw new Error("Failed to update phase status");
+        throw new Error("Falha ao atualizar o status da fase");
       }
       
-      toast.success("Phase completed successfully!");
+      toast.success("Fase completada com sucesso!");
       queryClient.invalidateQueries({ queryKey: ['phases'] });
       
       if (nextPhase) {
@@ -78,8 +78,8 @@ const PhaseDetailPage = () => {
         navigate(`/modulo/${moduleId}`);
       }
     } catch (error: any) {
-      console.error("Error completing phase:", error);
-      toast.error(error.message || "Error completing phase. Please try again.");
+      console.error("Erro ao completar fase:", error);
+      toast.error(error.message || "Erro ao completar fase. Por favor, tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -155,12 +155,12 @@ const PhaseDetailPage = () => {
   const deletePhaseMutation = useMutation({
     mutationFn: (phaseId: number) => deletePhaseFunc(phaseId),
     onSuccess: () => {
-      toast.success("Phase deleted successfully!");
+      toast.success("Fase excluída com sucesso!");
       navigate(`/modulo/${moduleId}`);
     },
     onError: (error) => {
-      toast.error("Error deleting phase");
-      console.error("Error deleting phase:", error);
+      toast.error("Erro ao excluir fase");
+      console.error("Erro ao excluir fase:", error);
     }
   });
 
@@ -174,18 +174,18 @@ const PhaseDetailPage = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Observations updated successfully!");
+      toast.success("Observações atualizadas com sucesso!");
       queryClient.invalidateQueries({ queryKey: ['phase'] });
       setIsEditing(false);
     },
     onError: (error) => {
-      toast.error("Error updating observations");
-      console.error("Error updating video notes:", error);
+      toast.error("Erro ao atualizar observações");
+      console.error("Erro ao atualizar anotações do vídeo:", error);
     }
   });
 
   const handleDelete = async () => {
-    if (window.confirm("Are you sure you want to delete this phase?")) {
+    if (window.confirm("Tem certeza que deseja excluir esta fase?")) {
       deletePhaseMutation.mutate(Number(phaseId));
     }
   };
@@ -209,7 +209,7 @@ const PhaseDetailPage = () => {
   if (!phase) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <p className="text-gray-500">Phase not found.</p>
+        <p className="text-gray-500">Fase não encontrada.</p>
       </div>
     );
   }
@@ -248,19 +248,19 @@ const PhaseDetailPage = () => {
         {phase.type === "video" && (
           <div className="mt-6">
             <div className="flex justify-between items-center mb-3">
-              <h3 className="text-lg font-medium">Observations about the video</h3>
+              <h3 className="text-lg font-medium">Observações sobre o vídeo</h3>
               {isEditing ? (
                 <div className="space-x-2">
                   <Button size="sm" variant="outline" onClick={() => setIsEditing(false)}>
-                    Cancel
+                    Cancelar
                   </Button>
                   <Button size="sm" onClick={handleSaveVideoNotes}>
-                    Save
+                    Salvar
                   </Button>
                 </div>
               ) : (
                 <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>
-                  Edit
+                  Editar
                 </Button>
               )}
             </div>
@@ -286,13 +286,13 @@ const PhaseDetailPage = () => {
 
         {phase.type === "text" && phase.images && phase.images.length > 0 && (
           <div className="mt-6">
-            <h3 className="text-lg font-medium mb-3">Images</h3>
+            <h3 className="text-lg font-medium mb-3">Imagens</h3>
             <div className="flex flex-wrap gap-4">
               {phase.images.map((image, index) => (
                 <img
                   key={index}
                   src={image}
-                  alt={`Image ${index + 1}`}
+                  alt={`Imagem ${index + 1}`}
                   className="rounded-lg shadow-md"
                   style={{ maxWidth: '200px', maxHeight: '200px', objectFit: 'cover' }}
                 />
@@ -303,7 +303,7 @@ const PhaseDetailPage = () => {
 
         {phase.type === "quiz" && (
           <div className="mt-6">
-            <h3 className="text-lg font-medium mb-3">Quiz</h3>
+            <h3 className="text-lg font-medium mb-3">Questionário</h3>
             <div className="mb-3">
               <Button 
                 size="sm" 
@@ -311,7 +311,7 @@ const PhaseDetailPage = () => {
                 onClick={() => refetchQuestions()}
                 className="mb-3"
               >
-                Reload Questions
+                Recarregar Perguntas
               </Button>
             </div>
             
@@ -320,27 +320,27 @@ const PhaseDetailPage = () => {
                 <div className="animate-spin rounded-full h-8 w-8 border-4 border-trilha-orange border-t-transparent"></div>
               </div>
             ) : questions.length === 0 ? (
-              <p>No questions available for this quiz.</p>
+              <p>Nenhuma pergunta disponível para este questionário.</p>
             ) : quizCompleted ? (
               <div className="p-6 bg-white rounded-lg shadow-sm border text-center">
-                <h4 className="text-xl font-bold mb-4">Quiz Result</h4>
+                <h4 className="text-xl font-bold mb-4">Resultado do Questionário</h4>
                 <p className="text-lg">
-                  You answered {correctAnswers} out of {questions.length} questions correctly!
+                  Você acertou {correctAnswers} de {questions.length} perguntas!
                 </p>
                 <p className="text-lg mt-4">
                   {correctAnswers === questions.length ? 
-                    "Congratulations! You answered all questions correctly!" : 
-                    "Keep practicing to improve your knowledge!"}
+                    "Parabéns! Você acertou todas as perguntas!" : 
+                    "Continue praticando para melhorar seu conhecimento!"}
                 </p>
               </div>
             ) : (
               <div className="p-6 bg-white rounded-lg shadow-sm border">
                 <div className="flex justify-between mb-4">
                   <span className="text-sm font-medium">
-                    Question {currentQuestionIndex + 1} of {questions.length}
+                    Pergunta {currentQuestionIndex + 1} de {questions.length}
                   </span>
                   <span className="text-sm text-gray-500">
-                    {Math.round(((currentQuestionIndex + 1) / questions.length) * 100)}% complete
+                    {Math.round(((currentQuestionIndex + 1) / questions.length) * 100)}% completo
                   </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2 mb-6">
@@ -360,7 +360,7 @@ const PhaseDetailPage = () => {
                   />
                 ) : (
                   <div className="text-center p-4">
-                    <p>Loading question... {isLoadingQuestions ? "(Wait)" : "(Click Reload Questions)"}</p>
+                    <p>Carregando pergunta... {isLoadingQuestions ? "(Aguarde)" : "(Clique em Recarregar Perguntas)"}</p>
                   </div>
                 )}
               </div>
@@ -370,7 +370,7 @@ const PhaseDetailPage = () => {
 
         {phase.type === "challenge" && (
           <div className="mt-6">
-            <h3 className="text-lg font-medium mb-3">Challenge</h3>
+            <h3 className="text-lg font-medium mb-3">Desafio</h3>
             {phase.content ? (
               <div className="p-6 bg-white rounded-lg shadow-sm border">
                 <div 
@@ -380,7 +380,7 @@ const PhaseDetailPage = () => {
               </div>
             ) : (
               <div className="p-6 bg-white rounded-lg shadow-sm border text-center">
-                <p className="text-lg text-gray-500">Challenge content not available.</p>
+                <p className="text-lg text-gray-500">Conteúdo do desafio não disponível.</p>
               </div>
             )}
           </div>
@@ -395,14 +395,14 @@ const PhaseDetailPage = () => {
                   className="flex items-center text-gray-600 hover:text-trilha-orange"
                 >
                   <ArrowLeft className="h-4 w-4 mr-1" />
-                  <span className="text-sm">Previous</span>
+                  <span className="text-sm">Anterior</span>
                 </Link>
               )}
             </div>
             
             {(phase.type !== 'quiz' || quizCompleted) && (
               <Button onClick={handleCompletePhase} className="bg-trilha-orange hover:bg-trilha-orange/90">
-                Complete
+                Completar
               </Button>
             )}
             
@@ -412,7 +412,7 @@ const PhaseDetailPage = () => {
                   to={`/fase/${moduleId}/${nextPhase.id}`} 
                   className="flex items-center text-gray-600 hover:text-trilha-orange"
                 >
-                  <span className="text-sm">Next</span>
+                  <span className="text-sm">Próximo</span>
                   <ArrowRight className="h-4 w-4 ml-1" />
                 </Link>
               )}

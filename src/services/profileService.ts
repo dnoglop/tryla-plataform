@@ -11,6 +11,8 @@ export interface Profile {
   linkedin_url: string;
   level?: number;
   xp?: number;
+  streak_days?: number;
+  last_login_date?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -93,8 +95,67 @@ export const uploadAvatar = async (userId: string, file: File): Promise<string |
   }
 };
 
+export const updateLoginStreak = async (userId: string): Promise<number> => {
+  try {
+    // Obter o perfil atual do usuário
+    const profile = await getProfile(userId);
+    if (!profile) return 0;
+    
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    const lastLogin = profile.last_login_date ? new Date(profile.last_login_date) : null;
+    const lastLoginStr = lastLogin ? lastLogin.toISOString().split('T')[0] : null;
+    
+    let newStreakDays = profile.streak_days || 0;
+    
+    // Verifica se já logou hoje
+    if (lastLoginStr === todayStr) {
+      // Já logou hoje, mantém o streak atual
+      return newStreakDays;
+    }
+    
+    // Verifica se o último login foi ontem
+    if (lastLogin) {
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+      
+      if (lastLoginStr === yesterdayStr) {
+        // Se o último login foi ontem, incrementa o streak
+        newStreakDays += 1;
+      } else {
+        // Se o último login não foi ontem, reinicia o streak
+        newStreakDays = 1;
+      }
+    } else {
+      // Primeiro login
+      newStreakDays = 1;
+    }
+    
+    // Atualiza o streak e a data do último login
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        streak_days: newStreakDays,
+        last_login_date: todayStr
+      })
+      .eq("id", userId);
+    
+    if (error) {
+      console.error("Erro ao atualizar streak:", error);
+      return 0;
+    }
+    
+    return newStreakDays;
+  } catch (error) {
+    console.error("Exceção ao atualizar streak:", error);
+    return 0;
+  }
+};
+
 export default {
   getProfile,
   updateProfile,
-  uploadAvatar
+  uploadAvatar,
+  updateLoginStreak
 };

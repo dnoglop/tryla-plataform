@@ -10,7 +10,7 @@ const BottomNavigation = () => {
     { icon: Home, path: "/dashboard", label: "Início" },
     { icon: BookOpen, path: "/modulos", label: "Trilhas" },
     { icon: Award, path: "/recompensas", label: "Conquistas" },
-    { icon: MessageSquare, path: "/comunidade", label: "Tribo" },
+    { icon: MessageSquare, path: "/comunidade", label: "Comunidade" },
     { icon: User, path: "/perfil", label: "Perfil" },
   ];
 
