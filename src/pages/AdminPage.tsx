@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -934,3 +935,319 @@ const AdminPage = () => {
                       className="pl-8"
                     />
                   </div>
+                </div>
+                
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Duração (min)</TableHead>
+                        <TableHead>Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {phases.map((phase) => (
+                        <TableRow key={phase.id}>
+                          <TableCell>{phase.id}</TableCell>
+                          <TableCell className="font-medium">{phase.name}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {phase.type === "text" ? "Texto" : 
+                              phase.type === "video" ? "Vídeo" :
+                              phase.type === "quiz" ? "Quiz" : 
+                              phase.type}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{phase.duration || 15} min</TableCell>
+                          <TableCell>
+                            <div className="flex space-x-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleEditPhase(phase)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              
+                              {phase.type === "quiz" && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => handleQuizEdit(phase.id)}
+                                >
+                                  <FileText className="h-4 w-4" />
+                                </Button>
+                              )}
+                              
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => navigate(`/fase/${phase.id}`)}
+                              >
+                                Visualizar
+                              </Button>
+                              
+                              <Button 
+                                variant="destructive" 
+                                size="sm" 
+                                onClick={() => handleDeletePhase(phase.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="quizzes">
+          {editingQuiz ? (
+            <Card className="p-4">
+              <h2 className="text-lg font-semibold mb-4">
+                Editar Quiz: {getPhaseNameById(editingQuiz.phaseId)}
+              </h2>
+              
+              <div className="space-y-6">
+                {editingQuiz.questions.map((question, index) => (
+                  <div key={index} className="p-4 border rounded-md bg-gray-50">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-medium">Pergunta {index + 1}</h3>
+                      {editingQuiz.questions.length > 1 && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => removeQuestion(index)}
+                          className="text-red-500 h-8 p-0"
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" /> Remover
+                        </Button>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor={`question-${index}`}>Pergunta</Label>
+                        <Input
+                          id={`question-${index}`}
+                          value={question.question}
+                          onChange={(e) => updateQuestion(index, "question", e.target.value)}
+                          placeholder="Digite a pergunta aqui"
+                        />
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <Label>Opções de Resposta</Label>
+                        {question.options.map((option, optIndex) => (
+                          <div key={optIndex} className="flex gap-2 items-center">
+                            <div className="flex-1">
+                              <Input
+                                value={option}
+                                onChange={(e) => updateQuestion(
+                                  index, 
+                                  `option${optIndex}`, 
+                                  e.target.value
+                                )}
+                                placeholder={`Opção ${optIndex + 1}`}
+                                className={question.correct_answer === optIndex ? "border-green-500" : ""}
+                              />
+                            </div>
+                            <div>
+                              <Button
+                                type="button"
+                                variant={question.correct_answer === optIndex ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => updateQuestion(index, "correctAnswer", optIndex)}
+                              >
+                                Correta
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                <div className="flex justify-between">
+                  <Button 
+                    variant="outline" 
+                    onClick={addQuestion}
+                    className="flex items-center"
+                  >
+                    <PlusCircle className="h-4 w-4 mr-1" /> Adicionar Pergunta
+                  </Button>
+                  
+                  <div className="space-x-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setEditingQuiz(null)}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button onClick={handleUpdateQuiz}>
+                      Salvar Quiz
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-64">
+              <AlertCircle className="h-16 w-16 text-gray-400 mb-4" />
+              <h3 className="text-xl font-medium text-gray-600">
+                Selecione uma fase do tipo Quiz para editar
+              </h3>
+              <p className="text-gray-500 mt-2 mb-4">
+                Vá para a aba Conteúdos, encontre uma fase do tipo Quiz e clique no ícone do quiz
+              </p>
+              <Button 
+                variant="outline" 
+                onClick={() => setActiveTab("conteudo")}
+              >
+                Ir para Conteúdos
+              </Button>
+            </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="eventos">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-1">
+              <Card className="p-4">
+                <h2 className="text-lg font-semibold mb-4">Adicionar Evento</h2>
+                
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="event-title">Título do Evento *</Label>
+                    <Input
+                      id="event-title"
+                      value={eventTitle}
+                      onChange={(e) => setEventTitle(e.target.value)}
+                      placeholder="Workshop, palestra, roda de conversa, etc."
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="event-date">Data *</Label>
+                      <Input
+                        id="event-date"
+                        type="date"
+                        value={eventDate}
+                        onChange={(e) => setEventDate(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="event-time">Horário</Label>
+                      <Input
+                        id="event-time"
+                        type="time"
+                        value={eventTime}
+                        onChange={(e) => setEventTime(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="event-location">Local</Label>
+                    <Input
+                      id="event-location"
+                      value={eventLocation}
+                      onChange={(e) => setEventLocation(e.target.value)}
+                      placeholder="Presencial ou link para evento online"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="event-description">Descrição *</Label>
+                    <Textarea
+                      id="event-description"
+                      value={eventDescription}
+                      onChange={(e) => setEventDescription(e.target.value)}
+                      placeholder="Descreva o evento em detalhes..."
+                      rows={4}
+                    />
+                  </div>
+                  
+                  <div className="flex justify-end pt-2">
+                    <Button onClick={handleAddEvent}>
+                      Adicionar Evento
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            </div>
+            
+            <div className="lg:col-span-2">
+              <Card className="p-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-semibold">Eventos da Comunidade</h2>
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Pesquisar eventos..."
+                      className="pl-8"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {communityEvents.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">Nenhum evento cadastrado</p>
+                    </div>
+                  ) : (
+                    communityEvents.map((event) => (
+                      <div key={event.id} className="p-4 border rounded-md hover:bg-gray-50">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="font-medium">{event.title}</h3>
+                            <div className="flex items-center text-sm text-gray-500 mt-1">
+                              <Calendar className="h-3.5 w-3.5 mr-1" />
+                              {new Date(event.date).toLocaleDateString('pt-BR')}
+                              {event.time && ` às ${event.time}`}
+                              {event.location && ` • ${event.location}`}
+                            </div>
+                            <p className="mt-2">{event.description}</p>
+                          </div>
+                          <div className="flex space-x-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="h-8"
+                            >
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button 
+                              variant="destructive" 
+                              size="sm" 
+                              onClick={() => deleteEvent(event.id)} 
+                              className="h-8"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default AdminPage;

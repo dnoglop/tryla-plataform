@@ -92,7 +92,7 @@ const ModuleForm = ({ module, onSuccess }: ModuleFormProps) => {
       if (isEditing && module) {
         updateModuleMutation.mutate({ id: module.id, data: moduleData });
       } else {
-        createModuleMutation.mutate(moduleData as any);
+        createModuleMutation.mutate(moduleData);
       }
     } catch (error) {
       console.error("Error in form submission:", error);
