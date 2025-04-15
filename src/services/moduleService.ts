@@ -29,7 +29,7 @@ export interface Phase {
   video_notes: string | null;
   duration: number | null;
   order_index: number | null;
-  images: string[] | null;
+  images?: string[] | null;
   status?: PhaseStatus;
 }
 
@@ -152,10 +152,9 @@ export const getPhasesByModuleId = async (moduleId: number): Promise<Phase[]> =>
 
     const processedPhases = (phases || []).map(phase => ({
       ...phase,
-      images: phase.images || null
-    }));
+    })) as Phase[];
 
-    return processedPhases as Phase[];
+    return processedPhases;
   } catch (error) {
     console.error("Error fetching phases:", error);
     throw error;
@@ -174,23 +173,18 @@ export const getPhaseById = async (id: number): Promise<Phase | null> => {
       throw error;
     }
 
-    return phase ? { ...phase, images: phase.images || null } as Phase : null;
+    return phase as Phase;
   } catch (error) {
     console.error("Error fetching phase:", error);
     throw error;
   }
 };
 
-export const createPhase = async (phase: Omit<Phase, 'id' | 'created_at' | 'images'>): Promise<Phase> => {
-  try {
-    const phaseToCreate = {
-      ...phase,
-      images: null
-    };
-    
+export const createPhase = async (phase: Omit<Phase, 'id' | 'created_at'>): Promise<Phase> => {
+  try {    
     const { data, error } = await supabase
       .from('phases')
-      .insert([phaseToCreate])
+      .insert([phase])
       .select()
       .single();
 
@@ -205,7 +199,7 @@ export const createPhase = async (phase: Omit<Phase, 'id' | 'created_at' | 'imag
   }
 };
 
-export const updatePhase = async (id: number, phase: Partial<Omit<Phase, 'id' | 'created_at' | 'images'>>): Promise<Phase> => {
+export const updatePhase = async (id: number, phase: Partial<Omit<Phase, 'id' | 'created_at'>>): Promise<Phase> => {
   try {
     const { data, error } = await supabase
       .from('phases')
@@ -218,7 +212,7 @@ export const updatePhase = async (id: number, phase: Partial<Omit<Phase, 'id' | 
       throw error;
     }
 
-    return { ...data, images: data.images || null } as Phase;
+    return data as Phase;
   } catch (error) {
     console.error("Error updating phase:", error);
     throw error;

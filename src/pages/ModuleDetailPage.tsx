@@ -151,7 +151,7 @@ const ModuleDetailPage = () => {
                 moduleId={phase.module_id || moduleId}
                 phaseId={phase.id}
                 title={phase.name}
-                description={phase.description}
+                description={phase.description || ''}
                 duration={phase.duration || 15}
                 status={mapPhaseStatus(phase.status)}
                 iconType={mapIconType(phase.icon_type)}
