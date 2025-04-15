@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -32,7 +32,7 @@ const ModuleForm = ({ module, onSuccess }: ModuleFormProps) => {
   );
   const [content, setContent] = useState(module?.content || "");
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
+  const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm({
     defaultValues: {
       name: module?.name || "",
       description: module?.description || "",
@@ -40,6 +40,20 @@ const ModuleForm = ({ module, onSuccess }: ModuleFormProps) => {
       order_index: module?.order_index || 0
     }
   });
+
+  // Update form when module changes
+  useEffect(() => {
+    if (module) {
+      reset({
+        name: module.name || "",
+        description: module.description || "",
+        emoji: module.emoji || "📚",
+        order_index: module.order_index || 0
+      });
+      setModuleType((module.type as ModuleType) || "autoconhecimento");
+      setContent(module.content || "");
+    }
+  }, [module, reset]);
 
   const createModuleMutation = useMutation({
     mutationFn: createModule,
