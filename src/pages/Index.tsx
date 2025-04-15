@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,7 +17,16 @@ const Index = () => {
   const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Verificar autenticação do usuário
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentPhraseIndex((prevIndex) => 
+        prevIndex >= motivationalPhrases.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     const checkAuth = async () => {
       const { data } = await supabase.auth.getSession();
@@ -54,20 +62,20 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-amber-50 to-white p-6 text-center">
-      {/* Logo sempre visível */}
       <div className="mb-8">
         <div className="text-6xl mb-3">🔶</div>
         <h1 className="text-3xl font-bold text-trilha-orange mb-2">Na Trilha</h1>
         <p className="text-gray-500">Sua jornada de desenvolvimento pessoal</p>
       </div>
       
-      {/* Frases motivacionais com altura fixa */}
       <div className="h-32 flex items-center justify-center mb-8">
         {motivationalPhrases.map((phrase, index) => (
           <p 
             key={index} 
-            className={`absolute transition-all duration-500 text-xl text-center max-w-xs text-gray-700 font-medium
-              ${currentPhraseIndex === index ? "opacity-100 transform-none" : "opacity-0 translate-y-8"}
+            className={`absolute transition-all duration-700 ease-in-out text-xl text-center max-w-xs text-gray-700 font-medium
+              ${currentPhraseIndex === index 
+                ? "opacity-100 transform-none" 
+                : "opacity-0 translate-y-8"}
             `}
           >
             "{phrase}"
@@ -76,27 +84,28 @@ const Index = () => {
       </div>
       
       <div className="flex flex-col items-center gap-4">
-        {/* Botão para navegar entre frases */}
         <Button 
           onClick={handleNextPhrase} 
           variant="outline" 
           size="icon"
-          className="rounded-full"
+          className="rounded-full hover:bg-trilha-orange/10"
         >
           <ChevronRight className="h-5 w-5" />
         </Button>
 
-        {/* Indicadores */}
         <div className="flex justify-center space-x-2 mb-8">
           {motivationalPhrases.map((_, i) => (
             <div 
               key={i} 
-              className={`h-2 w-2 rounded-full transition-all ${currentPhraseIndex === i ? 'bg-trilha-orange' : 'bg-gray-300'}`}
+              className={`h-2 w-2 rounded-full transition-all duration-500 ${
+                currentPhraseIndex === i 
+                  ? 'bg-trilha-orange scale-110' 
+                  : 'bg-gray-300'
+              }`}
             />
           ))}
         </div>
 
-        {/* Botão para começar */}
         <Button 
           onClick={handleGetStarted}
           className="bg-trilha-orange hover:bg-trilha-orange/90 text-white"
