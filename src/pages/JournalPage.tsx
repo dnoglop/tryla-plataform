@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Plus, ArrowLeft, Search, Star, ClipboardList } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Plus, ArrowLeft, Search, Star, ClipboardList, BookIcon, ListFilter } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,8 @@ import {
   toggleFavoriteJournalEntry,
   deleteJournalEntry
 } from '@/services/journalService';
+import { useQuery } from '@tanstack/react-query';
+import { getModules, Module } from '@/services/moduleService';
 import JournalEntry from '@/components/journal/JournalEntry';
 import JournalForm from '@/components/journal/JournalForm';
 import EmptyJournal from '@/components/journal/EmptyJournal';
@@ -27,9 +29,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 
 const JournalPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const moduleIdParam = queryParams.get('moduleId');
+  
   const [entries, setEntries] = useState<JournalEntryType[]>([]);
   const [filteredEntries, setFilteredEntries] = useState<JournalEntryType[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
@@ -39,6 +52,19 @@ const JournalPage = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [editingEntry, setEditingEntry] = useState<JournalEntryType | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [moduleFilter, setModuleFilter] = useState<number | null>(moduleIdParam ? parseInt(moduleIdParam) : null);
+
+  // Buscar módulos para o filtro
+  const { data: modules = [] } = useQuery({
+    queryKey: ['modules'],
+    queryFn: getModules
+  });
+
+  useEffect(() => {
+    if (moduleIdParam) {
+      setModuleFilter(parseInt(moduleIdParam));
+    }
+  }, [moduleIdParam]);
 
   useEffect(() => {
     const fetchUserAndEntries = async () => {
@@ -69,7 +95,7 @@ const JournalPage = () => {
     fetchUserAndEntries();
   }, [navigate]);
   
-  // Filtrar entradas quando o termo de busca ou a tab ativa mudar
+  // Filtrar entradas quando o termo de busca, a tab ativa ou o filtro de módulo mudar
   useEffect(() => {
     if (entries.length === 0) {
       setFilteredEntries([]);
@@ -83,6 +109,11 @@ const JournalPage = () => {
       filtered = filtered.filter(entry => entry.is_favorite);
     }
     
+    // Filtrar por módulo
+    if (moduleFilter !== null) {
+      filtered = filtered.filter(entry => entry.module_id === moduleFilter);
+    }
+    
     // Filtrar por termo de busca
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase().trim();
@@ -93,7 +124,7 @@ const JournalPage = () => {
     }
     
     setFilteredEntries(filtered);
-  }, [entries, searchTerm, activeTab]);
+  }, [entries, searchTerm, activeTab, moduleFilter]);
 
   const handleCreateEntry = async (entry: JournalEntryType) => {
     if (!userId) return;
@@ -156,6 +187,17 @@ const JournalPage = () => {
     }
   };
 
+  const clearModuleFilter = () => {
+    setModuleFilter(null);
+    navigate('/diario');
+  };
+
+  const getModuleNameById = (id: number | null | undefined) => {
+    if (!id) return null;
+    const module = modules.find((m: Module) => m.id === id);
+    return module ? `${module.emoji || '📚'} ${module.name}` : null;
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -192,6 +234,7 @@ const JournalPage = () => {
               userId={userId}
               onSubmit={handleCreateEntry}
               onCancel={() => setIsCreating(false)}
+              currentModuleId={moduleFilter}
             />
           </div>
         )}
@@ -209,15 +252,61 @@ const JournalPage = () => {
         
         {!isCreating && !editingEntry && (
           <>
-            <div className="mb-4 relative">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Pesquisar anotações..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
-              />
+            <div className="mb-4 flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Pesquisar anotações..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <ListFilter className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem 
+                      className={!moduleFilter ? "bg-gray-100" : ""} 
+                      onClick={clearModuleFilter}
+                    >
+                      <BookIcon className="mr-2 h-4 w-4" />
+                      <span>Todos os módulos</span>
+                    </DropdownMenuItem>
+                    {modules.map((module: Module) => (
+                      <DropdownMenuItem 
+                        key={module.id}
+                        className={moduleFilter === module.id ? "bg-gray-100" : ""}
+                        onClick={() => setModuleFilter(module.id)}
+                      >
+                        <span className="mr-2">{module.emoji || '📚'}</span>
+                        <span>{module.name}</span>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
+            
+            {moduleFilter !== null && (
+              <div className="bg-blue-50 rounded-md p-2 mb-4 flex items-center justify-between">
+                <span className="text-sm text-blue-700">
+                  Filtrado por: {getModuleNameById(moduleFilter)}
+                </span>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={clearModuleFilter} 
+                  className="text-blue-700 h-6 px-2"
+                >
+                  Limpar
+                </Button>
+              </div>
+            )}
             
             <Tabs 
               value={activeTab} 
@@ -251,6 +340,7 @@ const JournalPage = () => {
                         onEdit={setEditingEntry}
                         onDelete={(id) => setDeleteId(id)}
                         onToggleFavorite={handleToggleFavorite}
+                        moduleName={getModuleNameById(entry.module_id)}
                       />
                     ))}
                   </div>
@@ -271,6 +361,7 @@ const JournalPage = () => {
                         onEdit={setEditingEntry}
                         onDelete={(id) => setDeleteId(id)}
                         onToggleFavorite={handleToggleFavorite}
+                        moduleName={getModuleNameById(entry.module_id)}
                       />
                     ))}
                   </div>

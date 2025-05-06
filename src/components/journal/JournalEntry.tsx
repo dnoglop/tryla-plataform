@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Heart, MoreVertical, Pencil, Trash } from 'lucide-react';
+import { Heart, MoreVertical, Pencil, Trash, BookOpen } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Button } from '../ui/button';
@@ -17,13 +17,15 @@ type JournalEntryProps = {
   onEdit: (entry: JournalEntryType) => void;
   onDelete: (id: string) => void;
   onToggleFavorite: (id: string, isFavorite: boolean) => void;
+  moduleName?: string | null;
 };
 
 const JournalEntry: React.FC<JournalEntryProps> = ({
   entry,
   onEdit,
   onDelete,
-  onToggleFavorite
+  onToggleFavorite,
+  moduleName
 }) => {
   const formattedDate = entry.created_at 
     ? formatDistanceToNow(new Date(entry.created_at), { addSuffix: true, locale: ptBR })
@@ -67,6 +69,14 @@ const JournalEntry: React.FC<JournalEntryProps> = ({
           </DropdownMenu>
         </div>
       </div>
+      
+      {moduleName && (
+        <div className="flex items-center gap-1 text-xs text-blue-600 mb-2 bg-blue-50 py-1 px-2 rounded-full inline-block">
+          <BookOpen className="w-3 h-3" />
+          <span>{moduleName}</span>
+        </div>
+      )}
+      
       <p className="text-gray-700 whitespace-pre-line">{entry.content}</p>
       <div className="text-xs text-gray-500 mt-3">{formattedDate}</div>
     </div>

@@ -9,6 +9,7 @@ export interface JournalEntry {
   content: string;
   emoji?: string | null;
   is_favorite?: boolean;
+  module_id?: number | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -55,9 +56,12 @@ export const getJournalEntry = async (id: string): Promise<JournalEntry | null> 
 
 export const createJournalEntry = async (entry: JournalEntry): Promise<JournalEntry | null> => {
   try {
+    // Importante: remover o id para que o Supabase gere um novo automaticamente
+    const { id, ...entryWithoutId } = entry;
+    
     const { data, error } = await supabase
       .from("learning_journals")
-      .insert([entry])
+      .insert([entryWithoutId])
       .select()
       .single();
 
@@ -85,6 +89,7 @@ export const updateJournalEntry = async (entry: JournalEntry): Promise<boolean> 
         title: entry.title,
         content: entry.content,
         emoji: entry.emoji,
+        module_id: entry.module_id,
         is_favorite: entry.is_favorite,
         updated_at: new Date().toISOString()
       })

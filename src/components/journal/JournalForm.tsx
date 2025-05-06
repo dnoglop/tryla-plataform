@@ -4,13 +4,17 @@ import { X } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { JournalEntry } from '@/services/journalService';
+import { useQuery } from '@tanstack/react-query';
+import { getModules, Module } from '@/services/moduleService';
 
 type JournalFormProps = {
   entry?: JournalEntry | null;
   userId: string;
   onSubmit: (entry: JournalEntry) => void;
   onCancel: () => void;
+  currentModuleId?: number | null;
 };
 
 const EMOJIS = ["📝", "🚀", "🧠", "💡", "🎯", "🌱", "🤔", "🎉", "📚", "🧐", "💪", "❤️", "🌟"];
@@ -19,12 +23,20 @@ const JournalForm: React.FC<JournalFormProps> = ({
   entry,
   userId,
   onSubmit,
-  onCancel
+  onCancel,
+  currentModuleId = null
 }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [emoji, setEmoji] = useState('📝');
+  const [moduleId, setModuleId] = useState<number | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  
+  // Buscar módulos
+  const { data: modules = [] } = useQuery({
+    queryKey: ['modules'],
+    queryFn: getModules
+  });
   
   // Preencher o formulário se estiver editando uma entrada existente
   useEffect(() => {
@@ -32,8 +44,11 @@ const JournalForm: React.FC<JournalFormProps> = ({
       setTitle(entry.title || '');
       setContent(entry.content || '');
       setEmoji(entry.emoji || '📝');
+      setModuleId(entry.module_id || null);
+    } else if (currentModuleId) {
+      setModuleId(currentModuleId);
     }
-  }, [entry]);
+  }, [entry, currentModuleId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,6 +59,7 @@ const JournalForm: React.FC<JournalFormProps> = ({
       title: title.trim(),
       content: content.trim(),
       emoji,
+      module_id: moduleId,
       is_favorite: entry?.is_favorite || false
     };
     
@@ -100,6 +116,25 @@ const JournalForm: React.FC<JournalFormProps> = ({
             required
             className="flex-1"
           />
+        </div>
+        
+        <div>
+          <label htmlFor="module" className="block text-sm mb-1 text-gray-600">
+            Relacionar com módulo (opcional)
+          </label>
+          <Select value={moduleId?.toString() || ''} onValueChange={(value) => setModuleId(value ? parseInt(value) : null)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Escolha um módulo (opcional)" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Nenhum módulo</SelectItem>
+              {modules.map((module: Module) => (
+                <SelectItem key={module.id} value={module.id.toString()}>
+                  {module.emoji || '📚'} {module.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         
         <Textarea
