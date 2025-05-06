@@ -153,9 +153,56 @@ export const updateLoginStreak = async (userId: string): Promise<number> => {
   }
 };
 
+export const updateUserXp = async (userId: string, xpToAdd: number): Promise<number> => {
+  try {
+    // Obter o perfil atual do usuário
+    const profile = await getProfile(userId);
+    if (!profile) return 0;
+    
+    const currentXp = profile.xp || 0;
+    const currentLevel = profile.level || 1;
+    
+    // Calcular novo XP
+    const newXp = currentXp + xpToAdd;
+    
+    // Calcular se subiu de nível (cada nível requer XP = nível * 100)
+    const xpForNextLevel = currentLevel * 100;
+    let newLevel = currentLevel;
+    
+    if (newXp >= xpForNextLevel) {
+      newLevel = Math.floor(newXp / 100) + 1;
+      // Mostrar toast de subida de nível
+      toast.success(`Parabéns! Você avançou para o Nível ${newLevel}! 🎉`, { 
+        duration: 5000,
+        icon: "🏆"
+      });
+    }
+    
+    // Atualizar XP e nível no banco de dados
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        xp: newXp,
+        level: newLevel
+      })
+      .eq("id", userId);
+    
+    if (error) {
+      console.error("Erro ao atualizar XP:", error);
+      return currentXp;
+    }
+    
+    return newXp;
+  } catch (error) {
+    console.error("Exceção ao atualizar XP:", error);
+    return 0;
+  }
+};
+
 export default {
   getProfile,
   updateProfile,
   uploadAvatar,
-  updateLoginStreak
+  updateLoginStreak,
+  updateUserXp
 };

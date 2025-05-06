@@ -1,3 +1,4 @@
+
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
@@ -10,6 +11,7 @@ import PhaseDetailPage from "@/pages/PhaseDetailPage";
 import RewardsPage from "@/pages/RewardsPage";
 import CommunityPage from "@/pages/CommunityPage";
 import ProfilePage from "@/pages/ProfilePage";
+import JournalPage from "@/pages/JournalPage";
 import AdminPage from "@/pages/AdminPage";
 import NotFound from "@/pages/NotFound";
 import LoginPage from "@/pages/LoginPage";
@@ -114,6 +116,7 @@ function App() {
         <Route path="/recompensas" element={<ProtectedRoute><RewardsPage /></ProtectedRoute>} />
         <Route path="/comunidade" element={<ProtectedRoute><CommunityPage /></ProtectedRoute>} />
         <Route path="/perfil" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+        <Route path="/diario" element={<ProtectedRoute><JournalPage /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
         
         <Route path="*" element={<NotFound />} />

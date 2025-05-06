@@ -67,13 +67,13 @@ const ModuleCard = ({
       className={`card-modulo ${config.bgColor} ${
         locked
           ? "opacity-70 cursor-not-allowed"
-          : "cursor-pointer"
+          : "cursor-pointer hover:shadow-md transition-transform duration-300 hover:-translate-y-1"
       }`}
     >
       <div className="w-full">
         <div className="mb-3 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <div className="rounded-full bg-white p-2">
+            <div className={`rounded-full bg-white p-2 ${completed ? 'animate-pulse' : ''}`}>
               {moduleEmoji ? (
                 <span className="text-lg">{moduleEmoji}</span>
               ) : (
@@ -83,7 +83,7 @@ const ModuleCard = ({
             <h3 className="font-bold">{title}</h3>
           </div>
           {completed && (
-            <span className="text-xs font-bold text-green-600">
+            <span className="text-xs font-bold text-green-600 animate-bounce-slow">
               CONCLUÍDO
             </span>
           )}
@@ -98,7 +98,7 @@ const ModuleCard = ({
         {!locked ? (
           <div className="progress-bar">
             <div
-              className="progress-value"
+              className={`progress-value ${progress === 100 ? 'animate-pulse' : 'transition-all duration-1000 ease-out'}`}
               style={{ width: `${progress}%` }}
             />
           </div>

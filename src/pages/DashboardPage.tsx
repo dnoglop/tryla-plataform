@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Zap, Calendar } from "lucide-react";
@@ -8,8 +9,8 @@ import UserLevel from "@/components/UserLevel";
 import DailyTask from "@/components/DailyTask";
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery } from '@tanstack/react-query';
-import { getModules, Module } from "@/services/moduleService";
-import { getProfile, updateLoginStreak } from "@/services/profileService";
+import { getModules, Module, getModuleProgress, isModuleCompleted, getUserNextPhase } from "@/services/moduleService";
+import { getProfile, updateLoginStreak, updateUserXp } from "@/services/profileService";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +20,9 @@ const DashboardPage = () => {
   const [dailyCompleted, setDailyCompleted] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [streakDays, setStreakDays] = useState(0);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [moduleProgress, setModuleProgress] = useState<{[key: number]: number}>({});
+  const [completedModules, setCompletedModules] = useState<{[key: number]: boolean}>({});
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -26,6 +30,7 @@ const DashboardPage = () => {
         const { data } = await supabase.auth.getUser();
         if (data?.user) {
           const userId = data.user.id;
+          setUserId(userId);
           const userProfile = await getProfile(userId);
           
           if (userProfile) {
@@ -51,22 +56,52 @@ const DashboardPage = () => {
   const { data: modules = [], isLoading } = useQuery({
     queryKey: ['modules'],
     queryFn: getModules,
-    select: (data) => data.map((module, index) => ({
-      ...module,
-      progress: index === 0 ? 75 : index === 1 ? 25 : 0,
-      completed: false,
-      locked: index > 1,
-    })),
+    enabled: !!userId,
   });
 
-  const handleDailyTask = () => {
-    if (!dailyCompleted) {
+  // Buscar progresso e status de conclusão para cada módulo
+  useEffect(() => {
+    const fetchProgress = async () => {
+      if (!userId || modules.length === 0) return;
+      
+      const progressData: {[key: number]: number} = {};
+      const completedData: {[key: number]: boolean} = {};
+      
+      // Buscar progresso e status de cada módulo
+      for (const module of modules) {
+        const progress = await getModuleProgress(userId, module.id);
+        const completed = await isModuleCompleted(userId, module.id);
+        
+        progressData[module.id] = progress;
+        completedData[module.id] = completed;
+      }
+      
+      setModuleProgress(progressData);
+      setCompletedModules(completedData);
+    };
+    
+    fetchProgress();
+  }, [userId, modules]);
+
+  const handleDailyTask = async () => {
+    if (!dailyCompleted && userId) {
       setDailyCompleted(true);
+      
+      // Adicionar XP pela tarefa diária
+      const xpGained = 50;
+      await updateUserXp(userId, xpGained);
+      
       toast({
         title: "Missão do Dia completada!",
-        description: "Você ganhou +50 XP! 🔥",
+        description: `Você ganhou +${xpGained} XP! 🔥`,
         duration: 3000,
       });
+      
+      // Atualizar o perfil após ganhar XP
+      const updatedProfile = await getProfile(userId);
+      if (updatedProfile) {
+        setProfile(updatedProfile);
+      }
     }
   };
 
@@ -101,7 +136,7 @@ const DashboardPage = () => {
 
           <div className="flex-1">
             <h2 className="font-bold">Olá, {profile.full_name || "Explorador(a)"}!</h2>
-            <UserLevel level={profile.level || 1} xp={profile.xp || 0} nextLevelXp={500} />
+            <UserLevel level={profile.level || 1} xp={profile.xp || 0} nextLevelXp={(profile.level || 1) * 100} />
           </div>
         </div>
         
@@ -141,9 +176,9 @@ const DashboardPage = () => {
                 id={module.id}
                 title={module.name}
                 type={module.type || "autoconhecimento"}
-                progress={module.progress}
-                completed={module.completed}
-                locked={module.locked}
+                progress={moduleProgress[module.id] || 0}
+                completed={completedModules[module.id] || false}
+                locked={false}
                 description={module.description}
                 emoji={module.emoji}
               />

@@ -78,6 +78,47 @@ export type Database = {
         }
         Relationships: []
       }
+      learning_journals: {
+        Row: {
+          content: string
+          created_at: string | null
+          emoji: string | null
+          id: string
+          is_favorite: boolean | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          emoji?: string | null
+          id?: string
+          is_favorite?: boolean | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          emoji?: string | null
+          id?: string
+          is_favorite?: boolean | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_journals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       modules: {
         Row: {
           content: string | null
@@ -177,8 +218,10 @@ export type Database = {
           created_at: string | null
           full_name: string | null
           id: string
+          last_login_date: string | null
           level: number | null
           linkedin_url: string | null
+          streak_days: number | null
           updated_at: string | null
           username: string | null
           xp: number | null
@@ -189,8 +232,10 @@ export type Database = {
           created_at?: string | null
           full_name?: string | null
           id: string
+          last_login_date?: string | null
           level?: number | null
           linkedin_url?: string | null
+          streak_days?: number | null
           updated_at?: string | null
           username?: string | null
           xp?: number | null
@@ -201,8 +246,10 @@ export type Database = {
           created_at?: string | null
           full_name?: string | null
           id?: string
+          last_login_date?: string | null
           level?: number | null
           linkedin_url?: string | null
+          streak_days?: number | null
           updated_at?: string | null
           username?: string | null
           xp?: number | null
@@ -304,6 +351,42 @@ export type Database = {
             columns: ["achievement_id"]
             isOneToOne: false
             referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_badges: {
+        Row: {
+          badge_id: number
+          id: string
+          unlocked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          badge_id: number
+          id?: string
+          unlocked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          badge_id?: number
+          id?: string
+          unlocked_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_badges_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

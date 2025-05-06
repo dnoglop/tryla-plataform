@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export type PhaseStatus = "notStarted" | "inProgress" | "completed";
@@ -400,6 +401,13 @@ export const updateUserPhaseStatus = async (userId: string, phaseId: number, sta
       }
     }
 
+    // Ganhar XP quando completa uma fase
+    if (status === 'completed') {
+      // Importar dinamicamente para evitar dependência circular
+      const { updateUserXp } = await import('@/services/profileService');
+      await updateUserXp(userId, 50); // 50 XP por fase completada
+    }
+
     return true;
   } catch (error) {
     console.error("Error updating user phase status:", error);
@@ -423,6 +431,114 @@ export const getUserPhaseStatus = async (userId: string, phaseId: number): Promi
     return data?.status || null;
   } catch (error) {
     console.error("Error getting user phase status:", error);
+    return null;
+  }
+};
+
+export const getModuleProgress = async (userId: string, moduleId: number): Promise<number> => {
+  try {
+    // Buscar todas as fases do módulo
+    const phases = await getPhasesByModuleId(moduleId);
+    
+    if (phases.length === 0) return 0;
+    
+    // Buscar os status das fases para o usuário
+    const phaseIds = phases.map(phase => phase.id);
+    
+    const { data, error } = await supabase
+      .from('user_phases')
+      .select('phase_id, status')
+      .eq('user_id', userId)
+      .in('phase_id', phaseIds);
+    
+    if (error) {
+      console.error("Error getting module progress:", error);
+      return 0;
+    }
+    
+    // Contar fases completadas
+    const completedPhases = (data || []).filter(p => p.status === 'completed').length;
+    
+    // Calcular progresso
+    return Math.round((completedPhases / phases.length) * 100);
+  } catch (error) {
+    console.error("Error calculating module progress:", error);
+    return 0;
+  }
+};
+
+export const isModuleCompleted = async (userId: string, moduleId: number): Promise<boolean> => {
+  try {
+    // Buscar todas as fases do módulo
+    const phases = await getPhasesByModuleId(moduleId);
+    
+    if (phases.length === 0) return false;
+    
+    // Buscar os status das fases para o usuário
+    const phaseIds = phases.map(phase => phase.id);
+    
+    const { data, error } = await supabase
+      .from('user_phases')
+      .select('phase_id, status')
+      .eq('user_id', userId)
+      .in('phase_id', phaseIds);
+    
+    if (error) {
+      console.error("Error checking module completion:", error);
+      return false;
+    }
+    
+    // Verificar se todas as fases estão completas
+    const completedPhases = (data || []).filter(p => p.status === 'completed').length;
+    return completedPhases === phases.length;
+  } catch (error) {
+    console.error("Error checking module completion:", error);
+    return false;
+  }
+};
+
+export const getUserNextPhase = async (userId: string, moduleId: number): Promise<Phase | null> => {
+  try {
+    // Buscar todas as fases do módulo
+    const phases = await getPhasesByModuleId(moduleId);
+    
+    if (phases.length === 0) return null;
+    
+    // Buscar os status das fases para o usuário
+    const phaseIds = phases.map(phase => phase.id);
+    
+    const { data, error } = await supabase
+      .from('user_phases')
+      .select('phase_id, status')
+      .eq('user_id', userId)
+      .in('phase_id', phaseIds);
+    
+    if (error && error.code !== 'PGRST116') {
+      console.error("Error getting user phases:", error);
+      return null;
+    }
+    
+    // Se não há dados do usuário, a primeira fase é a próxima
+    if (!data || data.length === 0) {
+      return phases[0];
+    }
+    
+    // Criar um mapa de status das fases do usuário
+    const userPhaseStatus = new Map();
+    data.forEach(p => userPhaseStatus.set(p.phase_id, p.status));
+    
+    // Encontrar a primeira fase que não esteja completa
+    for (const phase of phases) {
+      const status = userPhaseStatus.get(phase.id) || 'notStarted';
+      if (status !== 'completed') {
+        return phase;
+      }
+    }
+    
+    // Se todas estão completadas, retornar null (módulo completo)
+    return null;
+  } catch (error) {
+    console.error("Error getting next phase:", error);
     return null;
   }
 };

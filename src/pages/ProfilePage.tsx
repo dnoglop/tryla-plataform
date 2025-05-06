@@ -1,9 +1,8 @@
 
 import React, { useState, useEffect, useRef } from "react";
-import { Mail, Linkedin, Users, Target, Rocket } from "lucide-react";
+import { Mail, Linkedin, Users, Target, Rocket, Book, ChevronRight } from "lucide-react";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
-import BadgeItem from "@/components/BadgeItem";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getProfile, updateProfile, Profile, uploadAvatar } from "@/services/profileService";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
+import { Link } from "react-router-dom";
 
 const ProfilePage = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -153,11 +153,12 @@ const ProfilePage = () => {
     );
   }
 
-  const level = profile?.level || 5;
+  const level = profile?.level || 1;
   const nextLevel = level + 1;
-  const currentXp = profile?.xp || 350;
-  const maxXp = 500;
+  const currentXp = profile?.xp || 0;
+  const maxXp = level * 100;
   const xpProgress = (currentXp / maxXp) * 100;
+  const streakDays = profile?.streak_days || 0;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-16">
@@ -199,6 +200,7 @@ const ProfilePage = () => {
               size="sm" 
               variant="outline" 
               className="absolute right-0 top-2 rounded-full bg-white/20 hover:bg-white/30 border-none text-white"
+              onClick={() => setIsEditing(true)}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
             </Button>
@@ -218,6 +220,7 @@ const ProfilePage = () => {
           </div>
           <div className="mt-1 flex justify-between text-sm">
             <span>Nível {level}</span>
+            <span>{streakDays} {streakDays === 1 ? 'dia' : 'dias'} de sequência</span>
           </div>
         </div>
       </div>
@@ -317,6 +320,20 @@ const ProfilePage = () => {
             </form>
           )}
         </div>
+        
+        {/* Link para o Diário de Aprendizado */}
+        <Link to="/diario" className="bg-white rounded-lg shadow-sm p-6 mb-4 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center text-2xl">
+              📝
+            </div>
+            <div>
+              <h3 className="font-bold text-lg">Diário de Aprendizado</h3>
+              <p className="text-sm text-gray-600">Registre insights e reflexões da sua jornada</p>
+            </div>
+          </div>
+          <ChevronRight className="text-gray-400" />
+        </Link>
         
         {/* Emblemas section */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-4">

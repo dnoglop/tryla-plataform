@@ -1,33 +1,87 @@
 
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
 import PhaseCard from "@/components/PhaseCard";
 import ProgressBar from "@/components/ProgressBar";
 import { useQuery } from '@tanstack/react-query';
-import { getModuleById, getPhasesByModuleId, Phase, PhaseStatus } from "@/services/moduleService";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  getModuleById,
+  getPhasesByModuleId,
+  getUserPhaseStatus,
+  Phase,
+  PhaseStatus
+} from "@/services/moduleService";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const ModuleDetailPage = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const moduleId = parseInt(id || "1");
   const [activeTab, setActiveTab] = useState<'intro' | 'phases'>('intro');
+  const [userId, setUserId] = useState<string | null>(null);
+  const [phaseStatuses, setPhaseStatuses] = useState<{[key: number]: PhaseStatus}>({});
+  const [isLoadingStatuses, setIsLoadingStatuses] = useState(false);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data?.user) {
+        setUserId(data.user.id);
+      } else {
+        navigate("/login");
+      }
+    };
+
+    getUser();
+  }, [navigate]);
 
   // Fetch module data from Supabase
   const { data: module, isLoading: isLoadingModule } = useQuery({
     queryKey: ['module', moduleId],
     queryFn: () => getModuleById(moduleId),
+    enabled: !!moduleId,
   });
 
   // Fetch phases data from Supabase
   const { data: phases = [], isLoading: isLoadingPhases } = useQuery({
     queryKey: ['phases', moduleId],
     queryFn: () => getPhasesByModuleId(moduleId),
+    enabled: !!moduleId,
   });
 
+  // Buscar status das fases
+  useEffect(() => {
+    const fetchPhaseStatuses = async () => {
+      if (!userId || phases.length === 0) return;
+      
+      setIsLoadingStatuses(true);
+      try {
+        const statusMap: {[key: number]: PhaseStatus} = {};
+        
+        for (const phase of phases) {
+          const status = await getUserPhaseStatus(userId, phase.id);
+          statusMap[phase.id] = (status as PhaseStatus) || "notStarted";
+        }
+        
+        setPhaseStatuses(statusMap);
+      } catch (error) {
+        console.error("Erro ao buscar status das fases:", error);
+      } finally {
+        setIsLoadingStatuses(false);
+      }
+    };
+    
+    fetchPhaseStatuses();
+  }, [userId, phases]);
+
   // Calcular progresso baseado nas fases completadas
-  const completedPhases = phases.filter(p => p.status === "completed");
-  const progress = phases.length > 0 ? (completedPhases.length / phases.length) * 100 : 0;
+  const completedPhases = phases.filter(p => phaseStatuses[p.id] === "completed").length;
+  const progress = phases.length > 0 ? (completedPhases / phases.length) * 100 : 0;
 
   // Determinar cor do módulo baseado no tipo
   const getModuleColor = (type?: string) => {
@@ -41,7 +95,19 @@ const ModuleDetailPage = () => {
     }
   };
 
-  if (isLoadingModule || isLoadingPhases) {
+  const navigateToNextModule = () => {
+    const nextModuleId = moduleId + 1;
+    navigate(`/modulo/${nextModuleId}`);
+  };
+
+  const navigateToPrevModule = () => {
+    if (moduleId > 1) {
+      const prevModuleId = moduleId - 1;
+      navigate(`/modulo/${prevModuleId}`);
+    }
+  };
+
+  if (isLoadingModule || isLoadingPhases || isLoadingStatuses) {
     return (
       <div className="pb-16 min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-pulse">Carregando...</div>
@@ -90,7 +156,7 @@ const ModuleDetailPage = () => {
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-3xl shadow-sm">
             {module.emoji || "📚"}
           </div>
-          <div>
+          <div className="flex-1">
             <h2 className="text-xl font-bold">{module.name || "Módulo"}</h2>
             <p className="text-sm text-gray-600">{module.description || "Descrição do módulo"}</p>
           </div>
@@ -102,8 +168,27 @@ const ModuleDetailPage = () => {
         </div>
         <ProgressBar progress={progress} />
       </div>
+      
+      <div className="flex justify-between px-4 pt-2">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={navigateToPrevModule}
+          disabled={moduleId <= 1}
+          className={moduleId <= 1 ? "invisible" : ""}
+        >
+          <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={navigateToNextModule}
+        >
+          Próximo <ChevronRight className="h-4 w-4 ml-1" />
+        </Button>
+      </div>
 
-      <div className="container px-4 py-6">
+      <div className="container px-4 py-4">
         {/* Tabs para alternar entre introdução e fases */}
         <div className="border-b mb-4">
           <div className="flex space-x-6">
@@ -153,10 +238,26 @@ const ModuleDetailPage = () => {
                 title={phase.name}
                 description={phase.description || ''}
                 duration={phase.duration || 15}
-                status={mapPhaseStatus(phase.status)}
+                status={mapPhaseStatus(phaseStatuses[phase.id])}
                 iconType={mapIconType(phase.icon_type)}
               />
             ))}
+            
+            {completedPhases === phases.length && phases.length > 0 && (
+              <div className="mt-6 bg-green-100 rounded-lg p-4 text-center animate-pulse">
+                <div className="text-3xl mb-2">🎉</div>
+                <h3 className="text-lg font-bold text-green-800">Módulo completo!</h3>
+                <p className="text-sm text-green-700 mb-4">
+                  Parabéns! Você concluiu todas as fases deste módulo.
+                </p>
+                <Button 
+                  className="bg-green-600 hover:bg-green-700"
+                  onClick={() => toast.success("Parabéns pelo módulo completo!")}
+                >
+                  Resgatar emblema
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>

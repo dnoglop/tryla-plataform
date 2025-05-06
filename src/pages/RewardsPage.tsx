@@ -1,14 +1,38 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
 import BadgeItem from "@/components/BadgeItem";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { getProfile } from "@/services/profileService";
 
 const RewardsPage = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("badges");
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      setIsLoading(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          const profile = await getProfile(user.id);
+          setUserProfile(profile);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar perfil:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchUserProfile();
+  }, []);
   
   // Dados de exemplo para recompensas
   const badges = [
@@ -81,6 +105,19 @@ const RewardsPage = () => {
     });
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 pb-16 flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-4 border-trilha-orange border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
+
+  const earnedBadges = badges.filter(badge => badge.earned).length;
+  const totalXp = userProfile?.xp || 0;
+  const level = userProfile?.level || 1;
+  const completedPhases = 2; // Placeholder - deve vir da API
+
   return (
     <div className="pb-16 min-h-screen bg-gray-50">
       <Header title="🏆 Central de Recompensas" />
@@ -94,20 +131,26 @@ const RewardsPage = () => {
           
           <div className="mt-4 flex items-center justify-center gap-4">
             <div className="flex flex-col items-center">
-              <div className="text-xl font-bold text-trilha-orange">3</div>
-              <div className="text-xs text-gray-600">Badges</div>
+              <div className="text-xl font-bold text-trilha-orange">{earnedBadges}</div>
+              <div className="text-xs text-gray-600">Emblemas</div>
             </div>
             <div className="h-10 w-px bg-gray-300"></div>
             <div className="flex flex-col items-center">
-              <div className="text-xl font-bold text-trilha-orange">750</div>
+              <div className="text-xl font-bold text-trilha-orange">{totalXp}</div>
               <div className="text-xs text-gray-600">Pontos</div>
             </div>
             <div className="h-10 w-px bg-gray-300"></div>
             <div className="flex flex-col items-center">
-              <div className="text-xl font-bold text-trilha-orange">2</div>
+              <div className="text-xl font-bold text-trilha-orange">{completedPhases}</div>
               <div className="text-xs text-gray-600">Fases</div>
             </div>
           </div>
+          
+          {level > 1 && (
+            <div className="mt-4 bg-amber-50 rounded-lg p-2 inline-block">
+              <span className="text-sm font-medium text-trilha-orange">Nível {level}</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -141,7 +184,7 @@ const RewardsPage = () => {
               <div className="flex items-center justify-between">
                 <h2 className="font-bold">Seu saldo</h2>
                 <div className="rounded-full bg-trilha-orange px-3 py-1 text-sm font-bold text-white">
-                  750 pontos
+                  {totalXp} pontos
                 </div>
               </div>
             </div>
@@ -161,7 +204,8 @@ const RewardsPage = () => {
                     </div>
                     <button
                       onClick={() => handleBuyReward(reward.id, reward.price)}
-                      className="rounded-full bg-trilha-orange px-3 py-2 text-sm font-semibold text-white"
+                      className="rounded-full bg-trilha-orange px-3 py-2 text-sm font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={totalXp < reward.price}
                     >
                       {reward.price} pts
                     </button>
