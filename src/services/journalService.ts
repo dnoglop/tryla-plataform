@@ -56,12 +56,12 @@ export const getJournalEntry = async (id: string): Promise<JournalEntry | null> 
 
 export const createJournalEntry = async (entry: JournalEntry): Promise<JournalEntry | null> => {
   try {
-    // Importante: remover o id para que o Supabase gere um novo automaticamente
-    const { id, ...entryWithoutId } = entry;
+    // Remove ID completely to let Supabase generate it
+    const { id, ...entryData } = entry;
     
     const { data, error } = await supabase
       .from("learning_journals")
-      .insert([entryWithoutId])
+      .insert([entryData])
       .select()
       .single();
 

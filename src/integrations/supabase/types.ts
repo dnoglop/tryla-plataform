@@ -85,6 +85,7 @@ export type Database = {
           emoji: string | null
           id: string
           is_favorite: boolean | null
+          module_id: number | null
           title: string
           updated_at: string | null
           user_id: string
@@ -95,6 +96,7 @@ export type Database = {
           emoji?: string | null
           id?: string
           is_favorite?: boolean | null
+          module_id?: number | null
           title: string
           updated_at?: string | null
           user_id: string
@@ -105,6 +107,7 @@ export type Database = {
           emoji?: string | null
           id?: string
           is_favorite?: boolean | null
+          module_id?: number | null
           title?: string
           updated_at?: string | null
           user_id?: string
