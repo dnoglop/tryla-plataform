@@ -121,4 +121,57 @@
     animation-fill-mode: forwards;
     animation-delay: calc(var(--delay, 0) * 0.1s);
   }
+  
+  /* Duolingo-inspired styles */
+  .module-grid {
+    @apply grid grid-cols-2 gap-3;
+  }
+  
+  .stats-bar {
+    @apply flex items-center justify-between py-2 px-4 bg-white shadow-sm sticky top-0 z-30;
+  }
+  
+  .stats-item {
+    @apply flex items-center gap-1;
+  }
+  
+  .continue-card {
+    @apply bg-amber-50 rounded-2xl overflow-hidden shadow-md border-none;
+  }
+  
+  .section-heading {
+    @apply text-lg font-bold flex items-center justify-between;
+  }
+  
+  .section-link {
+    @apply text-sm font-medium text-trilha-orange flex items-center;
+  }
+}
+
+/* Progress bar modifications for Duolingo-style */
+.progress-bar-container {
+  @apply relative w-full;
+}
+
+.progress-bar-trophy {
+  @apply absolute right-0 -top-1 -mr-2 bg-white rounded-full border-2 border-trilha-orange w-5 h-5 flex items-center justify-center;
+  font-size: 10px;
+}
+
+@keyframes bounce-slow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 2s ease-in-out infinite;
+}
+
+/* Make sure content doesn't get hidden behind bottom navigation */
+.pb-20 {
+  padding-bottom: 5rem;
 }

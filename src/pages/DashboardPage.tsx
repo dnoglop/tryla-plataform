@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Zap, Calendar } from "lucide-react";
+import { Flame, Trophy, ArrowRight, Heart } from "lucide-react";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
 import ModuleCard from "@/components/ModuleCard";
@@ -14,6 +13,8 @@ import { getProfile, updateLoginStreak, updateUserXp } from "@/services/profileS
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import ProgressBar from "@/components/ProgressBar";
 
 const DashboardPage = () => {
   const { toast } = useToast();
@@ -126,6 +127,34 @@ const DashboardPage = () => {
     return true; // In all other cases, lock the module
   };
 
+  // Find the next module to continue (highest progress that's not complete)
+  const findContinueModule = () => {
+    if (!modules.length) return null;
+    
+    // First look for modules in progress
+    const inProgressModules = modules.filter(
+      module => moduleProgress[module.id] > 0 && moduleProgress[module.id] < 100
+    );
+    
+    if (inProgressModules.length) {
+      // Sort by progress descending to find the one with most progress
+      return inProgressModules.sort(
+        (a, b) => moduleProgress[b.id] - moduleProgress[a.id]
+      )[0];
+    }
+    
+    // If none in progress, find first unlocked but not started module
+    for (let i = 0; i < modules.length; i++) {
+      if (!isModuleLocked(i, modules[i].id) && moduleProgress[modules[i].id] === 0) {
+        return modules[i];
+      }
+    }
+    
+    return null; // All modules either completed or locked
+  };
+
+  const continueModule = findContinueModule();
+
   if (isLoading || !profile) {
     return (
       <div className="pb-16 min-h-screen bg-gray-50 flex items-center justify-center">
@@ -135,13 +164,12 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="pb-16 min-h-screen bg-gray-50">
-      <Header title="🗺️ Painel da Jornada" showBackButton={false} />
-
-      <div className="container px-4 py-6 space-y-6">
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <Avatar className="h-14 w-14 border-2 border-trilha-orange">
+    <div className="pb-20 min-h-screen bg-gray-50">
+      {/* User stats bar */}
+      <div className="bg-white shadow-sm py-3 px-4 sticky top-0 z-30">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Avatar className="h-10 w-10 border-2 border-trilha-orange">
               {profile.avatar_url ? (
                 <AvatarImage src={profile.avatar_url} alt="Foto de perfil" />
               ) : (
@@ -150,48 +178,76 @@ const DashboardPage = () => {
                 </AvatarFallback>
               )}
             </Avatar>
-            <div className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-trilha-orange text-xs font-bold text-white shadow-sm">
+            <div className="text-lg font-bold">{profile.xp || 0} XP</div>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1 text-red-500">
+              <Heart className="w-5 h-5 fill-current" />
+              <span className="font-bold">5</span>
+            </div>
+            
+            <div className="flex items-center gap-1 text-amber-500">
+              <Flame className="w-5 h-5" />
+              <span className="font-bold">{streakDays}</span>
+            </div>
+            
+            <Badge variant="outline" className="font-bold text-blue-500 border-blue-200 bg-blue-50">
               {profile.level || 1}
-            </div>
-          </div>
-
-          <div className="flex-1">
-            <h2 className="font-bold">Olá, {profile.full_name || "Explorador(a)"}!</h2>
-            <UserLevel level={profile.level || 1} xp={profile.xp || 0} nextLevelXp={(profile.level || 1) * 100} />
+            </Badge>
           </div>
         </div>
-        
-        <div className="flex items-center justify-between bg-gradient-to-r from-amber-50 to-orange-50 p-4 rounded-lg">
-          <div className="flex items-center gap-3">
-            <div className="rounded-full p-2 bg-orange-100">
-              <Calendar className="h-5 w-5 text-orange-600" />
-            </div>
-            <div>
-              <h3 className="font-medium">Sequência de dias</h3>
-              <p className="text-sm text-gray-600">Você está em uma sequência!</p>
-            </div>
+      </div>
+
+      <div className="container px-4 py-6 space-y-6">
+        {/* Continue Learning Section */}
+        {continueModule && (
+          <div>
+            <h2 className="text-xl font-bold mb-3">Continue Aprendendo</h2>
+            <Card className="mb-4 overflow-hidden border-none shadow-md">
+              <CardContent className="p-0">
+                <div className="bg-amber-50 p-5">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-bold text-lg mb-1">{continueModule.title}</h3>
+                      <p className="text-sm text-gray-600 mb-2">Continue de onde parou</p>
+                      
+                      <Link 
+                        to={`/modulo/${continueModule.id}`}
+                        className="bg-trilha-orange text-white px-4 py-2 rounded-full text-sm font-medium inline-flex items-center mt-2"
+                      >
+                        Continuar
+                      </Link>
+                    </div>
+                    <div className="text-3xl">
+                      {continueModule.emoji || "🚀"}
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <ProgressBar 
+                      progress={moduleProgress[continueModule.id] || 0} 
+                      showIcon={true}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-          <Badge variant="outline" className="bg-white px-3 py-1 text-lg font-bold text-trilha-orange">
-            {streakDays} {streakDays === 1 ? 'dia' : 'dias'}
-          </Badge>
-        </div>
+        )}
 
-        <DailyTask 
-          completed={dailyCompleted}
-          xpReward={50}
-          onClick={handleDailyTask}
-        />
-
+        {/* Your Course Section */}
         <div>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-bold">Sua Trilha</h2>
-            <Link to="/modulos" className="text-sm font-medium text-trilha-orange">
+            <Link to="/modulos" className="text-sm font-medium text-trilha-orange flex items-center">
               Ver tudo
+              <ArrowRight className="h-4 w-4 ml-1" />
             </Link>
           </div>
 
-          <div className="grid gap-4">
-            {modules.slice(0, 3).map((module, index) => (
+          <div className="grid grid-cols-2 gap-3">
+            {modules.slice(0, 4).map((module, index) => (
               <ModuleCard 
                 key={module.id}
                 id={module.id}
@@ -207,22 +263,62 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        <div className="mt-6">
-          <Link
-            to="/recompensas"
-            className="card-trilha flex items-center gap-3 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 p-4"
-          >
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-trilha-orange bg-opacity-10 text-2xl">
-              🏆
+        {/* Streak Box */}
+        <div className="bg-white rounded-2xl shadow p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="rounded-full p-2 bg-orange-100">
+                <Flame className="h-5 w-5 text-orange-600" />
+              </div>
+              <div>
+                <h3 className="font-medium">Sequência de dias</h3>
+                <p className="text-sm text-gray-600">Continue estudando para manter sua sequência!</p>
+              </div>
             </div>
-            <div className="flex-1">
-              <h3 className="font-bold">Central de Recompensas</h3>
-              <p className="text-sm text-gray-600">
-                Você tem 3 emblemas novos para desbloquear!
-              </p>
-            </div>
-            <Zap className="h-5 w-5 animate-pulse text-trilha-orange" />
-          </Link>
+            <Badge variant="outline" className="bg-white px-3 py-1 text-lg font-bold text-trilha-orange">
+              {streakDays} {streakDays === 1 ? 'dia' : 'dias'}
+            </Badge>
+          </div>
+        </div>
+
+        {/* Daily Task */}
+        <DailyTask 
+          completed={dailyCompleted}
+          xpReward={50}
+          onClick={handleDailyTask}
+        />
+
+        {/* Leaderboard Preview */}
+        <div>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-lg font-bold">Ranking</h2>
+            <Link to="/comunidade" className="text-sm font-medium text-trilha-orange flex items-center">
+              Ver tudo
+              <ArrowRight className="h-4 w-4 ml-1" />
+            </Link>
+          </div>
+          
+          <Card className="overflow-hidden">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback className="bg-amber-100 text-amber-800">
+                        1
+                      </AvatarFallback>
+                    </Avatar>
+                    <Trophy className="h-4 w-4 absolute -bottom-1 -right-1 text-amber-500" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Você</p>
+                    <p className="text-xs text-gray-500">Liga Bronze</p>
+                  </div>
+                </div>
+                <p className="font-bold text-lg">{profile.xp || 0} XP</p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
