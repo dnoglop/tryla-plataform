@@ -1,10 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Flame, Trophy, ArrowRight, Heart } from "lucide-react";
-import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
 import ModuleCard from "@/components/ModuleCard";
-import UserLevel from "@/components/UserLevel";
 import DailyTask from "@/components/DailyTask";
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery } from '@tanstack/react-query';
@@ -15,6 +13,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import ProgressBar from "@/components/ProgressBar";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const DashboardPage = () => {
   const { toast } = useToast();
@@ -24,6 +23,7 @@ const DashboardPage = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [moduleProgress, setModuleProgress] = useState<{[key: number]: number}>({});
   const [completedModules, setCompletedModules] = useState<{[key: number]: boolean}>({});
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -166,10 +166,10 @@ const DashboardPage = () => {
   return (
     <div className="pb-20 min-h-screen bg-gray-50">
       {/* User stats bar */}
-      <div className="bg-white shadow-sm py-3 px-4 sticky top-0 z-30">
+      <div className="bg-white shadow-sm py-2 px-3 sticky top-0 z-30">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Avatar className="h-10 w-10 border-2 border-trilha-orange">
+            <Avatar className="h-8 w-8 border-2 border-trilha-orange">
               {profile.avatar_url ? (
                 <AvatarImage src={profile.avatar_url} alt="Foto de perfil" />
               ) : (
@@ -178,56 +178,57 @@ const DashboardPage = () => {
                 </AvatarFallback>
               )}
             </Avatar>
-            <div className="text-lg font-bold">{profile.xp || 0} XP</div>
+            <div className="text-base font-bold">{profile.xp || 0} XP</div>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <div className="flex items-center gap-1 text-red-500">
-              <Heart className="w-5 h-5 fill-current" />
-              <span className="font-bold">5</span>
+              <Heart className="w-4 h-4 fill-current" />
+              <span className="font-bold text-sm">5</span>
             </div>
             
             <div className="flex items-center gap-1 text-amber-500">
-              <Flame className="w-5 h-5" />
-              <span className="font-bold">{streakDays}</span>
+              <Flame className="w-4 h-4" />
+              <span className="font-bold text-sm">{streakDays}</span>
             </div>
             
-            <Badge variant="outline" className="font-bold text-blue-500 border-blue-200 bg-blue-50">
+            <Badge variant="outline" className="font-bold text-xs text-blue-500 border-blue-200 bg-blue-50">
               {profile.level || 1}
             </Badge>
           </div>
         </div>
       </div>
 
-      <div className="container px-4 py-6 space-y-6">
+      <div className="container px-3 py-4 space-y-4">
         {/* Continue Learning Section */}
         {continueModule && (
           <div>
-            <h2 className="text-xl font-bold mb-3">Continue Aprendendo</h2>
+            <h2 className="text-lg font-bold mb-2">Continue Aprendendo</h2>
             <Card className="mb-4 overflow-hidden border-none shadow-md">
               <CardContent className="p-0">
-                <div className="bg-amber-50 p-5">
+                <div className="bg-amber-50 p-3 sm:p-5">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="font-bold text-lg mb-1">{continueModule.name}</h3>
-                      <p className="text-sm text-gray-600 mb-2">Continue de onde parou</p>
+                      <h3 className="font-bold text-base sm:text-lg mb-1">{continueModule.name}</h3>
+                      <p className="text-xs sm:text-sm text-gray-600 mb-2">Continue de onde parou</p>
                       
                       <Link 
                         to={`/modulo/${continueModule.id}`}
-                        className="bg-trilha-orange text-white px-4 py-2 rounded-full text-sm font-medium inline-flex items-center mt-2"
+                        className="bg-trilha-orange text-white px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium inline-flex items-center mt-2"
                       >
                         Continuar
                       </Link>
                     </div>
-                    <div className="text-3xl">
+                    <div className="text-2xl sm:text-3xl">
                       {continueModule.emoji || "🚀"}
                     </div>
                   </div>
                   
-                  <div className="mt-4">
+                  <div className="mt-3">
                     <ProgressBar 
                       progress={moduleProgress[continueModule.id] || 0} 
                       showIcon={true}
+                      compact={isMobile}
                     />
                   </div>
                 </div>
@@ -238,15 +239,15 @@ const DashboardPage = () => {
 
         {/* Your Course Section */}
         <div>
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-2 flex items-center justify-between">
             <h2 className="text-lg font-bold">Sua Trilha</h2>
-            <Link to="/modulos" className="text-sm font-medium text-trilha-orange flex items-center">
+            <Link to="/modulos" className="text-xs sm:text-sm font-medium text-trilha-orange flex items-center">
               Ver tudo
-              <ArrowRight className="h-4 w-4 ml-1" />
+              <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1" />
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
             {modules.slice(0, 4).map((module, index) => (
               <ModuleCard 
                 key={module.id}
@@ -264,18 +265,18 @@ const DashboardPage = () => {
         </div>
 
         {/* Streak Box */}
-        <div className="bg-white rounded-2xl shadow p-4">
+        <div className="bg-white rounded-xl shadow p-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full p-2 bg-orange-100">
-                <Flame className="h-5 w-5 text-orange-600" />
+            <div className="flex items-center gap-2">
+              <div className="rounded-full p-1.5 bg-orange-100">
+                <Flame className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600" />
               </div>
               <div>
-                <h3 className="font-medium">Sequência de dias</h3>
-                <p className="text-sm text-gray-600">Continue estudando para manter sua sequência!</p>
+                <h3 className="font-medium text-sm sm:text-base">Sequência de dias</h3>
+                <p className="text-xs text-gray-600">Continue estudando!</p>
               </div>
             </div>
-            <Badge variant="outline" className="bg-white px-3 py-1 text-lg font-bold text-trilha-orange">
+            <Badge variant="outline" className="bg-white px-2 py-0.5 text-base font-bold text-trilha-orange">
               {streakDays} {streakDays === 1 ? 'dia' : 'dias'}
             </Badge>
           </div>
@@ -290,32 +291,32 @@ const DashboardPage = () => {
 
         {/* Leaderboard Preview */}
         <div>
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-2 flex items-center justify-between">
             <h2 className="text-lg font-bold">Ranking</h2>
-            <Link to="/comunidade" className="text-sm font-medium text-trilha-orange flex items-center">
+            <Link to="/comunidade" className="text-xs sm:text-sm font-medium text-trilha-orange flex items-center">
               Ver tudo
-              <ArrowRight className="h-4 w-4 ml-1" />
+              <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1" />
             </Link>
           </div>
           
           <Card className="overflow-hidden">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-3">
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
                   <div className="relative">
-                    <Avatar className="h-10 w-10">
+                    <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
                       <AvatarFallback className="bg-amber-100 text-amber-800">
                         1
                       </AvatarFallback>
                     </Avatar>
-                    <Trophy className="h-4 w-4 absolute -bottom-1 -right-1 text-amber-500" />
+                    <Trophy className="h-3 w-3 sm:h-4 sm:w-4 absolute -bottom-1 -right-1 text-amber-500" />
                   </div>
                   <div>
-                    <p className="font-medium">Você</p>
-                    <p className="text-xs text-gray-500">Liga Bronze</p>
+                    <p className="font-medium text-sm sm:text-base">Você</p>
+                    <p className="text-[10px] sm:text-xs text-gray-500">Liga Bronze</p>
                   </div>
                 </div>
-                <p className="font-bold text-lg">{profile.xp || 0} XP</p>
+                <p className="font-bold text-base sm:text-lg">{profile.xp || 0} XP</p>
               </div>
             </CardContent>
           </Card>

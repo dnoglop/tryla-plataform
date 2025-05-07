@@ -25,7 +25,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
       {/* Progress bar */}
       <Progress 
         value={validProgress} 
-        className={`h-3 rounded-full ${compact ? 'h-2' : 'h-3'} ${className}`}
+        className={`rounded-full ${compact ? 'h-2' : 'h-3'} ${className}`}
       />
       
       {/* Progress indicator */}
@@ -37,8 +37,8 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
       
       {/* Icon at the end of progress bar when complete */}
       {showIcon && validProgress === 100 && (
-        <div className="absolute right-0 -top-1 -mr-2 bg-white rounded-full border-2 border-trilha-orange w-5 h-5 flex items-center justify-center">
-          <span className="text-[10px]">🏆</span>
+        <div className={`absolute right-0 -top-1 -mr-1.5 bg-white rounded-full border-2 border-trilha-orange flex items-center justify-center ${compact ? 'w-4 h-4' : 'w-5 h-5'}`}>
+          <span className={compact ? "text-[8px]" : "text-[10px]"}>🏆</span>
         </div>
       )}
     </div>

@@ -1,9 +1,11 @@
 
 import { Award, BookOpen, Home, MessageSquare, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const BottomNavigation = () => {
   const location = useLocation();
+  const isMobile = useIsMobile();
   const isActive = (path: string) => location.pathname === path;
 
   const navItems = [
@@ -21,17 +23,17 @@ const BottomNavigation = () => {
           <Link
             key={item.path}
             to={item.path}
-            className="flex flex-col items-center justify-center px-1 py-3 w-full"
+            className="flex flex-col items-center justify-center px-1 py-2 w-full"
           >
             <div className={`flex flex-col items-center ${
               isActive(item.path)
                 ? "text-trilha-orange"
                 : "text-gray-400"
             }`}>
-              <item.icon className={`w-6 h-6 ${
+              <item.icon className={`w-5 h-5 ${
                 isActive(item.path) && "animate-bounce-slow"
               }`} />
-              <span className="text-xs mt-1 font-medium">{item.label}</span>
+              <span className={`text-[10px] mt-0.5 font-medium ${isMobile ? 'hidden sm:block' : ''}`}>{item.label}</span>
             </div>
           </Link>
         ))}

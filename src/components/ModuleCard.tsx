@@ -2,6 +2,7 @@
 import { Trophy, Award, Heart, MessageSquare, Brain } from "lucide-react";
 import { Link } from "react-router-dom";
 import ProgressBar from "./ProgressBar";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ModuleCardProps {
   id: number;
@@ -24,6 +25,8 @@ const ModuleCard = ({
   description,
   emoji,
 }: ModuleCardProps) => {
+  const isMobile = useIsMobile();
+  
   // Configuração baseada no tipo de módulo
   const moduleConfig: Record<
     string,
@@ -71,60 +74,70 @@ const ModuleCard = ({
           : "cursor-pointer hover:shadow-md transition-all duration-300 hover:-translate-y-1"
       }`}
     >
-      <div className="w-full p-4">
-        {/* Module header */}
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex flex-col">
-            <h3 className="font-bold text-gray-800">{title}</h3>
-            <p className="text-xs text-gray-600">{config.description}</p>
-          </div>
-          
-          <div className={`rounded-full p-2 ${completed ? 'bg-trilha-orange' : 'bg-white'}`}>
-            {moduleEmoji ? (
-              <span className="text-xl">{moduleEmoji}</span>
-            ) : (
-              <Icon className={`h-5 w-5 ${completed ? 'text-white' : 'text-trilha-orange'}`} />
-            )}
-          </div>
-        </div>
-        
-        {/* Status indicators */}
+      <div className="w-full p-3 sm:p-4">
+        {/* Completed badge */}
         {completed && (
-          <span className="absolute top-2 right-2 text-xs font-bold text-green-600 bg-green-100 rounded-full px-2 py-0.5">
-            CONCLUÍDO
-          </span>
+          <div className="absolute top-1 w-full text-center">
+            <span className="text-[10px] sm:text-xs font-bold text-green-600 bg-green-100 rounded-full px-2 py-0.5">
+              CONCLUÍDO
+            </span>
+          </div>
         )}
+        
         {locked && (
-          <span className="absolute top-2 right-2 text-xs font-bold text-gray-500 bg-gray-100 rounded-full px-2 py-0.5">
-            BLOQUEADO
-          </span>
+          <div className="absolute top-1 right-2">
+            <span className="text-[10px] sm:text-xs font-bold text-gray-500 bg-gray-100 rounded-full px-2 py-0.5">
+              BLOQUEADO
+            </span>
+          </div>
         )}
 
+        {/* Module header - restructured for mobile */}
+        <div className="flex flex-col mt-4">
+          <h3 className="font-bold text-sm sm:text-base text-gray-800 text-center">{title}</h3>
+          
+          <div className={`mx-auto mt-2 rounded-full p-2 ${completed ? 'bg-trilha-orange' : 'bg-white'}`}>
+            {moduleEmoji ? (
+              <span className="text-xl sm:text-2xl">{moduleEmoji}</span>
+            ) : (
+              <Icon className={`h-6 w-6 ${completed ? 'text-white' : 'text-trilha-orange'}`} />
+            )}
+          </div>
+          
+          {/* Only show description on larger screens or if very short */}
+          {(!isMobile || description?.length < 30) && (
+            <p className="text-[10px] sm:text-xs text-gray-600 text-center mt-1 px-1">
+              {config.description}
+            </p>
+          )}
+        </div>
+        
         {/* Progress bar */}
-        <div className="mt-4">
+        <div className="mt-3">
           {!locked ? (
             <ProgressBar 
               progress={progress} 
               className={progress === 100 ? 'bg-gray-200' : 'bg-gray-200'} 
-              showIcon={true}
+              showIcon={false}
+              compact={isMobile}
             />
           ) : (
-            <div className="h-3 bg-gray-200 rounded-full"></div>
+            <div className="h-2 bg-gray-200 rounded-full"></div>
           )}
           
           <div className="mt-1 flex justify-between items-center">
-            <span className="text-xs text-gray-500">
-              {locked ? "Desbloqueie concluindo os módulos anteriores" : `${progress}% completo`}
+            <span className="text-[10px] sm:text-xs text-gray-500">
+              {progress}% completo
             </span>
             
             {!locked && !completed && progress > 0 && (
-              <span className="text-xs font-medium text-trilha-orange">CONTINUAR</span>
+              <span className="text-[10px] sm:text-xs font-medium text-trilha-orange">CONTINUAR</span>
             )}
             {!locked && !completed && progress === 0 && (
-              <span className="text-xs font-medium text-trilha-orange">INICIAR</span>
+              <span className="text-[10px] sm:text-xs font-medium text-trilha-orange">INICIAR</span>
             )}
             {completed && (
-              <span className="text-xs font-medium text-green-600">REVISAR</span>
+              <span className="text-[10px] sm:text-xs font-medium text-green-600">REVISAR</span>
             )}
           </div>
         </div>
