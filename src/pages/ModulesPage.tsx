@@ -146,43 +146,6 @@ const ModulesPage = () => {
     return true; // In all other cases, lock the module
   };
 
-  // Filter modules based on search
-  const filteredModules = modules.filter((module) =>
-    module.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Group modules by type for better organization
-  const groupedModules = modules.reduce<Record<string, Module[]>>((acc, module) => {
-    const type = module.type || "autoconhecimento";
-    if (!acc[type]) {
-      acc[type] = [];
-    }
-    acc[type].push(module);
-    return acc;
-  }, {});
-
-  // Translate module type to human readable format
-  const getModuleTypeTitle = (type: string) => {
-    const types: Record<string, string> = {
-      autoconhecimento: "Autoconhecimento",
-      empatia: "Empatia",
-      growth: "Desenvolvimento Pessoal",
-      comunicacao: "Comunicação",
-      futuro: "Futuro"
-    };
-    return types[type] || type.charAt(0).toUpperCase() + type.slice(1);
-  };
-
-  // Helper function to get module content
-  const getModuleContent = (moduleId: number) => {
-    return modulePhases[moduleId] || [];
-  };
-
-  const { data: modules = [], isLoading: isLoadingModules } = useQuery({
-    queryKey: ['modules'],
-    queryFn: getModules,
-  });
-
   if (isLoadingModules) {
     return (
       <div className="pb-16 min-h-screen bg-gray-50 flex items-center justify-center">
