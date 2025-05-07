@@ -127,7 +127,7 @@ const JournalForm: React.FC<JournalFormProps> = ({
               <SelectValue placeholder="Escolha um módulo (opcional)" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Nenhum módulo</SelectItem>
+              <SelectItem value="null">Nenhum módulo</SelectItem>
               {modules.map((module: Module) => (
                 <SelectItem key={module.id} value={module.id.toString()}>
                   {module.emoji || '📚'} {module.name}
