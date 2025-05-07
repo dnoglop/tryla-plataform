@@ -209,7 +209,7 @@ const DashboardPage = () => {
                 <div className="bg-amber-50 p-5">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="font-bold text-lg mb-1">{continueModule.title}</h3>
+                      <h3 className="font-bold text-lg mb-1">{continueModule.name}</h3>
                       <p className="text-sm text-gray-600 mb-2">Continue de onde parou</p>
                       
                       <Link 
