@@ -4,40 +4,35 @@ import { Search, Video, FileText, HelpCircle } from "lucide-react";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
 import ModuleCard from "@/components/ModuleCard";
-import ProgressBar from "@/components/ProgressBar";
+import { Progress } from "@/components/ui/progress";
 import { useQuery } from '@tanstack/react-query';
-import { getModules, getPhasesByModuleId, Module, Phase } from "@/services/moduleService";
+import { getModules, getPhasesByModuleId, getModuleProgress, isModuleCompleted, Module, Phase } from "@/services/moduleService";
+import { supabase } from "@/integrations/supabase/client";
 
 const ModulesPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [totalProgress, setTotalProgress] = useState(0);
   const [modulePhases, setModulePhases] = useState<Record<number, Phase[]>>({});
+  const [userId, setUserId] = useState<string | null>(null);
+  const [moduleProgress, setModuleProgress] = useState<{[key: number]: number}>({});
+  const [completedModules, setCompletedModules] = useState<{[key: number]: boolean}>({});
   
+  // Get current user
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data?.user) {
+        setUserId(data.user.id);
+      }
+    };
+    fetchUser();
+  }, []);
+
   // Fetch modules from Supabase
   const { data: modules = [], isLoading: isLoadingModules } = useQuery({
     queryKey: ['modules'],
     queryFn: getModules,
-    select: (data) => data.map((module) => ({
-      ...module,
-      progress: 0, // Default progress, will be updated later if needed
-      completed: false
-    })),
   });
-
-  // Calculate total progress
-  useEffect(() => {
-    const completedPercentage = modules.reduce(
-      (sum, module) => sum + (module.progress || 0), 
-      0
-    ) / (modules.length || 1);
-    
-    setTotalProgress(Math.round(completedPercentage));
-  }, [modules]);
-
-  // Filtrar módulos com base na busca
-  const filteredModules = modules.filter((module) =>
-    module.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   // Load phases for each module
   useEffect(() => {
@@ -60,6 +55,48 @@ const ModulesPage = () => {
       fetchAllPhases();
     }
   }, [modules]);
+
+  // Fetch progress and completion status for each module
+  useEffect(() => {
+    const fetchModuleProgress = async () => {
+      if (!userId || modules.length === 0) return;
+      
+      const progressData: {[key: number]: number} = {};
+      const completedData: {[key: number]: boolean} = {};
+      
+      for (const module of modules) {
+        try {
+          const progress = await getModuleProgress(userId, module.id);
+          const completed = await isModuleCompleted(userId, module.id);
+          
+          progressData[module.id] = progress;
+          completedData[module.id] = completed;
+        } catch (error) {
+          console.error(`Error loading progress for module ${module.id}:`, error);
+        }
+      }
+      
+      setModuleProgress(progressData);
+      setCompletedModules(completedData);
+      
+      // Calculate total progress
+      if (Object.keys(progressData).length > 0) {
+        const totalProgressValue = Object.values(progressData).reduce(
+          (sum, progress) => sum + progress, 
+          0
+        ) / Object.keys(progressData).length;
+        
+        setTotalProgress(Math.round(totalProgressValue));
+      }
+    };
+    
+    fetchModuleProgress();
+  }, [userId, modules]);
+
+  // Filter modules based on search
+  const filteredModules = modules.filter((module) =>
+    module.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   // Helper function to get module content
   const getModuleContent = (moduleId: number) => {
@@ -84,7 +121,7 @@ const ModulesPage = () => {
       <div className="container px-4 py-6 space-y-6">
         <div className="card-trilha p-4">
           <h2 className="mb-2 font-bold">Progresso Total</h2>
-          <ProgressBar progress={totalProgress} />
+          <Progress value={totalProgress} className="h-2" />
           <p className="mt-1 text-right text-sm text-gray-600">{totalProgress}% completo</p>
         </div>
 
@@ -106,8 +143,8 @@ const ModulesPage = () => {
                 id={module.id}
                 title={module.name}
                 type={module.type || "autoconhecimento"}
-                progress={module.progress || 0}
-                completed={module.completed || false}
+                progress={moduleProgress[module.id] || 0}
+                completed={completedModules[module.id] || false}
                 locked={isModuleLocked(index)}
                 description={module.description}
                 emoji={module.emoji}

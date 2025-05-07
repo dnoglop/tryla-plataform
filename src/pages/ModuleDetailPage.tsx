@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
-import ProgressBar from "@/components/ProgressBar";
 import { Progress } from "@/components/ui/progress";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +11,7 @@ import {
   getPhasesByModuleId,
   getUserPhaseStatus,
   getUserNextPhase,
+  getModuleProgress,
   Phase,
   PhaseStatus
 } from "@/services/moduleService";
@@ -27,6 +27,7 @@ const ModuleDetailPage = () => {
   const [nextPhase, setNextPhase] = useState<Phase | null>(null);
   const [phaseStatuses, setPhaseStatuses] = useState<{[key: number]: PhaseStatus}>({});
   const [isLoadingStatuses, setIsLoadingStatuses] = useState(false);
+  const [moduleProgress, setModuleProgress] = useState(0);
 
   useEffect(() => {
     const getUser = async () => {
@@ -54,6 +55,22 @@ const ModuleDetailPage = () => {
     queryFn: () => getPhasesByModuleId(moduleId),
     enabled: !!moduleId,
   });
+
+  // Get module progress
+  useEffect(() => {
+    const fetchModuleProgress = async () => {
+      if (!userId || !moduleId) return;
+      
+      try {
+        const progress = await getModuleProgress(userId, moduleId);
+        setModuleProgress(progress);
+      } catch (error) {
+        console.error("Erro ao buscar progresso do módulo:", error);
+      }
+    };
+    
+    fetchModuleProgress();
+  }, [userId, moduleId, phaseStatuses]);
 
   // Buscar próxima fase para o usuário
   useEffect(() => {
@@ -174,9 +191,9 @@ const ModuleDetailPage = () => {
 
         <div className="mb-1 flex justify-between">
           <span className="text-sm font-medium">Progresso</span>
-          <span className="text-sm">{Math.round(progress)}%</span>
+          <span className="text-sm">{Math.round(moduleProgress)}%</span>
         </div>
-        <ProgressBar progress={progress} />
+        <Progress value={moduleProgress} className="h-2" />
         
         {/* Botão para iniciar o módulo */}
         <div className="mt-4 flex justify-center">
@@ -185,7 +202,7 @@ const ModuleDetailPage = () => {
             className="bg-trilha-orange hover:bg-amber-600 text-white px-6 py-2 rounded-full flex items-center"
           >
             <PlayCircle className="mr-2 h-5 w-5" />
-            {progress > 0 ? "Continuar módulo" : "Iniciar módulo"}
+            {moduleProgress > 0 ? "Continuar módulo" : "Iniciar módulo"}
           </Button>
         </div>
       </div>

@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Progress } from '@/components/ui/progress';
 
 interface ProgressBarProps {
   progress: number;
@@ -7,14 +8,7 @@ interface ProgressBarProps {
 }
 
 const ProgressBar: React.FC<ProgressBarProps> = ({ progress, className = '' }) => {
-  return (
-    <div className={`w-full bg-gray-200 rounded-full ${className}`}>
-      <div
-        className="bg-trilha-orange rounded-full h-full"
-        style={{ width: `${progress}%` }}
-      />
-    </div>
-  );
+  return <Progress value={progress} className={`h-2 ${className}`} />;
 };
 
 export default ProgressBar;
