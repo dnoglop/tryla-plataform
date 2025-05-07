@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,10 +61,10 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-amber-50 to-white p-6 text-center">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#FFDCCC] to-white p-6 text-center">
       <div className="mb-8">
         <div className="text-6xl mb-3">🔶</div>
-        <h1 className="text-3xl font-bold text-trilha-orange mb-2">Na Trilha</h1>
+        <h1 className="text-3xl font-bold text-[#e36322] mb-2">Na Trilha</h1>
         <p className="text-gray-500">Sua jornada de desenvolvimento pessoal</p>
       </div>
       
@@ -89,7 +90,7 @@ const Index = () => {
               key={i} 
               className={`h-2 w-2 rounded-full transition-all duration-500 ${
                 currentPhraseIndex === i 
-                  ? 'bg-trilha-orange scale-110' 
+                  ? 'bg-[#e36322] scale-110' 
                   : 'bg-gray-300'
               }`}
             />
@@ -98,7 +99,7 @@ const Index = () => {
 
         <Button 
           onClick={handleGetStarted}
-          className="bg-trilha-orange hover:bg-trilha-orange/90 text-white"
+          className="bg-[#e36322] hover:bg-[#d15a1f] text-white"
         >
           Começar
         </Button>

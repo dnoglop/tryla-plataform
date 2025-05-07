@@ -27,7 +27,7 @@ const BottomNavigation = () => {
           >
             <div className={`flex flex-col items-center ${
               isActive(item.path)
-                ? "text-trilha-orange"
+                ? "text-[#e36322]"
                 : "text-gray-400"
             }`}>
               <item.icon className={`w-5 h-5 ${

@@ -22,7 +22,7 @@ const JournalHeader: React.FC<JournalHeaderProps> = ({ onNewEntry }) => {
       <Button 
         onClick={onNewEntry}
         size="sm"
-        className="bg-trilha-orange hover:bg-amber-600"
+        className="bg-[#e36322] hover:bg-[#d15a1f] text-white"
       >
         <Plus className="h-4 w-4 mr-1" /> Nova
       </Button>

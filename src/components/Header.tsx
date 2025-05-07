@@ -35,7 +35,7 @@ const Header = ({
           showNotifications && (
             <button className="relative rounded-full p-2 hover:bg-gray-100">
               <Bell className="h-5 w-5" />
-              <span className="absolute top-1 right-1 flex h-3 w-3 items-center justify-center rounded-full bg-trilha-orange text-[8px] text-white">
+              <span className="absolute top-1 right-1 flex h-3 w-3 items-center justify-center rounded-full bg-[#e36322] text-[8px] text-white">
                 3
               </span>
             </button>

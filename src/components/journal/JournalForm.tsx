@@ -150,7 +150,7 @@ const JournalForm: React.FC<JournalFormProps> = ({
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancelar
           </Button>
-          <Button type="submit" className="bg-trilha-orange hover:bg-amber-600">
+          <Button type="submit" className="bg-[#e36322] hover:bg-[#d15a1f] text-white">
             {entry ? 'Salvar alterações' : 'Criar anotação'}
           </Button>
         </div>

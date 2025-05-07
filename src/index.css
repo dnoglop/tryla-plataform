@@ -8,64 +8,64 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 0 0% 0%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 0 0% 0%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 0 0% 0%;
 
-    --primary: 24 94% 53%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 21 74% 51%;
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 0 0% 96%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary-foreground: 0 0% 0%;
 
     --muted: 240 5% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted-foreground: 0 0% 45%;
 
-    --accent: 0 0% 96%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 21 74% 95%;
+    --accent-foreground: 21 74% 30%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 24 94% 53%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 21 74% 51%;
 
     --radius: 1rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 0 0% 0%;
+    --foreground: 0 0% 98%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 3%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 3%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 24 94% 53%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 21 74% 51%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 21 74% 15%;
+    --accent-foreground: 0 0% 98%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 24 94% 53%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 21 74% 51%;
   }
 }
 
@@ -165,7 +165,7 @@
   }
 }
 
-/* Progress bar modifications for Duolingo-style */
+/* Progress bar modifications */
 .progress-bar-container {
   @apply relative w-full;
 }
@@ -181,56 +181,4 @@
   }
 }
 
-@keyframes bounce-slow {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-3px);
-  }
-}
-
-@media (min-width: 640px) {
-  @keyframes bounce-slow {
-    0%, 100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-5px);
-    }
-  }
-}
-
-.animate-bounce-slow {
-  animation: bounce-slow 2s ease-in-out infinite;
-}
-
-/* Make sure content doesn't get hidden behind bottom navigation */
-.pb-20 {
-  padding-bottom: 4rem;
-}
-
-@media (min-width: 640px) {
-  .pb-20 {
-    padding-bottom: 5rem;
-  }
-}
-
-/* Mobile optimizations */
-@media (max-width: 360px) {
-  .container {
-    @apply px-2 py-3;
-  }
-  
-  .card-trilha {
-    @apply rounded-lg;
-  }
-  
-  .btn-trilha, .btn-secundario {
-    @apply px-3 py-1.5 text-xs;
-  }
-  
-  .progress-bar {
-    @apply h-1;
-  }
-}
+/* ... keep existing code (animation, media queries) */

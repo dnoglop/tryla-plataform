@@ -57,8 +57,8 @@ export default {
 					foreground: 'hsl(var(--card-foreground))'
 				},
 				trilha: {
-					orange: '#F97316',
-					"orange-light": '#FEC6A1',
+					orange: '#e36322',
+					"orange-light": '#FFDCCC',
 					"gray-light": '#F1F0FB',
 					"purple-light": '#E5DEFF',
 				}

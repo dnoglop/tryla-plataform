@@ -161,7 +161,7 @@ const ModulesPage = () => {
       <div className="container px-3 py-4 space-y-4">
         {/* Overall Progress Card */}
         <Card className="border-none shadow-md overflow-hidden">
-          <CardContent className="p-3 sm:p-5 bg-gradient-to-r from-amber-50 to-orange-50">
+          <CardContent className="p-3 sm:p-5 bg-gradient-to-r from-amber-50 to-[#FFDCCC]">
             <h2 className="mb-2 font-bold text-base sm:text-lg">Progresso Total</h2>
             <ProgressBar 
               progress={totalProgress} 
