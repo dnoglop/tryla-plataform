@@ -4,7 +4,7 @@ import { Search, Video, FileText, HelpCircle } from "lucide-react";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
 import ModuleCard from "@/components/ModuleCard";
-import { Progress } from "@/components/ui/progress";
+import ProgressBar from "@/components/ProgressBar";
 import { useQuery } from '@tanstack/react-query';
 import { getModules, getPhasesByModuleId, getModuleProgress, isModuleCompleted, Module, Phase } from "@/services/moduleService";
 import { supabase } from "@/integrations/supabase/client";
@@ -103,8 +103,23 @@ const ModulesPage = () => {
     return modulePhases[moduleId] || [];
   };
 
-  // Determine if a module should be locked (for this example: lock all after the 2nd)
-  const isModuleLocked = (index: number) => index > 1;
+  // Updated logic: determine if a module should be locked
+  // A module is unlocked if it's the first one, or if the previous module is completed
+  // or if it has any progress
+  const isModuleLocked = (index: number, moduleId: number) => {
+    if (index === 0) return false; // First module is always unlocked
+    
+    // If this module already has progress, it's unlocked
+    if (moduleProgress[moduleId] > 0) return false;
+    
+    // Check if previous module is completed
+    const prevModuleId = modules[index - 1]?.id;
+    if (prevModuleId && completedModules[prevModuleId]) {
+      return false; // Previous module is completed, so this one is unlocked
+    }
+    
+    return true; // In all other cases, lock the module
+  };
 
   if (isLoadingModules) {
     return (
@@ -121,7 +136,7 @@ const ModulesPage = () => {
       <div className="container px-4 py-6 space-y-6">
         <div className="card-trilha p-4">
           <h2 className="mb-2 font-bold">Progresso Total</h2>
-          <Progress value={totalProgress} className="h-2" />
+          <ProgressBar progress={totalProgress} className="h-2" />
           <p className="mt-1 text-right text-sm text-gray-600">{totalProgress}% completo</p>
         </div>
 
@@ -145,13 +160,13 @@ const ModulesPage = () => {
                 type={module.type || "autoconhecimento"}
                 progress={moduleProgress[module.id] || 0}
                 completed={completedModules[module.id] || false}
-                locked={isModuleLocked(index)}
+                locked={isModuleLocked(index, module.id)}
                 description={module.description}
                 emoji={module.emoji}
               />
               
               {/* Show content count for each module */}
-              {!isModuleLocked(index) && (
+              {!isModuleLocked(index, module.id) && (
                 <div className="ml-4 flex space-x-3 text-xs text-gray-500">
                   {getModuleContent(module.id).filter(p => p.type === 'video').length > 0 && (
                     <div className="flex items-center">

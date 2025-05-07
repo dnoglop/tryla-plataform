@@ -1,6 +1,7 @@
 
 import { Trophy, Award, Heart, MessageSquare, Brain } from "lucide-react";
 import { Link } from "react-router-dom";
+import ProgressBar from "./ProgressBar";
 
 interface ModuleCardProps {
   id: number;
@@ -96,18 +97,12 @@ const ModuleCard = ({
         <p className="text-sm text-gray-700 mb-3">{config.description}</p>
 
         {!locked ? (
-          <div className="progress-bar">
-            <div
-              className={`progress-value ${progress === 100 ? 'animate-pulse' : 'transition-all duration-1000 ease-out'}`}
-              style={{ width: `${progress}%` }}
-            />
-          </div>
+          <ProgressBar 
+            progress={progress} 
+            className={progress === 100 ? 'animate-pulse' : 'transition-all duration-1000 ease-out'} 
+          />
         ) : (
-          <div className="progress-bar">
-            <div
-              className="h-full rounded-full bg-gray-300"
-              style={{ width: "100%" }}
-            />
+          <div className="progress-bar bg-gray-200 h-2 rounded-full overflow-hidden">
           </div>
         )}
 

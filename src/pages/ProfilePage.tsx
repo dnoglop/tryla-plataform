@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Mail, Linkedin, Users, Target, Rocket, Book, ChevronRight } from "lucide-react";
 import Header from "@/components/Header";
@@ -12,6 +11,7 @@ import { getProfile, updateProfile, Profile, uploadAvatar } from "@/services/pro
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import { Link } from "react-router-dom";
+import { getModules, getPhasesByModuleId, isModuleCompleted } from "@/services/moduleService";
 
 const ProfilePage = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -24,6 +24,10 @@ const ProfilePage = () => {
     avatar_url: "",
     linkedin_url: ""
   });
+  const [completedModulesCount, setCompletedModulesCount] = useState(0);
+  const [totalModulesCount, setTotalModulesCount] = useState(0);
+  const [completedPhasesCount, setCompletedPhasesCount] = useState(0);
+  const [totalPhasesCount, setTotalPhasesCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -45,6 +49,9 @@ const ProfilePage = () => {
               avatar_url: userProfile.avatar_url || "",
               linkedin_url: userProfile.linkedin_url || ""
             });
+            
+            // After setting the profile, fetch achievement data
+            fetchAchievementData(userId);
           }
         }
       } catch (error) {
@@ -57,6 +64,51 @@ const ProfilePage = () => {
 
     fetchUserProfile();
   }, []);
+  
+  const fetchAchievementData = async (userId: string) => {
+    try {
+      // Get all modules
+      const modules = await getModules();
+      setTotalModulesCount(modules.length);
+      
+      // Count completed modules
+      let completed = 0;
+      let totalPhases = 0;
+      let completedPhases = 0;
+      
+      for (const module of modules) {
+        const isCompleted = await isModuleCompleted(userId, module.id);
+        if (isCompleted) {
+          completed++;
+        }
+        
+        // Get phases for each module
+        const phases = await getPhasesByModuleId(module.id);
+        totalPhases += phases.length;
+        
+        // Count completed phases
+        if (phases.length > 0) {
+          const { data } = await supabase
+            .from('user_phases')
+            .select('phase_id')
+            .eq('user_id', userId)
+            .eq('status', 'completed')
+            .in('phase_id', phases.map(p => p.id));
+            
+          if (data) {
+            completedPhases += data.length;
+          }
+        }
+      }
+      
+      setCompletedModulesCount(completed);
+      setTotalPhasesCount(totalPhases);
+      setCompletedPhasesCount(completedPhases);
+      
+    } catch (error) {
+      console.error("Error fetching achievement data:", error);
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -159,6 +211,14 @@ const ProfilePage = () => {
   const maxXp = level * 100;
   const xpProgress = (currentXp / maxXp) * 100;
   const streakDays = profile?.streak_days || 0;
+
+  const modulesProgress = totalModulesCount > 0 
+    ? Math.round((completedModulesCount / totalModulesCount) * 100) 
+    : 0;
+    
+  const phasesProgress = totalPhasesCount > 0 
+    ? Math.round((completedPhasesCount / totalPhasesCount) * 100) 
+    : 0;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-16">
@@ -360,7 +420,7 @@ const ProfilePage = () => {
           </div>
         </div>
         
-        {/* Conquistas section */}
+        {/* Conquistas section - Updated with real data */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-4">
           <h3 className="font-bold text-xl mb-4">Conquistas</h3>
           
@@ -368,20 +428,30 @@ const ProfilePage = () => {
             <div>
               <div className="flex justify-between mb-1">
                 <span className="text-sm font-medium">Módulos Completos</span>
-                <span className="text-sm font-medium text-orange-500">1/5</span>
+                <span className="text-sm font-medium text-orange-500">
+                  {completedModulesCount}/{totalModulesCount}
+                </span>
               </div>
               <div className="h-2 bg-gray-200 rounded-full">
-                <div className="h-full bg-trilha-orange rounded-full" style={{ width: '20%' }}></div>
+                <div 
+                  className="h-full bg-trilha-orange rounded-full" 
+                  style={{ width: `${modulesProgress}%` }}
+                ></div>
               </div>
             </div>
             
             <div>
               <div className="flex justify-between mb-1">
                 <span className="text-sm font-medium">Fases Completas</span>
-                <span className="text-sm font-medium text-orange-500">3/20</span>
+                <span className="text-sm font-medium text-orange-500">
+                  {completedPhasesCount}/{totalPhasesCount}
+                </span>
               </div>
               <div className="h-2 bg-gray-200 rounded-full">
-                <div className="h-full bg-trilha-orange rounded-full" style={{ width: '15%' }}></div>
+                <div 
+                  className="h-full bg-trilha-orange rounded-full" 
+                  style={{ width: `${phasesProgress}%` }}
+                ></div>
               </div>
             </div>
           </div>

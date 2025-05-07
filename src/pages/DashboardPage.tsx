@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Zap, Calendar } from "lucide-react";
@@ -68,11 +69,15 @@ const DashboardPage = () => {
       
       // Buscar progresso e status de cada módulo
       for (const module of modules) {
-        const progress = await getModuleProgress(userId, module.id);
-        const completed = await isModuleCompleted(userId, module.id);
-        
-        progressData[module.id] = progress;
-        completedData[module.id] = completed;
+        try {
+          const progress = await getModuleProgress(userId, module.id);
+          const completed = await isModuleCompleted(userId, module.id);
+          
+          progressData[module.id] = progress;
+          completedData[module.id] = completed;
+        } catch (error) {
+          console.error(`Error fetching progress for module ${module.id}:`, error);
+        }
       }
       
       setModuleProgress(progressData);
@@ -102,6 +107,23 @@ const DashboardPage = () => {
         setProfile(updatedProfile);
       }
     }
+  };
+
+  // Determine if a module should be locked
+  // In dashboard, we only show first 3 modules, and use same logic as ModulesPage
+  const isModuleLocked = (index: number, moduleId: number) => {
+    if (index === 0) return false; // First module is always unlocked
+    
+    // If this module already has progress, it's unlocked
+    if (moduleProgress[moduleId] > 0) return false;
+    
+    // Check if previous module is completed
+    const prevModuleId = modules[index - 1]?.id;
+    if (prevModuleId && completedModules[prevModuleId]) {
+      return false; // Previous module is completed, so this one is unlocked
+    }
+    
+    return true; // In all other cases, lock the module
   };
 
   if (isLoading || !profile) {
@@ -169,7 +191,7 @@ const DashboardPage = () => {
           </div>
 
           <div className="grid gap-4">
-            {modules.slice(0, 3).map((module) => (
+            {modules.slice(0, 3).map((module, index) => (
               <ModuleCard 
                 key={module.id}
                 id={module.id}
@@ -177,7 +199,7 @@ const DashboardPage = () => {
                 type={module.type || "autoconhecimento"}
                 progress={moduleProgress[module.id] || 0}
                 completed={completedModules[module.id] || false}
-                locked={false}
+                locked={isModuleLocked(index, module.id)}
                 description={module.description}
                 emoji={module.emoji}
               />
