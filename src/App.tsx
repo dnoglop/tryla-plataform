@@ -13,6 +13,8 @@ import ProfilePage from "./pages/ProfilePage";
 import EditProfilePage from "./pages/EditProfilePage";
 import RewardsPage from "./pages/RewardsPage";
 import CommunityPage from "./pages/CommunityPage";
+import DashboardPage from "./pages/DashboardPage"; 
+import ModulesPage from "./pages/ModulesPage";
 
 function App() {
   const [session, setSession] = useState(null);
@@ -34,7 +36,7 @@ function App() {
           path="/"
           element={
             session ? (
-              <Navigate to="/perfil" replace />
+              <Navigate to="/dashboard" replace />
             ) : (
               <Navigate to="/login" replace />
             )
@@ -42,11 +44,11 @@ function App() {
         />
         <Route
           path="/login"
-          element={session ? <Navigate to="/perfil" replace /> : <LoginPage />}
+          element={session ? <Navigate to="/dashboard" replace /> : <LoginPage />}
         />
         <Route
           path="/cadastro"
-          element={session ? <Navigate to="/perfil" replace /> : <SignupPage />}
+          element={session ? <Navigate to="/dashboard" replace /> : <SignupPage />}
         />
         <Route
           path="/perfil"
@@ -66,11 +68,11 @@ function App() {
         />
         <Route
           path="/dashboard"
-          element={session ? <Navigate to="/perfil" replace /> : <Navigate to="/login" />}
+          element={session ? <DashboardPage /> : <Navigate to="/login" />}
         />
         <Route
           path="/modulos"
-          element={session ? <Navigate to="/perfil" replace /> : <Navigate to="/login" />}
+          element={session ? <ModulesPage /> : <Navigate to="/login" />}
         />
       </Routes>
     </Router>
