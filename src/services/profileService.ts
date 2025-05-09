@@ -15,6 +15,9 @@ export interface Profile {
   last_login_date?: string;
   created_at?: string;
   updated_at?: string;
+  phone?: string;
+  birthday?: string;
+  country?: string;
 }
 
 export const getProfile = async (userId: string): Promise<Profile | null> => {
@@ -47,6 +50,9 @@ export const updateProfile = async (profile: Profile): Promise<boolean> => {
         bio: profile.bio,
         avatar_url: profile.avatar_url,
         linkedin_url: profile.linkedin_url,
+        phone: profile.phone,
+        birthday: profile.birthday,
+        country: profile.country,
         updated_at: new Date().toISOString()
       })
       .eq("id", profile.id);

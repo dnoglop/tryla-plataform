@@ -26,16 +26,16 @@ const Header = ({
               onClick={() => navigate(-1)}
               className="rounded-full p-2 hover:bg-gray-100"
             >
-              <ArrowLeft className="h-5 w-5" />
+              <ArrowLeft className="h-5 w-5 text-[#E36322]" />
             </button>
           )}
-          <h1 className="text-xl font-bold">{title}</h1>
+          <h1 className="text-xl font-bold text-black">{title}</h1>
         </div>
         {rightContent ? rightContent : (
           showNotifications && (
             <button className="relative rounded-full p-2 hover:bg-gray-100">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1 right-1 flex h-3 w-3 items-center justify-center rounded-full bg-[#e36322] text-[8px] text-white">
+              <Bell className="h-5 w-5 text-[#E36322]" />
+              <span className="absolute top-1 right-1 flex h-3 w-3 items-center justify-center rounded-full bg-[#E36322] text-[8px] text-white">
                 3
               </span>
             </button>

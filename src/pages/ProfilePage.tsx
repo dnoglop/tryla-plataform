@@ -1,34 +1,25 @@
+
 import React, { useState, useEffect, useRef } from "react";
-import { Mail, Linkedin, Users, Target, Rocket, Book, ChevronRight } from "lucide-react";
+import { Mail, Linkedin, Users, Target, Rocket, Book, ChevronRight, Edit, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
-import { getProfile, updateProfile, Profile, uploadAvatar } from "@/services/profileService";
+import { getProfile, updateProfile, Profile } from "@/services/profileService";
 import { toast } from "sonner";
-import { Progress } from "@/components/ui/progress";
 import { Link } from "react-router-dom";
 import { getModules, getPhasesByModuleId, isModuleCompleted } from "@/services/moduleService";
 
 const ProfilePage = () => {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [formData, setFormData] = useState({
-    full_name: "",
-    username: "",
-    bio: "",
-    avatar_url: "",
-    linkedin_url: ""
-  });
   const [completedModulesCount, setCompletedModulesCount] = useState(0);
   const [totalModulesCount, setTotalModulesCount] = useState(0);
   const [completedPhasesCount, setCompletedPhasesCount] = useState(0);
   const [totalPhasesCount, setTotalPhasesCount] = useState(0);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -42,13 +33,6 @@ const ProfilePage = () => {
           
           if (userProfile) {
             setProfile(userProfile);
-            setFormData({
-              full_name: userProfile.full_name || "",
-              username: userProfile.username || "",
-              bio: userProfile.bio || "",
-              avatar_url: userProfile.avatar_url || "",
-              linkedin_url: userProfile.linkedin_url || ""
-            });
             
             // After setting the profile, fetch achievement data
             fetchAchievementData(userId);
@@ -110,83 +94,6 @@ const ProfilePage = () => {
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleAvatarClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
-
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || !e.target.files[0]) return;
-    
-    const file = e.target.files[0];
-    
-    if (!profile) return;
-    
-    try {
-      toast.info("Enviando imagem...");
-      
-      const imageUrl = await uploadAvatar(profile.id, file);
-      
-      if (imageUrl) {
-        setFormData(prev => ({
-          ...prev,
-          avatar_url: imageUrl
-        }));
-        
-        const success = await updateProfile({
-          ...profile,
-          avatar_url: imageUrl
-        });
-        
-        if (success) {
-          setProfile({
-            ...profile,
-            avatar_url: imageUrl
-          });
-          toast.success("Foto de perfil atualizada!");
-        }
-      }
-    } catch (error) {
-      console.error("Error uploading avatar:", error);
-      toast.error("Erro ao enviar foto de perfil");
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!profile) return;
-    
-    try {
-      const updatedProfile: Profile = {
-        ...profile,
-        full_name: formData.full_name,
-        username: formData.username,
-        bio: formData.bio,
-        linkedin_url: formData.linkedin_url
-      };
-      
-      const success = await updateProfile(updatedProfile);
-      
-      if (success) {
-        setProfile(updatedProfile);
-        setIsEditing(false);
-      }
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      toast.error("Falha ao atualizar perfil");
-    }
-  };
-
   const handleSignOut = async () => {
     try {
       await supabase.auth.signOut();
@@ -199,8 +106,8 @@ const ProfilePage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-trilha-orange border-t-transparent"></div>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#E36322] border-t-transparent"></div>
       </div>
     );
   }
@@ -221,23 +128,21 @@ const ProfilePage = () => {
     : 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-16">
-      <Header title="Seu Perfil" />
+    <div className="min-h-screen bg-white pb-16">
+      <Header 
+        title="Perfil" 
+        rightContent={
+          <Button variant="ghost" size="sm" className="rounded-full p-2" onClick={() => navigate("/editar-perfil")}>
+            <Edit className="h-5 w-5 text-[#E36322]" />
+          </Button>
+        }
+      />
 
-      <div className="bg-gradient-to-r from-orange-400 to-amber-400 pt-6 pb-8 px-4">
-        <div className="relative flex items-start">
+      {/* Main profile section */}
+      <div className="bg-[#E36322] px-4 pt-6 pb-6">
+        <div className="flex items-center gap-3">
           <div className="relative">
-            <input
-              type="file"
-              ref={fileInputRef}
-              className="hidden"
-              accept="image/*"
-              onChange={handleAvatarChange}
-            />
-            <div 
-              className="w-24 h-24 rounded-full border-4 border-white overflow-hidden cursor-pointer"
-              onClick={handleAvatarClick}
-            >
+            <div className="w-20 h-20 rounded-full border-4 border-white overflow-hidden">
               {profile?.avatar_url ? (
                 <img 
                   src={profile.avatar_url} 
@@ -250,191 +155,130 @@ const ProfilePage = () => {
                 </div>
               )}
             </div>
+            {profile?.streak_days && profile.streak_days > 0 && (
+              <div className="absolute -bottom-1 -right-1 bg-white text-[#E36322] rounded-full h-7 w-7 flex items-center justify-center border-2 border-[#E36322] text-xs font-bold">
+                {profile.streak_days}🔥
+              </div>
+            )}
           </div>
           
-          <div className="ml-4 flex-1">
-            <h2 className="text-2xl font-bold text-white">{profile?.full_name || "Usuário"}</h2>
+          <div className="flex-1">
+            <h2 className="text-xl font-bold text-white">{profile?.full_name || "Usuário"}</h2>
             <p className="text-white/90">@{profile?.username || "username"}</p>
-            
-            <Button 
-              size="sm" 
-              variant="outline" 
-              className="absolute right-0 top-2 rounded-full bg-white/20 hover:bg-white/30 border-none text-white"
-              onClick={() => setIsEditing(true)}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-            </Button>
+            <div className="flex items-center mt-1 text-white/80 text-xs">
+              <Mail className="h-3 w-3 mr-1" />
+              <span>Na Trilha desde {new Date(profile?.created_at || Date.now()).toLocaleDateString('pt-BR', {month: 'short', year: 'numeric'})}</span>
+            </div>
           </div>
         </div>
         
-        <div className="mt-4 text-white">
-          <div className="mb-1 flex justify-between text-sm">
+        <div className="mt-6 text-white">
+          <div className="flex justify-between text-xs mb-1">
+            <span>Nível {level}</span>
             <span>{currentXp}/{maxXp} XP</span>
-            <span>Nível {nextLevel}</span>
           </div>
-          <div className="relative h-3 w-full bg-white/30 rounded-full overflow-hidden">
+          <div className="relative h-2 w-full bg-white/30 rounded-full overflow-hidden">
             <div 
               className="absolute top-0 left-0 h-full bg-white rounded-full" 
               style={{ width: `${xpProgress}%` }}
             ></div>
           </div>
-          <div className="mt-1 flex justify-between text-sm">
-            <span>Nível {level}</span>
-            <span>{streakDays} {streakDays === 1 ? 'dia' : 'dias'} de sequência</span>
+          <div className="flex justify-end text-xs mt-1">
+            <span>Nível {nextLevel}</span>
           </div>
         </div>
       </div>
       
-      <div className="px-4 py-6">
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-4">
-          <h3 className="font-bold text-xl mb-4">Sobre mim</h3>
-          {!isEditing ? (
-            <>
-              <p className="text-gray-700 mb-4">{profile?.bio || "Adicione uma biografia para se apresentar."}</p>
-              
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Mail size={18} />
-                  <span>Na Trilha desde Dez 2024</span>
-                </div>
-                
-                {profile?.linkedin_url && (
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <Linkedin size={18} />
-                    <a href={profile.linkedin_url} target="_blank" rel="noreferrer" className="text-trilha-orange">
-                      LinkedIn
-                    </a>
-                  </div>
-                )}
-              </div>
-              
-              <div className="mt-6">
-                <Button variant="outline" onClick={() => setIsEditing(true)}>
-                  Editar perfil
-                </Button>
-              </div>
-            </>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="full_name" className="block text-sm font-medium text-gray-700">
-                  Nome completo
-                </label>
-                <Input
-                  id="full_name"
-                  name="full_name"
-                  value={formData.full_name}
-                  onChange={handleInputChange}
-                  placeholder="Seu nome completo"
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                  Nome de usuário
-                </label>
-                <Input
-                  id="username"
-                  name="username"
-                  value={formData.username}
-                  onChange={handleInputChange}
-                  placeholder="Seu username"
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="bio" className="block text-sm font-medium text-gray-700">
-                  Biografia
-                </label>
-                <Textarea
-                  id="bio"
-                  name="bio"
-                  value={formData.bio || ""}
-                  onChange={handleInputChange}
-                  placeholder="Conte um pouco sobre você"
-                  rows={3}
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="linkedin_url" className="block text-sm font-medium text-gray-700">
-                  LinkedIn URL
-                </label>
-                <Input
-                  id="linkedin_url"
-                  name="linkedin_url"
-                  value={formData.linkedin_url || ""}
-                  onChange={handleInputChange}
-                  placeholder="https://linkedin.com/in/seu-perfil"
-                />
-              </div>
-              
-              <div className="flex gap-2 justify-end pt-4">
-                <Button type="button" variant="outline" onClick={() => setIsEditing(false)}>
-                  Cancelar
-                </Button>
-                <Button type="submit">
-                  Salvar
-                </Button>
-              </div>
-            </form>
+      {/* Stats Summary */}
+      <div className="px-4 py-4 grid grid-cols-3 gap-4 border-b">
+        <div className="flex flex-col items-center">
+          <p className="text-lg font-bold text-[#E36322]">{totalPhasesCount}</p>
+          <p className="text-xs text-gray-600">Lições</p>
+        </div>
+        <div className="flex flex-col items-center border-l border-r border-gray-200 px-2">
+          <p className="text-lg font-bold text-[#E36322]">{currentXp}</p>
+          <p className="text-xs text-gray-600">XP Total</p>
+        </div>
+        <div className="flex flex-col items-center">
+          <p className="text-lg font-bold text-[#E36322]">{streakDays}</p>
+          <p className="text-xs text-gray-600">Dias Seguidos</p>
+        </div>
+      </div>
+
+      <div className="px-4 py-5">
+        {/* Bio Section */}
+        <div className="mb-6">
+          <h3 className="font-bold text-lg mb-2 text-black">Sobre mim</h3>
+          <p className="text-gray-700">{profile?.bio || "Adicione uma biografia para se apresentar."}</p>
+          
+          {profile?.linkedin_url && (
+            <div className="mt-3 flex items-center gap-2 text-[#E36322]">
+              <Linkedin size={18} />
+              <a href={profile.linkedin_url} target="_blank" rel="noreferrer">
+                LinkedIn
+              </a>
+            </div>
           )}
         </div>
         
         {/* Link para o Diário de Aprendizado */}
-        <Link to="/diario" className="bg-white rounded-lg shadow-sm p-6 mb-4 flex justify-between items-center">
+        <Link to="/diario" className="flex justify-between items-center py-4 border-t border-gray-200">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center text-2xl">
-              📝
+            <div className="w-12 h-12 rounded-full bg-[#E36322]/10 flex items-center justify-center">
+              <Book className="text-[#E36322]" />
             </div>
             <div>
-              <h3 className="font-bold text-lg">Diário de Aprendizado</h3>
-              <p className="text-sm text-gray-600">Registre insights e reflexões da sua jornada</p>
+              <h3 className="font-bold">Diário de Aprendizado</h3>
+              <p className="text-sm text-gray-600">Registre insights e reflexões</p>
             </div>
           </div>
           <ChevronRight className="text-gray-400" />
         </Link>
         
-        {/* Emblemas section */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-4">
-          <h3 className="font-bold text-xl mb-4">Meus Emblemas</h3>
+        {/* Conquistas section */}
+        <div className="border-t border-gray-200 py-4">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="font-bold text-lg text-black">Conquistas</h3>
+            <span className="text-sm text-[#E36322]">Ver todas</span>
+          </div>
+          
           <div className="grid grid-cols-3 gap-4">
             <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 rounded-full bg-orange-50 flex items-center justify-center mb-2">
-                <Rocket className="text-orange-500" />
+              <div className="w-14 h-14 rounded-full bg-[#E36322]/10 flex items-center justify-center mb-1">
+                <Rocket className="text-[#E36322]" />
               </div>
-              <p className="text-sm font-medium">Primeiro Passo</p>
+              <p className="text-xs font-medium">Primeiro Passo</p>
             </div>
             <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mb-2">
-                <Users className="text-gray-500" />
+              <div className="w-14 h-14 rounded-full bg-[#E36322]/10 flex items-center justify-center mb-1">
+                <Users className="text-[#E36322]" />
               </div>
-              <p className="text-sm font-medium">Explorador(a) Social</p>
+              <p className="text-xs font-medium">Explorador Social</p>
             </div>
             <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mb-2">
-                <Target className="text-red-500" />
+              <div className="w-14 h-14 rounded-full bg-[#E36322]/10 flex items-center justify-center mb-1">
+                <Target className="text-[#E36322]" />
               </div>
-              <p className="text-sm font-medium">Fera nos Quizzes</p>
+              <p className="text-xs font-medium">Fera nos Quizzes</p>
             </div>
           </div>
         </div>
         
-        {/* Conquistas section - Updated with real data */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-4">
-          <h3 className="font-bold text-xl mb-4">Conquistas</h3>
+        {/* Progresso section */}
+        <div className="border-t border-gray-200 py-4">
+          <h3 className="font-bold text-lg mb-4 text-black">Progresso</h3>
           
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div>
               <div className="flex justify-between mb-1">
                 <span className="text-sm font-medium">Módulos Completos</span>
-                <span className="text-sm font-medium text-orange-500">
+                <span className="text-sm font-medium text-[#E36322]">
                   {completedModulesCount}/{totalModulesCount}
                 </span>
               </div>
               <div className="h-2 bg-gray-200 rounded-full">
                 <div 
-                  className="h-full bg-trilha-orange rounded-full" 
+                  className="h-full bg-[#E36322] rounded-full" 
                   style={{ width: `${modulesProgress}%` }}
                 ></div>
               </div>
@@ -443,13 +287,13 @@ const ProfilePage = () => {
             <div>
               <div className="flex justify-between mb-1">
                 <span className="text-sm font-medium">Fases Completas</span>
-                <span className="text-sm font-medium text-orange-500">
+                <span className="text-sm font-medium text-[#E36322]">
                   {completedPhasesCount}/{totalPhasesCount}
                 </span>
               </div>
               <div className="h-2 bg-gray-200 rounded-full">
                 <div 
-                  className="h-full bg-trilha-orange rounded-full" 
+                  className="h-full bg-[#E36322] rounded-full" 
                   style={{ width: `${phasesProgress}%` }}
                 ></div>
               </div>
@@ -458,9 +302,14 @@ const ProfilePage = () => {
         </div>
         
         {/* Settings and logout */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <Button variant="outline" className="w-full justify-start text-red-500" onClick={handleSignOut}>
-            Sair da conta
+        <div className="border-t border-gray-200 pt-6 pb-4">
+          <Button 
+            variant="outline" 
+            className="w-full justify-between text-black border-gray-300 hover:bg-gray-100 hover:text-black" 
+            onClick={handleSignOut}
+          >
+            <span>Sair da conta</span>
+            <ArrowRight size={16} />
           </Button>
         </div>
       </div>
