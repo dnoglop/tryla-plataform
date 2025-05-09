@@ -1,28 +1,23 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Flame, Trophy, ArrowRight, Heart } from "lucide-react";
+import { Search, BookOpen, ArrowRight, User, Bell } from "lucide-react";
 import BottomNavigation from "@/components/BottomNavigation";
-import ModuleCard from "@/components/ModuleCard";
-import DailyTask from "@/components/DailyTask";
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery } from '@tanstack/react-query';
-import { getModules, Module, getModuleProgress, isModuleCompleted, getUserNextPhase } from "@/services/moduleService";
-import { getProfile, updateLoginStreak, updateUserXp } from "@/services/profileService";
+import { getModules, Module } from "@/services/moduleService";
+import { getProfile } from "@/services/profileService";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import ProgressBar from "@/components/ProgressBar";
+import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const DashboardPage = () => {
   const { toast } = useToast();
-  const [dailyCompleted, setDailyCompleted] = useState(false);
   const [profile, setProfile] = useState<any>(null);
-  const [streakDays, setStreakDays] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
-  const [moduleProgress, setModuleProgress] = useState<{[key: number]: number}>({});
-  const [completedModules, setCompletedModules] = useState<{[key: number]: boolean}>({});
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -36,9 +31,6 @@ const DashboardPage = () => {
           
           if (userProfile) {
             setProfile(userProfile);
-            // Atualiza o streak quando o usuário faz login
-            const streak = await updateLoginStreak(userId);
-            setStreakDays(streak);
           }
         }
       } catch (error) {
@@ -60,101 +52,6 @@ const DashboardPage = () => {
     enabled: !!userId,
   });
 
-  // Buscar progresso e status de conclusão para cada módulo
-  useEffect(() => {
-    const fetchProgress = async () => {
-      if (!userId || modules.length === 0) return;
-      
-      const progressData: {[key: number]: number} = {};
-      const completedData: {[key: number]: boolean} = {};
-      
-      // Buscar progresso e status de cada módulo
-      for (const module of modules) {
-        try {
-          const progress = await getModuleProgress(userId, module.id);
-          const completed = await isModuleCompleted(userId, module.id);
-          
-          progressData[module.id] = progress;
-          completedData[module.id] = completed;
-        } catch (error) {
-          console.error(`Error fetching progress for module ${module.id}:`, error);
-        }
-      }
-      
-      setModuleProgress(progressData);
-      setCompletedModules(completedData);
-    };
-    
-    fetchProgress();
-  }, [userId, modules]);
-
-  const handleDailyTask = async () => {
-    if (!dailyCompleted && userId) {
-      setDailyCompleted(true);
-      
-      // Adicionar XP pela tarefa diária
-      const xpGained = 50;
-      await updateUserXp(userId, xpGained);
-      
-      toast({
-        title: "Missão do Dia completada!",
-        description: `Você ganhou +${xpGained} XP! 🔥`,
-        duration: 3000,
-      });
-      
-      // Atualizar o perfil após ganhar XP
-      const updatedProfile = await getProfile(userId);
-      if (updatedProfile) {
-        setProfile(updatedProfile);
-      }
-    }
-  };
-
-  // Determine if a module should be locked
-  // In dashboard, we only show first 3 modules, and use same logic as ModulesPage
-  const isModuleLocked = (index: number, moduleId: number) => {
-    if (index === 0) return false; // First module is always unlocked
-    
-    // If this module already has progress, it's unlocked
-    if (moduleProgress[moduleId] > 0) return false;
-    
-    // Check if previous module is completed
-    const prevModuleId = modules[index - 1]?.id;
-    if (prevModuleId && completedModules[prevModuleId]) {
-      return false; // Previous module is completed, so this one is unlocked
-    }
-    
-    return true; // In all other cases, lock the module
-  };
-
-  // Find the next module to continue (highest progress that's not complete)
-  const findContinueModule = () => {
-    if (!modules.length) return null;
-    
-    // First look for modules in progress
-    const inProgressModules = modules.filter(
-      module => moduleProgress[module.id] > 0 && moduleProgress[module.id] < 100
-    );
-    
-    if (inProgressModules.length) {
-      // Sort by progress descending to find the one with most progress
-      return inProgressModules.sort(
-        (a, b) => moduleProgress[b.id] - moduleProgress[a.id]
-      )[0];
-    }
-    
-    // If none in progress, find first unlocked but not started module
-    for (let i = 0; i < modules.length; i++) {
-      if (!isModuleLocked(i, modules[i].id) && moduleProgress[modules[i].id] === 0) {
-        return modules[i];
-      }
-    }
-    
-    return null; // All modules either completed or locked
-  };
-
-  const continueModule = findContinueModule();
-
   if (isLoading || !profile) {
     return (
       <div className="pb-16 min-h-screen bg-gray-50 flex items-center justify-center">
@@ -164,160 +61,165 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="pb-20 min-h-screen bg-gray-50">
-      {/* User stats bar */}
-      <div className="bg-white shadow-sm py-2 px-3 sticky top-0 z-30">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Avatar className="h-8 w-8 border-2 border-trilha-orange">
-              {profile.avatar_url ? (
-                <AvatarImage src={profile.avatar_url} alt="Foto de perfil" />
-              ) : (
-                <AvatarFallback className="bg-trilha-orange/20 text-trilha-orange">
-                  {profile.full_name ? profile.full_name.charAt(0).toUpperCase() : "U"}
-                </AvatarFallback>
-              )}
-            </Avatar>
-            <div className="text-base font-bold">{profile.xp || 0} XP</div>
+    <div className="pb-20 min-h-screen bg-white">
+      {/* Header Section */}
+      <div className="bg-[#E36322] px-4 pt-6 pb-4 rounded-b-3xl">
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h2 className="text-white text-lg font-semibold">Hi, {profile.full_name?.split(' ')[0] || "Aluno"}</h2>
           </div>
-          
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1 text-red-500">
-              <Heart className="w-4 h-4 fill-current" />
-              <span className="font-bold text-sm">5</span>
-            </div>
-            
-            <div className="flex items-center gap-1 text-amber-500">
-              <Flame className="w-4 h-4" />
-              <span className="font-bold text-sm">{streakDays}</span>
-            </div>
-            
-            <Badge variant="outline" className="font-bold text-xs text-blue-500 border-blue-200 bg-blue-50">
-              {profile.level || 1}
-            </Badge>
-          </div>
+          <Avatar className="h-10 w-10 border-2 border-white">
+            {profile.avatar_url ? (
+              <AvatarImage src={profile.avatar_url} alt="Foto de perfil" />
+            ) : (
+              <AvatarFallback className="bg-white/20 text-white">
+                {profile.full_name ? profile.full_name.charAt(0).toUpperCase() : "U"}
+              </AvatarFallback>
+            )}
+          </Avatar>
+        </div>
+        
+        {/* Search Bar */}
+        <div className="relative mb-2">
+          <Input
+            className="bg-white/10 border-0 text-white placeholder-white/60 rounded-full pl-10 pr-4 py-2"
+            placeholder="Pesquisar"
+          />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/60" />
         </div>
       </div>
 
-      <div className="container px-3 py-4 space-y-4">
-        {/* Continue Learning Section */}
-        {continueModule && (
-          <div>
-            <h2 className="text-lg font-bold mb-2">Continue Aprendendo</h2>
-            <Card className="mb-4 overflow-hidden border-none shadow-md">
+      <div className="container px-4 py-5 space-y-6">
+        {/* What do you want to learn today */}
+        <div>
+          <Card className="overflow-hidden border-none shadow-md rounded-xl">
+            <CardContent className="p-0">
+              <div className="bg-blue-50 p-4 flex items-center justify-between">
+                <div className="flex-1">
+                  <h3 className="font-bold text-base sm:text-lg text-gray-800">O que você gostaria de aprender hoje?</h3>
+                  <p className="text-xs sm:text-sm text-gray-600 mb-3">Continue sua jornada de aprendizado</p>
+                  <Link 
+                    to="/modulos"
+                    className="bg-[#E36322] text-white px-4 py-2 rounded-full text-xs sm:text-sm font-medium inline-flex items-center"
+                  >
+                    Começar
+                  </Link>
+                </div>
+                <div className="hidden sm:block">
+                  <img 
+                    src="/lovable-uploads/1686c74f-2645-4b35-95c0-da717ef37ffe.png" 
+                    alt="Graduação" 
+                    className="w-24 h-24 object-contain"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* For You Section */}
+        <div>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-gray-800">Para você</h2>
+            <Link to="/modulos" className="text-xs sm:text-sm font-medium text-[#E36322] flex items-center">
+              Ver tudo
+              <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* PHP Card */}
+            <Card className="overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-all rounded-xl">
               <CardContent className="p-0">
-                <div className="bg-amber-50 p-3 sm:p-5">
-                  <div className="flex justify-between items-start">
+                <div className="bg-green-100 p-4">
+                  <div className="flex items-start justify-between">
                     <div>
-                      <h3 className="font-bold text-base sm:text-lg mb-1">{continueModule.name}</h3>
-                      <p className="text-xs sm:text-sm text-gray-600 mb-2">Continue de onde parou</p>
-                      
-                      <Link 
-                        to={`/modulo/${continueModule.id}`}
-                        className="bg-trilha-orange text-white px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium inline-flex items-center mt-2"
-                      >
-                        Continuar
-                      </Link>
+                      <h3 className="font-bold text-base text-gray-800">Básico: O que é PHP?</h3>
+                      <p className="text-xs text-gray-600 mt-1">PHP é uma linguagem de script do lado do servidor...</p>
+                      <div className="mt-3 flex items-center gap-2">
+                        <BookOpen className="h-3 w-3 text-gray-500" />
+                        <span className="text-xs text-gray-500">20 mins</span>
+                      </div>
                     </div>
-                    <div className="text-2xl sm:text-3xl">
-                      {continueModule.emoji || "🚀"}
-                    </div>
+                    <Badge className="bg-green-600 text-white text-xs">Básico</Badge>
                   </div>
-                  
-                  <div className="mt-3">
-                    <ProgressBar 
-                      progress={moduleProgress[continueModule.id] || 0} 
-                      showIcon={true}
-                      compact={isMobile}
-                    />
+                </div>
+                <div className="p-3 bg-white flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Avatar className="h-5 w-5">
+                      <AvatarFallback className="bg-gray-200 text-gray-600 text-[10px]">A</AvatarFallback>
+                    </Avatar>
+                    <span className="text-xs text-gray-600">Artur</span>
                   </div>
+                  <Link 
+                    to="/modulos/php"
+                    className="text-[#E36322] text-xs font-medium"
+                  >
+                    Ver mais
+                  </Link>
                 </div>
               </CardContent>
             </Card>
-          </div>
-        )}
 
-        {/* Your Course Section */}
-        <div>
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-lg font-bold">Sua Trilha</h2>
-            <Link to="/modulos" className="text-xs sm:text-sm font-medium text-trilha-orange flex items-center">
-              Ver tudo
-              <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 sm:gap-3">
-            {modules.slice(0, 4).map((module, index) => (
-              <ModuleCard 
-                key={module.id}
-                id={module.id}
-                title={module.name}
-                type={module.type || "autoconhecimento"}
-                progress={moduleProgress[module.id] || 0}
-                completed={completedModules[module.id] || false}
-                locked={isModuleLocked(index, module.id)}
-                description={module.description}
-                emoji={module.emoji}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Streak Box */}
-        <div className="bg-white rounded-xl shadow p-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="rounded-full p-1.5 bg-orange-100">
-                <Flame className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600" />
-              </div>
-              <div>
-                <h3 className="font-medium text-sm sm:text-base">Sequência de dias</h3>
-                <p className="text-xs text-gray-600">Continue estudando!</p>
-              </div>
-            </div>
-            <Badge variant="outline" className="bg-white px-2 py-0.5 text-base font-bold text-trilha-orange">
-              {streakDays} {streakDays === 1 ? 'dia' : 'dias'}
-            </Badge>
-          </div>
-        </div>
-
-        {/* Daily Task */}
-        <DailyTask 
-          completed={dailyCompleted}
-          xpReward={50}
-          onClick={handleDailyTask}
-        />
-
-        {/* Leaderboard Preview */}
-        <div>
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-lg font-bold">Ranking</h2>
-            <Link to="/comunidade" className="text-xs sm:text-sm font-medium text-trilha-orange flex items-center">
-              Ver tudo
-              <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1" />
-            </Link>
-          </div>
-          
-          <Card className="overflow-hidden">
-            <CardContent className="p-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
-                      <AvatarFallback className="bg-amber-100 text-amber-800">
-                        1
-                      </AvatarFallback>
-                    </Avatar>
-                    <Trophy className="h-3 w-3 sm:h-4 sm:w-4 absolute -bottom-1 -right-1 text-amber-500" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-sm sm:text-base">Você</p>
-                    <p className="text-[10px] sm:text-xs text-gray-500">Liga Bronze</p>
+            {/* Join your class card */}
+            <Card className="overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-all rounded-xl">
+              <CardContent className="p-4">
+                <h3 className="font-bold text-base text-gray-800">Entre na sua turma</h3>
+                <p className="text-xs text-gray-600 mt-1 mb-3">Conecte-se com outros estudantes da sua área</p>
+                
+                <div className="flex items-center -space-x-2 mb-3">
+                  <Avatar className="border-2 border-white h-7 w-7">
+                    <AvatarFallback className="bg-blue-100 text-blue-600 text-[10px]">D</AvatarFallback>
+                  </Avatar>
+                  <Avatar className="border-2 border-white h-7 w-7">
+                    <AvatarFallback className="bg-green-100 text-green-600 text-[10px]">M</AvatarFallback>
+                  </Avatar>
+                  <Avatar className="border-2 border-white h-7 w-7">
+                    <AvatarFallback className="bg-amber-100 text-amber-600 text-[10px]">J</AvatarFallback>
+                  </Avatar>
+                  <div className="h-7 w-7 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center">
+                    <span className="text-[10px] text-gray-500">+5</span>
                   </div>
                 </div>
-                <p className="font-bold text-base sm:text-lg">{profile.xp || 0} XP</p>
-              </div>
+                
+                <Link 
+                  to="/comunidade"
+                  className="bg-[#E36322] text-white px-4 py-2 rounded-full text-xs font-medium inline-flex items-center"
+                >
+                  Entrar
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Tips Section */}
+        <div>
+          <div className="mb-3">
+            <h2 className="text-lg font-bold text-gray-800">Dicas para você</h2>
+          </div>
+
+          <Card className="overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-all rounded-xl">
+            <CardContent className="p-4">
+              <h3 className="font-bold text-base text-gray-800">Tips para um melhor aprendizado</h3>
+              <p className="text-xs text-gray-600 mt-1 mb-3">
+                Aprenda como otimizar seus estudos com estas estratégias comprovadas
+              </p>
+              
+              <ul className="space-y-2">
+                <li className="flex items-center gap-2 text-xs text-gray-700">
+                  <div className="h-2 w-2 rounded-full bg-[#E36322]"></div>
+                  <span>Estude por 25 minutos e descanse por 5</span>
+                </li>
+                <li className="flex items-center gap-2 text-xs text-gray-700">
+                  <div className="h-2 w-2 rounded-full bg-[#E36322]"></div>
+                  <span>Faça anotações durante as aulas</span>
+                </li>
+                <li className="flex items-center gap-2 text-xs text-gray-700">
+                  <div className="h-2 w-2 rounded-full bg-[#E36322]"></div>
+                  <span>Revise seu conteúdo regularmente</span>
+                </li>
+              </ul>
             </CardContent>
           </Card>
         </div>

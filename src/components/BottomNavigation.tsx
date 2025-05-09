@@ -34,7 +34,7 @@ const BottomNavigation = () => {
               <item.icon className={`w-5 h-5 ${
                 isActive(item.path) && "animate-bounce-slow"
               }`} />
-              <span className={`text-[10px] mt-0.5 font-medium ${isMobile ? 'hidden sm:block' : ''}`}>{item.label}</span>
+              <span className={`text-[10px] mt-0.5 font-medium ${isMobile ? 'block' : ''}`}>{item.label}</span>
             </div>
           </Link>
         ))}
