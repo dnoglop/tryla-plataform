@@ -11,6 +11,8 @@ import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import ProfilePage from "./pages/ProfilePage";
 import EditProfilePage from "./pages/EditProfilePage";
+import RewardsPage from "./pages/RewardsPage";
+import CommunityPage from "./pages/CommunityPage";
 
 function App() {
   const [session, setSession] = useState(null);
@@ -53,6 +55,22 @@ function App() {
         <Route
           path="/editar-perfil"
           element={session ? <EditProfilePage /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/recompensas"
+          element={session ? <RewardsPage /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/comunidade"
+          element={session ? <CommunityPage /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/dashboard"
+          element={session ? <Navigate to="/perfil" replace /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/modulos"
+          element={session ? <Navigate to="/perfil" replace /> : <Navigate to="/login" />}
         />
       </Routes>
     </Router>
