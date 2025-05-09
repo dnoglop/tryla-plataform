@@ -15,6 +15,7 @@ import RewardsPage from "./pages/RewardsPage";
 import CommunityPage from "./pages/CommunityPage";
 import DashboardPage from "./pages/DashboardPage"; 
 import ModulesPage from "./pages/ModulesPage";
+import AdminPage from "./pages/AdminPage";
 
 function App() {
   const [session, setSession] = useState(null);
@@ -73,6 +74,10 @@ function App() {
         <Route
           path="/modulos"
           element={session ? <ModulesPage /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/admin"
+          element={session ? <AdminPage /> : <Navigate to="/login" />}
         />
       </Routes>
     </Router>

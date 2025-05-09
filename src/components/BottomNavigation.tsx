@@ -1,5 +1,5 @@
 
-import { Award, BookOpen, Home, MessageSquare, User } from "lucide-react";
+import { Award, BookOpen, Home, MessageSquare, User, Settings } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -14,6 +14,7 @@ const BottomNavigation = () => {
     { icon: Award, path: "/recompensas", label: "Conquistas" },
     { icon: MessageSquare, path: "/comunidade", label: "Comunidade" },
     { icon: User, path: "/perfil", label: "Perfil" },
+    { icon: Settings, path: "/admin", label: "Admin" },
   ];
 
   return (
