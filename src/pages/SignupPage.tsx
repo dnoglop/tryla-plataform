@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
@@ -59,8 +60,8 @@ const SignupPage = () => {
         description: "Verifique seu email para confirmar sua conta",
       });
       
-      // Redirecionar para o dashboard (ou login, dependendo do fluxo desejado)
-      navigate("/dashboard");
+      // Redirecionar para o perfil após o login
+      navigate("/perfil");
     } catch (error: any) {
       toast({
         title: "Erro no cadastro",
@@ -78,7 +79,7 @@ const SignupPage = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: `${window.location.origin}/perfil`,
         },
       });
 
@@ -98,7 +99,7 @@ const SignupPage = () => {
       <div className="flex-1 px-6 py-12 md:px-12">
         <div className="mb-8 text-center">
           <h1 className="mb-2 text-4xl font-extrabold tracking-tight">
-            Na <span className="text-trilha-orange">Trilha</span>
+            Na <span className="text-[#E36322]">Trilha</span>
           </h1>
           <p className="text-lg text-gray-600">Crie sua conta de explorador(a)!</p>
         </div>
@@ -136,7 +137,7 @@ const SignupPage = () => {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 p-3 focus:border-trilha-orange focus:outline-none focus:ring-2 focus:ring-trilha-orange focus:ring-opacity-20"
+                className="w-full rounded-lg border border-gray-300 p-3 focus:border-[#E36322] focus:outline-none focus:ring-2 focus:ring-[#E36322] focus:ring-opacity-20"
                 placeholder="Seu nome completo"
                 required
                 disabled={isLoading}
@@ -152,7 +153,7 @@ const SignupPage = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 p-3 focus:border-trilha-orange focus:outline-none focus:ring-2 focus:ring-trilha-orange focus:ring-opacity-20"
+                className="w-full rounded-lg border border-gray-300 p-3 focus:border-[#E36322] focus:outline-none focus:ring-2 focus:ring-[#E36322] focus:ring-opacity-20"
                 placeholder="seu@email.com"
                 required
                 disabled={isLoading}
@@ -168,7 +169,7 @@ const SignupPage = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 p-3 focus:border-trilha-orange focus:outline-none focus:ring-2 focus:ring-trilha-orange focus:ring-opacity-20"
+                className="w-full rounded-lg border border-gray-300 p-3 focus:border-[#E36322] focus:outline-none focus:ring-2 focus:ring-[#E36322] focus:ring-opacity-20"
                 placeholder="••••••••"
                 required
                 disabled={isLoading}
@@ -184,7 +185,7 @@ const SignupPage = () => {
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 p-3 focus:border-trilha-orange focus:outline-none focus:ring-2 focus:ring-trilha-orange focus:ring-opacity-20"
+                className="w-full rounded-lg border border-gray-300 p-3 focus:border-[#E36322] focus:outline-none focus:ring-2 focus:ring-[#E36322] focus:ring-opacity-20"
                 placeholder="••••••••"
                 required
                 disabled={isLoading}
@@ -193,7 +194,7 @@ const SignupPage = () => {
 
             <Button 
               type="submit" 
-              className="w-full h-12 bg-trilha-orange text-white hover:bg-trilha-orange/90"
+              className="w-full h-12 bg-[#E36322] text-white hover:bg-[#E36322]/90"
               disabled={isLoading}
             >
               {isLoading ? "Criando conta..." : "Criar conta"}
@@ -203,7 +204,7 @@ const SignupPage = () => {
           <div className="text-center text-sm">
             <p>
               Já tem uma conta?{" "}
-              <Link to="/login" className="font-semibold text-trilha-orange hover:underline">
+              <Link to="/login" className="font-semibold text-[#E36322] hover:underline">
                 Faça login
               </Link>
             </p>
@@ -223,7 +224,7 @@ const SignupPage = () => {
         </div>
       </div>
 
-      <div className="bg-trilha-orange h-2" />
+      <div className="bg-[#E36322] h-2" />
     </div>
   );
 };

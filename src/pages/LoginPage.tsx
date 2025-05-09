@@ -26,7 +26,7 @@ const LoginPage = () => {
       if (error) throw error;
 
       toast.success("Login realizado com sucesso!");
-      navigate("/dashboard");
+      navigate("/perfil");
     } catch (error: any) {
       toast.error(error.message || "Ocorreu um erro ao processar sua solicitação.");
     } finally {
@@ -38,7 +38,7 @@ const LoginPage = () => {
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-amber-50 to-white">
       <div className="flex-1 flex flex-col items-center justify-center p-6">
         <div className="text-5xl mb-3">🔶</div>
-        <h1 className="text-2xl font-bold text-trilha-orange mb-1">Na Trilha</h1>
+        <h1 className="text-2xl font-bold text-[#E36322] mb-1">Na Trilha</h1>
         <p className="text-gray-500 mb-8">Sua jornada de desenvolvimento pessoal</p>
 
         <div className="w-full max-w-md bg-white rounded-xl shadow-sm p-6 border border-gray-100">
@@ -77,7 +77,7 @@ const LoginPage = () => {
 
             <Button
               type="submit"
-              className="w-full bg-trilha-orange hover:bg-amber-600"
+              className="w-full bg-[#E36322] hover:bg-[#E36322]/90 text-white"
               disabled={loading}
             >
               {loading ? (
@@ -89,12 +89,12 @@ const LoginPage = () => {
           </form>
 
           <div className="mt-4 text-center">
-            <button
-              onClick={() => navigate("/cadastro")}
-              className="text-sm text-trilha-orange hover:underline"
+            <Link
+              to="/cadastro"
+              className="text-sm text-[#E36322] hover:underline"
             >
               Não tem uma conta? Cadastre-se
-            </button>
+            </Link>
           </div>
         </div>
       </div>
