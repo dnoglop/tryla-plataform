@@ -20,6 +20,23 @@ export interface Profile {
   country?: string;
 }
 
+export interface Badge {
+  id: number;
+  name: string;
+  description: string;
+  icon: string;
+  unlocked: boolean;
+}
+
+export interface Achievement {
+  id: number;
+  name: string;
+  description: string;
+  icon: string;
+  xp_reward: number;
+  unlocked: boolean;
+}
+
 export const getProfile = async (userId: string): Promise<Profile | null> => {
   try {
     const { data, error } = await supabase
@@ -37,6 +54,80 @@ export const getProfile = async (userId: string): Promise<Profile | null> => {
   } catch (error) {
     console.error("Exception while fetching profile:", error);
     return null;
+  }
+};
+
+export const getUserBadges = async (userId: string): Promise<Badge[]> => {
+  try {
+    // Fetch badges from user_badges table with join to get badge details
+    const { data, error } = await supabase
+      .from("user_badges")
+      .select(`
+        badge_id,
+        unlocked_at,
+        badges:badge_id (
+          id,
+          name,
+          description,
+          icon
+        )
+      `)
+      .eq("user_id", userId);
+    
+    if (error) {
+      console.error("Error fetching user badges:", error);
+      return [];
+    }
+    
+    // Format the data to match the Badge interface
+    return data.map((item) => ({
+      id: item.badge_id,
+      name: item.badges.name,
+      description: item.badges.description || '',
+      icon: item.badges.icon || '🏅',
+      unlocked: !!item.unlocked_at
+    }));
+  } catch (error) {
+    console.error("Exception while fetching user badges:", error);
+    return [];
+  }
+};
+
+export const getUserAchievements = async (userId: string): Promise<Achievement[]> => {
+  try {
+    // Fetch achievements from user_achievements table with join to get achievement details
+    const { data, error } = await supabase
+      .from("user_achievements")
+      .select(`
+        achievement_id,
+        unlocked_at,
+        achievements:achievement_id (
+          id,
+          name,
+          description,
+          icon,
+          xp_reward
+        )
+      `)
+      .eq("user_id", userId);
+    
+    if (error) {
+      console.error("Error fetching user achievements:", error);
+      return [];
+    }
+    
+    // Format the data to match the Achievement interface
+    return data.map((item) => ({
+      id: item.achievement_id,
+      name: item.achievements.name,
+      description: item.achievements.description || '',
+      icon: item.achievements.icon || '🏆',
+      xp_reward: item.achievements.xp_reward || 0,
+      unlocked: !!item.unlocked_at
+    }));
+  } catch (error) {
+    console.error("Exception while fetching user achievements:", error);
+    return [];
   }
 };
 
@@ -210,5 +301,7 @@ export default {
   updateProfile,
   uploadAvatar,
   updateLoginStreak,
-  updateUserXp
+  updateUserXp,
+  getUserBadges,
+  getUserAchievements
 };

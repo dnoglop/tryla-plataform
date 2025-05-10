@@ -98,8 +98,8 @@ const RewardsPage = () => {
                   <BadgeItem
                     key={achievement.id}
                     name={achievement.name}
-                    description={achievement.description || ''}
-                    icon={achievement.icon || '🏆'}
+                    description={achievement.description}
+                    icon={achievement.icon}
                     unlocked={achievement.unlocked}
                     xpReward={achievement.xp_reward}
                     type="achievement"
@@ -129,8 +129,8 @@ const RewardsPage = () => {
                   <BadgeItem
                     key={badge.id}
                     name={badge.name}
-                    description={badge.description || ''}
-                    icon={badge.icon || '🏅'}
+                    description={badge.description}
+                    icon={badge.icon}
                     unlocked={badge.unlocked}
                     type="badge"
                   />
