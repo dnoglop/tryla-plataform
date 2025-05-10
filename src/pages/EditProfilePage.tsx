@@ -25,7 +25,6 @@ const EditProfilePage = () => {
     phone: "",
     email: "",
     birthday: "",
-    country: "Brasil"
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -48,10 +47,9 @@ const EditProfilePage = () => {
               bio: userProfile.bio || "",
               avatar_url: userProfile.avatar_url || "",
               linkedin_url: userProfile.linkedin_url || "",
-              phone: userProfile.phone || "",
+              phone: "", // Mantém como string vazia, pois não existe na tabela
               email: userData?.user?.email || "",
-              birthday: userProfile.birthday || "",
-              country: userProfile.country || "Brasil"
+              birthday: "", // Mantém como string vazia, pois não existe na tabela
             });
           }
         }
@@ -119,9 +117,6 @@ const EditProfilePage = () => {
         bio: formData.bio,
         linkedin_url: formData.linkedin_url,
         avatar_url: formData.avatar_url,
-        phone: formData.phone,
-        birthday: formData.birthday,
-        country: formData.country
       };
       
       const success = await updateProfile(profile.id, updatedProfile);
@@ -247,19 +242,6 @@ const EditProfilePage = () => {
               />
               <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
             </div>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              País
-            </label>
-            <Input
-              name="country"
-              value={formData.country}
-              onChange={handleInputChange}
-              className="border-gray-300 focus:border-[#E36322] focus:ring-[#E36322]"
-              placeholder="Seu país"
-            />
           </div>
           
           <div>

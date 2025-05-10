@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Search, BookOpen, ArrowRight, Clock, Trophy } from "lucide-react";
+import { Search, ArrowRight, Clock, Trophy } from "lucide-react";
 import BottomNavigation from "@/components/BottomNavigation";
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery } from '@tanstack/react-query';
@@ -168,14 +168,14 @@ const DashboardPage = () => {
       <div className="bg-[#E36322] px-4 pt-6 pb-4 rounded-b-3xl">
         <div className="flex justify-between items-center mb-4">
           <div>
-            <h2 className="text-white text-lg font-semibold">Olá, {profile.full_name?.split(' ')[0] || "Aluno"}</h2>
+            <h2 className="text-white text-lg font-semibold">Olá, {profile?.full_name?.split(' ')[0] || "Aluno"}</h2>
           </div>
           <Avatar className="h-10 w-10 border-2 border-white">
-            {profile.avatar_url ? (
+            {profile?.avatar_url ? (
               <AvatarImage src={profile.avatar_url} alt="Foto de perfil" />
             ) : (
               <AvatarFallback className="bg-white/20 text-white">
-                {profile.full_name ? profile.full_name.charAt(0).toUpperCase() : "U"}
+                {profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : "U"}
               </AvatarFallback>
             )}
           </Avatar>
