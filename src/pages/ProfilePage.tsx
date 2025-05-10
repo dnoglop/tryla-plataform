@@ -167,7 +167,7 @@ const ProfilePage = () => {
             <p className="text-white/90">@{profile?.username || "username"}</p>
             <div className="flex items-center mt-1 text-white/80 text-xs">
               <Mail className="h-3 w-3 mr-1" />
-              <span>Na Trilha desde {new Date(profile?.created_at || Date.now()).toLocaleDateString('pt-BR', {month: 'short', year: 'numeric'})}</span>
+              <span>Tryla desde {new Date(profile?.created_at || Date.now()).toLocaleDateString('pt-BR', {month: 'short', year: 'numeric'})}</span>
             </div>
           </div>
         </div>

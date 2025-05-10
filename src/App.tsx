@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "./integrations/supabase/client";
+import SplashScreen from "./pages/SplashScreen";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -39,13 +40,7 @@ function App() {
       <Routes>
         <Route
           path="/"
-          element={
-            session ? (
-              <Navigate to="/dashboard" replace />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
+          element={<SplashScreen />}
         />
         <Route
           path="/login"

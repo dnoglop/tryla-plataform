@@ -63,8 +63,14 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#FFDCCC] to-white p-6 text-center">
       <div className="mb-8">
-        <div className="text-6xl mb-3">🔶</div>
-        <h1 className="text-3xl font-bold text-[#e36322] mb-2">Na Trilha</h1>
+        <div className="w-32 h-32 mb-3 flex items-center justify-center">
+          <img 
+            src="https://i.imgur.com/TmfqRTD.gif" 
+            alt="Logo Tryla" 
+            className="w-full h-auto"
+          />
+        </div>
+        <h1 className="text-3xl font-bold text-[#e36322] mb-2">Tryla</h1>
         <p className="text-gray-500">Sua jornada de desenvolvimento pessoal</p>
       </div>
       

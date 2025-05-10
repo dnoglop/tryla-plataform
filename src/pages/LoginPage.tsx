@@ -37,8 +37,14 @@ const LoginPage = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-amber-50 to-white">
       <div className="flex-1 flex flex-col items-center justify-center p-6">
-        <div className="text-5xl mb-3">🔶</div>
-        <h1 className="text-2xl font-bold text-[#E36322] mb-1">Na Trilha</h1>
+        <div className="w-32 h-32 mb-3 flex items-center justify-center">
+          <img 
+            src="https://i.imgur.com/TmfqRTD.gif" 
+            alt="Logo Tryla" 
+            className="w-full h-auto"
+          />
+        </div>
+        <h1 className="text-2xl font-bold text-[#E36322] mb-1">Tryla</h1>
         <p className="text-gray-500 mb-8">Sua jornada de desenvolvimento pessoal</p>
 
         <div className="w-full max-w-md bg-white rounded-xl shadow-sm p-6 border border-gray-100">
@@ -101,7 +107,7 @@ const LoginPage = () => {
 
       <div className="p-4 text-center">
         <p className="text-sm text-gray-500">
-          &copy; {new Date().getFullYear()} Na Trilha. Todos os direitos reservados.
+          &copy; {new Date().getFullYear()} Tryla. Todos os direitos reservados.
         </p>
       </div>
     </div>

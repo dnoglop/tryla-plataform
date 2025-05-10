@@ -18,10 +18,10 @@ const NotFound = () => {
     <div className="min-h-screen flex items-center justify-center flex-col bg-gray-50 px-4">
       <div className="text-center space-y-6">
         <div className="text-9xl font-bold text-trilha-orange">404</div>
-        <h1 className="text-3xl font-bold">Opa, se perdeu na trilha?</h1>
+        <h1 className="text-3xl font-bold">Opa, se perdeu no caminho?</h1>
         <p className="text-gray-600 max-w-md mx-auto">
           A página que você está procurando parece não existir. Mas não se preocupe, 
-          você pode voltar à trilha principal!
+          você pode voltar ao caminho principal!
         </p>
         <Button 
           asChild
