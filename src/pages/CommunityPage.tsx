@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { Filter, Plus, Search } from "lucide-react";
-import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
 import ForumThread from "@/components/ForumThread";
 import CommunityEvent from "@/components/CommunityEvent";
@@ -109,26 +108,34 @@ const CommunityPage = () => {
   const topTags = ["Growth Mindset", "Empatia", "Comunicação", "Emprego", "Autoconhecimento"];
 
   return (
-    <div className="pb-16 min-h-screen bg-gray-50">
-      <Header title="👥 Comunidade da Trilha" />
-
-      <div className="container px-4 py-6 space-y-6">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+    <div className="pb-20 min-h-screen bg-white">
+      {/* Header Section */}
+      <div className="bg-[#E36322] px-4 pt-6 pb-4 rounded-b-3xl">
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h2 className="text-white text-lg font-semibold">👥 Comunidade da Trilha</h2>
+          </div>
+        </div>
+        
+        {/* Search Bar */}
+        <div className="relative mb-2">
           <input
             type="text"
             placeholder="Buscar tópicos, eventos ou pessoas..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 py-3 pl-10 pr-4 focus:border-trilha-orange focus:outline-none focus:ring-2 focus:ring-trilha-orange focus:ring-opacity-20"
+            className="w-full bg-white/10 border-0 text-white placeholder-white/60 rounded-full py-2 pl-9 pr-4 focus:outline-none"
           />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/60" />
         </div>
+      </div>
 
+      <div className="container px-4 py-5 space-y-6">
         <div className="flex flex-wrap gap-2">
           {topTags.map((tag, index) => (
             <button
               key={index}
-              className="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs hover:border-trilha-orange hover:bg-trilha-orange/5"
+              className="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs hover:border-[#E36322] hover:bg-[#FFF6F0]"
               onClick={() => setSearchTerm(tag)}
             >
               {tag}
@@ -195,7 +202,7 @@ const CommunityPage = () => {
         </Tabs>
       </div>
 
-      <button className="fixed bottom-20 right-4 flex h-14 w-14 items-center justify-center rounded-full bg-trilha-orange text-white shadow-lg">
+      <button className="fixed bottom-20 right-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#E36322] text-white shadow-lg">
         <Plus className="h-6 w-6" />
       </button>
 

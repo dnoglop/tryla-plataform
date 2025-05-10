@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from "react";
 import { Search, Video, FileText, HelpCircle, ArrowRight } from "lucide-react";
-import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
 import ModuleCard from "@/components/ModuleCard";
 import ProgressBar from "@/components/ProgressBar";
@@ -129,39 +128,51 @@ const ModulesPage = () => {
   };
 
   // Updated logic: determine if a module should be locked
-  // A module is unlocked if it's the first one, or if the previous module is completed
-  // or if it has any progress
   const isModuleLocked = (index: number, moduleId: number) => {
-    if (index === 0) return false; // First module is always unlocked
-    
-    // If this module already has progress, it's unlocked
+    if (index === 0) return false; 
     if (moduleProgress[moduleId] > 0) return false;
-    
-    // Check if previous module is completed
     const prevModuleId = modules[index - 1]?.id;
     if (prevModuleId && completedModules[prevModuleId]) {
-      return false; // Previous module is completed, so this one is unlocked
+      return false;
     }
-    
-    return true; // In all other cases, lock the module
+    return true;
   };
 
   if (isLoadingModules) {
     return (
-      <div className="pb-16 min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="pb-16 min-h-screen bg-white flex items-center justify-center">
         <div className="animate-pulse">Carregando...</div>
       </div>
     );
   }
 
   return (
-    <div className="pb-20 min-h-screen bg-gray-50">
-      <Header title="🧠 Trilha de Aprendizado" />
+    <div className="pb-20 min-h-screen bg-white">
+      {/* Header Section */}
+      <div className="bg-[#E36322] px-4 pt-6 pb-4 rounded-b-3xl">
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h2 className="text-white text-lg font-semibold">🧠 Trilha de Aprendizado</h2>
+          </div>
+        </div>
+        
+        {/* Search Bar */}
+        <div className="relative mb-2">
+          <input
+            type="text"
+            placeholder="Buscar módulos..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full bg-white/10 border-0 text-white placeholder-white/60 rounded-full py-2 pl-9 pr-4 focus:outline-none"
+          />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/60" />
+        </div>
+      </div>
 
-      <div className="container px-3 py-4 space-y-4">
+      <div className="container px-4 py-5 space-y-6">
         {/* Overall Progress Card */}
         <Card className="border-none shadow-md overflow-hidden">
-          <CardContent className="p-3 sm:p-5 bg-gradient-to-r from-amber-50 to-[#FFDCCC]">
+          <CardContent className="p-3 sm:p-5 bg-[#FFF6F0]">
             <h2 className="mb-2 font-bold text-base sm:text-lg">Progresso Total</h2>
             <ProgressBar 
               progress={totalProgress} 
@@ -172,7 +183,7 @@ const ModulesPage = () => {
             <div className="mt-2 flex justify-between items-center">
               <p className="text-xs sm:text-sm text-gray-600">{totalProgress}% completo</p>
               {totalProgress < 100 && (
-                <span className="text-xs sm:text-sm font-medium text-trilha-orange">Continue!</span>
+                <span className="text-xs sm:text-sm font-medium text-[#E36322]">Continue!</span>
               )}
               {totalProgress === 100 && (
                 <span className="text-xs sm:text-sm font-medium text-green-600">Concluído!</span>
@@ -180,18 +191,6 @@ const ModulesPage = () => {
             </div>
           </CardContent>
         </Card>
-
-        {/* Search Bar */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 sm:h-5 sm:w-5 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Buscar módulos..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-full border border-gray-300 bg-white py-2 pl-9 pr-4 text-sm sm:py-3 sm:pl-10 focus:border-trilha-orange focus:outline-none focus:ring-2 focus:ring-trilha-orange focus:ring-opacity-20"
-          />
-        </div>
 
         {/* Modules by Category */}
         {searchTerm ? (
