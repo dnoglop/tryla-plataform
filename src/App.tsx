@@ -15,6 +15,7 @@ import RewardsPage from "./pages/RewardsPage";
 import CommunityPage from "./pages/CommunityPage";
 import DashboardPage from "./pages/DashboardPage"; 
 import ModulesPage from "./pages/ModulesPage";
+import ModuleDetailPage from "./pages/ModuleDetailPage";
 import AdminPage from "./pages/AdminPage";
 
 function App() {
@@ -74,6 +75,10 @@ function App() {
         <Route
           path="/modulos"
           element={session ? <ModulesPage /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/modulo/:id"
+          element={session ? <ModuleDetailPage /> : <Navigate to="/login" />}
         />
         <Route
           path="/admin"

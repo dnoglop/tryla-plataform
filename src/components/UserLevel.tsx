@@ -47,7 +47,7 @@ const UserLevel: React.FC<UserLevelProps> = ({
       </div>
       <div className="w-full h-2 bg-gray-200 rounded-full mt-1">
         <div 
-          className="h-full bg-trilha-orange rounded-full"
+          className="h-full bg-[#9b87f5] rounded-full"
           style={{ width: `${progress}%` }}
         />
       </div>

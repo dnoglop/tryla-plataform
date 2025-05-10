@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import BottomNavigation from "@/components/BottomNavigation";
-import { Search } from "lucide-react";
+import { Search, Award, Trophy, Users } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import BadgeItem from "@/components/BadgeItem";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +11,7 @@ import UserLevel from "@/components/UserLevel";
 const RewardsPage = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedPeriod, setSelectedPeriod] = useState("weekly");
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -53,10 +53,23 @@ const RewardsPage = () => {
 
   const isLoading = isLoadingBadges || isLoadingAchievements;
 
+  // Dados de exemplo para o leaderboard
+  const leaderboardData = [
+    { id: 1, name: "Maria", rank: 1, avatar: "👩‍🦰", xp: 945 },
+    { id: 2, name: "João", rank: 2, avatar: "👨‍🦱", xp: 872 },
+    { id: 3, name: "Ana", rank: 3, avatar: "👩‍🦳", xp: 765 },
+    { id: 4, name: "Carlos", rank: 4, avatar: "👨‍🦲", xp: 723 },
+    { id: 5, name: "Paula", rank: 5, avatar: "👩", xp: 640 },
+    { id: 6, name: "Fernando", rank: 6, avatar: "👨", xp: 596 },
+  ];
+
+  const top3 = leaderboardData.slice(0, 3);
+  const others = leaderboardData.slice(3);
+
   return (
     <div className="pb-20 min-h-screen bg-white">
       {/* Header Section */}
-      <div className="bg-[#E36322] px-4 pt-6 pb-4 rounded-b-3xl">
+      <div className="bg-[#9b87f5] px-4 pt-6 pb-4 rounded-b-3xl">
         <div className="flex justify-between items-center mb-4">
           <div>
             <h2 className="text-white text-lg font-semibold">🏆 Conquistas e Recompensas</h2>
@@ -77,75 +90,167 @@ const RewardsPage = () => {
       </div>
 
       <div className="container px-4 py-5 space-y-6">
-        {/* User Level Section */}
-        {userId && <UserLevel userId={userId} className="mb-6" />}
-
-        {/* Tabs for badges and achievements */}
-        <Tabs defaultValue="achievements">
-          <TabsList className="w-full">
+        {/* Tabs for Leaderboard and Achievements */}
+        <Tabs defaultValue="leaderboard">
+          <TabsList className="w-full mb-4">
+            <TabsTrigger value="leaderboard" className="flex-1">Ranking</TabsTrigger>
             <TabsTrigger value="achievements" className="flex-1">Conquistas</TabsTrigger>
-            <TabsTrigger value="badges" className="flex-1">Insígnias</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="achievements" className="mt-6">
-            {isLoading ? (
-              <div className="flex justify-center py-12">
-                <div className="animate-pulse">Carregando...</div>
+          {/* Leaderboard Tab */}
+          <TabsContent value="leaderboard" className="mt-2">
+            {/* Period Selection */}
+            <div className="flex gap-2 mb-6">
+              <button 
+                className={`rounded-full px-4 py-1.5 text-sm ${selectedPeriod === 'weekly' ? 'bg-[#9b87f5] text-white' : 'bg-gray-100 text-gray-600'}`}
+                onClick={() => setSelectedPeriod('weekly')}
+              >
+                Semanal
+              </button>
+              <button 
+                className={`rounded-full px-4 py-1.5 text-sm ${selectedPeriod === 'monthly' ? 'bg-[#9b87f5] text-white' : 'bg-gray-100 text-gray-600'}`}
+                onClick={() => setSelectedPeriod('monthly')}
+              >
+                Mensal
+              </button>
+              <button 
+                className={`rounded-full px-4 py-1.5 text-sm ${selectedPeriod === 'alltime' ? 'bg-[#9b87f5] text-white' : 'bg-gray-100 text-gray-600'}`}
+                onClick={() => setSelectedPeriod('alltime')}
+              >
+                Todos os Tempos
+              </button>
+            </div>
+            
+            {/* Top 3 Users */}
+            <div className="flex justify-between items-end mb-8">
+              {/* 2nd Place */}
+              <div className="flex flex-col items-center w-1/3">
+                <div className="w-16 h-16 rounded-full bg-[#7E69AB] flex items-center justify-center text-white text-2xl mb-1 border-2 border-white shadow-lg">
+                  {top3[1]?.avatar || "👤"}
+                </div>
+                <p className="font-medium text-sm text-center">{top3[1]?.name || "Usuário"}</p>
+                <p className="text-xs text-[#7E69AB] font-bold">{top3[1]?.xp || 0} XP</p>
+                <div className="bg-[#7E69AB] w-full h-20 rounded-t-2xl mt-2 flex items-center justify-center">
+                  <span className="text-white text-2xl font-bold">2</span>
+                </div>
               </div>
-            ) : filteredAchievements.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {filteredAchievements.map((achievement) => (
-                  <BadgeItem
-                    key={achievement.id}
-                    name={achievement.name}
-                    description={achievement.description}
-                    icon={achievement.icon}
-                    unlocked={achievement.unlocked}
-                    xpReward={achievement.xp_reward}
-                    type="achievement"
-                  />
-                ))}
+              
+              {/* 1st Place */}
+              <div className="flex flex-col items-center w-1/3">
+                <div className="w-20 h-20 rounded-full bg-[#9b87f5] flex items-center justify-center text-white text-3xl mb-1 border-2 border-white shadow-lg">
+                  {top3[0]?.avatar || "👤"}
+                </div>
+                <p className="font-medium text-base text-center">{top3[0]?.name || "Usuário"}</p>
+                <p className="text-sm text-[#9b87f5] font-bold">{top3[0]?.xp || 0} XP</p>
+                <div className="bg-[#9b87f5] w-full h-28 rounded-t-2xl mt-2 flex items-center justify-center">
+                  <span className="text-white text-3xl font-bold">1</span>
+                </div>
               </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-gray-500">
-                  {searchTerm 
-                    ? "Nenhuma conquista encontrada com este termo."
-                    : "Ainda não há conquistas disponíveis."
-                  }
-                </p>
+              
+              {/* 3rd Place */}
+              <div className="flex flex-col items-center w-1/3">
+                <div className="w-16 h-16 rounded-full bg-[#6E59A5] flex items-center justify-center text-white text-2xl mb-1 border-2 border-white shadow-lg">
+                  {top3[2]?.avatar || "👤"}
+                </div>
+                <p className="font-medium text-sm text-center">{top3[2]?.name || "Usuário"}</p>
+                <p className="text-xs text-[#6E59A5] font-bold">{top3[2]?.xp || 0} XP</p>
+                <div className="bg-[#6E59A5] w-full h-16 rounded-t-2xl mt-2 flex items-center justify-center">
+                  <span className="text-white text-2xl font-bold">3</span>
+                </div>
               </div>
-            )}
+            </div>
+            
+            {/* Other Rankings */}
+            <div className="space-y-3 mt-6">
+              {others.map((user) => (
+                <div key={user.id} className="flex items-center bg-gray-50 p-3 rounded-lg">
+                  <div className="w-6 text-center text-gray-500 font-medium mr-3">
+                    {user.rank}
+                  </div>
+                  <div className="w-10 h-10 rounded-full bg-[#D6BCFA] flex items-center justify-center text-lg mr-3">
+                    {user.avatar}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium">{user.name}</p>
+                  </div>
+                  <div className="text-sm font-bold text-[#7E69AB]">
+                    {user.xp} XP
+                  </div>
+                </div>
+              ))}
+            </div>
           </TabsContent>
 
-          <TabsContent value="badges" className="mt-6">
-            {isLoading ? (
-              <div className="flex justify-center py-12">
-                <div className="animate-pulse">Carregando...</div>
-              </div>
-            ) : filteredBadges.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {filteredBadges.map((badge) => (
-                  <BadgeItem
-                    key={badge.id}
-                    name={badge.name}
-                    description={badge.description}
-                    icon={badge.icon}
-                    unlocked={badge.unlocked}
-                    type="badge"
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-gray-500">
-                  {searchTerm 
-                    ? "Nenhuma insígnia encontrada com este termo."
-                    : "Ainda não há insígnias disponíveis."
-                  }
-                </p>
-              </div>
-            )}
+          {/* Achievements Tab */}
+          <TabsContent value="achievements" className="mt-2">
+            {userId && <UserLevel userId={userId} className="mb-6" />}
+            
+            <div className="mb-6">
+              <h3 className="font-bold text-[#7E69AB] mb-3 flex items-center">
+                <Trophy className="h-5 w-5 mr-2" /> Conquistas
+              </h3>
+              {isLoading ? (
+                <div className="flex justify-center py-12">
+                  <div className="animate-pulse">Carregando...</div>
+                </div>
+              ) : filteredAchievements.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {filteredAchievements.map((achievement) => (
+                    <BadgeItem
+                      key={achievement.id}
+                      name={achievement.name}
+                      description={achievement.description}
+                      icon={achievement.icon}
+                      unlocked={achievement.unlocked}
+                      xpReward={achievement.xp_reward}
+                      type="achievement"
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">
+                    {searchTerm 
+                      ? "Nenhuma conquista encontrada com este termo."
+                      : "Ainda não há conquistas disponíveis."
+                    }
+                  </p>
+                </div>
+              )}
+            </div>
+            
+            <div>
+              <h3 className="font-bold text-[#7E69AB] mb-3 flex items-center">
+                <Award className="h-5 w-5 mr-2" /> Insígnias
+              </h3>
+              {isLoading ? (
+                <div className="flex justify-center py-12">
+                  <div className="animate-pulse">Carregando...</div>
+                </div>
+              ) : filteredBadges.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {filteredBadges.map((badge) => (
+                    <BadgeItem
+                      key={badge.id}
+                      name={badge.name}
+                      description={badge.description}
+                      icon={badge.icon}
+                      unlocked={badge.unlocked}
+                      type="badge"
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">
+                    {searchTerm 
+                      ? "Nenhuma insígnia encontrada com este termo."
+                      : "Ainda não há insígnias disponíveis."
+                    }
+                  </p>
+                </div>
+              )}
+            </div>
           </TabsContent>
         </Tabs>
       </div>
