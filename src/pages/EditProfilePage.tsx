@@ -113,8 +113,7 @@ const EditProfilePage = () => {
     
     setIsSaving(true);
     try {
-      const updatedProfile: Profile = {
-        ...profile,
+      const updatedProfile: Partial<Profile> = {
         full_name: formData.full_name,
         username: formData.username,
         bio: formData.bio,
@@ -125,11 +124,13 @@ const EditProfilePage = () => {
         country: formData.country
       };
       
-      const success = await updateProfile(updatedProfile);
+      const success = await updateProfile(profile.id, updatedProfile);
       
       if (success) {
         toast.success("Perfil atualizado com sucesso");
         navigate('/perfil');
+      } else {
+        toast.error("Falha ao atualizar perfil");
       }
     } catch (error) {
       console.error("Error updating profile:", error);

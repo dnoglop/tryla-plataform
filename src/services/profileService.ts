@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Profile {
@@ -14,6 +15,9 @@ export interface Profile {
   streak_days?: number;
   bio?: string;
   linkedin_url?: string;
+  phone?: string;
+  birthday?: string;
+  country?: string;
 }
 
 export const getProfile = async (userId: string): Promise<Profile | null> => {
@@ -33,7 +37,10 @@ export const getProfile = async (userId: string): Promise<Profile | null> => {
         xp,
         streak_days,
         bio,
-        linkedin_url
+        linkedin_url,
+        phone,
+        birthday,
+        country
       `)
       .eq('id', userId)
       .single();
@@ -50,7 +57,7 @@ export const getProfile = async (userId: string): Promise<Profile | null> => {
   }
 };
 
-export const updateProfile = async (userId: string, updates: Profile) => {
+export const updateProfile = async (userId: string, updates: Partial<Profile>): Promise<boolean> => {
   try {
     const { error } = await supabase
       .from('profiles')
@@ -59,11 +66,43 @@ export const updateProfile = async (userId: string, updates: Profile) => {
 
     if (error) {
       console.error("Error updating profile:", error);
-      throw error;
+      return false;
     }
+    return true;
   } catch (error) {
     console.error("Unexpected error updating profile:", error);
-    throw error;
+    return false;
+  }
+};
+
+export const uploadAvatar = async (userId: string, file: File): Promise<string | null> => {
+  try {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${userId}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const filePath = `avatars/${fileName}`;
+    
+    // Upload the image to storage
+    const { error: uploadError } = await supabase.storage
+      .from('profiles')
+      .upload(filePath, file);
+      
+    if (uploadError) {
+      throw uploadError;
+    }
+    
+    // Get the public URL
+    const { data } = supabase.storage
+      .from('profiles')
+      .getPublicUrl(filePath);
+    
+    if (!data || !data.publicUrl) {
+      throw new Error("Failed to get public URL for uploaded avatar");
+    }
+
+    return data.publicUrl;
+  } catch (error) {
+    console.error("Error uploading avatar:", error);
+    return null;
   }
 };
 
