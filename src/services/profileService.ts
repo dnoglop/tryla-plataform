@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Profile {
@@ -36,7 +35,6 @@ export const getProfile = async (userId: string): Promise<Profile | null> => {
         streak_days,
         bio,
         linkedin_url,
-        birthday,
         country
       `)
       .eq('id', userId)
@@ -56,9 +54,12 @@ export const getProfile = async (userId: string): Promise<Profile | null> => {
 
 export const updateProfile = async (userId: string, updates: Partial<Profile>): Promise<boolean> => {
   try {
+    // Remove fields that don't exist in the database table
+    const { phone, birthday, email, website, ...validUpdates } = updates;
+    
     const { error } = await supabase
       .from('profiles')
-      .update(updates)
+      .update(validUpdates)
       .eq('id', userId);
 
     if (error) {
