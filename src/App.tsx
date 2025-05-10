@@ -17,6 +17,8 @@ import DashboardPage from "./pages/DashboardPage";
 import ModulesPage from "./pages/ModulesPage";
 import ModuleDetailPage from "./pages/ModuleDetailPage";
 import AdminPage from "./pages/AdminPage";
+import JournalPage from "./pages/JournalPage";
+
 
 function App() {
   const [session, setSession] = useState(null);
@@ -83,6 +85,10 @@ function App() {
         <Route
           path="/admin"
           element={session ? <AdminPage /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/diario"
+          element={session ? <JournalPage /> : <Navigate to="/login" />}
         />
       </Routes>
     </Router>
