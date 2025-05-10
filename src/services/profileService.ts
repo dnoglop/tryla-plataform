@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Profile {
@@ -46,7 +47,7 @@ export const getProfile = async (userId: string): Promise<Profile | null> => {
       return null;
     }
 
-    return data;
+    return data as Profile;
   } catch (error) {
     console.error("Unexpected error fetching profile:", error);
     return null;
