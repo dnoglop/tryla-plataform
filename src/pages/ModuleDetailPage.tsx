@@ -143,12 +143,27 @@ const ModuleDetailPage = () => {
 
   // Função para iniciar o módulo (ir para a primeira fase ou próxima fase)
   const startModule = () => {
-    if (nextPhase) {
-      navigate(`/fase/${moduleId}/${nextPhase.id}`);
-    } else if (phases.length > 0) {
-      navigate(`/fase/${moduleId}/${phases[0].id}`);
-    } else {
+    console.log("Iniciando módulo", moduleId);
+    console.log("Fases disponíveis:", phases);
+    
+    if (!phases || phases.length === 0) {
       toast.error("Não há fases disponíveis neste módulo.");
+      return;
+    }
+    
+    // Encontrar a primeira fase não concluída ou a primeira fase
+    const firstIncompletePhase = phases.find(phase => 
+      !phaseStatuses[phase.id]?.completed
+    );
+    
+    const targetPhase = firstIncompletePhase || phases[0];
+    console.log("Navegando para a fase:", targetPhase);
+    
+    if (targetPhase) {
+      navigate(`/fase/${moduleId}/${targetPhase.id}`);
+    } else {
+      // Fallback para a primeira fase se algo der errado
+      navigate(`/fase/${moduleId}/${phases[0].id}`);
     }
   };
 

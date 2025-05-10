@@ -33,27 +33,27 @@ const ModuleCard = ({
     { bgColor: string; icon: React.ElementType; description: string }
   > = {
     autoconhecimento: {
-      bgColor: "bg-amber-50 border-amber-200",
+      bgColor: "bg-white border-[#e36322]/20",
       icon: Trophy,
       description: description || "Descubra seus superpoderes!",
     },
     empatia: {
-      bgColor: "bg-red-50 border-red-200",
+      bgColor: "bg-white border-[#e36322]/20",
       icon: Heart,
       description: description || "Conecte-se com outras pessoas!",
     },
     growth: {
-      bgColor: "bg-green-50 border-green-200",
+      bgColor: "bg-white border-[#e36322]/20",
       icon: Brain,
       description: description || "Potencialize seu cérebro!",
     },
     comunicacao: {
-      bgColor: "bg-blue-50 border-blue-200",
+      bgColor: "bg-white border-[#e36322]/20",
       icon: MessageSquare,
       description: description || "Domine a arte de se expressar!",
     },
     futuro: {
-      bgColor: "bg-purple-50 border-purple-200",
+      bgColor: "bg-white border-[#e36322]/20",
       icon: Award,
       description: description || "Em breve...",
     },
@@ -100,7 +100,8 @@ const ModuleCard = ({
             {moduleEmoji ? (
               <span className="text-xl sm:text-2xl">{moduleEmoji}</span>
             ) : (
-              <Icon className={`h-6 w-6 ${completed ? 'text-white' : 'text-trilha-orange'}`} />
+              // Modificar também a cor do ícone
+              <Icon className={`h-6 w-6 ${completed ? 'text-white' : 'text-[#e36322]'}`} />
             )}
           </div>
           

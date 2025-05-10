@@ -18,6 +18,7 @@ import ModulesPage from "./pages/ModulesPage";
 import ModuleDetailPage from "./pages/ModuleDetailPage";
 import AdminPage from "./pages/AdminPage";
 import JournalPage from "./pages/JournalPage";
+import PhaseDetailPage from "./pages/PhaseDetailPage";
 
 
 function App() {
@@ -83,8 +84,8 @@ function App() {
           element={session ? <ModuleDetailPage /> : <Navigate to="/login" />}
         />
         <Route
-          path="/admin"
-          element={session ? <AdminPage /> : <Navigate to="/login" />}
+          path="/fase/:moduleId/:phaseId"
+          element={session ? <PhaseDetailPage /> : <Navigate to="/login" />}
         />
         <Route
           path="/diario"

@@ -165,7 +165,7 @@ const DashboardPage = () => {
   return (
     <div className="pb-20 min-h-screen bg-white">
       {/* Header Section */}
-      <div className="bg-[#E36322] px-4 pt-6 pb-4 rounded-b-3xl">
+      <div className="bg-[#e36322] px-4 pt-6 pb-4 rounded-b-3xl">
         <div className="flex justify-between items-center mb-4">
           <div>
             <h2 className="text-white text-lg font-semibold">Olá, {profile?.full_name?.split(' ')[0] || "Aluno"}</h2>

@@ -37,7 +37,7 @@
 
     --radius: 1rem;
   }
-
+  
   .dark {
     --background: 0 0% 0%;
     --foreground: 0 0% 98%;
@@ -68,6 +68,36 @@
     --ring: 21 74% 51%;
   }
 }
+
+@layer base {
+  :root {
+    --trilha-orange: 227, 99, 34; /* #e36322 */
+    
+    --background: 255, 255, 255; /* #FFF */
+    --foreground: 0, 0, 0; /* #000 */
+    
+    /* Substituir outras cores por variações de preto, branco e laranja */
+    --card: 255, 255, 255;
+    --card-foreground: 0, 0, 0;
+    --popover: 255, 255, 255;
+    --popover-foreground: 0, 0, 0;
+    --primary: 227, 99, 34; /* #e36322 */
+    --primary-foreground: 255, 255, 255;
+    --secondary: 245, 245, 245; /* Cinza muito claro */
+    --secondary-foreground: 0, 0, 0;
+    --muted: 240, 240, 240;
+    --muted-foreground: 40, 40, 40;
+    --accent: 250, 250, 250;
+    --accent-foreground: 0, 0, 0;
+    --destructive: 227, 99, 34; /* #e36322 */
+    --destructive-foreground: 255, 255, 255;
+    --border: 230, 230, 230;
+    --input: 230, 230, 230;
+    --ring: 227, 99, 34; /* #e36322 */
+  }
+}
+
+
 
 @layer base {
   * {

@@ -98,11 +98,31 @@ const PhaseDetailPage = () => {
     getUser();
   }, []);
 
-  const { data: phase, isLoading: isLoadingPhase } = useQuery({
+  const { data: phase, isLoading: isLoadingPhase, error: phaseError } = useQuery({
     queryKey: ['phase', Number(phaseId)],
-    queryFn: () => getPhaseById(Number(phaseId)),
+    queryFn: async () => {
+      console.log("Iniciando busca da fase:", phaseId);
+      try {
+        const result = await getPhaseById(Number(phaseId));
+        console.log("Resultado da busca da fase:", result);
+        return result;
+      } catch (error) {
+        console.error("Erro ao buscar fase:", error);
+        throw error;
+      }
+    },
     enabled: !!phaseId,
+    retry: 3,
+    retryDelay: 1000,
   });
+
+  // Adicione este useEffect para monitorar erros
+  useEffect(() => {
+    if (phaseError) {
+      console.error("Erro ao carregar fase:", phaseError);
+      toast.error("Erro ao carregar dados da fase. Verifique sua conexão com o banco de dados.");
+    }
+  }, [phaseError]);
 
   const { data: phases = [], isLoading: isLoadingPhases } = useQuery({
     queryKey: ['phases', Number(moduleId)],
@@ -197,6 +217,61 @@ const PhaseDetailPage = () => {
       notes: videoNotes
     });
   };
+
+  // Remova este useEffect duplicado
+  useEffect(() => {
+    const fetchPhaseData = async () => {
+      try {
+        console.log("Carregando fase:", phaseId);
+        setIsLoading(true);
+        
+        if (!phaseId) {
+          console.error("ID da fase não encontrado");
+          toast.error("Erro ao carregar a fase. ID não encontrado.");
+          return;
+        }
+        
+        const phaseData = await getPhaseById(Number(phaseId));
+        console.log("Dados da fase carregados:", phaseData);
+        
+        if (!phaseData) {
+          console.error("Fase não encontrada");
+          toast.error("Fase não encontrada.");
+          return;
+        }
+        
+        setPhase(phaseData);
+      } catch (error) {
+        console.error("Erro ao carregar fase:", error);
+        toast.error("Erro ao carregar a fase. Tente novamente.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchPhaseData();
+  }, [phaseId]);
+
+  // Adicione este useEffect para testar a conexão com o Supabase
+  useEffect(() => {
+    const testDatabaseConnection = async () => {
+      try {
+        console.log("Testando conexão com o Supabase...");
+        const { data, error } = await supabase.from('phases').select('count').limit(1);
+        
+        if (error) {
+          console.error("Erro na conexão com o Supabase:", error);
+          toast.error("Erro na conexão com o banco de dados. Verifique sua conexão com a internet.");
+        } else {
+          console.log("Conexão com o Supabase bem-sucedida:", data);
+        }
+      } catch (e) {
+        console.error("Exceção ao testar conexão:", e);
+      }
+    };
+    
+    testDatabaseConnection();
+  }, []);
 
   if (loading) {
     return (

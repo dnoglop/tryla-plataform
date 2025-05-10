@@ -69,7 +69,7 @@ const RewardsPage = () => {
   return (
     <div className="pb-20 min-h-screen bg-white">
       {/* Header Section */}
-      <div className="bg-[#9b87f5] px-4 pt-6 pb-4 rounded-b-3xl">
+      <div className="bg-[#e36322] px-4 pt-6 pb-4 rounded-b-3xl">
         <div className="flex justify-between items-center mb-4">
           <div>
             <h2 className="text-white text-lg font-semibold">🏆 Conquistas e Recompensas</h2>
@@ -102,19 +102,19 @@ const RewardsPage = () => {
             {/* Period Selection */}
             <div className="flex gap-2 mb-6">
               <button 
-                className={`rounded-full px-4 py-1.5 text-sm ${selectedPeriod === 'weekly' ? 'bg-[#9b87f5] text-white' : 'bg-gray-100 text-gray-600'}`}
+                className={`rounded-full px-4 py-1.5 text-sm ${selectedPeriod === 'weekly' ? 'bg-[#e36322] text-white' : 'bg-gray-100 text-gray-600'}`}
                 onClick={() => setSelectedPeriod('weekly')}
               >
                 Semanal
               </button>
               <button 
-                className={`rounded-full px-4 py-1.5 text-sm ${selectedPeriod === 'monthly' ? 'bg-[#9b87f5] text-white' : 'bg-gray-100 text-gray-600'}`}
+                className={`rounded-full px-4 py-1.5 text-sm ${selectedPeriod === 'monthly' ? 'bg-[#e36322] text-white' : 'bg-gray-100 text-gray-600'}`}
                 onClick={() => setSelectedPeriod('monthly')}
               >
                 Mensal
               </button>
               <button 
-                className={`rounded-full px-4 py-1.5 text-sm ${selectedPeriod === 'alltime' ? 'bg-[#9b87f5] text-white' : 'bg-gray-100 text-gray-600'}`}
+                className={`rounded-full px-4 py-1.5 text-sm ${selectedPeriod === 'alltime' ? 'bg-[#e36322] text-white' : 'bg-gray-100 text-gray-600'}`}
                 onClick={() => setSelectedPeriod('alltime')}
               >
                 Todos os Tempos
@@ -125,36 +125,36 @@ const RewardsPage = () => {
             <div className="flex justify-between items-end mb-8">
               {/* 2nd Place */}
               <div className="flex flex-col items-center w-1/3">
-                <div className="w-16 h-16 rounded-full bg-[#7E69AB] flex items-center justify-center text-white text-2xl mb-1 border-2 border-white shadow-lg">
+                <div className="w-16 h-16 rounded-full bg-[#e36322]/80 flex items-center justify-center text-white text-2xl mb-1 border-2 border-white shadow-lg">
                   {top3[1]?.avatar || "👤"}
                 </div>
                 <p className="font-medium text-sm text-center">{top3[1]?.name || "Usuário"}</p>
-                <p className="text-xs text-[#7E69AB] font-bold">{top3[1]?.xp || 0} XP</p>
-                <div className="bg-[#7E69AB] w-full h-20 rounded-t-2xl mt-2 flex items-center justify-center">
+                <p className="text-xs text-[#e36322] font-bold">{top3[1]?.xp || 0} XP</p>
+                <div className="bg-[#e36322]/80 w-full h-20 rounded-t-2xl mt-2 flex items-center justify-center">
                   <span className="text-white text-2xl font-bold">2</span>
                 </div>
               </div>
               
               {/* 1st Place */}
               <div className="flex flex-col items-center w-1/3">
-                <div className="w-20 h-20 rounded-full bg-[#9b87f5] flex items-center justify-center text-white text-3xl mb-1 border-2 border-white shadow-lg">
+                <div className="w-20 h-20 rounded-full bg-[#e36322] flex items-center justify-center text-white text-3xl mb-1 border-2 border-white shadow-lg">
                   {top3[0]?.avatar || "👤"}
                 </div>
                 <p className="font-medium text-base text-center">{top3[0]?.name || "Usuário"}</p>
-                <p className="text-sm text-[#9b87f5] font-bold">{top3[0]?.xp || 0} XP</p>
-                <div className="bg-[#9b87f5] w-full h-28 rounded-t-2xl mt-2 flex items-center justify-center">
+                <p className="text-sm text-[#e36322] font-bold">{top3[0]?.xp || 0} XP</p>
+                <div className="bg-[#e36322] w-full h-28 rounded-t-2xl mt-2 flex items-center justify-center">
                   <span className="text-white text-3xl font-bold">1</span>
                 </div>
               </div>
               
               {/* 3rd Place */}
               <div className="flex flex-col items-center w-1/3">
-                <div className="w-16 h-16 rounded-full bg-[#6E59A5] flex items-center justify-center text-white text-2xl mb-1 border-2 border-white shadow-lg">
+                <div className="w-16 h-16 rounded-full bg-[#e36322]/60 flex items-center justify-center text-white text-2xl mb-1 border-2 border-white shadow-lg">
                   {top3[2]?.avatar || "👤"}
                 </div>
                 <p className="font-medium text-sm text-center">{top3[2]?.name || "Usuário"}</p>
-                <p className="text-xs text-[#6E59A5] font-bold">{top3[2]?.xp || 0} XP</p>
-                <div className="bg-[#6E59A5] w-full h-16 rounded-t-2xl mt-2 flex items-center justify-center">
+                <p className="text-xs text-[#e36322] font-bold">{top3[2]?.xp || 0} XP</p>
+                <div className="bg-[#e36322]/60 w-full h-16 rounded-t-2xl mt-2 flex items-center justify-center">
                   <span className="text-white text-2xl font-bold">3</span>
                 </div>
               </div>
@@ -167,13 +167,13 @@ const RewardsPage = () => {
                   <div className="w-6 text-center text-gray-500 font-medium mr-3">
                     {user.rank}
                   </div>
-                  <div className="w-10 h-10 rounded-full bg-[#D6BCFA] flex items-center justify-center text-lg mr-3">
+                  <div className="w-10 h-10 rounded-full bg-[#FFDCCC] flex items-center justify-center text-lg mr-3">
                     {user.avatar}
                   </div>
                   <div className="flex-1">
                     <p className="font-medium">{user.name}</p>
                   </div>
-                  <div className="text-sm font-bold text-[#7E69AB]">
+                  <div className="text-sm font-bold text-[#e36322]">
                     {user.xp} XP
                   </div>
                 </div>
@@ -186,7 +186,7 @@ const RewardsPage = () => {
             {userId && <UserLevel userId={userId} className="mb-6" />}
             
             <div className="mb-6">
-              <h3 className="font-bold text-[#7E69AB] mb-3 flex items-center">
+              <h3 className="font-bold text-[#e36322] mb-3 flex items-center">
                 <Trophy className="h-5 w-5 mr-2" /> Conquistas
               </h3>
               {isLoading ? (
@@ -220,7 +220,7 @@ const RewardsPage = () => {
             </div>
             
             <div>
-              <h3 className="font-bold text-[#7E69AB] mb-3 flex items-center">
+              <h3 className="font-bold text-[#e36322] mb-3 flex items-center">
                 <Award className="h-5 w-5 mr-2" /> Insígnias
               </h3>
               {isLoading ? (
