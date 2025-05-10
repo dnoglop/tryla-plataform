@@ -29,7 +29,6 @@ export const getProfile = async (userId: string): Promise<Profile | null> => {
         username, 
         full_name, 
         avatar_url, 
-        website,
         email,
         created_at,
         updated_at,
@@ -47,7 +46,7 @@ export const getProfile = async (userId: string): Promise<Profile | null> => {
 
     if (error) {
       console.error("Error fetching profile:", error);
-      return null;
+      return null; // Return null instead of error
     }
 
     return data || null;
