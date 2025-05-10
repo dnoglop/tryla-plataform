@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Profile {
@@ -29,7 +28,6 @@ export const getProfile = async (userId: string): Promise<Profile | null> => {
         username, 
         full_name, 
         avatar_url, 
-        email,
         created_at,
         updated_at,
         level,
@@ -46,7 +44,7 @@ export const getProfile = async (userId: string): Promise<Profile | null> => {
 
     if (error) {
       console.error("Error fetching profile:", error);
-      return null; // Return null instead of error
+      return null; // Return null instead of an error object
     }
 
     return data || null;
