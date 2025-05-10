@@ -57,11 +57,11 @@ const SignupPage = () => {
       // Sucesso no cadastro
       toast({
         title: "Cadastro realizado!",
-        description: "Verifique seu email para confirmar sua conta",
+        description: "Faça o seu login para começar a explorar!",
       });
       
       // Redirecionar para o perfil após o login
-      navigate("/perfil");
+      navigate("/dashboard");
     } catch (error: any) {
       toast({
         title: "Erro no cadastro",
@@ -79,7 +79,7 @@ const SignupPage = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/perfil`,
+          redirectTo: `${window.location.origin}/dashboard`,
         },
       });
 
@@ -95,14 +95,17 @@ const SignupPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-white">
-      <div className="flex-1 px-6 py-12 md:px-12">
-        <div className="mb-8 text-center">
-          <h1 className="mb-2 text-4xl font-extrabold tracking-tight">
-            Na <span className="text-[#E36322]">Trilha</span>
-          </h1>
-          <p className="text-lg text-gray-600">Crie sua conta de explorador(a)!</p>
-        </div>
+    <div className="flex-1 flex flex-col items-center justify-center p-2 from-amber-50">
+      <div className="flex-1 flex flex-col items-center justify-center p-6">
+      {/* Logo centralizada */}
+      <div className="w-52 h-22 flex items-center justify-center mb-4">
+        <img 
+          src="https://i.imgur.com/sxJhyH8.gif" 
+          alt="Logo Tryla" 
+          className="w-full h-auto"
+        />
+      </div>
+        <p className="text-gray-500 mb-4">Comece sua jornada de aprendizado!</p>
 
         <div className="mx-auto w-full max-w-md space-y-6">
           <div className="grid grid-cols-1 gap-3">

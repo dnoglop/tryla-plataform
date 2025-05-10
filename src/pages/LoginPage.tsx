@@ -37,15 +37,14 @@ const LoginPage = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-amber-50 to-white">
       <div className="flex-1 flex flex-col items-center justify-center p-6">
-        <div className="w-32 h-32 mb-3 flex items-center justify-center">
+        <div className="w-52 h-22 flex items-center justify-center">
           <img 
-            src="https://i.imgur.com/TmfqRTD.gif" 
+            src="https://i.imgur.com/sxJhyH8.gif" 
             alt="Logo Tryla" 
             className="w-full h-auto"
           />
         </div>
-        <h1 className="text-2xl font-bold text-[#E36322] mb-1">Tryla</h1>
-        <p className="text-gray-500 mb-8">Sua jornada de desenvolvimento pessoal</p>
+        <p className="text-gray-500 mb-4">Continue a sua jornada!</p>
 
         <div className="w-full max-w-md bg-white rounded-xl shadow-sm p-6 border border-gray-100">
           <h2 className="text-xl font-bold text-center mb-6">
