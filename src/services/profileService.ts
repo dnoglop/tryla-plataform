@@ -77,7 +77,7 @@ export const updateProfile = async (userId: string, updates: Partial<Profile>): 
 export const uploadAvatar = async (userId: string, file: File): Promise<string | null> => {
   try {
     const fileExt = file.name.split('.').pop();
-    const fileName = `${userId}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const fileName = `${userId}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
     const filePath = `avatars/${fileName}`;
     
     // Upload the image to storage
