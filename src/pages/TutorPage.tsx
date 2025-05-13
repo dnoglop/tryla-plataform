@@ -30,6 +30,7 @@ const TutorPage = () => {
   const [selectedModule, setSelectedModule] = useState<string>("");
   const [connectionError, setConnectionError] = useState<boolean>(false);
   const [userIntroduced, setUserIntroduced] = useState<boolean>(false);
+  const [userName, setUserName] = useState<string>("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   
@@ -39,13 +40,29 @@ const TutorPage = () => {
   });
 
   useEffect(() => {
+    // Obter o nome do usuário do localStorage
+    const storedName = localStorage.getItem('userName');
+    if (storedName) {
+      setUserName(storedName);
+      console.log('Nome recuperado do localStorage:', storedName);
+    }
+    
     // Verificar se o usuário já se apresentou (usando localStorage)
     const hasIntroduced = localStorage.getItem('tutorIntroduced') === 'true';
     setUserIntroduced(hasIntroduced);
     
     // Adicionar mensagem apropriada quando a página carregar
     if (messages.length === 0) {
-      if (hasIntroduced) {
+      if (hasIntroduced && storedName) {
+        setMessages([
+          {
+            id: "welcome",
+            role: "tutor",
+            content: `Olá, ${storedName}! Eu sou o Tutor Tryla, seu assistente de aprendizado. Como posso ajudar você hoje? Você pode me fazer perguntas sobre qualquer um dos temas dos módulos!`,
+            timestamp: new Date(),
+          },
+        ]);
+      } else if (hasIntroduced) {
         setMessages([
           {
             id: "welcome",
@@ -64,6 +81,38 @@ const TutorPage = () => {
           },
         ]);
       }
+    }
+    
+    // Buscar informações do usuário do Supabase
+    const fetchUserProfile = async () => {
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData?.user) {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('first_name')
+            .eq('id', userData.user.id)
+            .single();
+            
+          if (profileData?.first_name) {
+            const firstName = profileData.first_name.split(' ')[0];
+            console.log('Nome obtido do perfil:', firstName);
+            setUserName(firstName);
+            localStorage.setItem('userName', firstName);
+            
+            // Verificar se o nome foi armazenado corretamente
+            const verifyStorage = localStorage.getItem('userName');
+            console.log('Nome verificado no localStorage:', verifyStorage);
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao buscar perfil do usuário:", error);
+      }
+    };
+    
+    // Se não tiver nome no localStorage, buscar do perfil
+    if (!storedName) {
+      fetchUserProfile();
     }
   }, []);
 
@@ -155,17 +204,51 @@ const TutorPage = () => {
     setInputMessage("");
     setIsLoading(true);
 
-    // Se for a primeira interação e o usuário não se apresentou ainda, marcar como apresentado
+    // Se for a primeira interação e o usuário não se apresentou ainda
     if (!userIntroduced) {
       localStorage.setItem('tutorIntroduced', 'true');
       setUserIntroduced(true);
+      
+      // Tentar extrair o nome do usuário da primeira mensagem
+      const nameParts = inputMessage.split(' ');
+      if (nameParts.length > 0) {
+        const possibleName = nameParts[0].replace(/[^a-zA-ZÀ-ÿ]/g, '');
+        if (possibleName && possibleName.length > 1) {
+          console.log('Nome extraído da mensagem:', possibleName);
+          setUserName(possibleName);
+          localStorage.setItem('userName', possibleName);
+          
+          // Verificar se o nome foi armazenado corretamente
+          const verifyStorage = localStorage.getItem('userName');
+          console.log('Nome verificado no localStorage após extração:', verifyStorage);
+        }
+      }
     }
     
     try {
+      // Garantir que temos o nome do usuário antes de enviar
+      const currentUserName = userName || localStorage.getItem('userName') || '';
+      
+      // Se ainda não temos o nome, tentar extrair da mensagem atual
+      if (!currentUserName && !userIntroduced) {
+        const nameParts = inputMessage.split(' ');
+        if (nameParts.length > 0) {
+          const possibleName = nameParts[0].replace(/[^a-zA-ZÀ-ÿ]/g, '');
+          if (possibleName && possibleName.length > 1) {
+            setUserName(possibleName);
+            localStorage.setItem('userName', possibleName);
+            console.log('Nome extraído antes de enviar:', possibleName);
+          }
+        }
+      }
+      
+      console.log('Nome sendo enviado para a função Edge:', currentUserName);
+      
       const { data, error } = await supabase.functions.invoke('tutor-tryla', {
         body: { 
           prompt: inputMessage,
-          module: selectedModule 
+          module: selectedModule,
+          userName: currentUserName // Enviar o nome do usuário para a função Edge
         },
       });
       
@@ -178,10 +261,13 @@ const TutorPage = () => {
           variant: "destructive",
         });
         
+        // Garantir que temos o nome mais atualizado
+        const currentUserName = userName || localStorage.getItem('userName') || '';
+        
         // Atualiza a mensagem de placeholder para mostrar o erro
         setMessages(prev => prev.map(msg => 
           msg.id === `tutor-${messageId}` 
-            ? { ...msg, content: "Desculpe, estou com dificuldades para responder agora. Tente verificar sua conexão clicando no botão 'Testar Conexão' acima.", isLoading: false } 
+            ? { ...msg, content: `Desculpe ${currentUserName ? currentUserName : ""}, estou com dificuldades para responder agora. Tente verificar sua conexão clicando no botão 'Testar Conexão' acima.`, isLoading: false } 
             : msg
         ));
       } else if (data?.error) {
@@ -193,26 +279,55 @@ const TutorPage = () => {
           variant: "destructive",
         });
         
+        // Garantir que temos o nome mais atualizado
+        const currentUserName = userName || localStorage.getItem('userName') || '';
+        
         // Atualiza a mensagem de placeholder com o erro
         setMessages(prev => prev.map(msg => 
           msg.id === `tutor-${messageId}` 
-            ? { ...msg, content: `Desculpe, ocorreu um erro ao processar sua pergunta: ${data.error}`, isLoading: false } 
+            ? { ...msg, content: `Desculpe ${currentUserName ? currentUserName : ""}, ocorreu um erro ao processar sua pergunta: ${data.error}`, isLoading: false } 
             : msg
         ));
       } else if (!data || !data.resposta) {
         setConnectionError(true);
         
+        // Garantir que temos o nome mais atualizado
+        const currentUserName = userName || localStorage.getItem('userName') || '';
+        
         // Atualiza a mensagem de placeholder
         setMessages(prev => prev.map(msg => 
           msg.id === `tutor-${messageId}` 
-            ? { ...msg, content: "Desculpe, recebi uma resposta vazia do servidor. Tente novamente mais tarde.", isLoading: false } 
+            ? { ...msg, content: `Desculpe ${currentUserName ? currentUserName : ""}, recebi uma resposta vazia do servidor. Tente novamente mais tarde.`, isLoading: false } 
             : msg
         ));
       } else {
+        // Adicionar o nome do usuário à resposta se não estiver presente
+        let resposta = data.resposta;
+        // Garantir que temos o nome mais atualizado
+        const currentUserName = userName || localStorage.getItem('userName') || '';
+        console.log('Nome atual do usuário para resposta:', currentUserName);
+        
+        // Verificar se o nome está presente na resposta (considerando variações de capitalização)
+        const nameInResponse = currentUserName && 
+          (resposta.toLowerCase().includes(currentUserName.toLowerCase()) ||
+           resposta.toLowerCase().includes(currentUserName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')));
+        
+        console.log('Resposta inclui o nome?', nameInResponse);
+        
+        if (currentUserName && !nameInResponse) {
+          // Verificar se a resposta começa com saudação
+          if (resposta.match(/^(Olá|Oi|Bem|Claro|Certo|Entendi|Compreendo)/i)) {
+            resposta = resposta.replace(/^(Olá|Oi|Bem|Claro|Certo|Entendi|Compreendo)/i, `$1, ${currentUserName}`);
+          } else {
+            resposta = `${currentUserName}, ${resposta}`;
+          }
+          console.log('Resposta modificada:', resposta);
+        }
+        
         // Atualiza a mensagem de placeholder com a resposta real
         setMessages(prev => prev.map(msg => 
           msg.id === `tutor-${messageId}` 
-            ? { ...msg, content: data.resposta, isLoading: false } 
+            ? { ...msg, content: resposta, isLoading: false } 
             : msg
         ));
         setConnectionError(false);
@@ -226,10 +341,13 @@ const TutorPage = () => {
         variant: "destructive",
       });
       
+      // Garantir que temos o nome mais atualizado
+      const currentUserName = userName || localStorage.getItem('userName') || '';
+      
       // Atualiza a mensagem de placeholder para mostrar o erro
       setMessages(prev => prev.map(msg => 
         msg.id === `tutor-${messageId}` 
-          ? { ...msg, content: "Desculpe, algo deu errado. Tente novamente mais tarde ou utilize o botão 'Testar Conexão'.", isLoading: false } 
+          ? { ...msg, content: `Desculpe ${currentUserName ? currentUserName : ""}, algo deu errado. Tente novamente mais tarde ou utilize o botão 'Testar Conexão'.`, isLoading: false } 
           : msg
       ));
     } finally {
@@ -279,15 +397,15 @@ const TutorPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-16">
+    <div className="min-h-screen bg-gray-50 pb-28">
       <Header 
         title="Tutor Tryla" 
         showBackButton={true} 
         onBackClick={handleBackClick}
       />
       
-      <div className="container px-4 py-4">
-        <div className="flex flex-col h-[calc(100vh-150px)]">
+      <div className="container px-4 py-4 pb-8">
+        <div className="flex flex-col h-[calc(100vh-200px)]">
           <Tabs defaultValue="chat" className="w-full mb-4">
             <TabsList className="w-full mb-4">
               <TabsTrigger value="chat" className="flex-1">
@@ -299,7 +417,6 @@ const TutorPage = () => {
                 Módulos
               </TabsTrigger>
             </TabsList>
-            
             <TabsContent value="chat" className="flex-1 flex flex-col h-full">
               {connectionError && (
                 <div className="mb-4 bg-yellow-50 border border-yellow-300 rounded-md p-3">
@@ -328,7 +445,7 @@ const TutorPage = () => {
                 </div>
               )}
               
-              <Card className="flex-1 overflow-hidden flex flex-col mb-4">
+              <Card className="flex-1 overflow-hidden flex flex-col mb-6">
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
                   {messages.map((message) => (
                     <div
@@ -362,8 +479,11 @@ const TutorPage = () => {
                   <div ref={messagesEndRef} />
                 </div>
               </Card>
-              
-              <div className="flex">
+              <p className="italic text-xs text-gray-600 mb-4">
+                Sempre reflita as respostas do Tutor e como isso pode se aplicar à você.
+                Aqui não tem verdades absolutas, apenas provocações para você refletir e ter novas ideias.
+              </p>
+              <div className="flex mb-10">
                 <Textarea
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
@@ -372,7 +492,7 @@ const TutorPage = () => {
                   className="flex-1 mr-2 resize-none overflow-hidden"
                   disabled={isLoading}
                   rows={1}
-                  maxRows={5}
+                  maxRows={7}
                 />
                 <Button
                   onClick={handleSendMessage}
