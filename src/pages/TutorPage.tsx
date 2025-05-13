@@ -40,80 +40,43 @@ const TutorPage = () => {
   });
 
   useEffect(() => {
-    // Obter o nome do usuário do localStorage
-    const storedName = localStorage.getItem('userName');
-    if (storedName) {
-      setUserName(storedName);
-      console.log('Nome recuperado do localStorage:', storedName);
-    }
-    
     // Verificar se o usuário já se apresentou (usando localStorage)
     const hasIntroduced = localStorage.getItem('tutorIntroduced') === 'true';
     setUserIntroduced(hasIntroduced);
-    
-    // Adicionar mensagem apropriada quando a página carregar
-    if (messages.length === 0) {
-      if (hasIntroduced && storedName) {
-        setMessages([
-          {
-            id: "welcome",
-            role: "tutor",
-            content: `Olá, ${storedName}! Eu sou o Tutor Tryla, seu assistente de aprendizado. Como posso ajudar você hoje? Você pode me fazer perguntas sobre qualquer um dos temas dos módulos!`,
-            timestamp: new Date(),
-          },
-        ]);
-      } else if (hasIntroduced) {
-        setMessages([
-          {
-            id: "welcome",
-            role: "tutor",
-            content: "Olá! Eu sou o Tutor Tryla, seu assistente de aprendizado. Como posso ajudar você hoje? Você pode me fazer perguntas sobre qualquer um dos temas dos módulos!",
-            timestamp: new Date(),
-          },
-        ]);
-      } else {
-        setMessages([
-          {
-            id: "introduction",
-            role: "tutor",
-            content: "Olá! Eu sou o Tutor Tryla, seu assistente de aprendizado. **Antes de começarmos**, gostaria que você se apresentasse brevemente. Conte-me seu nome, idade e o que você espera aprender aqui na Tryla!",
-            timestamp: new Date(),
-          },
-        ]);
-      }
-    }
     
     // Buscar informações do usuário do Supabase
     const fetchUserProfile = async () => {
       try {
         const { data: userData } = await supabase.auth.getUser();
         if (userData?.user) {
+          // Buscar o nome completo do usuário na tabela 'profiles'
           const { data: profileData } = await supabase
             .from('profiles')
-            .select('first_name')
+            .select('full_name')
             .eq('id', userData.user.id)
             .single();
             
-          if (profileData?.first_name) {
-            const firstName = profileData.first_name.split(' ')[0];
+          if (profileData?.full_name) {
+            // Extrair o primeiro nome
+            const firstName = profileData.full_name.split(' ')[0];
             console.log('Nome obtido do perfil:', firstName);
             setUserName(firstName);
-            localStorage.setItem('userName', firstName);
-            
-            // Verificar se o nome foi armazenado corretamente
-            const verifyStorage = localStorage.getItem('userName');
-            console.log('Nome verificado no localStorage:', verifyStorage);
+          } else {
+            console.log('Perfil encontrado, mas sem nome completo definido');
+            setUserName(""); // Definir nome como string vazia se não houver nome no perfil
           }
+        } else {
+          console.log('Usuário não autenticado');
+          setUserName(""); // Definir nome como string vazia se usuário não estiver autenticado
         }
       } catch (error) {
         console.error("Erro ao buscar perfil do usuário:", error);
+        setUserName(""); // Definir nome como string vazia em caso de erro
       }
     };
     
-    // Se não tiver nome no localStorage, buscar do perfil
-    if (!storedName) {
-      fetchUserProfile();
-    }
+    // Buscar o perfil do usuário diretamente do Supabase
+    fetchUserProfile();
   }, []);
 
   useEffect(() => {
@@ -123,6 +86,42 @@ const TutorPage = () => {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
+// Adicionar mensagem apropriada quando a página carregar
+useEffect(() => {
+  if (messages.length === 0) {
+    const hasIntroduced = localStorage.getItem('tutorIntroduced') === 'true';
+    
+    if (hasIntroduced && userName) {
+      setMessages([
+        {
+          id: "welcome",
+          role: "tutor",
+          content: `Olá, ${userName}! Eu sou o Tutor Tryla, seu assistente de aprendizado. Como posso ajudar você hoje? Você pode me fazer perguntas sobre qualquer um dos temas dos módulos!`,
+          timestamp: new Date(),
+        },
+      ]);
+    } else if (hasIntroduced) {
+      setMessages([
+        {
+          id: "welcome",
+          role: "tutor",
+          content: "Olá! Eu sou o Tutor Tryla, seu assistente de aprendizado. Como posso ajudar você hoje? Você pode me fazer perguntas sobre qualquer um dos temas dos módulos!",
+          timestamp: new Date(),
+        },
+      ]);
+    } else {
+      setMessages([
+        {
+          id: "introduction",
+          role: "tutor",
+          content: "Olá! Eu sou o Tutor Tryla, seu assistente de aprendizado. **Antes de começarmos**, gostaria que você se apresentasse brevemente. Conte-me seu nome, idade e o que você espera aprender aqui na Tryla!",
+          timestamp: new Date(),
+        },
+      ]);
+    }
+  }
+}, [messages.length, userName]);
 
   // Função para testar a conexão com a função Edge
   const testEdgeFunction = async () => {
@@ -208,47 +207,16 @@ const TutorPage = () => {
     if (!userIntroduced) {
       localStorage.setItem('tutorIntroduced', 'true');
       setUserIntroduced(true);
-      
-      // Tentar extrair o nome do usuário da primeira mensagem
-      const nameParts = inputMessage.split(' ');
-      if (nameParts.length > 0) {
-        const possibleName = nameParts[0].replace(/[^a-zA-ZÀ-ÿ]/g, '');
-        if (possibleName && possibleName.length > 1) {
-          console.log('Nome extraído da mensagem:', possibleName);
-          setUserName(possibleName);
-          localStorage.setItem('userName', possibleName);
-          
-          // Verificar se o nome foi armazenado corretamente
-          const verifyStorage = localStorage.getItem('userName');
-          console.log('Nome verificado no localStorage após extração:', verifyStorage);
-        }
-      }
     }
     
     try {
-      // Garantir que temos o nome do usuário antes de enviar
-      const currentUserName = userName || localStorage.getItem('userName') || '';
-      
-      // Se ainda não temos o nome, tentar extrair da mensagem atual
-      if (!currentUserName && !userIntroduced) {
-        const nameParts = inputMessage.split(' ');
-        if (nameParts.length > 0) {
-          const possibleName = nameParts[0].replace(/[^a-zA-ZÀ-ÿ]/g, '');
-          if (possibleName && possibleName.length > 1) {
-            setUserName(possibleName);
-            localStorage.setItem('userName', possibleName);
-            console.log('Nome extraído antes de enviar:', possibleName);
-          }
-        }
-      }
-      
-      console.log('Nome sendo enviado para a função Edge:', currentUserName);
+      console.log('Nome do usuário antes de enviar mensagem:', userName);
       
       const { data, error } = await supabase.functions.invoke('tutor-tryla', {
         body: { 
           prompt: inputMessage,
           module: selectedModule,
-          userName: currentUserName // Enviar o nome do usuário para a função Edge
+          userName: userName // Enviar o nome do usuário para a função Edge
         },
       });
       
@@ -261,13 +229,10 @@ const TutorPage = () => {
           variant: "destructive",
         });
         
-        // Garantir que temos o nome mais atualizado
-        const currentUserName = userName || localStorage.getItem('userName') || '';
-        
         // Atualiza a mensagem de placeholder para mostrar o erro
         setMessages(prev => prev.map(msg => 
           msg.id === `tutor-${messageId}` 
-            ? { ...msg, content: `Desculpe ${currentUserName ? currentUserName : ""}, estou com dificuldades para responder agora. Tente verificar sua conexão clicando no botão 'Testar Conexão' acima.`, isLoading: false } 
+            ? { ...msg, content: `Desculpe ${userName ? userName : ""}, estou com dificuldades para responder agora. Tente verificar sua conexão clicando no botão 'Testar Conexão' acima.`, isLoading: false } 
             : msg
         ));
       } else if (data?.error) {
@@ -279,47 +244,39 @@ const TutorPage = () => {
           variant: "destructive",
         });
         
-        // Garantir que temos o nome mais atualizado
-        const currentUserName = userName || localStorage.getItem('userName') || '';
-        
         // Atualiza a mensagem de placeholder com o erro
         setMessages(prev => prev.map(msg => 
           msg.id === `tutor-${messageId}` 
-            ? { ...msg, content: `Desculpe ${currentUserName ? currentUserName : ""}, ocorreu um erro ao processar sua pergunta: ${data.error}`, isLoading: false } 
+            ? { ...msg, content: `Desculpe ${userName ? userName : ""}, ocorreu um erro ao processar sua pergunta: ${data.error}`, isLoading: false } 
             : msg
         ));
       } else if (!data || !data.resposta) {
         setConnectionError(true);
         
-        // Garantir que temos o nome mais atualizado
-        const currentUserName = userName || localStorage.getItem('userName') || '';
-        
         // Atualiza a mensagem de placeholder
         setMessages(prev => prev.map(msg => 
           msg.id === `tutor-${messageId}` 
-            ? { ...msg, content: `Desculpe ${currentUserName ? currentUserName : ""}, recebi uma resposta vazia do servidor. Tente novamente mais tarde.`, isLoading: false } 
+            ? { ...msg, content: `Desculpe ${userName ? userName : ""}, recebi uma resposta vazia do servidor. Tente novamente mais tarde.`, isLoading: false } 
             : msg
         ));
       } else {
         // Adicionar o nome do usuário à resposta se não estiver presente
         let resposta = data.resposta;
-        // Garantir que temos o nome mais atualizado
-        const currentUserName = userName || localStorage.getItem('userName') || '';
-        console.log('Nome atual do usuário para resposta:', currentUserName);
+        console.log('Nome atual do usuário para resposta:', userName);
         
         // Verificar se o nome está presente na resposta (considerando variações de capitalização)
-        const nameInResponse = currentUserName && 
-          (resposta.toLowerCase().includes(currentUserName.toLowerCase()) ||
-           resposta.toLowerCase().includes(currentUserName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')));
+        const nameInResponse = userName && 
+          (resposta.toLowerCase().includes(userName.toLowerCase()) ||
+           resposta.toLowerCase().includes(userName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')));
         
         console.log('Resposta inclui o nome?', nameInResponse);
         
-        if (currentUserName && !nameInResponse) {
+        if (userName && !nameInResponse) {
           // Verificar se a resposta começa com saudação
           if (resposta.match(/^(Olá|Oi|Bem|Claro|Certo|Entendi|Compreendo)/i)) {
-            resposta = resposta.replace(/^(Olá|Oi|Bem|Claro|Certo|Entendi|Compreendo)/i, `$1, ${currentUserName}`);
+            resposta = resposta.replace(/^(Olá|Oi|Bem|Claro|Certo|Entendi|Compreendo)/i, `$1, ${userName}`);
           } else {
-            resposta = `${currentUserName}, ${resposta}`;
+            resposta = `${userName}, ${resposta}`;
           }
           console.log('Resposta modificada:', resposta);
         }
@@ -341,13 +298,10 @@ const TutorPage = () => {
         variant: "destructive",
       });
       
-      // Garantir que temos o nome mais atualizado
-      const currentUserName = userName || localStorage.getItem('userName') || '';
-      
       // Atualiza a mensagem de placeholder para mostrar o erro
       setMessages(prev => prev.map(msg => 
         msg.id === `tutor-${messageId}` 
-          ? { ...msg, content: `Desculpe ${currentUserName ? currentUserName : ""}, algo deu errado. Tente novamente mais tarde ou utilize o botão 'Testar Conexão'.`, isLoading: false } 
+          ? { ...msg, content: `Desculpe ${userName ? userName : ""}, algo deu errado. Tente novamente mais tarde ou utilize o botão 'Testar Conexão'.`, isLoading: false } 
           : msg
       ));
     } finally {
@@ -405,19 +359,18 @@ const TutorPage = () => {
       />
       
       <div className="container px-4 py-4 pb-8">
-        <div className="flex flex-col h-[calc(100vh-200px)]">
-          <Tabs defaultValue="chat" className="w-full mb-4">
-            <TabsList className="w-full mb-4">
-              <TabsTrigger value="chat" className="flex-1">
-                <MessageCircle className="w-4 h-4 mr-2" />
-                Chat
-              </TabsTrigger>
-              <TabsTrigger value="modules" className="flex-1">
-                <Bot className="w-4 h-4 mr-2" />
-                Módulos
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="chat" className="flex-1 flex flex-col h-full">
+        <Tabs defaultValue="chat" className="w-full">
+          <TabsList className="w-full mb-4">
+            <TabsTrigger value="chat" className="flex-1">
+              <MessageCircle className="w-4 h-4 mr-2" />
+              Chat
+            </TabsTrigger>
+            <TabsTrigger value="modules" className="flex-1">
+              <Bot className="w-4 h-4 mr-2" />
+              Módulos
+            </TabsTrigger>
+          </TabsList>
+            <TabsContent value="chat" className="h-[calc(100vh-240px)] flex flex-col">
               {connectionError && (
                 <div className="mb-4 bg-yellow-50 border border-yellow-300 rounded-md p-3">
                   <div className="flex items-center">
@@ -445,7 +398,7 @@ const TutorPage = () => {
                 </div>
               )}
               
-              <Card className="flex-1 overflow-hidden flex flex-col mb-6">
+              <Card className="flex-1 overflow-hidden flex flex-col mb-4">
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
                   {messages.map((message) => (
                     <div
@@ -479,20 +432,19 @@ const TutorPage = () => {
                   <div ref={messagesEndRef} />
                 </div>
               </Card>
-              <p className="italic text-xs text-gray-600 mb-4">
+              <p className="italic text-xs text-gray-600 mb-2">
                 Sempre reflita as respostas do Tutor e como isso pode se aplicar à você.
                 Aqui não tem verdades absolutas, apenas provocações para você refletir e ter novas ideias.
               </p>
-              <div className="flex mb-10">
+              <div className="flex mb-2">
                 <Textarea
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Digite sua pergunta aqui..."
-                  className="flex-1 mr-2 resize-none overflow-hidden"
+                  className="flex-1 mr-1 resize-none overflow-hidden"
                   disabled={isLoading}
-                  rows={1}
-                  maxRows={7}
+                  rows={isMobile ? 1 : 2}
                 />
                 <Button
                   onClick={handleSendMessage}
@@ -504,13 +456,13 @@ const TutorPage = () => {
               </div>
             </TabsContent>
             
-            <TabsContent value="modules" className="space-y-4">
-              <p className="text-sm text-gray-600 mb-2">
+            <TabsContent value="modules" className="h-300px overflow-y-auto pb-2">
+              <p className="text-sm text-gray-600 mb-3">
                 Selecione um módulo para direcionar suas perguntas para um tema específico.
                 O Tutor Tryla adaptará suas respostas ao tema escolhido.
               </p>
               
-              <div className="flex flex-col space-y-2">
+              <div className="flex flex-col space-y-1">
                 <Card
                   className={`p-3 cursor-pointer transition-all ${
                     selectedModule === "" ? "border-orange-500 shadow-md" : "hover:border-orange-300"
@@ -546,12 +498,10 @@ const TutorPage = () => {
               </div>
             </TabsContent>
           </Tabs>
-        </div>
       </div>
       
       <BottomNavigation />
     </div>
   );
 };
-
 export default TutorPage;

@@ -13,7 +13,8 @@ const EmptyJournal: React.FC<EmptyJournalProps> = ({ onNewEntry }) => {
       <div className="text-4xl">📝</div>
       <h3 className="text-xl font-bold">Seu diário está vazio</h3>
       <p className="text-gray-600">
-        Registre seus aprendizados, reflexões e insights da sua jornada de desenvolvimento pessoal.
+        Este é um espaço bem gostoso para anotar os seus aprendizados, reflexões
+        e insights da sua jornada de desenvolvimento pessoal.
       </p>
       <Button 
         onClick={onNewEntry}

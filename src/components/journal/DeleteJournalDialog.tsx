@@ -28,7 +28,7 @@ const DeleteJournalDialog: React.FC<DeleteJournalDialogProps> = ({
         <AlertDialogHeader>
           <AlertDialogTitle>Excluir anotação</AlertDialogTitle>
           <AlertDialogDescription>
-            Esta ação não pode ser desfeita. A anotação será permanentemente removida.
+            Esta ação não pode ser desfeita, tudo bem? A anotação será permanentemente removida.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -41,5 +41,4 @@ const DeleteJournalDialog: React.FC<DeleteJournalDialogProps> = ({
     </AlertDialog>
   );
 };
-
 export default DeleteJournalDialog;
