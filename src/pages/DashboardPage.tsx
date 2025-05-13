@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Search, ArrowRight, Clock, Trophy } from "lucide-react";
+import { Search, ArrowRight, Clock } from "lucide-react";
 import BottomNavigation from "@/components/BottomNavigation";
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery } from '@tanstack/react-query';
@@ -296,7 +296,7 @@ const DashboardPage = () => {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 sm:gap-3">
+          <div className="flex flex-col space-y-3">
             {modules.slice(0, 4).map((module, index) => (
               <ModuleCard 
                 key={module.id}
@@ -307,7 +307,7 @@ const DashboardPage = () => {
                 completed={completedModules[module.id] || false}
                 locked={isModuleLocked(index, module.id)}
                 description={module.description}
-                emoji={module.emoji}
+                vertical={true}
               />
             ))}
           </div>

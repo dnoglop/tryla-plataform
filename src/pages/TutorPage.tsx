@@ -12,6 +12,7 @@ import { Bot, MessageCircle, Send, RefreshCw } from "lucide-react";
 import { getModules } from "@/services/moduleService";
 import { supabase } from "@/integrations/supabase/client";
 import BottomNavigation from "@/components/BottomNavigation";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Message {
   id: string;
@@ -29,7 +30,9 @@ const TutorPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModule, setSelectedModule] = useState<string>("");
   const [connectionError, setConnectionError] = useState<boolean>(false);
+  const [userIntroduced, setUserIntroduced] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
   
   const { data: modules = [] } = useQuery({
     queryKey: ['modules'],
@@ -37,16 +40,31 @@ const TutorPage = () => {
   });
 
   useEffect(() => {
-    // Adicionar mensagem de boas-vindas quando a página carregar
+    // Verificar se o usuário já se apresentou (usando localStorage)
+    const hasIntroduced = localStorage.getItem('tutorIntroduced') === 'true';
+    setUserIntroduced(hasIntroduced);
+    
+    // Adicionar mensagem apropriada quando a página carregar
     if (messages.length === 0) {
-      setMessages([
-        {
-          id: "welcome",
-          role: "tutor",
-          content: "Olá! Eu sou o Tutor Tryla, seu assistente de aprendizado. Como posso ajudar você hoje? Você pode me fazer perguntas sobre qualquer um dos temas dos módulos!",
-          timestamp: new Date(),
-        },
-      ]);
+      if (hasIntroduced) {
+        setMessages([
+          {
+            id: "welcome",
+            role: "tutor",
+            content: "Olá! Eu sou o Tutor Tryla, seu assistente de aprendizado. Como posso ajudar você hoje? Você pode me fazer perguntas sobre qualquer um dos temas dos módulos!",
+            timestamp: new Date(),
+          },
+        ]);
+      } else {
+        setMessages([
+          {
+            id: "introduction",
+            role: "tutor",
+            content: "Olá! Eu sou o Tutor Tryla, seu assistente de aprendizado. **Antes de começarmos**, gostaria que você se apresentasse brevemente. Conte-me seu nome, idade e o que você espera aprender aqui na Tryla!",
+            timestamp: new Date(),
+          },
+        ]);
+      }
     }
   }, []);
 
@@ -137,6 +155,12 @@ const TutorPage = () => {
     setMessages(prev => [...prev, userMessage, tutorPlaceholder]);
     setInputMessage("");
     setIsLoading(true);
+
+    // Se for a primeira interação e o usuário não se apresentou ainda, marcar como apresentado
+    if (!userIntroduced) {
+      localStorage.setItem('tutorIntroduced', 'true');
+      setUserIntroduced(true);
+    }
     
     try {
       const { data, error } = await supabase.functions.invoke('tutor-tryla', {
@@ -214,6 +238,21 @@ const TutorPage = () => {
     }
   };
 
+  // Função para renderizar o conteúdo da mensagem com formatação
+  const renderMessageContent = (content: string) => {
+    // Substituir **texto** por <strong>texto</strong> (negrito)
+    const boldReplaced = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    // Substituir _texto_ ou *texto* por <em>texto</em> (itálico)
+    const italicReplaced = boldReplaced.replace(/(_|\*)(.*?)(_|\*)/g, '<em>$2</em>');
+    
+    // Substituir [texto](url) por <a href="url" target="_blank" rel="noopener noreferrer">texto</a> (link)
+    const linkReplaced = italicReplaced.replace(/\[([^\]]+)\]\(([^)]+)\)/g, 
+      '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-500 underline">$1</a>');
+    
+    return <div dangerouslySetInnerHTML={{ __html: linkReplaced }} />;
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -286,7 +325,7 @@ const TutorPage = () => {
                       }`}
                     >
                       <div
-                        className={`max-w-[80%] rounded-lg p-3 ${
+                        className={`max-w-[85%] sm:max-w-[80%] rounded-lg p-3 ${
                           message.role === "user"
                             ? "bg-orange-500 text-white"
                             : "bg-gray-100 text-gray-800"
@@ -299,7 +338,7 @@ const TutorPage = () => {
                             <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></div>
                           </div>
                         ) : (
-                          <p className="whitespace-pre-wrap">{message.content}</p>
+                          renderMessageContent(message.content)
                         )}
                         <p className={`text-xs mt-1 ${message.role === "user" ? "text-gray-200" : "text-gray-500"}`}>
                           {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
@@ -319,7 +358,7 @@ const TutorPage = () => {
                   placeholder="Digite sua pergunta aqui..."
                   className="flex-1 mr-2 resize-none"
                   disabled={isLoading}
-                  rows={2}
+                  rows={isMobile ? 2 : 3}
                 />
                 <Button
                   onClick={handleSendMessage}
@@ -337,7 +376,7 @@ const TutorPage = () => {
                 O Tutor Tryla adaptará suas respostas ao tema escolhido.
               </p>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-3">
                 <Card
                   className={`p-4 cursor-pointer transition-all ${
                     selectedModule === "" ? "border-orange-500 shadow-md" : "hover:border-orange-300"

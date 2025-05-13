@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Search, Video, FileText, HelpCircle, ArrowRight } from "lucide-react";
+import { Search, Video, FileText, HelpCircle } from "lucide-react";
 import BottomNavigation from "@/components/BottomNavigation";
 import ModuleCard from "@/components/ModuleCard";
 import ProgressBar from "@/components/ProgressBar";
@@ -196,7 +196,7 @@ const ModulesPage = () => {
         {searchTerm ? (
           <div className="space-y-4">
             <h2 className="text-lg font-bold">Resultados da Busca</h2>
-            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+            <div className="flex flex-col space-y-3">
               {filteredModules.map((module, index) => (
                 <ModuleCard 
                   key={module.id}
@@ -207,19 +207,19 @@ const ModulesPage = () => {
                   completed={completedModules[module.id] || false}
                   locked={isModuleLocked(index, module.id)}
                   description={module.description}
-                  emoji={module.emoji}
+                  vertical={true}
                 />
               ))}
             </div>
           </div>
         ) : (
           Object.entries(groupedModules).map(([type, typeModules]) => (
-            <div key={type} className="space-y-2">
+            <div key={type} className="space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-base sm:text-lg font-bold">{getModuleTypeTitle(type)}</h2>
               </div>
               
-              <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              <div className="flex flex-col space-y-3">
                 {typeModules.map((module, moduleIdx) => {
                   // Find overall index in the complete modules list
                   const moduleIndex = modules.findIndex(m => m.id === module.id);
@@ -234,7 +234,7 @@ const ModulesPage = () => {
                         completed={completedModules[module.id] || false}
                         locked={isModuleLocked(moduleIndex, module.id)}
                         description={module.description}
-                        emoji={module.emoji}
+                        vertical={true}
                       />
                       
                       {/* Show content count for unlocked modules - hide on very small screens */}

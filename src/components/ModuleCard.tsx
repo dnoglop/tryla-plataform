@@ -13,6 +13,7 @@ interface ModuleCardProps {
   locked?: boolean;
   description?: string;
   emoji?: string;
+  vertical?: boolean;
 }
 
 const ModuleCard = ({
@@ -24,6 +25,7 @@ const ModuleCard = ({
   locked = false,
   description,
   emoji,
+  vertical = false,
 }: ModuleCardProps) => {
   const isMobile = useIsMobile();
   
@@ -62,9 +64,6 @@ const ModuleCard = ({
   const config = moduleConfig[type];
   const Icon = config.icon;
 
-  // Use emoji from the admin or default to the icon
-  const moduleEmoji = emoji || null;
-
   return (
     <Link
       to={locked ? "#" : `/modulo/${id}`}
@@ -72,7 +71,7 @@ const ModuleCard = ({
         locked
           ? "opacity-80 grayscale cursor-not-allowed"
           : "cursor-pointer hover:shadow-md transition-all duration-300 hover:-translate-y-1"
-      }`}
+      } ${vertical ? "w-full" : ""}`}
     >
       <div className="w-full p-3 sm:p-4">
         {/* Completed badge */}
@@ -92,25 +91,22 @@ const ModuleCard = ({
           </div>
         )}
 
-        {/* Module header - restructured for mobile */}
-        <div className="flex flex-col mt-4">
-          <h3 className="font-bold text-sm sm:text-base text-gray-800 text-center">{title}</h3>
-          
-          <div className={`mx-auto mt-2 rounded-full p-2 ${completed ? 'bg-trilha-orange' : 'bg-white'}`}>
-            {moduleEmoji ? (
-              <span className="text-xl sm:text-2xl">{moduleEmoji}</span>
-            ) : (
-              // Modificar também a cor do ícone
-              <Icon className={`h-6 w-6 ${completed ? 'text-white' : 'text-[#e36322]'}`} />
-            )}
+        {/* Module header */}
+        <div className={`flex ${vertical ? "items-center" : "flex-col mt-4"}`}>
+          <div className={`${vertical ? "mr-3" : "mx-auto"} rounded-full p-2 ${completed ? 'bg-trilha-orange' : 'bg-white'}`}>
+            <Icon className={`h-6 w-6 ${completed ? 'text-white' : 'text-[#e36322]'}`} />
           </div>
           
-          {/* Only show description on larger screens or if very short */}
-          {(!isMobile || description?.length < 30) && (
-            <p className="text-[10px] sm:text-xs text-gray-600 text-center mt-1 px-1">
-              {config.description}
-            </p>
-          )}
+          <div className={vertical ? "flex-1" : ""}>
+            <h3 className={`font-bold text-sm sm:text-base text-gray-800 ${vertical ? "" : "text-center mt-2"}`}>{title}</h3>
+            
+            {/* Only show description on larger screens or if very short */}
+            {(!isMobile || description?.length < 30 || vertical) && (
+              <p className="text-[10px] sm:text-xs text-gray-600 mt-1 px-1">
+                {config.description}
+              </p>
+            )}
+          </div>
         </div>
         
         {/* Progress bar */}
