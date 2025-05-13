@@ -218,7 +218,7 @@ const DashboardPage = () => {
         {nextModule && nextPhase && (
           <div>
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-800">Continue de onde parou</h2>
+              <h2 className="text-lg font-bold text-gray-800">{profile?.full_name?.split(' ')[0] || "Aluno"}, vamos continuar os estudos?</h2>
             </div>
             
             <Card className="overflow-hidden border-none shadow-md rounded-xl">
@@ -259,37 +259,10 @@ const DashboardPage = () => {
           </div>
         )}
 
-        {/* What do you want to learn today */}
-        <div>
-          <Card className="overflow-hidden border-none shadow-md rounded-xl">
-            <CardContent className="p-0">
-              <div className="bg-[#FFF6F0] p-4 flex items-center justify-between">
-                <div className="flex-1">
-                  <h3 className="font-bold text-base sm:text-lg text-gray-800">O que você gostaria de aprender hoje?</h3>
-                  <p className="text-xs sm:text-sm text-gray-600 mb-3">Continue sua jornada de aprendizado</p>
-                  <Link 
-                    to="/modulos"
-                    className="bg-[#E36322] text-white px-4 py-2 rounded-full text-xs sm:text-sm font-medium inline-flex items-center"
-                  >
-                    Começar
-                  </Link>
-                </div>
-                <div className="hidden sm:block">
-                  <img 
-                    src="/lovable-uploads/1686c74f-2645-4b35-95c0-da717ef37ffe.png" 
-                    alt="Graduação" 
-                    className="w-24 h-24 object-contain"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* For You Section - Featured Modules */}
         <div>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-gray-800">Para você</h2>
+            <h2 className="text-lg font-bold text-gray-800">Módulos bem legais para você</h2>
             <Link to="/modulos" className="text-xs sm:text-sm font-medium text-[#E36322] flex items-center">
               Ver tudo
               <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1" />
@@ -316,12 +289,12 @@ const DashboardPage = () => {
         {/* Tips Section */}
         <div>
           <div className="mb-3">
-            <h2 className="text-lg font-bold text-gray-800">Dicas para você</h2>
+            <h2 className="text-lg font-bold text-gray-800">{profile?.full_name?.split(' ')[0] || "Aluno"}, se liga nesses conselhos importantes!</h2>
           </div>
 
           <Card className="overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-all rounded-xl">
             <CardContent className="p-4">
-              <h3 className="font-bold text-base text-gray-800">Tips para um melhor aprendizado</h3>
+              <h3 className="font-bold text-base text-gray-800">Dicas maneiras para um melhor aprendizado</h3>
               <p className="text-xs text-gray-600 mt-1 mb-3">
                 Aprenda como otimizar seus estudos com estas estratégias comprovadas
               </p>

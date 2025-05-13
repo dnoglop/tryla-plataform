@@ -75,7 +75,7 @@ const ModuleCard = ({
       <div className="w-full p-3 sm:p-4">
         {/* Completed badge */}
         {completed && (
-          <div className="absolute top-1 w-full text-center">
+          <div className="absolute top-2 right-2">
             <span className="text-[10px] sm:text-xs font-bold text-green-600 bg-green-100 rounded-full px-2 py-0.5">
               CONCLUÍDO
             </span>
@@ -93,7 +93,7 @@ const ModuleCard = ({
         {/* Module header - Always vertical layout */}
         <div className="flex items-center">
           <div className="mr-3 rounded-full p-2 ${completed ? 'bg-trilha-orange' : 'bg-white'}">
-            <Icon className={`h-6 w-6 ${completed ? 'text-white' : 'text-[#e36322]'}`} />
+            <Icon className={`h-6 w-6 ${completed ? 'text-green-600' : 'text-[#e36322]'}`} />
           </div>
           
           <div className="flex-1">
