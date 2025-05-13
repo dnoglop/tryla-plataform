@@ -451,18 +451,18 @@ useEffect(() => {
                   disabled={!inputMessage.trim() || isLoading}
                   className="h-auto"
                 >
-                  <Send className="h-5 w-5" />
+                  <Send className="h-3 w-5" />
                 </Button>
               </div>
             </TabsContent>
             
-            <TabsContent value="modules" className="h-300px overflow-y-auto pb-2">
+            <TabsContent value="modules" className="h-[calc(100vh-240px)] overflow-y-auto pb-4">
               <p className="text-sm text-gray-600 mb-3">
                 Selecione um módulo para direcionar suas perguntas para um tema específico.
                 O Tutor Tryla adaptará suas respostas ao tema escolhido.
               </p>
               
-              <div className="flex flex-col space-y-1">
+              <div className="flex flex-col space-y-2">
                 <Card
                   className={`p-3 cursor-pointer transition-all ${
                     selectedModule === "" ? "border-orange-500 shadow-md" : "hover:border-orange-300"
