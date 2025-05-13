@@ -47,3 +47,27 @@
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
+
+/* Message formatting styles */
+.message-content a {
+  color: #3b82f6;
+  text-decoration: underline;
+}
+
+.message-content strong, 
+.message-content b {
+  font-weight: 600;
+}
+
+.message-content em,
+.message-content i {
+  font-style: italic;
+}
+
+/* Auto-expanding textarea */
+textarea.auto-resize {
+  min-height: 24px;
+  max-height: 200px;
+  overflow-y: hidden;
+  resize: none;
+}

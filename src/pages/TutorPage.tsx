@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
@@ -238,19 +237,33 @@ const TutorPage = () => {
     }
   };
 
-  // Função para renderizar o conteúdo da mensagem com formatação
+  // Função para renderizar o conteúdo da mensagem com formatação melhorada
   const renderMessageContent = (content: string) => {
-    // Substituir **texto** por <strong>texto</strong> (negrito)
-    const boldReplaced = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    // Formato de parágrafo - adiciona quebras de linha entre parágrafos
+    const paragraphSplit = content.split('\n\n').map((paragraph, i) => {
+      // Aplicar formatação dentro de cada parágrafo
+      
+      // Substituir **texto** por <strong>texto</strong> (negrito)
+      const boldReplaced = paragraph.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      
+      // Substituir _texto_ ou *texto* por <em>texto</em> (itálico)
+      const italicReplaced = boldReplaced.replace(/(_|\*)(.*?)(_|\*)/g, '<em>$2</em>');
+      
+      // Substituir [texto](url) por <a href="url" target="_blank" rel="noopener noreferrer">texto</a> (link)
+      const linkReplaced = italicReplaced.replace(/\[([^\]]+)\]\(([^)]+)\)/g, 
+        '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-500 underline">$1</a>');
+      
+      // Substituir numerações (1. Texto) com formatação adequada
+      const numberedReplaced = linkReplaced.replace(/(\d+)\.\s+(.*)/g, '<span class="font-medium">$1.</span> $2');
+      
+      return (
+        <p key={i} className="mb-3">{
+          <div dangerouslySetInnerHTML={{ __html: numberedReplaced }} />
+        }</p>
+      );
+    });
     
-    // Substituir _texto_ ou *texto* por <em>texto</em> (itálico)
-    const italicReplaced = boldReplaced.replace(/(_|\*)(.*?)(_|\*)/g, '<em>$2</em>');
-    
-    // Substituir [texto](url) por <a href="url" target="_blank" rel="noopener noreferrer">texto</a> (link)
-    const linkReplaced = italicReplaced.replace(/\[([^\]]+)\]\(([^)]+)\)/g, 
-      '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-500 underline">$1</a>');
-    
-    return <div dangerouslySetInnerHTML={{ __html: linkReplaced }} />;
+    return <div className="whitespace-pre-wrap">{paragraphSplit}</div>;
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -273,7 +286,7 @@ const TutorPage = () => {
         onBackClick={handleBackClick}
       />
       
-      <div className="container px-4 py-6">
+      <div className="container px-4 py-4">
         <div className="flex flex-col h-[calc(100vh-150px)]">
           <Tabs defaultValue="chat" className="w-full mb-4">
             <TabsList className="w-full mb-4">
@@ -356,9 +369,10 @@ const TutorPage = () => {
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Digite sua pergunta aqui..."
-                  className="flex-1 mr-2 resize-none"
+                  className="flex-1 mr-2 resize-none overflow-hidden"
                   disabled={isLoading}
-                  rows={isMobile ? 2 : 3}
+                  rows={1}
+                  maxRows={5}
                 />
                 <Button
                   onClick={handleSendMessage}
@@ -371,23 +385,23 @@ const TutorPage = () => {
             </TabsContent>
             
             <TabsContent value="modules" className="space-y-4">
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-gray-600 mb-2">
                 Selecione um módulo para direcionar suas perguntas para um tema específico.
                 O Tutor Tryla adaptará suas respostas ao tema escolhido.
               </p>
               
-              <div className="space-y-3">
+              <div className="flex flex-col space-y-2">
                 <Card
-                  className={`p-4 cursor-pointer transition-all ${
+                  className={`p-3 cursor-pointer transition-all ${
                     selectedModule === "" ? "border-orange-500 shadow-md" : "hover:border-orange-300"
                   }`}
                   onClick={() => setSelectedModule("")}
                 >
                   <div className="flex items-center">
-                    <div className="text-2xl mr-3">🧠</div>
+                    <div className="text-xl mr-3">🧠</div>
                     <div>
                       <h3 className="font-medium">Todos os temas</h3>
-                      <p className="text-sm text-gray-500">Perguntas gerais sobre desenvolvimento socioemocional</p>
+                      <p className="text-xs text-gray-500">Perguntas gerais sobre desenvolvimento socioemocional</p>
                     </div>
                   </div>
                 </Card>
@@ -395,16 +409,16 @@ const TutorPage = () => {
                 {modules.map((module) => (
                   <Card
                     key={module.id}
-                    className={`p-4 cursor-pointer transition-all ${
+                    className={`p-3 cursor-pointer transition-all ${
                       selectedModule === module.type ? "border-orange-500 shadow-md" : "hover:border-orange-300"
                     }`}
                     onClick={() => setSelectedModule(module.type)}
                   >
                     <div className="flex items-center">
-                      <div className="text-2xl mr-3">{module.emoji || "📚"}</div>
+                      <div className="text-xl mr-3">{module.emoji || "📚"}</div>
                       <div>
                         <h3 className="font-medium">{module.name}</h3>
-                        <p className="text-sm text-gray-500">{module.description}</p>
+                        <p className="text-xs text-gray-500">{module.description}</p>
                       </div>
                     </div>
                   </Card>

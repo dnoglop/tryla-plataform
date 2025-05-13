@@ -24,8 +24,7 @@ const ModuleCard = ({
   completed,
   locked = false,
   description,
-  emoji,
-  vertical = false,
+  vertical = true, // Changed default to true for vertical layout
 }: ModuleCardProps) => {
   const isMobile = useIsMobile();
   
@@ -91,21 +90,18 @@ const ModuleCard = ({
           </div>
         )}
 
-        {/* Module header */}
-        <div className={`flex ${vertical ? "items-center" : "flex-col mt-4"}`}>
-          <div className={`${vertical ? "mr-3" : "mx-auto"} rounded-full p-2 ${completed ? 'bg-trilha-orange' : 'bg-white'}`}>
+        {/* Module header - Always vertical layout */}
+        <div className="flex items-center">
+          <div className="mr-3 rounded-full p-2 ${completed ? 'bg-trilha-orange' : 'bg-white'}">
             <Icon className={`h-6 w-6 ${completed ? 'text-white' : 'text-[#e36322]'}`} />
           </div>
           
-          <div className={vertical ? "flex-1" : ""}>
-            <h3 className={`font-bold text-sm sm:text-base text-gray-800 ${vertical ? "" : "text-center mt-2"}`}>{title}</h3>
+          <div className="flex-1">
+            <h3 className="font-bold text-sm sm:text-base text-gray-800">{title}</h3>
             
-            {/* Only show description on larger screens or if very short */}
-            {(!isMobile || description?.length < 30 || vertical) && (
-              <p className="text-[10px] sm:text-xs text-gray-600 mt-1 px-1">
-                {config.description}
-              </p>
-            )}
+            <p className="text-[10px] sm:text-xs text-gray-600 mt-1 px-1">
+              {config.description}
+            </p>
           </div>
         </div>
         
