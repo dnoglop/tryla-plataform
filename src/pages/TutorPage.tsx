@@ -3,13 +3,12 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { useQuery } from "@tanstack/react-query";
-import { Bot, MessageCircle, Send } from "lucide-react";
+import { Bot, MessageCircle, Send, RefreshCw } from "lucide-react";
 import { getModules } from "@/services/moduleService";
 import { supabase } from "@/integrations/supabase/client";
 import BottomNavigation from "@/components/BottomNavigation";
@@ -29,6 +28,7 @@ const TutorPage = () => {
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModule, setSelectedModule] = useState<string>("");
+  const [connectionError, setConnectionError] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const { data: modules = [] } = useQuery({
@@ -56,6 +56,59 @@ const TutorPage = () => {
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // Função para testar a conexão com a função Edge
+  const testEdgeFunction = async () => {
+    setConnectionError(false);
+    setIsLoading(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('tutor-tryla', {
+        body: { 
+          prompt: "Olá, esta é uma mensagem de teste para verificar se você está funcionando corretamente.",
+          module: "" 
+        },
+      });
+      
+      if (error) {
+        console.error("Erro ao testar a conexão:", error);
+        setConnectionError(true);
+        toast({
+          title: "Erro de conexão",
+          description: "Não foi possível conectar ao Tutor Tryla. Verifique sua conexão e tente novamente.",
+          variant: "destructive",
+        });
+        return false;
+      }
+      
+      if (!data || !data.resposta) {
+        setConnectionError(true);
+        toast({
+          title: "Resposta inválida",
+          description: "O servidor respondeu, mas a resposta é inválida.",
+          variant: "destructive",
+        });
+        return false;
+      }
+      
+      toast({
+        title: "Conexão estabelecida",
+        description: "O Tutor Tryla está online e pronto para responder!",
+      });
+      return true;
+    } catch (error) {
+      console.error("Erro ao testar conexão:", error);
+      setConnectionError(true);
+      toast({
+        title: "Erro de conexão",
+        description: "Ocorreu um erro ao testar a conexão com o Tutor Tryla.",
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSendMessage = async () => {
@@ -95,16 +148,41 @@ const TutorPage = () => {
       
       if (error) {
         console.error("Erro ao chamar o Tutor Tryla:", error);
+        setConnectionError(true);
         toast({
-          title: "Erro",
-          description: "Não consegui processar sua pergunta. Tente novamente mais tarde.",
+          title: "Erro de conexão",
+          description: "Não foi possível conectar ao Tutor Tryla. Por favor, verifique sua conexão.",
           variant: "destructive",
         });
         
         // Atualiza a mensagem de placeholder para mostrar o erro
         setMessages(prev => prev.map(msg => 
           msg.id === `tutor-${messageId}` 
-            ? { ...msg, content: "Desculpe, estou com dificuldades para responder agora. Tente novamente mais tarde.", isLoading: false } 
+            ? { ...msg, content: "Desculpe, estou com dificuldades para responder agora. Tente verificar sua conexão clicando no botão 'Testar Conexão' acima.", isLoading: false } 
+            : msg
+        ));
+      } else if (data?.error) {
+        console.error("Erro retornado pelo servidor:", data.error);
+        setConnectionError(true);
+        toast({
+          title: "Erro no servidor",
+          description: data.error || "Ocorreu um erro ao processar sua solicitação.",
+          variant: "destructive",
+        });
+        
+        // Atualiza a mensagem de placeholder com o erro
+        setMessages(prev => prev.map(msg => 
+          msg.id === `tutor-${messageId}` 
+            ? { ...msg, content: `Desculpe, ocorreu um erro ao processar sua pergunta: ${data.error}`, isLoading: false } 
+            : msg
+        ));
+      } else if (!data || !data.resposta) {
+        setConnectionError(true);
+        
+        // Atualiza a mensagem de placeholder
+        setMessages(prev => prev.map(msg => 
+          msg.id === `tutor-${messageId}` 
+            ? { ...msg, content: "Desculpe, recebi uma resposta vazia do servidor. Tente novamente mais tarde.", isLoading: false } 
             : msg
         ));
       } else {
@@ -114,9 +192,11 @@ const TutorPage = () => {
             ? { ...msg, content: data.resposta, isLoading: false } 
             : msg
         ));
+        setConnectionError(false);
       }
     } catch (error) {
       console.error("Erro ao processar a resposta:", error);
+      setConnectionError(true);
       toast({
         title: "Erro",
         description: "Ocorreu um erro ao processar sua pergunta.",
@@ -126,7 +206,7 @@ const TutorPage = () => {
       // Atualiza a mensagem de placeholder para mostrar o erro
       setMessages(prev => prev.map(msg => 
         msg.id === `tutor-${messageId}` 
-          ? { ...msg, content: "Desculpe, algo deu errado. Tente novamente mais tarde.", isLoading: false } 
+          ? { ...msg, content: "Desculpe, algo deu errado. Tente novamente mais tarde ou utilize o botão 'Testar Conexão'.", isLoading: false } 
           : msg
       ));
     } finally {
@@ -169,6 +249,33 @@ const TutorPage = () => {
             </TabsList>
             
             <TabsContent value="chat" className="flex-1 flex flex-col h-full">
+              {connectionError && (
+                <div className="mb-4 bg-yellow-50 border border-yellow-300 rounded-md p-3">
+                  <div className="flex items-center">
+                    <div className="text-yellow-700">
+                      <p className="font-medium">Problema de conexão detectado</p>
+                      <p className="text-sm">O Tutor Tryla parece estar com dificuldades para responder.</p>
+                    </div>
+                    <div className="ml-auto">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={testEdgeFunction}
+                        disabled={isLoading}
+                        className="flex items-center gap-2"
+                      >
+                        {isLoading ? (
+                          <RefreshCw className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <RefreshCw className="h-4 w-4" />
+                        )}
+                        Testar Conexão
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               <Card className="flex-1 overflow-hidden flex flex-col mb-4">
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
                   {messages.map((message) => (

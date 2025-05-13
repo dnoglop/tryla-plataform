@@ -39,6 +39,7 @@ serve(async (req) => {
     console.log("Chamando OpenAI com prompt:", prompt);
     console.log("Módulo selecionado:", module || "nenhum");
 
+    // Usando o modelo gpt-4o-mini que é mais rápido e econômico
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -46,7 +47,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }
@@ -56,13 +57,18 @@ serve(async (req) => {
       }),
     });
 
-    const data = await response.json();
-    
-    if (data.error) {
-      console.error("Erro da OpenAI:", data.error);
-      throw new Error(data.error.message || "Erro ao consultar a OpenAI");
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error("Erro na resposta da OpenAI:", errorData);
+      throw new Error(`OpenAI API respondeu com status ${response.status}: ${JSON.stringify(errorData)}`);
     }
 
+    const data = await response.json();
+    
+    if (!data.choices || data.choices.length === 0) {
+      throw new Error("Resposta da OpenAI não contém escolhas");
+    }
+    
     const resposta = data.choices[0].message.content;
     console.log("Resposta do Tutor Tryla:", resposta);
 
