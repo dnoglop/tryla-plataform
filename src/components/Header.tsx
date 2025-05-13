@@ -7,9 +7,10 @@ export interface HeaderProps {
   title: string;
   showBackButton?: boolean;
   onBackClick?: () => void;
+  rightContent?: React.ReactNode;
 }
 
-const Header: React.FC<HeaderProps> = ({ title, showBackButton = false, onBackClick }) => {
+const Header: React.FC<HeaderProps> = ({ title, showBackButton = false, onBackClick, rightContent }) => {
   const handleBackClick = (e: React.MouseEvent) => {
     if (onBackClick) {
       e.preventDefault();
@@ -26,6 +27,7 @@ const Header: React.FC<HeaderProps> = ({ title, showBackButton = false, onBackCl
           </Link>
         )}
         <h1 className="text-xl font-medium flex-1 text-center">{title}</h1>
+        {rightContent && <div className="ml-auto">{rightContent}</div>}
       </div>
     </header>
   );
