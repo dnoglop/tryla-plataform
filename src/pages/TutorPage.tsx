@@ -141,9 +141,18 @@ const TutorPage = () => {
     }
   };
 
+  // Função para lidar com o botão voltar
+  const handleBackClick = () => {
+    navigate(-1);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-16">
-      <Header title="Tutor Tryla" showBackButton={true} onBackClick={() => navigate(-1)} />
+      <Header 
+        title="Tutor Tryla" 
+        showBackButton={true} 
+        onBackClick={handleBackClick}
+      />
       
       <div className="container px-4 py-6">
         <div className="flex flex-col h-[calc(100vh-150px)]">

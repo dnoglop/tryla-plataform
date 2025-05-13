@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Trash2 } from "lucide-react";
@@ -15,7 +16,7 @@ import {
   updateUserPhaseStatus,
   deletePhase as deletePhaseFunc
 } from "@/services/moduleService";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import RichTextEditor from "@/components/RichTextEditor";
@@ -218,39 +219,7 @@ const PhaseDetailPage = () => {
     });
   };
 
-  // Remova este useEffect duplicado
-  useEffect(() => {
-    const fetchPhaseData = async () => {
-      try {
-        console.log("Carregando fase:", phaseId);
-        setIsLoading(true);
-        
-        if (!phaseId) {
-          console.error("ID da fase não encontrado");
-          toast.error("Erro ao carregar a fase. ID não encontrado.");
-          return;
-        }
-        
-        const phaseData = await getPhaseById(Number(phaseId));
-        console.log("Dados da fase carregados:", phaseData);
-        
-        if (!phaseData) {
-          console.error("Fase não encontrada");
-          toast.error("Fase não encontrada.");
-          return;
-        }
-        
-        setPhase(phaseData);
-      } catch (error) {
-        console.error("Erro ao carregar fase:", error);
-        toast.error("Erro ao carregar a fase. Tente novamente.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchPhaseData();
-  }, [phaseId]);
+  // Removendo o useEffect duplicado que estava causando erros
 
   // Adicione este useEffect para testar a conexão com o Supabase
   useEffect(() => {

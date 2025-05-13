@@ -7,15 +7,26 @@ interface HeaderProps {
   showBackButton?: boolean;
   showNotifications?: boolean;
   rightContent?: React.ReactNode;
+  onBackClick?: () => void; // Adicionando esta prop
 }
 
 const Header = ({ 
   title, 
   showBackButton = true,
   showNotifications = true,
-  rightContent
+  rightContent,
+  onBackClick // Usando a nova prop
 }: HeaderProps) => {
   const navigate = useNavigate();
+
+  // Função para lidar com o clique no botão de voltar
+  const handleBackClick = () => {
+    if (onBackClick) {
+      onBackClick();
+    } else {
+      navigate(-1);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-30 w-full bg-white shadow-sm">
@@ -23,7 +34,7 @@ const Header = ({
         <div className="flex items-center gap-2">
           {showBackButton && (
             <button 
-              onClick={() => navigate(-1)}
+              onClick={handleBackClick}
               className="rounded-full p-2 hover:bg-gray-100"
             >
               <ArrowLeft className="h-5 w-5 text-[#E36322]" />

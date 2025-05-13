@@ -153,7 +153,7 @@ const ModuleDetailPage = () => {
     
     // Encontrar a primeira fase não concluída ou a primeira fase
     const firstIncompletePhase = phases.find(phase => 
-      !phaseStatuses[phase.id]?.completed
+      phaseStatuses[phase.id] !== "completed"
     );
     
     const targetPhase = firstIncompletePhase || phases[0];
