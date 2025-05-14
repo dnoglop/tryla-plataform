@@ -43,11 +43,11 @@ function App() {
         />
         <Route
           path="/login"
-          element={session ? <Navigate to="/dashboard" replace /> : <LoginPage />}
+          element={session ? <Navigate to="/dashboard" /> : <LoginPage />}
         />
         <Route
           path="/cadastro"
-          element={session ? <Navigate to="/dashboard" replace /> : <SignupPage />}
+          element={session ? <Navigate to="/dashboard" /> : <SignupPage />}
         />
         <Route
           path="/dashboard"
