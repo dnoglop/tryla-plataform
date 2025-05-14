@@ -129,20 +129,13 @@ const ProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-white pb-16">
-      <Header 
-        title="Perfil" 
-        rightContent={
-          <Button variant="ghost" size="sm" className="rounded-full p-2" onClick={() => navigate("/editar-perfil")}>
-            <Edit className="h-5 w-5 text-[#E36322]" />
-          </Button>
-        }
-      />
+      <Header title="Perfil" />
 
       {/* Main profile section */}
       <div className="bg-[#E36322] px-4 pt-6 pb-6">
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <div className="w-20 h-20 rounded-full border-4 border-white overflow-hidden">
+        <div className="flex flex-col items-center text-center">
+          <div className="relative mb-3">
+            <div className="w-24 h-24 rounded-full border-4 border-white overflow-hidden mx-auto">
               {profile?.avatar_url ? (
                 <img 
                   src={profile.avatar_url} 
@@ -156,19 +149,28 @@ const ProfilePage = () => {
               )}
             </div>
             {profile?.streak_days && profile.streak_days > 0 && (
-              <div className="absolute -bottom-1 -right-1 bg-white text-[#E36322] rounded-full h-7 w-7 flex items-center justify-center border-2 border-[#E36322] text-xs font-bold">
+              <div className="absolute -bottom-1 right-1 bg-white text-[#E36322] rounded-full h-7 w-7 flex items-center justify-center border-2 border-[#E36322] text-xs font-bold">
                 {profile.streak_days}🔥
               </div>
             )}
           </div>
           
-          <div className="flex-1">
+          <div className="w-full mb-3">
             <h2 className="text-xl font-bold text-white">{profile?.full_name || "Usuário"}</h2>
-            <p className="text-white/90">@{profile?.username || "username"}</p>
-            <div className="flex items-center mt-1 text-white/80 text-xs">
+            <p className="text-white/90 mt-1">@{profile?.username || "username"}</p>
+            <div className="flex items-center justify-center mt-2 text-white/80 text-xs">
               <Mail className="h-3 w-3 mr-1" />
               <span>Tryla desde {new Date(profile?.created_at || Date.now()).toLocaleDateString('pt-BR', {month: 'short', year: 'numeric'})}</span>
             </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mt-3 bg-white text-[#E36322] hover:bg-white/90 font-medium rounded-full" 
+              onClick={() => navigate("/editar-perfil")}
+            >
+              <Edit className="h-4 w-4 mr-1" />
+              Editar Perfil
+            </Button>
           </div>
         </div>
         
