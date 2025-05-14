@@ -12,8 +12,6 @@ import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { getModules, getPhasesByModuleId, isModuleCompleted } from "@/services/moduleService";
 import { getUserRanking, updateUserXpFromModules, RankingUser, RankingPeriod } from "@/services/rankingService";
-import { useQuery } from '@tanstack/react-query';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -300,109 +298,6 @@ const ProfilePage = () => {
               </div>
               <p className="text-xs font-medium">Fera nos Quizzes</p>
             </div>
-          </div>
-          
-          {/* Ranking na tela de conquistas */}
-          <div className="mt-4">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="font-bold text-lg text-black">Ranking de XP</h3>
-              <span className="text-sm text-[#E36322]">Sua posição: {userRank}º</span>
-            </div>
-            
-            <Tabs defaultValue="all" className="w-full" onValueChange={(value) => setRankingPeriod(value as RankingPeriod)}>
-              <TabsList className="grid w-full grid-cols-3 mb-4">
-                <TabsTrigger value="all">Todos os Tempos</TabsTrigger>
-                <TabsTrigger value="monthly">Mensal</TabsTrigger>
-                <TabsTrigger value="weekly">Semanal</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="all" className="space-y-3 mt-2">
-                {userRanking.slice(0, 3).map((user, index) => (
-                  <div key={user.id} className={`flex items-center p-3 rounded-lg ${user.id === profile?.id ? 'bg-[#FFF6F0]' : 'bg-gray-50'}`}>
-                    <div className="flex-shrink-0 w-8 text-center font-bold text-gray-500">
-                      {index + 1}
-                    </div>
-                    <div className="flex-shrink-0 ml-2">
-                      <Avatar className="h-10 w-10 border border-gray-200">
-                        {user.avatar_url ? (
-                          <AvatarImage src={user.avatar_url} alt={user.username} />
-                        ) : (
-                          <AvatarFallback className="bg-[#E36322]/10 text-[#E36322]">
-                            {user.username?.charAt(0).toUpperCase() || "U"}
-                          </AvatarFallback>
-                        )}
-                      </Avatar>
-                    </div>
-                    <div className="ml-3 flex-grow">
-                      <p className="font-medium text-sm">{user.username}</p>
-                      <p className="text-xs text-gray-500">Nível {user.level}</p>
-                    </div>
-                    <div className="flex items-center">
-                      <Trophy className="h-4 w-4 text-yellow-500 mr-1" />
-                      <span className="font-bold text-sm">{user.xp} XP</span>
-                    </div>
-                  </div>
-                ))}
-              </TabsContent>
-              
-              <TabsContent value="monthly" className="space-y-3 mt-2">
-                {userRanking.slice(0, 3).map((user, index) => (
-                  <div key={user.id} className={`flex items-center p-3 rounded-lg ${user.id === profile?.id ? 'bg-[#FFF6F0]' : 'bg-gray-50'}`}>
-                    <div className="flex-shrink-0 w-8 text-center font-bold text-gray-500">
-                      {index + 1}
-                    </div>
-                    <div className="flex-shrink-0 ml-2">
-                      <Avatar className="h-10 w-10 border border-gray-200">
-                        {user.avatar_url ? (
-                          <AvatarImage src={user.avatar_url} alt={user.username} />
-                        ) : (
-                          <AvatarFallback className="bg-[#E36322]/10 text-[#E36322]">
-                            {user.username?.charAt(0).toUpperCase() || "U"}
-                          </AvatarFallback>
-                        )}
-                      </Avatar>
-                    </div>
-                    <div className="ml-3 flex-grow">
-                      <p className="font-medium text-sm">{user.username}</p>
-                      <p className="text-xs text-gray-500">Nível {user.level}</p>
-                    </div>
-                    <div className="flex items-center">
-                      <Trophy className="h-4 w-4 text-yellow-500 mr-1" />
-                      <span className="font-bold text-sm">{user.xp} XP</span>
-                    </div>
-                  </div>
-                ))}
-              </TabsContent>
-              
-              <TabsContent value="weekly" className="space-y-3 mt-2">
-                {userRanking.slice(0, 3).map((user, index) => (
-                  <div key={user.id} className={`flex items-center p-3 rounded-lg ${user.id === profile?.id ? 'bg-[#FFF6F0]' : 'bg-gray-50'}`}>
-                    <div className="flex-shrink-0 w-8 text-center font-bold text-gray-500">
-                      {index + 1}
-                    </div>
-                    <div className="flex-shrink-0 ml-2">
-                      <Avatar className="h-10 w-10 border border-gray-200">
-                        {user.avatar_url ? (
-                          <AvatarImage src={user.avatar_url} alt={user.username} />
-                        ) : (
-                          <AvatarFallback className="bg-[#E36322]/10 text-[#E36322]">
-                            {user.username?.charAt(0).toUpperCase() || "U"}
-                          </AvatarFallback>
-                        )}
-                      </Avatar>
-                    </div>
-                    <div className="ml-3 flex-grow">
-                      <p className="font-medium text-sm">{user.username}</p>
-                      <p className="text-xs text-gray-500">Nível {user.level}</p>
-                    </div>
-                    <div className="flex items-center">
-                      <Trophy className="h-4 w-4 text-yellow-500 mr-1" />
-                      <span className="font-bold text-sm">{user.xp} XP</span>
-                    </div>
-                  </div>
-                ))}
-              </TabsContent>
-            </Tabs>
           </div>
         </div>
         

@@ -58,7 +58,7 @@ const TutorPage = () => {
             
           if (profileData?.full_name) {
             // Extrair o primeiro nome
-            const firstName = profileData.full_name.split(' ')[0];
+            const firstName = profileData.full_name.split(' ')[0] || "Aluno";
             console.log('Nome obtido do perfil:', firstName);
             setUserName(firstName);
           } else {
@@ -97,25 +97,7 @@ useEffect(() => {
         {
           id: "welcome",
           role: "tutor",
-          content: `Olá, ${userName}! Eu sou o Tutor Tryla, seu assistente de aprendizado. Como posso ajudar você hoje? Você pode me fazer perguntas sobre qualquer um dos temas dos módulos!`,
-          timestamp: new Date(),
-        },
-      ]);
-    } else if (hasIntroduced) {
-      setMessages([
-        {
-          id: "welcome",
-          role: "tutor",
-          content: "Olá! Eu sou o Tutor Tryla, seu assistente de aprendizado. Como posso ajudar você hoje? Você pode me fazer perguntas sobre qualquer um dos temas dos módulos!",
-          timestamp: new Date(),
-        },
-      ]);
-    } else {
-      setMessages([
-        {
-          id: "introduction",
-          role: "tutor",
-          content: "Olá! Eu sou o Tutor Tryla, seu assistente de aprendizado. **Antes de começarmos**, gostaria que você se apresentasse brevemente. Conte-me seu nome, idade e o que você espera aprender aqui na Tryla!",
+          content: `Como posso ajudar você hoje? Você pode me fazer perguntas sobre qualquer um dos temas dos módulos!`,
           timestamp: new Date(),
         },
       ]);
@@ -345,161 +327,131 @@ useEffect(() => {
     }
   };
 
-  // Função para lidar com o botão voltar
-  const handleBackClick = () => {
-    navigate(-1);
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50 pb-28">
-      <Header 
-        title="Tutor Tryla" 
-        showBackButton={true} 
-        onBackClick={handleBackClick}
-      />
+    <div className="min-h-screen bg-white pb-20">
+      <Header title="Tutor Tryla" />
       
-      <div className="container px-4 py-4 pb-8">
-        <Tabs defaultValue="chat" className="w-full">
-          <TabsList className="w-full mb-4">
-            <TabsTrigger value="chat" className="flex-1">
-              <MessageCircle className="w-4 h-4 mr-2" />
-              Chat
-            </TabsTrigger>
-            <TabsTrigger value="modules" className="flex-1">
-              <Bot className="w-4 h-4 mr-2" />
-              Módulos
-            </TabsTrigger>
-          </TabsList>
-            <TabsContent value="chat" className="h-[calc(100vh-240px)] flex flex-col">
-              {connectionError && (
-                <div className="mb-4 bg-yellow-50 border border-yellow-300 rounded-md p-3">
-                  <div className="flex items-center">
-                    <div className="text-yellow-700">
-                      <p className="font-medium">Problema de conexão detectado</p>
-                      <p className="text-sm">O Tutor Tryla parece estar com dificuldades para responder.</p>
-                    </div>
-                    <div className="ml-auto">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={testEdgeFunction}
-                        disabled={isLoading}
-                        className="flex items-center gap-2"
-                      >
-                        {isLoading ? (
-                          <RefreshCw className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <RefreshCw className="h-4 w-4" />
-                        )}
-                        Testar Conexão
-                      </Button>
-                    </div>
-                  </div>
+      <div className="container px-4 py-2">
+        {/* Perfil do Tutor */}
+        <div className="flex flex-col items-center text-center bg-[#FFF6F0] p-3 rounded-lg">
+          <div className="w-20 h-20 rounded-full bg-[#e36322] flex items-center justify-center text-white text-3xl border-4 border-white shadow-lg overflow-hidden">
+            <img src="https://i.imgur.com/y3pNoHz.png" alt="Tutor IAê" className="w-full h-full object-cover p-1" />
+          </div>
+          <div>
+            <h3 className="font-bold text-[#e36322]">Olá, {userName}. Eu sou a IAê</h3>
+            <p className="text-sm text-gray-400">Uma IA feita para ajudar você com suas dúvidas sobre os temas da trilha e da vida.</p>
+          </div>
+        </div>
+      </div>
+        <div className="container px-4 py-2">     
+        {/* Mensagens do Chat */}
+        <div className="flex flex-col h-[calc(100vh-350px)] overflow-hidden">
+          {connectionError && (
+            <div className="mb-4 bg-yellow-50 border border-yellow-300 rounded-md p-3">
+              <div className="flex items-center">
+                <div className="text-yellow-700">
+                  <p className="font-medium">Problema de conexão detectado</p>
+                  <p className="text-sm">O Tutor Tryla parece estar com dificuldades para responder.</p>
                 </div>
-              )}
-              
-              <Card className="flex-1 overflow-hidden flex flex-col mb-4">
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                  {messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex ${
-                        message.role === "user" ? "justify-end" : "justify-start"
-                      }`}
-                    >
-                      <div
-                        className={`max-w-[85%] sm:max-w-[80%] rounded-lg p-3 ${
-                          message.role === "user"
-                            ? "bg-orange-500 text-white"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        {message.isLoading ? (
-                          <div className="flex items-center space-x-2">
-                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
-                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></div>
-                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></div>
-                          </div>
-                        ) : (
-                          renderMessageContent(message.content)
-                        )}
-                        <p className={`text-xs mt-1 ${message.role === "user" ? "text-gray-200" : "text-gray-500"}`}>
-                          {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                  <div ref={messagesEndRef} />
-                </div>
-              </Card>
-              <p className="italic text-xs text-gray-600 mb-2">
-                Sempre reflita as respostas do Tutor e como isso pode se aplicar à você.
-                Aqui não tem verdades absolutas, apenas provocações para você refletir e ter novas ideias.
-              </p>
-              <div className="flex mb-2">
-                <Textarea
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Digite sua pergunta aqui..."
-                  className="flex-1 mr-1 resize-none overflow-hidden"
-                  disabled={isLoading}
-                  rows={isMobile ? 1 : 2}
-                />
-                <Button
-                  onClick={handleSendMessage}
-                  disabled={!inputMessage.trim() || isLoading}
-                  className="h-auto"
-                >
-                  <Send className="h-3 w-5" />
-                </Button>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="modules" className="h-[calc(100vh-240px)] overflow-y-auto pb-4">
-              <p className="text-sm text-gray-600 mb-3">
-                Selecione um módulo para direcionar suas perguntas para um tema específico.
-                O Tutor Tryla adaptará suas respostas ao tema escolhido.
-              </p>
-              
-              <div className="flex flex-col space-y-2">
-                <Card
-                  className={`p-3 cursor-pointer transition-all ${
-                    selectedModule === "" ? "border-orange-500 shadow-md" : "hover:border-orange-300"
-                  }`}
-                  onClick={() => setSelectedModule("")}
-                >
-                  <div className="flex items-center">
-                    <div className="text-xl mr-3">🧠</div>
-                    <div>
-                      <h3 className="font-medium">Todos os temas</h3>
-                      <p className="text-xs text-gray-500">Perguntas gerais sobre desenvolvimento socioemocional</p>
-                    </div>
-                  </div>
-                </Card>
-                
-                {modules.map((module) => (
-                  <Card
-                    key={module.id}
-                    className={`p-3 cursor-pointer transition-all ${
-                      selectedModule === module.type ? "border-orange-500 shadow-md" : "hover:border-orange-300"
-                    }`}
-                    onClick={() => setSelectedModule(module.type)}
+                <div className="ml-auto">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={testEdgeFunction}
+                    disabled={isLoading}
+                    className="flex items-center gap-2"
                   >
-                    <div className="flex items-center">
-                      <div className="text-xl mr-3">{module.emoji || "📚"}</div>
-                      <div>
-                        <h3 className="font-medium">{module.name}</h3>
-                        <p className="text-xs text-gray-500">{module.description}</p>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
+                    {isLoading ? (
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4" />
+                    )}
+                    Testar Conexão
+                  </Button>
+                </div>
               </div>
-            </TabsContent>
-          </Tabs>
+            </div>
+          )}
+          
+          <Card className="flex-1 overflow-hidden flex flex-col mb-2">
+            <div className="flex-1 overflow-y-auto p-2 space-y-2">
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex ${
+                    message.role === "user" ? "justify-end" : "justify-start"
+                  }`}
+                >
+                  <div
+                    className={`max-w-[85%] sm:max-w-[80%] rounded-lg p-3 ${
+                      message.role === "user"
+                        ? "bg-orange-500 text-white"
+                        : "bg-gray-100 text-gray-800"
+                    }`}
+                  >
+                    {message.isLoading ? (
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></div>
+                      </div>
+                    ) : (
+                      renderMessageContent(message.content)
+                    )}
+                    <p className={`text-xs mt-1 ${message.role === "user" ? "text-gray-200" : "text-gray-500"}`}>
+                      {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+          </Card>
+          <p className="italic text-xs text-center text-gray-600 mb-20">
+          Reflita sobre as respostas do Tutor e como elas se aplicam a você.
+          Não há verdades absolutas aqui, apenas provocações para gerar novas ideias.
+          </p>
+        </div>
       </div>
       
+      <div className="fixed bottom-16 left-0 right-0 bg-white border-t p-3 z-10 mt-4">
+        <div className="flex space-x-2 container mx-auto px-4">
+          {connectionError && (
+            <div className="flex justify-center mb-2 w-full">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={testEdgeFunction}
+                disabled={isLoading}
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                Reconectar
+              </Button>
+            </div>
+          )}
+          
+          <Textarea
+            placeholder="Digite sua pergunta aqui..."
+            value={inputMessage}
+            onChange={(e) => setInputMessage(e.target.value)}
+            className="min-h-[40px] max-h-[80px] resize-none"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
+              }
+            }}
+            disabled={isLoading}
+          />
+          <Button 
+            onClick={handleSendMessage} 
+            disabled={!inputMessage.trim() || isLoading}
+            className="shrink-0"
+          >
+            <Send className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
       <BottomNavigation />
     </div>
   );

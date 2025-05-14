@@ -84,7 +84,7 @@ const RewardsPage = () => {
       <div className="bg-[#e36322] px-4 pt-6 pb-4 rounded-b-3xl">
         <div className="flex justify-between items-center mb-4">
           <div>
-            <h2 className="text-white text-lg font-semibold">🏆 Conquistas e Recompensas</h2>
+            <h2 className="text-white text-lg font-semibold">🏆 Ranking da Galera</h2>
           </div>
         </div>
         

@@ -11,7 +11,7 @@ const BottomNavigation = () => {
   const navItems = [
     { icon: Home, path: "/dashboard", label: "Início" },
     { icon: BookOpen, path: "/modulos", label: "Trilhas" },
-    { icon: Award, path: "/recompensas", label: "Conquistas" },
+    { icon: Award, path: "/recompensas", label: "Ranking" },
     { icon: MessageCircle, path: "/comunidade", label: "Comunidade" },
     { icon: Bot, path: "/tutor", label: "Tutor" },
     { icon: User, path: "/perfil", label: "Perfil" },
