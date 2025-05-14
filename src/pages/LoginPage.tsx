@@ -26,7 +26,7 @@ const LoginPage = () => {
       if (error) throw error;
 
       toast.success("Login realizado com sucesso!");
-      navigate("/perfil");
+      navigate("/dashboard");
     } catch (error: any) {
       toast.error(error.message || "Ocorreu um erro ao processar sua solicitação.");
     } finally {

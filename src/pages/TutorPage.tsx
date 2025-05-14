@@ -4,7 +4,6 @@ import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { Bot, MessageCircle, Send, RefreshCw } from "lucide-react";
@@ -93,6 +92,15 @@ useEffect(() => {
     const hasIntroduced = localStorage.getItem('tutorIntroduced') === 'true';
     
     if (hasIntroduced && userName) {
+      setMessages([
+        {
+          id: "welcome",
+          role: "tutor",
+          content: `Como posso ajudar você hoje? Você pode me fazer perguntas sobre qualquer um dos temas dos módulos!`,
+          timestamp: new Date(),
+        },
+      ]);
+    } else if (hasIntroduced) {
       setMessages([
         {
           id: "welcome",
