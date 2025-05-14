@@ -9,17 +9,34 @@ export interface RankingUser {
   xp: number;
   level: number;
   rank: number;
+  created_at?: string;
 }
+
+export type RankingPeriod = 'all' | 'weekly' | 'monthly';
 
 /**
  * Obtém o ranking de usuários ordenado por XP
  */
-export const getUserRanking = async (): Promise<RankingUser[]> => {
+export const getUserRanking = async (period: RankingPeriod = 'all'): Promise<RankingUser[]> => {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('profiles')
-      .select('id, username, full_name, avatar_url, xp, level')
-      .order('xp', { ascending: false });
+      .select('id, username, full_name, avatar_url, xp, level, created_at');
+    
+    // Filtrar por período se necessário
+    if (period === 'weekly') {
+      // Obter data de 7 dias atrás
+      const lastWeek = new Date();
+      lastWeek.setDate(lastWeek.getDate() - 7);
+      query = query.gte('created_at', lastWeek.toISOString());
+    } else if (period === 'monthly') {
+      // Obter data de 30 dias atrás
+      const lastMonth = new Date();
+      lastMonth.setDate(lastMonth.getDate() - 30);
+      query = query.gte('created_at', lastMonth.toISOString());
+    }
+    
+    const { data, error } = await query.order('xp', { ascending: false });
 
     if (error) {
       console.error("Erro ao buscar ranking de usuários:", error);
@@ -42,9 +59,9 @@ export const getUserRanking = async (): Promise<RankingUser[]> => {
 /**
  * Obtém a posição do usuário no ranking
  */
-export const getUserRankPosition = async (userId: string): Promise<number> => {
+export const getUserRankPosition = async (userId: string, period: RankingPeriod = 'all'): Promise<number> => {
   try {
-    const ranking = await getUserRanking();
+    const ranking = await getUserRanking(period);
     const userRank = ranking.find(user => user.id === userId);
     return userRank?.rank || 0;
   } catch (error) {

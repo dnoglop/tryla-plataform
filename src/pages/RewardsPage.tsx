@@ -5,13 +5,16 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import BadgeItem from "@/components/BadgeItem";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { getUserBadges, getUserAchievements, updateUserXp } from "@/services/profileService";
+import { getUserBadges, getUserAchievements } from "@/services/profileService";
 import UserLevel from "@/components/UserLevel";
+import { getUserRanking, RankingUser, RankingPeriod } from "@/services/rankingService";
 
 const RewardsPage = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedPeriod, setSelectedPeriod] = useState("weekly");
+  const [selectedPeriod, setSelectedPeriod] = useState<RankingPeriod>("weekly");
+  const [isLoadingRanking, setIsLoadingRanking] = useState(false);
+  const [rankingData, setRankingData] = useState<RankingUser[]>([]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -53,18 +56,27 @@ const RewardsPage = () => {
 
   const isLoading = isLoadingBadges || isLoadingAchievements;
 
-  // Dados de exemplo para o leaderboard
-  const leaderboardData = [
-    { id: 1, name: "Maria", rank: 1, avatar: "👩‍🦰", xp: 945 },
-    { id: 2, name: "João", rank: 2, avatar: "👨‍🦱", xp: 872 },
-    { id: 3, name: "Ana", rank: 3, avatar: "👩‍🦳", xp: 765 },
-    { id: 4, name: "Carlos", rank: 4, avatar: "👨‍🦲", xp: 723 },
-    { id: 5, name: "Paula", rank: 5, avatar: "👩", xp: 640 },
-    { id: 6, name: "Fernando", rank: 6, avatar: "👨", xp: 596 },
-  ];
+  // Buscar dados do ranking quando o período ou usuário mudar
+  useEffect(() => {
+    const fetchRankingData = async () => {
+      if (!userId) return;
+      
+      setIsLoadingRanking(true);
+      try {
+        const ranking = await getUserRanking(selectedPeriod);
+        setRankingData(ranking);
+      } catch (error) {
+        console.error("Erro ao buscar ranking:", error);
+      } finally {
+        setIsLoadingRanking(false);
+      }
+    };
+    
+    fetchRankingData();
+  }, [userId, selectedPeriod]);
 
-  const top3 = leaderboardData.slice(0, 3);
-  const others = leaderboardData.slice(3);
+  const top3 = rankingData.slice(0, 3);
+  const others = rankingData.slice(3);
 
   return (
     <div className="pb-20 min-h-screen bg-white">
@@ -114,71 +126,91 @@ const RewardsPage = () => {
                 Mensal
               </button>
               <button 
-                className={`rounded-full px-4 py-1.5 text-sm ${selectedPeriod === 'alltime' ? 'bg-[#e36322] text-white' : 'bg-gray-100 text-gray-600'}`}
-                onClick={() => setSelectedPeriod('alltime')}
+                className={`rounded-full px-4 py-1.5 text-sm ${selectedPeriod === 'all' ? 'bg-[#e36322] text-white' : 'bg-gray-100 text-gray-600'}`}
+                onClick={() => setSelectedPeriod('all')}
               >
                 Todos os Tempos
               </button>
             </div>
             
             {/* Top 3 Users */}
-            <div className="flex justify-between items-end mb-8">
-              {/* 2nd Place */}
-              <div className="flex flex-col items-center w-1/3">
-                <div className="w-16 h-16 rounded-full bg-[#e36322]/80 flex items-center justify-center text-white text-2xl mb-1 border-2 border-white shadow-lg">
-                  {top3[1]?.avatar || "👤"}
+            {isLoadingRanking ? (
+              <div className="flex justify-center py-12">
+                <div className="animate-pulse">Carregando ranking...</div>
+              </div>
+            ) : rankingData.length > 0 ? (
+              <div className="flex justify-between items-end mb-8">
+                {/* 2nd Place */}
+                <div className="flex flex-col items-center w-1/3">
+                  <div className="w-16 h-16 rounded-full bg-[#e36322]/80 flex items-center justify-center text-white text-2xl mb-1 border-2 border-white shadow-lg">
+                    {top3[1]?.avatar_url ? (
+                      <img src={top3[1].avatar_url} alt="Avatar" className="w-full h-full object-cover rounded-full" />
+                    ) : "👤"}
+                  </div>
+                  <p className="font-medium text-sm text-center">{top3[1]?.full_name || top3[1]?.username || "Usuário"}</p>
+                  <p className="text-xs text-[#e36322] font-bold">{top3[1]?.xp || 0} XP</p>
+                  <div className="bg-[#e36322]/80 w-full h-20 rounded-t-2xl mt-2 flex items-center justify-center">
+                    <span className="text-white text-2xl font-bold">2</span>
+                  </div>
                 </div>
-                <p className="font-medium text-sm text-center">{top3[1]?.name || "Usuário"}</p>
-                <p className="text-xs text-[#e36322] font-bold">{top3[1]?.xp || 0} XP</p>
-                <div className="bg-[#e36322]/80 w-full h-20 rounded-t-2xl mt-2 flex items-center justify-center">
-                  <span className="text-white text-2xl font-bold">2</span>
+                
+                {/* 1st Place */}
+                <div className="flex flex-col items-center w-1/3">
+                  <div className="w-20 h-20 rounded-full bg-[#e36322] flex items-center justify-center text-white text-3xl mb-1 border-2 border-white shadow-lg">
+                    {top3[0]?.avatar_url ? (
+                      <img src={top3[0].avatar_url} alt="Avatar" className="w-full h-full object-cover rounded-full" />
+                    ) : "👤"}
+                  </div>
+                  <p className="font-medium text-base text-center">{top3[0]?.full_name || top3[0]?.username || "Usuário"}</p>
+                  <p className="text-sm text-[#e36322] font-bold">{top3[0]?.xp || 0} XP</p>
+                  <div className="bg-[#e36322] w-full h-28 rounded-t-2xl mt-2 flex items-center justify-center">
+                    <span className="text-white text-3xl font-bold">1</span>
+                  </div>
+                </div>
+                
+                {/* 3rd Place */}
+                <div className="flex flex-col items-center w-1/3">
+                  <div className="w-16 h-16 rounded-full bg-[#e36322]/60 flex items-center justify-center text-white text-2xl mb-1 border-2 border-white shadow-lg">
+                    {top3[2]?.avatar_url ? (
+                      <img src={top3[2].avatar_url} alt="Avatar" className="w-full h-full object-cover rounded-full" />
+                    ) : "👤"}
+                  </div>
+                  <p className="font-medium text-sm text-center">{top3[2]?.full_name || top3[2]?.username || "Usuário"}</p>
+                  <p className="text-xs text-[#e36322] font-bold">{top3[2]?.xp || 0} XP</p>
+                  <div className="bg-[#e36322]/60 w-full h-16 rounded-t-2xl mt-2 flex items-center justify-center">
+                    <span className="text-white text-2xl font-bold">3</span>
+                  </div>
                 </div>
               </div>
-              
-              {/* 1st Place */}
-              <div className="flex flex-col items-center w-1/3">
-                <div className="w-20 h-20 rounded-full bg-[#e36322] flex items-center justify-center text-white text-3xl mb-1 border-2 border-white shadow-lg">
-                  {top3[0]?.avatar || "👤"}
-                </div>
-                <p className="font-medium text-base text-center">{top3[0]?.name || "Usuário"}</p>
-                <p className="text-sm text-[#e36322] font-bold">{top3[0]?.xp || 0} XP</p>
-                <div className="bg-[#e36322] w-full h-28 rounded-t-2xl mt-2 flex items-center justify-center">
-                  <span className="text-white text-3xl font-bold">1</span>
-                </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500">Nenhum usuário encontrado para este período.</p>
               </div>
-              
-              {/* 3rd Place */}
-              <div className="flex flex-col items-center w-1/3">
-                <div className="w-16 h-16 rounded-full bg-[#e36322]/60 flex items-center justify-center text-white text-2xl mb-1 border-2 border-white shadow-lg">
-                  {top3[2]?.avatar || "👤"}
-                </div>
-                <p className="font-medium text-sm text-center">{top3[2]?.name || "Usuário"}</p>
-                <p className="text-xs text-[#e36322] font-bold">{top3[2]?.xp || 0} XP</p>
-                <div className="bg-[#e36322]/60 w-full h-16 rounded-t-2xl mt-2 flex items-center justify-center">
-                  <span className="text-white text-2xl font-bold">3</span>
-                </div>
-              </div>
-            </div>
+            )}
             
             {/* Other Rankings */}
-            <div className="space-y-3 mt-6">
-              {others.map((user) => (
-                <div key={user.id} className="flex items-center bg-gray-50 p-3 rounded-lg">
-                  <div className="w-6 text-center text-gray-500 font-medium mr-3">
-                    {user.rank}
+            {rankingData.length > 3 && (
+              <div className="space-y-3 mt-6">
+                {others.map((user) => (
+                  <div key={user.id} className="flex items-center bg-gray-50 p-3 rounded-lg">
+                    <div className="w-6 text-center text-gray-500 font-medium mr-3">
+                      {user.rank}
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-[#FFDCCC] flex items-center justify-center text-lg mr-3">
+                      {user.avatar_url ? (
+                        <img src={user.avatar_url} alt="Avatar" className="w-full h-full object-cover rounded-full" />
+                      ) : "👤"}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium">{user.full_name || user.username}</p>
+                    </div>
+                    <div className="text-sm font-bold text-[#e36322]">
+                      {user.xp} XP
+                    </div>
                   </div>
-                  <div className="w-10 h-10 rounded-full bg-[#FFDCCC] flex items-center justify-center text-lg mr-3">
-                    {user.avatar}
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium">{user.name}</p>
-                  </div>
-                  <div className="text-sm font-bold text-[#e36322]">
-                    {user.xp} XP
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           {/* Achievements Tab */}

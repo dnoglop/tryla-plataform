@@ -11,8 +11,9 @@ import { getProfile, updateProfile, Profile, updateUserStreak } from "@/services
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { getModules, getPhasesByModuleId, isModuleCompleted } from "@/services/moduleService";
-import { getUserRanking, updateUserXpFromModules, RankingUser } from "@/services/rankingService";
+import { getUserRanking, updateUserXpFromModules, RankingUser, RankingPeriod } from "@/services/rankingService";
 import { useQuery } from '@tanstack/react-query';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -24,6 +25,7 @@ const ProfilePage = () => {
   const [totalPhasesCount, setTotalPhasesCount] = useState(0);
   const [userRanking, setUserRanking] = useState<RankingUser[]>([]);
   const [userRank, setUserRank] = useState(0);
+  const [rankingPeriod, setRankingPeriod] = useState<RankingPeriod>('all');
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -49,12 +51,7 @@ const ProfilePage = () => {
             fetchAchievementData(userId);
             
             // Buscar ranking de usuários
-            const ranking = await getUserRanking();
-            setUserRanking(ranking);
-            
-            // Encontrar a posição do usuário no ranking
-            const userPosition = ranking.findIndex(user => user.id === userId);
-            setUserRank(userPosition !== -1 ? userPosition + 1 : 0);
+            await fetchRanking(userId);
           }
         }
       } catch (error) {
@@ -67,6 +64,27 @@ const ProfilePage = () => {
 
     fetchUserProfile();
   }, []);
+  
+  // Função para buscar o ranking com base no período selecionado
+  const fetchRanking = async (userId: string) => {
+    try {
+      const ranking = await getUserRanking(rankingPeriod);
+      setUserRanking(ranking);
+      
+      // Encontrar a posição do usuário no ranking
+      const userPosition = ranking.findIndex(user => user.id === userId);
+      setUserRank(userPosition !== -1 ? userPosition + 1 : 0);
+    } catch (error) {
+      console.error("Erro ao buscar ranking:", error);
+    }
+  };
+  
+  // Atualizar o ranking quando o período mudar
+  useEffect(() => {
+    if (profile?.id) {
+      fetchRanking(profile.id);
+    }
+  }, [rankingPeriod, profile?.id]);
   
   const fetchAchievementData = async (userId: string) => {
     try {
@@ -263,7 +281,7 @@ const ProfilePage = () => {
             <span className="text-sm text-[#E36322]">Ver todas</span>
           </div>
           
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="flex flex-col items-center text-center">
               <div className="w-14 h-14 rounded-full bg-[#E36322]/10 flex items-center justify-center mb-1">
                 <Rocket className="text-[#E36322]" />
@@ -282,6 +300,109 @@ const ProfilePage = () => {
               </div>
               <p className="text-xs font-medium">Fera nos Quizzes</p>
             </div>
+          </div>
+          
+          {/* Ranking na tela de conquistas */}
+          <div className="mt-4">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="font-bold text-lg text-black">Ranking de XP</h3>
+              <span className="text-sm text-[#E36322]">Sua posição: {userRank}º</span>
+            </div>
+            
+            <Tabs defaultValue="all" className="w-full" onValueChange={(value) => setRankingPeriod(value as RankingPeriod)}>
+              <TabsList className="grid w-full grid-cols-3 mb-4">
+                <TabsTrigger value="all">Todos os Tempos</TabsTrigger>
+                <TabsTrigger value="monthly">Mensal</TabsTrigger>
+                <TabsTrigger value="weekly">Semanal</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="all" className="space-y-3 mt-2">
+                {userRanking.slice(0, 3).map((user, index) => (
+                  <div key={user.id} className={`flex items-center p-3 rounded-lg ${user.id === profile?.id ? 'bg-[#FFF6F0]' : 'bg-gray-50'}`}>
+                    <div className="flex-shrink-0 w-8 text-center font-bold text-gray-500">
+                      {index + 1}
+                    </div>
+                    <div className="flex-shrink-0 ml-2">
+                      <Avatar className="h-10 w-10 border border-gray-200">
+                        {user.avatar_url ? (
+                          <AvatarImage src={user.avatar_url} alt={user.username} />
+                        ) : (
+                          <AvatarFallback className="bg-[#E36322]/10 text-[#E36322]">
+                            {user.username?.charAt(0).toUpperCase() || "U"}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                    </div>
+                    <div className="ml-3 flex-grow">
+                      <p className="font-medium text-sm">{user.username}</p>
+                      <p className="text-xs text-gray-500">Nível {user.level}</p>
+                    </div>
+                    <div className="flex items-center">
+                      <Trophy className="h-4 w-4 text-yellow-500 mr-1" />
+                      <span className="font-bold text-sm">{user.xp} XP</span>
+                    </div>
+                  </div>
+                ))}
+              </TabsContent>
+              
+              <TabsContent value="monthly" className="space-y-3 mt-2">
+                {userRanking.slice(0, 3).map((user, index) => (
+                  <div key={user.id} className={`flex items-center p-3 rounded-lg ${user.id === profile?.id ? 'bg-[#FFF6F0]' : 'bg-gray-50'}`}>
+                    <div className="flex-shrink-0 w-8 text-center font-bold text-gray-500">
+                      {index + 1}
+                    </div>
+                    <div className="flex-shrink-0 ml-2">
+                      <Avatar className="h-10 w-10 border border-gray-200">
+                        {user.avatar_url ? (
+                          <AvatarImage src={user.avatar_url} alt={user.username} />
+                        ) : (
+                          <AvatarFallback className="bg-[#E36322]/10 text-[#E36322]">
+                            {user.username?.charAt(0).toUpperCase() || "U"}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                    </div>
+                    <div className="ml-3 flex-grow">
+                      <p className="font-medium text-sm">{user.username}</p>
+                      <p className="text-xs text-gray-500">Nível {user.level}</p>
+                    </div>
+                    <div className="flex items-center">
+                      <Trophy className="h-4 w-4 text-yellow-500 mr-1" />
+                      <span className="font-bold text-sm">{user.xp} XP</span>
+                    </div>
+                  </div>
+                ))}
+              </TabsContent>
+              
+              <TabsContent value="weekly" className="space-y-3 mt-2">
+                {userRanking.slice(0, 3).map((user, index) => (
+                  <div key={user.id} className={`flex items-center p-3 rounded-lg ${user.id === profile?.id ? 'bg-[#FFF6F0]' : 'bg-gray-50'}`}>
+                    <div className="flex-shrink-0 w-8 text-center font-bold text-gray-500">
+                      {index + 1}
+                    </div>
+                    <div className="flex-shrink-0 ml-2">
+                      <Avatar className="h-10 w-10 border border-gray-200">
+                        {user.avatar_url ? (
+                          <AvatarImage src={user.avatar_url} alt={user.username} />
+                        ) : (
+                          <AvatarFallback className="bg-[#E36322]/10 text-[#E36322]">
+                            {user.username?.charAt(0).toUpperCase() || "U"}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                    </div>
+                    <div className="ml-3 flex-grow">
+                      <p className="font-medium text-sm">{user.username}</p>
+                      <p className="text-xs text-gray-500">Nível {user.level}</p>
+                    </div>
+                    <div className="flex items-center">
+                      <Trophy className="h-4 w-4 text-yellow-500 mr-1" />
+                      <span className="font-bold text-sm">{user.xp} XP</span>
+                    </div>
+                  </div>
+                ))}
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
         
