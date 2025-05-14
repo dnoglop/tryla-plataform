@@ -73,6 +73,86 @@ export const updateProfile = async (userId: string, updates: Partial<Profile>): 
   }
 };
 
+/**
+ * Atualiza a contagem de dias seguidos (streak) do usuário
+ */
+export const updateUserStreak = async (userId: string): Promise<boolean> => {
+  try {
+    // Buscar o perfil atual do usuário
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('streak_days, last_login')
+      .eq('id', userId)
+      .single();
+    
+    if (profileError) {
+      console.error("Erro ao buscar perfil para streak:", profileError);
+      return false;
+    }
+    
+    // Verificar a última atividade do usuário
+    const { data: lastActivity, error: activityError } = await supabase
+      .from('user_phases')
+      .select('completed_at')
+      .eq('user_id', userId)
+      .order('completed_at', { ascending: false })
+      .limit(1);
+    
+    if (activityError) {
+      console.error("Erro ao buscar última atividade:", activityError);
+      return false;
+    }
+    
+    if (!lastActivity || lastActivity.length === 0) return true; // Sem atividades, manter streak atual
+    
+    const lastActivityDate = new Date(lastActivity[0].completed_at);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    // Verificar se a última atividade foi hoje
+    const isToday = lastActivityDate.toDateString() === today.toDateString();
+    
+    // Verificar se a última atividade foi ontem
+    const isYesterday = lastActivityDate.toDateString() === yesterday.toDateString();
+    
+    let newStreakDays = profile?.streak_days || 0;
+    let shouldUpdate = false;
+    
+    // Se o usuário fez atividade hoje e não tinha feito login hoje ainda
+    if (isToday && (!profile?.last_login || new Date(profile.last_login).toDateString() !== today.toDateString())) {
+      newStreakDays += 1;
+      shouldUpdate = true;
+    } 
+    // Se o usuário não fez atividade ontem nem hoje, resetar streak
+    else if (!isYesterday && !isToday && newStreakDays > 0) {
+      newStreakDays = 0;
+      shouldUpdate = true;
+    }
+    
+    // Atualizar streak_days e last_login
+    if (shouldUpdate) {
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ 
+          streak_days: newStreakDays,
+          last_login: new Date().toISOString()
+        })
+        .eq('id', userId);
+      
+      if (updateError) {
+        console.error("Erro ao atualizar streak days:", updateError);
+        return false;
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Erro inesperado ao atualizar streak days:", error);
+    return false;
+  }
+};
+
 export const uploadAvatar = async (userId: string, file: File): Promise<string | null> => {
   try {
     const fileExt = file.name.split('.').pop();

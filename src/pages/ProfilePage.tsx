@@ -1,16 +1,18 @@
 
 import React, { useState, useEffect, useRef } from "react";
-import { Mail, Linkedin, Users, Target, Rocket, Book, ChevronRight, Edit, ArrowRight } from "lucide-react";
+import { Mail, Linkedin, Users, Target, Rocket, Book, ChevronRight, Edit, ArrowRight, Trophy, Award } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
-import { getProfile, updateProfile, Profile } from "@/services/profileService";
+import { getProfile, updateProfile, Profile, updateUserStreak } from "@/services/profileService";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { getModules, getPhasesByModuleId, isModuleCompleted } from "@/services/moduleService";
+import { getUserRanking, updateUserXpFromModules, RankingUser } from "@/services/rankingService";
+import { useQuery } from '@tanstack/react-query';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -20,6 +22,8 @@ const ProfilePage = () => {
   const [totalModulesCount, setTotalModulesCount] = useState(0);
   const [completedPhasesCount, setCompletedPhasesCount] = useState(0);
   const [totalPhasesCount, setTotalPhasesCount] = useState(0);
+  const [userRanking, setUserRanking] = useState<RankingUser[]>([]);
+  const [userRank, setUserRank] = useState(0);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -29,6 +33,13 @@ const ProfilePage = () => {
         
         if (session?.data?.session?.user?.id) {
           const userId = session.data.session.user.id;
+          
+          // Atualizar o XP do usuário com base nos módulos concluídos
+          await updateUserXpFromModules(userId);
+          
+          // Atualizar a contagem de dias seguidos
+          await updateUserStreak(userId);
+          
           const userProfile = await getProfile(userId);
           
           if (userProfile) {
@@ -36,6 +47,14 @@ const ProfilePage = () => {
             
             // After setting the profile, fetch achievement data
             fetchAchievementData(userId);
+            
+            // Buscar ranking de usuários
+            const ranking = await getUserRanking();
+            setUserRanking(ranking);
+            
+            // Encontrar a posição do usuário no ranking
+            const userPosition = ranking.findIndex(user => user.id === userId);
+            setUserRank(userPosition !== -1 ? userPosition + 1 : 0);
           }
         }
       } catch (error) {
@@ -263,6 +282,52 @@ const ProfilePage = () => {
               </div>
               <p className="text-xs font-medium">Fera nos Quizzes</p>
             </div>
+          </div>
+        </div>
+        
+        {/* Ranking section */}
+        <div className="border-t border-gray-200 py-4">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="font-bold text-lg text-black">Ranking</h3>
+            <span className="text-sm text-[#E36322]">Sua posição: {userRank}º</span>
+          </div>
+          
+          <div className="space-y-3 mt-2">
+            {userRanking.slice(0, 5).map((user, index) => (
+              <div key={user.id} className={`flex items-center p-3 rounded-lg ${user.id === profile?.id ? 'bg-[#FFF6F0]' : 'bg-gray-50'}`}>
+                <div className="flex-shrink-0 w-8 text-center font-bold text-gray-500">
+                  {index + 1}
+                </div>
+                <div className="flex-shrink-0 ml-2">
+                  <Avatar className="h-10 w-10 border border-gray-200">
+                    {user.avatar_url ? (
+                      <AvatarImage src={user.avatar_url} alt={user.username} />
+                    ) : (
+                      <AvatarFallback className="bg-[#E36322]/10 text-[#E36322]">
+                        {user.username?.charAt(0).toUpperCase() || "U"}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                </div>
+                <div className="ml-3 flex-grow">
+                  <p className="font-medium text-sm">{user.username}</p>
+                  <p className="text-xs text-gray-500">Nível {user.level}</p>
+                </div>
+                <div className="flex items-center">
+                  <Trophy className="h-4 w-4 text-yellow-500 mr-1" />
+                  <span className="font-bold text-sm">{user.xp} XP</span>
+                </div>
+              </div>
+            ))}
+            
+            {userRanking.length > 5 && (
+              <Button 
+                variant="outline" 
+                className="w-full mt-2 text-[#E36322] border-[#E36322] hover:bg-[#FFF6F0]"
+              >
+                Ver ranking completo
+              </Button>
+            )}
           </div>
         </div>
         

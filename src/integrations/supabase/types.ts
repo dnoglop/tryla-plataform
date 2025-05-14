@@ -222,6 +222,7 @@ export type Database = {
           full_name: string | null
           id: string
           last_login_date: string | null
+      last_login: string | null
           level: number | null
           linkedin_url: string | null
           streak_days: number | null
@@ -236,6 +237,7 @@ export type Database = {
           full_name?: string | null
           id: string
           last_login_date?: string | null
+      last_login?: string | null
           level?: number | null
           linkedin_url?: string | null
           streak_days?: number | null
@@ -250,6 +252,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           last_login_date?: string | null
+      last_login?: string | null
           level?: number | null
           linkedin_url?: string | null
           streak_days?: number | null
