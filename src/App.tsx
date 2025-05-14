@@ -50,6 +50,10 @@ function App() {
           element={session ? <Navigate to="/dashboard" replace /> : <SignupPage />}
         />
         <Route
+          path="/dashboard"
+          element={session ? <DashboardPage /> : <Navigate to="/login" />}
+        />
+        <Route
           path="/perfil"
           element={session ? <ProfilePage /> : <Navigate to="/login" />}
         />
@@ -64,10 +68,6 @@ function App() {
         <Route
           path="/comunidade"
           element={session ? <CommunityPage /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/dashboard"
-          element={session ? <DashboardPage /> : <Navigate to="/login" />}
         />
         <Route
           path="/modulos"
