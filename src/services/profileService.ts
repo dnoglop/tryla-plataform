@@ -90,43 +90,48 @@ export const updateUserStreak = async (userId: string): Promise<boolean> => {
       return false;
     }
     
-    // Verificar a última atividade do usuário
-    const { data: lastActivity, error: activityError } = await supabase
-      .from('user_phases')
-      .select('completed_at')
-      .eq('user_id', userId)
-      .order('completed_at', { ascending: false })
-      .limit(1);
-    
-    if (activityError) {
-      console.error("Erro ao buscar última atividade:", activityError);
-      return false;
-    }
-    
-    if (!lastActivity || lastActivity.length === 0) return true; // Sem atividades, manter streak atual
-    
-    const lastActivityDate = new Date(lastActivity[0].completed_at);
     const today = new Date();
+    const todayStr = today.toDateString();
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toDateString();
     
-    // Verificar se a última atividade foi hoje
-    const isToday = lastActivityDate.toDateString() === today.toDateString();
+    // Se o usuário não tem last_login, definir streak como 1 (primeiro dia)
+    if (!profile?.last_login) {
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ 
+          streak_days: 1,
+          last_login: today.toISOString()
+        })
+        .eq('id', userId);
+      
+      if (updateError) {
+        console.error("Erro ao inicializar streak days:", updateError);
+        return false;
+      }
+      return true;
+    }
     
-    // Verificar se a última atividade foi ontem
-    const isYesterday = lastActivityDate.toDateString() === yesterday.toDateString();
+    // Converter last_login para objeto Date
+    const lastLogin = new Date(profile.last_login);
+    const lastLoginStr = lastLogin.toDateString();
     
     let newStreakDays = profile?.streak_days || 0;
     let shouldUpdate = false;
     
-    // Se o usuário fez atividade hoje e não tinha feito login hoje ainda
-    if (isToday && (!profile?.last_login || new Date(profile.last_login).toDateString() !== today.toDateString())) {
+    // Se o último login foi hoje, não fazer nada
+    if (lastLoginStr === todayStr) {
+      return true;
+    }
+    // Se o último login foi ontem, incrementar streak
+    else if (lastLoginStr === yesterdayStr) {
       newStreakDays += 1;
       shouldUpdate = true;
-    } 
-    // Se o usuário não fez atividade ontem nem hoje, resetar streak
-    else if (!isYesterday && !isToday && newStreakDays > 0) {
-      newStreakDays = 0;
+    }
+    // Se o último login foi há mais de um dia, mas o usuário está acessando hoje, reiniciar streak
+    else {
+      newStreakDays = 1; // Reiniciar streak com 1 (dia atual)
       shouldUpdate = true;
     }
     
@@ -136,7 +141,7 @@ export const updateUserStreak = async (userId: string): Promise<boolean> => {
         .from('profiles')
         .update({ 
           streak_days: newStreakDays,
-          last_login: new Date().toISOString()
+          last_login: today.toISOString()
         })
         .eq('id', userId);
       

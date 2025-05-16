@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Search, ArrowRight, Clock } from "lucide-react";
+import { Search, ArrowRight, Clock, Gift } from "lucide-react";
 import BottomNavigation from "@/components/BottomNavigation";
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery } from '@tanstack/react-query';
@@ -8,6 +8,7 @@ import { getModules, Module, getUserNextPhase, getModuleProgress, isModuleComple
 import { getProfile } from "@/services/profileService";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +25,8 @@ const DashboardPage = () => {
   const [moduleProgress, setModuleProgress] = useState<{[key: number]: number}>({});
   const [completedModules, setCompletedModules] = useState<{[key: number]: boolean}>({});
   const [totalProgress, setTotalProgress] = useState(0);
+  const [dailyXpClaimed, setDailyXpClaimed] = useState(false);
+  const [dailyXpButtonDisabled, setDailyXpButtonDisabled] = useState(false);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -37,6 +40,21 @@ const DashboardPage = () => {
           
           if (userProfile) {
             setProfile(userProfile);
+            
+            // Verificar se o usuário já reclamou o XP diário no banco de dados
+            const today = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
+            
+            const { data: claimData } = await supabase
+              .from('daily_xp_claims')
+              .select('claimed_at')
+              .eq('user_id', userId)
+              .eq('claimed_at', today)
+              .single();
+            
+            if (claimData) {
+              setDailyXpClaimed(true);
+              setDailyXpButtonDisabled(true);
+            }
           }
         }
       } catch (error) {
@@ -153,6 +171,102 @@ const DashboardPage = () => {
     return types[type] || type.charAt(0).toUpperCase() + type.slice(1);
   };
 
+  const handleClaimDailyXp = async () => {
+    if (!userId || dailyXpClaimed) return;
+    
+    setDailyXpButtonDisabled(true);
+    
+    try {
+      // Verificar se já reclamou hoje (dupla verificação)
+      const today = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
+      
+      const { data: existingClaim } = await supabase
+        .from('daily_xp_claims')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('claimed_at', today)
+        .single();
+      
+      if (existingClaim) {
+        setDailyXpClaimed(true);
+        toast({
+          title: "Aviso",
+          description: "Você já reclamou seu XP diário hoje!",
+        });
+        return;
+      }
+      
+      // Atualizar XP no banco de dados
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('xp')
+        .eq('id', userId)
+        .single();
+      
+      if (error) throw error;
+      
+      const currentXp = data?.xp || 0;
+      const newXp = currentXp + 50;
+      
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ xp: newXp })
+        .eq('id', userId);
+      
+      if (updateError) throw updateError;
+      
+      // Registrar a reivindicação no banco de dados
+      const { error: claimError } = await supabase
+        .from('daily_xp_claims')
+        .insert({
+          user_id: userId,
+          claimed_at: today,
+          xp_amount: 50
+        });
+      
+      if (claimError) throw claimError;
+      
+      // Atualizar o estado local
+      setProfile(prev => ({
+        ...prev,
+        xp: newXp
+      }));
+      
+      setDailyXpClaimed(true);
+      
+      // Mensagens motivacionais para exibir quando o usuário ganha XP
+      const mensagensMotivacionais = [
+        "Incrível! Sua constância está construindo um futuro brilhante! 🌟",
+        "Mais 50 XP para sua jornada! Continue assim e você vai longe! 🚀",
+        "Você está arrasando! Cada dia de estudo é um passo para o sucesso! 💪",
+        "Parabéns pela dedicação! Seu esforço diário faz toda a diferença! 🏆",
+        "Mais um dia, mais conhecimento! Você está no caminho certo! 📚",
+        "Sua determinação é inspiradora! Continue brilhando! ✨",
+        "Cada ponto de XP te aproxima dos seus objetivos! Continue firme! 🎯",
+        "Você é incrível! Sua constância está construindo seu futuro! 🌈",
+        "Mais um dia de conquistas! Seu futuro agradece! 🙏",
+        "Sua jornada de aprendizado está ficando mais forte a cada dia! 💯"
+      ];
+      
+      // Selecionar uma mensagem aleatória
+      const mensagemAleatoria = mensagensMotivacionais[Math.floor(Math.random() * mensagensMotivacionais.length)];
+      
+      toast({
+        title: "Parabéns!",
+        description: mensagemAleatoria,
+      });
+      
+    } catch (error) {
+      console.error("Erro ao reclamar XP diário:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível reclamar seu XP diário",
+        variant: "destructive"
+      });
+      setDailyXpButtonDisabled(false);
+    }
+  };
+
   if (isLoading || !profile) {
     return (
       <div className="pb-16 min-h-screen bg-gray-50 flex items-center justify-center">
@@ -191,6 +305,28 @@ const DashboardPage = () => {
       </div>
 
       <div className="container px-4 py-5 space-y-6">
+        {/* Daily XP Bonus Button */}
+        {!dailyXpClaimed && (
+          <Card className="border-none shadow-md overflow-hidden bg-gradient-to-r from-purple-100 to-blue-100">
+            <CardContent className="p-3 sm:p-5">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="font-bold text-base sm:text-lg">Bônus Diário</h2>
+                  <p className="text-xs sm:text-sm text-gray-600">Ganhe 50 XP pelo seu acesso hoje!</p>
+                </div>
+                <Button 
+                  onClick={handleClaimDailyXp}
+                  disabled={dailyXpButtonDisabled}
+                  className="bg-[#9b87f5] hover:bg-[#8a74e8] text-white"
+                >
+                  <Gift className="h-4 w-4 mr-2" />
+                  Receber XP
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Overall Progress Card */}
         <Card className="border-none shadow-md overflow-hidden">
           <CardContent className="p-3 sm:p-5 bg-[#FFF6F0]">
