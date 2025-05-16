@@ -105,8 +105,8 @@ const LoginPage = () => {
       </div>
 
       <div className="p-4 text-center">
-        <p className="text-sm text-gray-500">
-          &copy; {new Date().getFullYear()} Tryla. Todos os direitos reservados.
+        <p className="text-sm text-gray-400">
+          &copy; {new Date().getFullYear()} Tryla. Feito com carinho priorizando seu aprendizado.
         </p>
       </div>
     </div>
