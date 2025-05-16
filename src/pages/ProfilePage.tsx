@@ -337,7 +337,7 @@ const ProfilePage = () => {
             ))}
             
             {userRanking.length > 5 && (
-              <Link to="/ranking">
+              <Link to="/recompensas">
               <Button 
                 variant="outline" 
                 className="w-full mt-2 text-[#E36322] border-[#E36322] hover:bg-[#FFF6F0]"
