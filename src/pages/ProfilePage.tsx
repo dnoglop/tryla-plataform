@@ -337,12 +337,14 @@ const ProfilePage = () => {
             ))}
             
             {userRanking.length > 5 && (
+              <Link to="/ranking">
               <Button 
                 variant="outline" 
                 className="w-full mt-2 text-[#E36322] border-[#E36322] hover:bg-[#FFF6F0]"
               >
                 Ver ranking completo
               </Button>
+            </Link>
             )}
           </div>
         </div>

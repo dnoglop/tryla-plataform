@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useQuery } from '@tanstack/react-query';
 import { getModules, Module, getUserNextPhase, getModuleProgress, isModuleCompleted } from "@/services/moduleService";
 import { getProfile } from "@/services/profileService";
+import { updateUserXpFromModules } from "@/services/rankingService";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -44,16 +45,21 @@ const DashboardPage = () => {
             // Verificar se o usuário já reclamou o XP diário no banco de dados
             const today = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
             
-            const { data: claimData } = await supabase
+            const { data: claimData, error: claimError } = await supabase
               .from('daily_xp_claims')
               .select('claimed_at')
               .eq('user_id', userId)
               .eq('claimed_at', today)
               .single();
             
-            if (claimData) {
+            // Se não houver erro ou se o erro não for 'não encontrado', significa que o usuário já reclamou hoje
+            if (claimData && !claimError) {
               setDailyXpClaimed(true);
               setDailyXpButtonDisabled(true);
+            } else {
+              // Garantir que o botão esteja habilitado se o usuário não reclamou hoje
+              setDailyXpClaimed(false);
+              setDailyXpButtonDisabled(false);
             }
           }
         }
@@ -180,12 +186,18 @@ const DashboardPage = () => {
       // Verificar se já reclamou hoje (dupla verificação)
       const today = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
       
-      const { data: existingClaim } = await supabase
+      const { data: existingClaim, error: checkError } = await supabase
         .from('daily_xp_claims')
         .select('id')
         .eq('user_id', userId)
         .eq('claimed_at', today)
         .single();
+      
+      // Se houver erro de 'não encontrado', significa que o usuário não reclamou hoje
+      // Qualquer outro erro deve ser tratado como exceção
+      if (checkError && !checkError.message.includes('No rows found')) {
+        throw checkError;
+      }
       
       if (existingClaim) {
         setDailyXpClaimed(true);
@@ -199,18 +211,31 @@ const DashboardPage = () => {
       // Atualizar XP no banco de dados
       const { data, error } = await supabase
         .from('profiles')
-        .select('xp')
+        .select('xp, level')
         .eq('id', userId)
         .single();
       
       if (error) throw error;
       
       const currentXp = data?.xp || 0;
+      const currentLevel = data?.level || 1;
       const newXp = currentXp + 50;
       
+      // Verificar se o usuário subiu de nível
+      const xpForNextLevel = currentLevel * 100;
+      let newLevel = currentLevel;
+      
+      if (newXp >= xpForNextLevel) {
+        newLevel = currentLevel + 1;
+      }
+      
+      // Atualizar XP e possivelmente o nível no banco de dados
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ xp: newXp })
+        .update({ 
+          xp: newXp,
+          level: newLevel
+        })
         .eq('id', userId);
       
       if (updateError) throw updateError;
@@ -229,10 +254,23 @@ const DashboardPage = () => {
       // Atualizar o estado local
       setProfile(prev => ({
         ...prev,
-        xp: newXp
+        xp: newXp,
+        level: newLevel
       }));
       
       setDailyXpClaimed(true);
+      
+      // Forçar atualização do ranking no banco de dados
+      // Isso garante que o XP diário seja refletido no ranking imediatamente
+      try {
+        // Atualizar o ranking usando a função do serviço de ranking
+        if (userId) {
+          await updateUserXpFromModules(userId);
+        }
+      } catch (refreshError) {
+        console.error("Erro ao atualizar ranking:", refreshError);
+        // Não interromper o fluxo se falhar, apenas logar o erro
+      }
       
       // Mensagens motivacionais para exibir quando o usuário ganha XP
       const mensagensMotivacionais = [
@@ -263,6 +301,7 @@ const DashboardPage = () => {
         description: "Não foi possível reclamar seu XP diário",
         variant: "destructive"
       });
+      // Garantir que o botão seja reabilitado em caso de erro
       setDailyXpButtonDisabled(false);
     }
   };
@@ -322,6 +361,23 @@ const DashboardPage = () => {
                   <Gift className="h-4 w-4 mr-2" />
                   Receber XP
                 </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        
+        {/* Mensagem quando XP já foi reclamado */}
+        {dailyXpClaimed && (
+          <Card className="border-none shadow-md overflow-hidden bg-gradient-to-r from-green-100 to-blue-100">
+            <CardContent className="p-3 sm:p-5">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="font-bold text-base sm:text-lg">Bônus Diário</h2>
+                  <p className="text-xs sm:text-sm text-gray-600">Você já recebeu seu XP hoje! Volte amanhã para mais!</p>
+                </div>
+                <div className="bg-green-500 text-white rounded-full p-2">
+                  <Gift className="h-4 w-4" />
+                </div>
               </div>
             </CardContent>
           </Card>
