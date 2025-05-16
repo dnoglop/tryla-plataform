@@ -147,7 +147,7 @@ const RewardsPage = () => {
                       <img src={top3[1].avatar_url} alt="Avatar" className="w-full h-full object-cover rounded-full" />
                     ) : "👤"}
                   </div>
-                  <p className="font-medium text-sm text-center">{top3[1]?.full_name || top3[1]?.username || "Usuário"}</p>
+                  <p className="font-medium text-sm text-center">{top3[1]?.username || "Usuário"}</p>
                   <p className="text-xs text-[#e36322] font-bold">{top3[1]?.xp || 0} XP</p>
                   <div className="bg-[#e36322]/80 w-full h-20 rounded-t-2xl mt-2 flex items-center justify-center">
                     <span className="text-white text-2xl font-bold">2</span>
@@ -161,7 +161,7 @@ const RewardsPage = () => {
                       <img src={top3[0].avatar_url} alt="Avatar" className="w-full h-full object-cover rounded-full" />
                     ) : "👤"}
                   </div>
-                  <p className="font-medium text-base text-center">{top3[0]?.full_name || top3[0]?.username || "Usuário"}</p>
+                  <p className="font-medium text-base text-center">{top3[0]?.username || "Usuário"}</p>
                   <p className="text-sm text-[#e36322] font-bold">{top3[0]?.xp || 0} XP</p>
                   <div className="bg-[#e36322] w-full h-28 rounded-t-2xl mt-2 flex items-center justify-center">
                     <span className="text-white text-3xl font-bold">1</span>
@@ -175,7 +175,7 @@ const RewardsPage = () => {
                       <img src={top3[2].avatar_url} alt="Avatar" className="w-full h-full object-cover rounded-full" />
                     ) : "👤"}
                   </div>
-                  <p className="font-medium text-sm text-center">{top3[2]?.full_name || top3[2]?.username || "Usuário"}</p>
+                  <p className="font-medium text-sm text-center">{top3[2]?.username || "Usuário"}</p>
                   <p className="text-xs text-[#e36322] font-bold">{top3[2]?.xp || 0} XP</p>
                   <div className="bg-[#e36322]/60 w-full h-16 rounded-t-2xl mt-2 flex items-center justify-center">
                     <span className="text-white text-2xl font-bold">3</span>
@@ -202,7 +202,7 @@ const RewardsPage = () => {
                       ) : "👤"}
                     </div>
                     <div className="flex-1">
-                      <p className="font-medium">{user.full_name || user.username}</p>
+                      <p className="font-medium">{user.username}</p>
                     </div>
                     <div className="text-sm font-bold text-[#e36322]">
                       {user.xp} XP
