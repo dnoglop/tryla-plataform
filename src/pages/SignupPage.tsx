@@ -73,27 +73,6 @@ const SignupPage = () => {
     }
   };
 
-  const handleGoogleSignup = async () => {
-    try {
-      setIsLoading(true);
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`,
-        },
-      });
-
-      if (error) throw error;
-    } catch (error: any) {
-      toast({
-        title: "Erro",
-        description: error.message || "Ocorreu um erro ao tentar entrar com Google",
-        variant: "destructive",
-      });
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-2 from-amber-50">
       <div className="flex-1 flex flex-col items-center justify-center p-6">
@@ -108,28 +87,6 @@ const SignupPage = () => {
         <p className="text-gray-500 mb-4">Comece sua jornada de aprendizado!</p>
 
         <div className="mx-auto w-full max-w-md space-y-6">
-          <div className="grid grid-cols-1 gap-3">
-            <Button 
-              onClick={handleGoogleSignup} 
-              variant="outline"
-              className="flex items-center gap-2 h-12"
-              disabled={isLoading}
-            >
-              <img 
-                src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg" 
-                alt="Google"
-                className="h-5 w-5" 
-              />
-              <span>Continuar com Google</span>
-            </Button>
-          </div>
-
-          <div className="relative flex items-center py-2">
-            <Separator className="flex-1" />
-            <span className="mx-2 text-xs text-gray-400">OU</span>
-            <Separator className="flex-1" />
-          </div>
-
           <form onSubmit={handleSignup} className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="name" className="text-sm font-medium">
@@ -141,7 +98,7 @@ const SignupPage = () => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 p-3 focus:border-[#E36322] focus:outline-none focus:ring-2 focus:ring-[#E36322] focus:ring-opacity-20"
-                placeholder="Seu nome completo"
+                placeholder="qual o seu nome?"
                 required
                 disabled={isLoading}
               />
@@ -157,7 +114,7 @@ const SignupPage = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 p-3 focus:border-[#E36322] focus:outline-none focus:ring-2 focus:ring-[#E36322] focus:ring-opacity-20"
-                placeholder="seu@email.com"
+                placeholder="seumelhor@email.com"
                 required
                 disabled={isLoading}
               />
@@ -200,29 +157,17 @@ const SignupPage = () => {
               className="w-full h-12 bg-[#E36322] text-white hover:bg-[#E36322]/90"
               disabled={isLoading}
             >
-              {isLoading ? "Criando conta..." : "Criar conta"}
+              {isLoading ? "Criando conta..." : "Criar minha conta"}
             </Button>
           </form>
 
           <div className="text-center text-sm">
             <p>
-              Já tem uma conta?{" "}
+              Já criou a sua conta?{" "}
               <Link to="/login" className="font-semibold text-[#E36322] hover:underline">
-                Faça login
+                Faça o login
               </Link>
             </p>
-            
-            <Button 
-              asChild
-              variant="link" 
-              className="mt-4 text-gray-500"
-              disabled={isLoading}
-            >
-              <Link to="/login">
-                <ArrowLeft className="mr-1 h-4 w-4" />
-                <span>Voltar ao login</span>
-              </Link>
-            </Button>
           </div>
         </div>
       </div>
@@ -231,5 +176,4 @@ const SignupPage = () => {
     </div>
   );
 };
-
 export default SignupPage;

@@ -48,7 +48,7 @@ const LoginPage = () => {
 
         <div className="w-full max-w-md bg-white rounded-xl shadow-sm p-6 border border-gray-100">
           <h2 className="text-xl font-bold text-center mb-6">
-            Bem-vindo de volta!
+            Que bom que você voltou!
           </h2>
 
           <form onSubmit={handleAuth} className="space-y-4">
@@ -61,7 +61,8 @@ const LoginPage = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="seu@email.com"
+                className="w-full rounded-lg border text-gray-400 border-gray-600 p-3 focus:border-[#E36322] focus:outline-none focus:ring-2 focus:ring-[#E36322] focus:ring-opacity-20"
+                placeholder="seu e-mail cadastrado"
                 required
               />
             </div>
@@ -75,6 +76,7 @@ const LoginPage = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-lg border text-gray-400 border-gray-600 p-3 focus:border-[#E36322] focus:outline-none focus:ring-2 focus:ring-[#E36322] focus:ring-opacity-20"
                 placeholder="••••••••"
                 required
               />
