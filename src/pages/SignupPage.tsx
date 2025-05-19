@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { generateUsername } from "@/services/profileService";
 
 const SignupPage = () => {
   const [name, setName] = useState("");
@@ -53,6 +54,25 @@ const SignupPage = () => {
       });
 
       if (error) throw error;
+      
+      // Gerar nome de usuário automático e atualizar perfil
+      if (data.user) {
+        // Gerar username baseado no primeiro nome + 4 dígitos aleatórios
+        const username = generateUsername(name);
+        
+        // Aguardar um momento para garantir que o perfil foi criado pelo Supabase
+        // O Supabase cria automaticamente um registro na tabela profiles quando um usuário se registra
+        setTimeout(async () => {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .update({ username: username, full_name: name })
+            .eq('id', data.user.id);
+            
+          if (profileError) {
+            console.error("Erro ao definir username:", profileError);
+          }
+        }, 1000); // Aguardar 1 segundo para garantir que o perfil foi criado
+      }
 
       // Sucesso no cadastro
       toast({

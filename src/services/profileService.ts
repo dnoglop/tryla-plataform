@@ -52,6 +52,68 @@ export const getProfile = async (userId: string): Promise<Profile | null> => {
   }
 };
 
+/**
+ * Gera um nome de usuário automático baseado no primeiro nome + 4 dígitos aleatórios
+ */
+export const generateUsername = (fullName: string): string => {
+  // Extrair o primeiro nome
+  const firstName = fullName.split(' ')[0].toLowerCase();
+  
+  // Gerar 4 dígitos aleatórios
+  const randomDigits = Math.floor(1000 + Math.random() * 9000);
+  
+  // Retornar o nome de usuário no formato: primeironomeDDDD
+  return `${firstName}${randomDigits}`;
+};
+
+/**
+ * Verifica e atualiza o username do usuário se necessário
+ * Esta função garante que todo usuário tenha um username no formato: primeironomeDDDD
+ */
+export const ensureUsername = async (userId: string): Promise<boolean> => {
+  try {
+    // Buscar o perfil atual do usuário
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('username, full_name')
+      .eq('id', userId)
+      .single();
+    
+    if (profileError) {
+      console.error("Erro ao buscar perfil para verificação de username:", profileError);
+      return false;
+    }
+    
+    // Se o usuário já tem um username, não fazer nada
+    if (profile?.username) {
+      return true;
+    }
+    
+    // Se não tem username mas tem nome completo, gerar um username
+    if (profile?.full_name) {
+      const username = generateUsername(profile.full_name);
+      
+      // Atualizar o perfil com o novo username
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ username })
+        .eq('id', userId);
+      
+      if (updateError) {
+        console.error("Erro ao atualizar username:", updateError);
+        return false;
+      }
+      
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error("Erro inesperado ao verificar username:", error);
+    return false;
+  }
+};
+
 export const updateProfile = async (userId: string, updates: Partial<Profile>): Promise<boolean> => {
   try {
     // Remove fields that don't exist in the database table
