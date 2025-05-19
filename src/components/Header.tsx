@@ -1,4 +1,3 @@
-
 import React from "react";
 import { ChevronLeft } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -22,7 +21,7 @@ const Header: React.FC<HeaderProps> = ({ title, showBackButton = false, onBackCl
     <header className="bg-[#e36322] text-white p-4 relative z-10">
       <div className="container mx-auto flex items-center">
         {showBackButton && (
-          <Link to="#" onClick={handleBackClick} className="mr-2">
+          <Link to="/modulos" onClick={handleBackClick} className="mr-2">
             <ChevronLeft className="h-6 w-6" />
           </Link>
         )}

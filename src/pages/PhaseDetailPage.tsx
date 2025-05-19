@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Trash2 } from "lucide-react";
@@ -292,21 +291,7 @@ const PhaseDetailPage = () => {
         {phase.type === "video" && (
           <div className="mt-6">
             <div className="flex justify-between items-center mb-3">
-              <h3 className="text-lg font-medium">Observações sobre o vídeo</h3>
-              {isEditing ? (
-                <div className="space-x-2">
-                  <Button size="sm" variant="outline" onClick={() => setIsEditing(false)}>
-                    Cancelar
-                  </Button>
-                  <Button size="sm" onClick={handleSaveVideoNotes}>
-                    Salvar
-                  </Button>
-                </div>
-              ) : (
-                <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>
-                  Editar
-                </Button>
-              )}
+              <h3 className="text-lg font-medium">Algumas observações sobre o vídeo</h3>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg border">
               {isEditing ? (
@@ -431,36 +416,12 @@ const PhaseDetailPage = () => {
         )}
 
         <div className="mt-8">
-          <div className="flex items-center justify-between border-t pt-4">
-            <div>
-              {prevPhase && (
-                <Link 
-                  to={`/fase/${moduleId}/${prevPhase.id}`} 
-                  className="flex items-center text-gray-600 hover:text-trilha-orange"
-                >
-                  <ArrowLeft className="h-4 w-4 mr-1" />
-                  <span className="text-sm">Anterior</span>
-                </Link>
-              )}
-            </div>
-            
+          <div className="flex items-center justify-center border-t pt-4">
             {(phase.type !== 'quiz' || quizCompleted) && (
               <Button onClick={handleCompletePhase} className="bg-trilha-orange hover:bg-trilha-orange/90">
-                Completar
+                Concluir lição
               </Button>
             )}
-            
-            <div>
-              {nextPhase && (
-                <Link 
-                  to={`/fase/${moduleId}/${nextPhase.id}`} 
-                  className="flex items-center text-gray-600 hover:text-trilha-orange"
-                >
-                  <span className="text-sm">Próximo</span>
-                  <ArrowRight className="h-4 w-4 ml-1" />
-                </Link>
-              )}
-            </div>
           </div>
         </div>
       </div>

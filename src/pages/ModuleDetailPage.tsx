@@ -17,7 +17,8 @@ import {
 } from "@/services/moduleService";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, PlayCircle } from "lucide-react";
+import { PlayCircle } from "lucide-react";
+import { getProfile } from "@/services/profileService";
 
 const ModuleDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -28,12 +29,16 @@ const ModuleDetailPage = () => {
   const [phaseStatuses, setPhaseStatuses] = useState<{[key: number]: PhaseStatus}>({});
   const [isLoadingStatuses, setIsLoadingStatuses] = useState(false);
   const [moduleProgress, setModuleProgress] = useState(0);
+  const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
     const getUser = async () => {
       const { data } = await supabase.auth.getUser();
       if (data?.user) {
-        setUserId(data.user.id);
+        const userId = data.user.id;
+        setUserId(userId);
+        const userProfile = await getProfile(userId);
+        setProfile(userProfile);
       } else {
         navigate("/login");
       }
@@ -221,28 +226,25 @@ const ModuleDetailPage = () => {
           </Button>
         </div>
       </div>
-      
-      <div className="flex justify-between px-4 pt-2">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={navigateToPrevModule}
-          disabled={moduleId <= 1}
-          className={moduleId <= 1 ? "invisible" : ""}
-        >
-          <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
-        </Button>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={navigateToNextModule}
-        >
-          Próximo <ChevronRight className="h-4 w-4 ml-1" />
-        </Button>
-      </div>
 
-      <div className="container px-4 py-4">
-        <div className="prose max-w-none mb-6">
+      <div className="container px-2 py-2">
+        {completedPhases === phases.length && phases.length > 0 && (
+          <div className="mt-4 bg-green-100 rounded-lg p-6 text-center animate-pulse">
+            <div className="text-3xl mb-2">🎉</div>
+            <h3 className="text-lg font-bold text-green-800">Módulo completo, {profile?.full_name?.split(' ')[0] || "Aluno"}!</h3>
+            <p className="text-sm text-green-700 mb-4">
+              Parabéns! Você concluiu todas as fases deste módulo.
+            </p>
+            <Button 
+              className="bg-green-600 hover:bg-green-700"
+              //onClick={() => toast.success("Parabéns pelo módulo completo!")}
+              onClick={() => navigate("/modulos")}
+            >
+              Continuar minha evolução!
+            </Button>
+          </div>
+        )}
+        <div className="prose max-w-none mb-8">
           {module.content ? (
             <div dangerouslySetInnerHTML={{ __html: module.content }} />
           ) : (
@@ -251,22 +253,6 @@ const ModuleDetailPage = () => {
             </div>
           )}
         </div>
-
-        {completedPhases === phases.length && phases.length > 0 && (
-          <div className="mt-6 bg-green-100 rounded-lg p-4 text-center animate-pulse">
-            <div className="text-3xl mb-2">🎉</div>
-            <h3 className="text-lg font-bold text-green-800">Módulo completo!</h3>
-            <p className="text-sm text-green-700 mb-4">
-              Parabéns! Você concluiu todas as fases deste módulo.
-            </p>
-            <Button 
-              className="bg-green-600 hover:bg-green-700"
-              onClick={() => toast.success("Parabéns pelo módulo completo!")}
-            >
-              Resgatar emblema
-            </Button>
-          </div>
-        )}
       </div>
 
       <BottomNavigation />

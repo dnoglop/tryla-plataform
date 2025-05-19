@@ -103,7 +103,6 @@ export const ensureUsername = async (userId: string): Promise<boolean> => {
         console.error("Erro ao atualizar username:", updateError);
         return false;
       }
-      
       return true;
     }
     

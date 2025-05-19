@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Search, Video, FileText, HelpCircle } from "lucide-react";
 import BottomNavigation from "@/components/BottomNavigation";
