@@ -269,8 +269,7 @@ export const updateUserXp = async (userId: string, xpToAdd: number) => {
     }
 
     const currentXp = profileData.xp || 0;
-    let currentLevel = profileData.level || 1;
-    let newXp = currentXp + xpToAdd;
+    const newXp = currentXp + xpToAdd;
     
     // Calculate new level based on 100 XP per level
     const newLevel = Math.floor(newXp / 100) + 1;
@@ -287,31 +286,6 @@ export const updateUserXp = async (userId: string, xpToAdd: number) => {
     }
 
     return { newXp, newLevel };
-  } catch (error) {
-    console.error("Unexpected error updating user XP:", error);
-    throw error;
-  }
-};tLevelXp = currentLevel * 100;
-
-    // Check if the user has leveled up
-    while (newXp >= nextLevelXp) {
-      newXp -= nextLevelXp;
-      currentLevel++;
-      nextLevelXp = currentLevel * 100;
-    }
-
-    // Update the profile with new XP and level
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ xp: newXp, level: currentLevel })
-      .eq('id', userId);
-
-    if (updateError) {
-      console.error("Error updating profile:", updateError);
-      throw updateError;
-    }
-
-    return { newXp, newLevel: currentLevel };
   } catch (error) {
     console.error("Unexpected error updating user XP:", error);
     throw error;
