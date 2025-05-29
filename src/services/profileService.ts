@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Profile {
@@ -23,8 +22,9 @@ export interface Profile {
 export const getProfile = async (userId: string): Promise<Profile | null> => {
   try {
     const { data, error } = await supabase
-      .from('profiles')
-      .select(`
+      .from("profiles")
+      .select(
+        `
         id, 
         username, 
         full_name, 
@@ -36,8 +36,9 @@ export const getProfile = async (userId: string): Promise<Profile | null> => {
         streak_days,
         bio,
         linkedin_url
-      `)
-      .eq('id', userId)
+      `,
+      )
+      .eq("id", userId)
       .single();
 
     if (error) {
@@ -57,11 +58,11 @@ export const getProfile = async (userId: string): Promise<Profile | null> => {
  */
 export const generateUsername = (fullName: string): string => {
   // Extrair o primeiro nome
-  const firstName = fullName.split(' ')[0].toLowerCase();
-  
+  const firstName = fullName.split(" ")[0].toLowerCase();
+
   // Gerar 4 dígitos aleatórios
   const randomDigits = Math.floor(1000 + Math.random() * 9000);
-  
+
   // Retornar o nome de usuário no formato: primeironomeDDDD
   return `${firstName}${randomDigits}`;
 };
@@ -74,38 +75,41 @@ export const ensureUsername = async (userId: string): Promise<boolean> => {
   try {
     // Buscar o perfil atual do usuário
     const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('username, full_name')
-      .eq('id', userId)
+      .from("profiles")
+      .select("username, full_name")
+      .eq("id", userId)
       .single();
-    
+
     if (profileError) {
-      console.error("Erro ao buscar perfil para verificação de username:", profileError);
+      console.error(
+        "Erro ao buscar perfil para verificação de username:",
+        profileError,
+      );
       return false;
     }
-    
+
     // Se o usuário já tem um username, não fazer nada
     if (profile?.username) {
       return true;
     }
-    
+
     // Se não tem username mas tem nome completo, gerar um username
     if (profile?.full_name) {
       const username = generateUsername(profile.full_name);
-      
+
       // Atualizar o perfil com o novo username
       const { error: updateError } = await supabase
-        .from('profiles')
+        .from("profiles")
         .update({ username })
-        .eq('id', userId);
-      
+        .eq("id", userId);
+
       if (updateError) {
         console.error("Erro ao atualizar username:", updateError);
         return false;
       }
       return true;
     }
-    
+
     return false;
   } catch (error) {
     console.error("Erro inesperado ao verificar username:", error);
@@ -113,15 +117,19 @@ export const ensureUsername = async (userId: string): Promise<boolean> => {
   }
 };
 
-export const updateProfile = async (userId: string, updates: Partial<Profile>): Promise<boolean> => {
+export const updateProfile = async (
+  userId: string,
+  updates: Partial<Profile>,
+): Promise<boolean> => {
   try {
     // Remove fields that don't exist in the database table
-    const { phone, birthday, email, website, country, ...validUpdates } = updates;
-    
+    const { phone, birthday, email, website, country, ...validUpdates } =
+      updates;
+
     const { error } = await supabase
-      .from('profiles')
+      .from("profiles")
       .update(validUpdates)
-      .eq('id', userId);
+      .eq("id", userId);
 
     if (error) {
       console.error("Error updating profile:", error);
@@ -141,46 +149,46 @@ export const updateUserStreak = async (userId: string): Promise<boolean> => {
   try {
     // Buscar o perfil atual do usuário
     const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('streak_days, last_login')
-      .eq('id', userId)
+      .from("profiles")
+      .select("streak_days, last_login")
+      .eq("id", userId)
       .single();
-    
+
     if (profileError) {
       console.error("Erro ao buscar perfil para streak:", profileError);
       return false;
     }
-    
+
     const today = new Date();
     const todayStr = today.toDateString();
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toDateString();
-    
+
     // Se o usuário não tem last_login, definir streak como 1 (primeiro dia)
     if (!profile?.last_login) {
       const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ 
+        .from("profiles")
+        .update({
           streak_days: 1,
-          last_login: today.toISOString()
+          last_login: today.toISOString(),
         })
-        .eq('id', userId);
-      
+        .eq("id", userId);
+
       if (updateError) {
         console.error("Erro ao inicializar streak days:", updateError);
         return false;
       }
       return true;
     }
-    
+
     // Converter last_login para objeto Date
     const lastLogin = new Date(profile.last_login);
     const lastLoginStr = lastLogin.toDateString();
-    
+
     let newStreakDays = profile?.streak_days || 0;
     let shouldUpdate = false;
-    
+
     // Se o último login foi hoje, não fazer nada
     if (lastLoginStr === todayStr) {
       return true;
@@ -195,23 +203,23 @@ export const updateUserStreak = async (userId: string): Promise<boolean> => {
       newStreakDays = 1; // Reiniciar streak com 1 (dia atual)
       shouldUpdate = true;
     }
-    
+
     // Atualizar streak_days e last_login
     if (shouldUpdate) {
       const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ 
+        .from("profiles")
+        .update({
           streak_days: newStreakDays,
-          last_login: today.toISOString()
+          last_login: today.toISOString(),
         })
-        .eq('id', userId);
-      
+        .eq("id", userId);
+
       if (updateError) {
         console.error("Erro ao atualizar streak days:", updateError);
         return false;
       }
     }
-    
+
     return true;
   } catch (error) {
     console.error("Erro inesperado ao atualizar streak days:", error);
@@ -219,26 +227,27 @@ export const updateUserStreak = async (userId: string): Promise<boolean> => {
   }
 };
 
-export const uploadAvatar = async (userId: string, file: File): Promise<string | null> => {
+export const uploadAvatar = async (
+  userId: string,
+  file: File,
+): Promise<string | null> => {
   try {
-    const fileExt = file.name.split('.').pop();
+    const fileExt = file.name.split(".").pop();
     const fileName = `${userId}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
     const filePath = `avatars/${fileName}`;
-    
+
     // Upload the image to storage
     const { error: uploadError } = await supabase.storage
-      .from('profiles')
+      .from("profiles")
       .upload(filePath, file);
-      
+
     if (uploadError) {
       throw uploadError;
     }
-    
+
     // Get the public URL
-    const { data } = supabase.storage
-      .from('profiles')
-      .getPublicUrl(filePath);
-    
+    const { data } = supabase.storage.from("profiles").getPublicUrl(filePath);
+
     if (!data || !data.publicUrl) {
       throw new Error("Failed to get public URL for uploaded avatar");
     }
@@ -254,9 +263,9 @@ export const updateUserXp = async (userId: string, xpToAdd: number) => {
   try {
     // Fetch the current profile
     const { data: profileData, error: profileError } = await supabase
-      .from('profiles')
-      .select('xp, level')
-      .eq('id', userId)
+      .from("profiles")
+      .select("xp, level")
+      .eq("id", userId)
       .single();
 
     if (profileError) {
@@ -270,15 +279,15 @@ export const updateUserXp = async (userId: string, xpToAdd: number) => {
 
     const currentXp = profileData.xp || 0;
     const newXp = currentXp + xpToAdd;
-    
+
     // Calculate new level based on 100 XP per level
-    const newLevel = Math.floor(newXp / 100) + 1;
+    const newLevel = Math.floor(newXp / 100) - 1;
 
     // Update the profile with new XP and level
     const { error: updateError } = await supabase
-      .from('profiles')
+      .from("profiles")
       .update({ xp: newXp, level: newLevel })
-      .eq('id', userId);
+      .eq("id", userId);
 
     if (updateError) {
       console.error("Error updating profile:", updateError);
@@ -295,8 +304,9 @@ export const updateUserXp = async (userId: string, xpToAdd: number) => {
 export const getUserBadges = async (userId: string) => {
   try {
     const { data, error } = await supabase
-      .from('user_badges')
-      .select(`
+      .from("user_badges")
+      .select(
+        `
         badge_id,
         unlocked_at,
         badges:badge_id (
@@ -306,22 +316,23 @@ export const getUserBadges = async (userId: string) => {
           icon,
           xp_reward
         )
-      `)
-      .eq('user_id', userId);
+      `,
+      )
+      .eq("user_id", userId);
 
     if (error) throw error;
 
     // Transform the data to match the expected format
     return (data || []).map((item: any) => ({
       id: item.badge_id,
-      name: item.badges?.name || '',
-      description: item.badges?.description || '',
-      icon: item.badges?.icon || '🏆',
+      name: item.badges?.name || "",
+      description: item.badges?.description || "",
+      icon: item.badges?.icon || "🏆",
       unlocked: true,
-      xp_reward: item.badges?.xp_reward || 0
+      xp_reward: item.badges?.xp_reward || 0,
     }));
   } catch (error) {
-    console.error('Error fetching user badges:', error);
+    console.error("Error fetching user badges:", error);
     return [];
   }
 };
@@ -329,8 +340,9 @@ export const getUserBadges = async (userId: string) => {
 export const getUserAchievements = async (userId: string) => {
   try {
     const { data, error } = await supabase
-      .from('user_achievements')
-      .select(`
+      .from("user_achievements")
+      .select(
+        `
         achievement_id,
         unlocked_at,
         achievements:achievement_id (
@@ -340,22 +352,23 @@ export const getUserAchievements = async (userId: string) => {
           icon,
           xp_reward
         )
-      `)
-      .eq('user_id', userId);
+      `,
+      )
+      .eq("user_id", userId);
 
     if (error) throw error;
 
     // Transform the data to match the expected format
     return (data || []).map((item: any) => ({
       id: item.achievement_id,
-      name: item.achievements?.name || '',
-      description: item.achievements?.description || '',
-      icon: item.achievements?.icon || '🏅',
+      name: item.achievements?.name || "",
+      description: item.achievements?.description || "",
+      icon: item.achievements?.icon || "🏅",
       unlocked: true,
-      xp_reward: item.achievements?.xp_reward || 0
+      xp_reward: item.achievements?.xp_reward || 0,
     }));
   } catch (error) {
-    console.error('Error fetching user achievements:', error);
+    console.error("Error fetching user achievements:", error);
     return [];
   }
 };
