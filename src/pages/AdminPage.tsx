@@ -337,7 +337,7 @@ const AdminPage = () => {
     setVideoUrl(phase.video_url || "");
     setContent(phase.content || "");
     setPhaseDuration(phase.duration || 15);
-    setActiveTab("conteudo");
+    setActiveTab("conteudo");eTab("conteudo");
   };
 
   const handleUpdatePhase = () => {
@@ -375,7 +375,7 @@ const AdminPage = () => {
     setContent("");
     setPhaseType("text");
     setIconType("video");
-    setPhaseDuration(15);
+    setPhaseDuration(15);tPhaseDuration(15);
   };
 
   const handleAddEvent = () => {
@@ -413,7 +413,10 @@ const AdminPage = () => {
 
   const handleEditModule = (module: Module) => {
     setEditingModule(module);
-    setActiveTab("modulos");
+    setModuleName(module.name);
+    setModuleDescription(module.description || "");
+    setModuleEmoji(module.emoji || "📚");
+    setActiveTab("modulos");etActiveTab("modulos");
   };
 
   const handleUpdateModule = () => {

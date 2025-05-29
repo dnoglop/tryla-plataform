@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,7 +14,7 @@ import { getModules, Module } from '@/services/moduleService';
 
 export const useJournal = (moduleIdParam: string | null) => {
   const navigate = useNavigate();
-  
+
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [filteredEntries, setFilteredEntries] = useState<JournalEntry[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
@@ -42,18 +41,18 @@ export const useJournal = (moduleIdParam: string | null) => {
   useEffect(() => {
     const fetchUserAndEntries = async () => {
       setIsLoading(true);
-      
+
       try {
         // Obter usuário atual
         const { data: { user } } = await supabase.auth.getUser();
-        
+
         if (!user) {
           navigate('/login');
           return;
         }
-        
+
         setUserId(user.id);
-        
+
         // Buscar entradas do diário
         const journalEntries = await getJournalEntries(user.id);
         setEntries(journalEntries);
@@ -64,29 +63,29 @@ export const useJournal = (moduleIdParam: string | null) => {
         setIsLoading(false);
       }
     };
-    
+
     fetchUserAndEntries();
   }, [navigate]);
-  
+
   // Filtrar entradas quando o termo de busca, a tab ativa ou o filtro de módulo mudar
   useEffect(() => {
     if (entries.length === 0) {
       setFilteredEntries([]);
       return;
     }
-    
+
     let filtered = [...entries];
-    
+
     // Filtrar por tab
     if (activeTab === 'favorites') {
       filtered = filtered.filter(entry => entry.is_favorite);
     }
-    
+
     // Filtrar por módulo
     if (moduleFilter !== null) {
       filtered = filtered.filter(entry => entry.module_id === moduleFilter);
     }
-    
+
     // Filtrar por termo de busca
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase().trim();
@@ -95,16 +94,16 @@ export const useJournal = (moduleIdParam: string | null) => {
         entry.content.toLowerCase().includes(term)
       );
     }
-    
+
     setFilteredEntries(filtered);
   }, [entries, searchTerm, activeTab, moduleFilter]);
 
   const handleCreateEntry = async (entry: JournalEntry) => {
     if (!userId) return;
-    
+
     try {
       const newEntry = await createJournalEntry(entry);
-      
+
       if (newEntry) {
         setEntries(prev => [newEntry, ...prev]);
         setIsCreating(false);
@@ -116,10 +115,10 @@ export const useJournal = (moduleIdParam: string | null) => {
 
   const handleUpdateEntry = async (entry: JournalEntry) => {
     if (!userId || !entry.id) return;
-    
+
     try {
       const success = await updateJournalEntry(entry);
-      
+
       if (success) {
         setEntries(prev => prev.map(e => 
           e.id === entry.id ? entry : e
@@ -134,7 +133,7 @@ export const useJournal = (moduleIdParam: string | null) => {
   const handleToggleFavorite = async (id: string, isFavorite: boolean) => {
     try {
       const success = await toggleFavoriteJournalEntry(id, isFavorite);
-      
+
       if (success) {
         setEntries(prev => prev.map(entry => 
           entry.id === id ? { ...entry, is_favorite: isFavorite } : entry
@@ -147,10 +146,10 @@ export const useJournal = (moduleIdParam: string | null) => {
 
   const handleConfirmDelete = async () => {
     if (!deleteId) return;
-    
+
     try {
       const success = await deleteJournalEntry(deleteId);
-      
+
       if (success) {
         setEntries(prev => prev.filter(entry => entry.id !== deleteId));
         setDeleteId(null);

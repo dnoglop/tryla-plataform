@@ -215,6 +215,7 @@ const PhaseDetailPage = () => {
     updatePhaseVideoNotesMutation.mutate({
       phaseId: Number(phaseId),
       notes: videoNotes
+    }); videoNotes
     });
   };
 

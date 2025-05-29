@@ -542,3 +542,6 @@ export const getUserNextPhase = async (userId: string, moduleId: number): Promis
     return null;
   }
 };
+    return null;
+  }
+};

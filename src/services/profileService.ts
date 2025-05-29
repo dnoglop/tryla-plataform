@@ -328,6 +328,9 @@ export const getUserBadges = async (userId: string) => {
     }));
   } catch (error) {
     console.error('Error fetching user badges:', error);
+    throw error;
+  }
+};:', error);
     return [];
   }
 };
