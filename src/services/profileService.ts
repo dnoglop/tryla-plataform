@@ -147,7 +147,6 @@ export const updateProfile = async (
  */
 export const updateUserStreak = async (userId: string): Promise<boolean> => {
   try {
-    // Buscar o perfil atual do usuário
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("streak_days, last_login")
@@ -161,64 +160,47 @@ export const updateUserStreak = async (userId: string): Promise<boolean> => {
 
     const today = new Date();
     const todayStr = today.toDateString();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toDateString();
+    const lastLogin = profile?.last_login ? new Date(profile.last_login) : null;
+    const lastLoginStr = lastLogin ? lastLogin.toDateString() : null;
 
-    // Se o usuário não tem last_login, definir streak como 1 (primeiro dia)
-    if (!profile?.last_login) {
-      const { error: updateError } = await supabase
+    if (!lastLogin) {
+      // Se o usuário não tem last_login, definir streak como 1
+      await supabase
         .from("profiles")
         .update({
           streak_days: 1,
           last_login: today.toISOString(),
         })
         .eq("id", userId);
-
-      if (updateError) {
-        console.error("Erro ao inicializar streak days:", updateError);
-        return false;
-      }
       return true;
     }
-
-    // Converter last_login para objeto Date
-    const lastLogin = new Date(profile.last_login);
-    const lastLoginStr = lastLogin.toDateString();
-
-    let newStreakDays = profile?.streak_days || 0;
-    let shouldUpdate = false;
 
     // Se o último login foi hoje, não fazer nada
     if (lastLoginStr === todayStr) {
       return true;
     }
+
+    let newStreakDays = profile?.streak_days || 0;
+
     // Se o último login foi ontem, incrementar streak
-    else if (lastLoginStr === yesterdayStr) {
+
+    if (
+      lastLoginStr ===
+      new Date(today.setDate(today.getDate() - 1)).toDateString()
+    ) {
       newStreakDays += 1;
-      shouldUpdate = true;
-    }
-    // Se o último login foi há mais de um dia, mas o usuário está acessando hoje, reiniciar streak
-    else {
-      newStreakDays = 1; // Reiniciar streak com 1 (dia atual)
-      shouldUpdate = true;
+    } else {
+      // Reiniciar streak se não acessado ontem
+      newStreakDays = 1;
     }
 
-    // Atualizar streak_days e last_login
-    if (shouldUpdate) {
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({
-          streak_days: newStreakDays,
-          last_login: today.toISOString(),
-        })
-        .eq("id", userId);
-
-      if (updateError) {
-        console.error("Erro ao atualizar streak days:", updateError);
-        return false;
-      }
-    }
+    await supabase
+      .from("profiles")
+      .update({
+        streak_days: newStreakDays,
+        last_login: today.toISOString(),
+      })
+      .eq("id", userId);
 
     return true;
   } catch (error) {
@@ -281,7 +263,7 @@ export const updateUserXp = async (userId: string, xpToAdd: number) => {
     const newXp = currentXp + xpToAdd;
 
     // Calculate new level based on 100 XP per level
-    const newLevel = Math.floor(newXp / 100) - 1;
+    const newLevel = Math.floor(newXp / 100) + 1;
 
     // Update the profile with new XP and level
     const { error: updateError } = await supabase
