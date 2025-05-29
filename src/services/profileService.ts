@@ -280,8 +280,8 @@ export const updateUserXp = async (userId: string, xpToAdd: number) => {
     const currentXp = profileData.xp || 0;
     const newXp = currentXp + xpToAdd;
 
-    // Calculate new level based on 99 XP per level (starting from level 1)
-    const newLevel = Math.floor(newXp / 99) + 1;
+    // Calculate new level based on 100 XP per level
+    const newLevel = Math.floor(newXp / 100) - 1;
 
     // Update the profile with new XP and level
     const { error: updateError } = await supabase

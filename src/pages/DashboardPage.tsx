@@ -223,8 +223,8 @@ const DashboardPage = () => {
       const currentLevel = data ? data.level || 1 : 1;
       const newXp = currentXp + 50;
 
-      // Verificar se o usuário subiu de nível (99 XP por nível)
-      const newLevel = Math.floor(newXp / 99) + 1;
+      // Verificar se o usuário subiu de nível (100 XP por nível)
+      const newLevel = Math.floor(newXp / 100) + 1;
       const leveledUp = newLevel > currentLevel;
 
       // Atualizar XP e possivelmente o nível no banco de dados

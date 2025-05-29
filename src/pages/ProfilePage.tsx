@@ -150,7 +150,7 @@ const ProfilePage = () => {
   const level = profile?.level || 1;
   const nextLevel = level + 1;
   const currentXp = profile?.xp || 0;
-  const maxXp = level * 99;
+  const maxXp = level * 100;
   const xpProgress = (currentXp / maxXp) * 100;
   const streakDays = profile?.streak_days || 0;
 
