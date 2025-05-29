@@ -163,8 +163,9 @@ export const updateUserStreak = async (userId: string): Promise<boolean> => {
     const today = new Date();
     
     // Extrair apenas ano, mês e dia de hoje
+    // Nota: getMonth() retorna valores de 0-11, então adicionamos 1 para exibição
     const todayYear = today.getFullYear();
-    const todayMonth = today.getMonth();
+    const todayMonth = today.getMonth() + 1; // Corrigido: Janeiro é 1, Dezembro é 12
     const todayDay = today.getDate();
     
     // Processar a data do último login
@@ -184,15 +185,26 @@ export const updateUserStreak = async (userId: string): Promise<boolean> => {
     
     // Extrair apenas ano, mês e dia do último login
     const lastLoginYear = lastLogin.getFullYear();
-    const lastLoginMonth = lastLogin.getMonth();
+    const lastLoginMonth = lastLogin.getMonth() + 1; // Corrigido: Janeiro é 1, Dezembro é 12
     const lastLoginDay = lastLogin.getDate();
+    
+    // Adicionar logs para depuração
+    console.log("Valores de data para comparação:");
+    console.log("Today:", todayYear, todayMonth, todayDay);
+    console.log("Last Login:", lastLoginYear, lastLoginMonth, lastLoginDay);
+    console.log("Raw last_login from DB:", profile.last_login);
+    console.log("Parsed lastLogin:", lastLogin);
+    console.log("É o mesmo dia?", lastLoginYear === todayYear && lastLoginMonth === todayMonth && lastLoginDay === todayDay);
     
     // Verificar se o último login foi hoje (mesmo ano, mês e dia)
     if (lastLoginYear === todayYear && lastLoginMonth === todayMonth && lastLoginDay === todayDay) {
       // Se o último login foi hoje, não fazer nada
+      console.log("CONDIÇÃO VERDADEIRA: Último login foi hoje!");
       toast.success("Que legal que você voltou no mesmo dia!");
       return true;
     }
+    
+    console.log("CONDIÇÃO FALSA: Último login NÃO foi hoje!");
     
     // Se chegou aqui, é um novo dia
     let newStreakDays = profile?.streak_days || 0;
@@ -203,17 +215,24 @@ export const updateUserStreak = async (userId: string): Promise<boolean> => {
     
     // Extrair apenas ano, mês e dia de ontem
     const yesterdayYear = yesterday.getFullYear();
-    const yesterdayMonth = yesterday.getMonth();
+    const yesterdayMonth = yesterday.getMonth() + 1; // Corrigido: Janeiro é 1, Dezembro é 12
     const yesterdayDay = yesterday.getDate();
+    
+    console.log("Yesterday:", yesterdayYear, yesterdayMonth, yesterdayDay);
+    console.log("É ontem?", lastLoginYear === yesterdayYear && lastLoginMonth === yesterdayMonth && lastLoginDay === yesterdayDay);
     
     // Verificar se o último login foi ontem (mesmo ano, mês e dia de ontem)
     if (lastLoginYear === yesterdayYear && lastLoginMonth === yesterdayMonth && lastLoginDay === yesterdayDay) {
       // Se o último login foi ontem, incrementar streak
+      console.log("Incrementando streak porque último login foi ontem");
       newStreakDays += 1;
     } else {
       // Reiniciar streak se não acessado ontem
+      console.log("Reiniciando streak porque último login não foi ontem");
       newStreakDays = 1;
     }
+    
+    console.log("Novo valor de streak:", newStreakDays);
     
     // Atualizar o perfil com o novo streak e o timestamp atual
     const { error: updateError } = await supabase
