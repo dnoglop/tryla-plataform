@@ -223,13 +223,9 @@ const DashboardPage = () => {
       const currentLevel = data ? data.level || 1 : 1;
       const newXp = currentXp + 50;
 
-      // Verificar se o usuário subiu de nível
-      const xpForNextLevel = currentLevel * 100;
-      let newLevel = currentLevel;
-
-      if (newXp >= xpForNextLevel) {
-        newLevel = currentLevel + 1;
-      }
+      // Verificar se o usuário subiu de nível (100 XP por nível)
+      const newLevel = Math.floor(newXp / 100) + 1;
+      const leveledUp = newLevel > currentLevel;
 
       // Atualizar XP e possivelmente o nível no banco de dados
       const { error: updateError } = await supabase
@@ -288,14 +284,48 @@ const DashboardPage = () => {
         "Sua jornada de aprendizado está ficando mais forte a cada dia! 💯"
       ];
 
-      // Selecionar uma mensagem aleatória
-      const mensagemAleatoria = mensagensMotivacionais[Math.floor(Math.random() * mensagensMotivacionais.length)];
+      // Verificar se subiu de nível para mostrar toast especial
+      if (leveledUp) {
+        // Mensagens de comemoração para novo nível
+        const mensagensNivel = [
+          `🎉 INCRÍVEL! Você subiu para o nível ${newLevel}! Sua dedicação está dando frutos! 🌟`,
+          `🚀 PARABÉNS! Nível ${newLevel} desbloqueado! Você está arrasando! 💪`,
+          `✨ FANTÁSTICO! Bem-vindo ao nível ${newLevel}! Continue brilhando! 🏆`,
+          `🎯 SUCESSO! Nível ${newLevel} conquistado! Seu esforço vale ouro! 💯`,
+          `🌈 SHOW! Você chegou ao nível ${newLevel}! Continue essa jornada incrível! 🎊`
+        ];
 
-      toast({
-        title: "Parabéns!",
-        description: mensagemAleatoria,
-        duration: 3000,
-      });
+        const mensagemNivel = mensagensNivel[Math.floor(Math.random() * mensagensNivel.length)];
+
+        toast({
+          title: "SUBIU DE NÍVEL!",
+          description: mensagemNivel,
+          duration: 5000,
+        });
+      } else {
+        // Mensagens motivacionais normais para XP diário
+        const mensagensMotivacionais = [
+          "Incrível! Sua constância está construindo um futuro brilhante! 🌟",
+          "Mais 50 XP para sua jornada! Continue assim e você vai longe! 🚀",
+          "Você está arrasando! Cada dia de estudo é um passo para o sucesso! 💪",
+          "Parabéns pela dedicação! Seu esforço diário faz toda a diferença! 🏆",
+          "Mais um dia, mais conhecimento! Você está no caminho certo! 📚",
+          "Sua determinação é inspiradora! Continue brilhando! ✨",
+          "Cada ponto de XP te aproxima dos seus objetivos! Continue firme! 🎯",
+          "Você é incrível! Sua constância está construindo seu futuro! 🌈",
+          "Mais um dia de conquistas! Seu futuro agradece! 🙏",
+          "Sua jornada de aprendizado está ficando mais forte a cada dia! 💯"
+        ];
+
+        // Selecionar uma mensagem aleatória
+        const mensagemAleatoria = mensagensMotivacionais[Math.floor(Math.random() * mensagensMotivacionais.length)];
+
+        toast({
+          title: "Parabéns!",
+          description: mensagemAleatoria,
+          duration: 3000,
+        });
+      }
 
     } catch (error) {
       console.error("Erro ao reclamar XP diário:", error);

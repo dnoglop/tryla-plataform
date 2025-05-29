@@ -115,15 +115,8 @@ export const updateUserXpFromModules = async (userId: string): Promise<number> =
       return 0;
     }
 
-    // Calcular nível com base no XP total
-    let currentLevel = 1;
-    let xpRequired = 0;
-    
-    // Calcular o nível correto baseado no XP total
-    while (totalXp >= xpRequired + (currentLevel * 100)) {
-      xpRequired += currentLevel * 100;
-      currentLevel++;
-    }
+    // Calcular nível com base no XP total (100 XP por nível)
+    const currentLevel = Math.floor(totalXp / 100) + 1;
 
     // Atualizar perfil com novo XP total e nível
     const { error: updateError } = await supabase

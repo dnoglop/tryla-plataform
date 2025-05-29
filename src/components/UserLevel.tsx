@@ -35,19 +35,11 @@ const UserLevel: React.FC<UserLevelProps> = ({
     }
   }, [userId]);
   
-  // Calculate XP needed for current level and progress to next level
-  const getXpForLevel = (lvl: number) => {
-    let totalXpForLevel = 0;
-    for (let i = 1; i < lvl; i++) {
-      totalXpForLevel += i * 100;
-    }
-    return totalXpForLevel;
-  };
-  
-  const currentLevelStartXp = getXpForLevel(level);
-  const nextLevelStartXp = getXpForLevel(level + 1);
+  // Calculate XP needed for current level and progress to next level (100 XP per level)
+  const currentLevelStartXp = (level - 1) * 100;
+  const nextLevelStartXp = level * 100;
   const currentLevelXp = xp - currentLevelStartXp;
-  const xpNeededForNextLevel = nextLevelStartXp - currentLevelStartXp;
+  const xpNeededForNextLevel = 100; // Always 100 XP per level
   
   const progress = Math.min(Math.floor((currentLevelXp / xpNeededForNextLevel) * 100), 100);
 
