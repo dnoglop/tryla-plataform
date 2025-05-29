@@ -38,23 +38,23 @@ const DashboardPage = () => {
           const userId = data.user.id;
           setUserId(userId);
           const userProfile = await getProfile(userId);
-          
+
           if (userProfile) {
             setProfile(userProfile);
-            
+
             // Verificar se o usuário já reclamou o XP diário no banco de dados
             const today = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
-            
+
             const { data: claimData, error: claimError } = await supabase
               .from('daily_xp_claims')
               .select('claimed_at')
               .eq('user_id', userId)
               .eq('claimed_at', today);
-            
+
             if (claimError) {
               console.error("Erro ao verificar XP diário:", claimError);
             }
-            
+
             // Se há dados, significa que o usuário já reclamou hoje
             if (claimData && claimData.length > 0) {
               setDailyXpClaimed(true);
@@ -71,7 +71,8 @@ const DashboardPage = () => {
         toast({
           title: "Erro",
           description: "Não foi possível carregar seu perfil",
-          variant: "destructive"
+          variant: "destructive",
+          duration: 3000,
         });
       }
     };
@@ -115,17 +116,17 @@ const DashboardPage = () => {
   useEffect(() => {
     const fetchProgressData = async () => {
       if (!userId || modules.length === 0) return;
-      
+
       const progressData: {[key: number]: number} = {};
       const completedData: {[key: number]: boolean} = {};
-      
+
       let totalProgressSum = 0;
-      
+
       for (const module of modules) {
         try {
           const progress = await getModuleProgress(userId, module.id);
           const completed = await isModuleCompleted(userId, module.id);
-          
+
           progressData[module.id] = progress;
           completedData[module.id] = completed;
           totalProgressSum += progress;
@@ -133,17 +134,17 @@ const DashboardPage = () => {
           console.error(`Error loading progress for module ${module.id}:`, error);
         }
       }
-      
+
       setModuleProgress(progressData);
       setCompletedModules(completedData);
-      
+
       // Calculate total progress
       if (modules.length > 0) {
         const overallProgress = Math.round(totalProgressSum / modules.length);
         setTotalProgress(overallProgress);
       }
     };
-    
+
     fetchProgressData();
   }, [userId, modules]);
 
@@ -182,53 +183,54 @@ const DashboardPage = () => {
 
   const handleClaimDailyXp = async () => {
     if (!userId || dailyXpClaimed) return;
-    
+
     setDailyXpButtonDisabled(true);
-    
+
     try {
       // Verificar se já reclamou hoje (dupla verificação)
       const today = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
-      
+
       const { data: existingClaim, error: checkError } = await supabase
         .from('daily_xp_claims')
         .select('id')
         .eq('user_id', userId)
         .eq('claimed_at', today);
-      
+
       if (checkError) {
         throw checkError;
       }
-      
+
       if (existingClaim && existingClaim.length > 0) {
         setDailyXpClaimed(true);
         toast({
           title: "Aviso",
           description: "Você já reclamou seu XP diário hoje!",
+          duration: 3000,
         });
         return;
       }
-      
+
       // Atualizar XP no banco de dados
       const { data, error } = await supabase
         .from('profiles')
         .select('xp, level')
         .eq('id', userId)
         .single();
-      
+
       if (error) throw error;
-      
+
       const currentXp = data?.xp || 0;
       const currentLevel = data?.level || 1;
       const newXp = currentXp + 50;
-      
+
       // Verificar se o usuário subiu de nível
       const xpForNextLevel = currentLevel * 100;
       let newLevel = currentLevel;
-      
+
       if (newXp >= xpForNextLevel) {
         newLevel = currentLevel + 1;
       }
-      
+
       // Atualizar XP e possivelmente o nível no banco de dados
       const { error: updateError } = await supabase
         .from('profiles')
@@ -237,9 +239,9 @@ const DashboardPage = () => {
           level: newLevel
         })
         .eq('id', userId);
-      
+
       if (updateError) throw updateError;
-      
+
       // Registrar a reivindicação no banco de dados
       const { error: claimError } = await supabase
         .from('daily_xp_claims')
@@ -248,18 +250,18 @@ const DashboardPage = () => {
           claimed_at: today,
           xp_amount: 50
         });
-      
+
       if (claimError) throw claimError;
-      
+
       // Atualizar o estado local
       setProfile(prev => ({
         ...prev,
         xp: newXp,
         level: newLevel
       }));
-      
+
       setDailyXpClaimed(true);
-      
+
       // Forçar atualização do ranking no banco de dados
       // Isso garante que o XP diário seja refletido no ranking imediatamente
       try {
@@ -271,7 +273,7 @@ const DashboardPage = () => {
         console.error("Erro ao atualizar ranking:", refreshError);
         // Não interromper o fluxo se falhar, apenas logar o erro
       }
-      
+
       // Mensagens motivacionais para exibir quando o usuário ganha XP
       const mensagensMotivacionais = [
         "Incrível! Sua constância está construindo um futuro brilhante! 🌟",
@@ -285,21 +287,23 @@ const DashboardPage = () => {
         "Mais um dia de conquistas! Seu futuro agradece! 🙏",
         "Sua jornada de aprendizado está ficando mais forte a cada dia! 💯"
       ];
-      
+
       // Selecionar uma mensagem aleatória
       const mensagemAleatoria = mensagensMotivacionais[Math.floor(Math.random() * mensagensMotivacionais.length)];
-      
+
       toast({
         title: "Parabéns!",
         description: mensagemAleatoria,
+        duration: 3000,
       });
-      
+
     } catch (error) {
       console.error("Erro ao reclamar XP diário:", error);
       toast({
         title: "Erro",
         description: "Não foi possível reclamar seu XP diário",
-        variant: "destructive"
+        variant: "destructive",
+        duration: 3000,
       });
       // Garantir que o botão seja reabilitado em caso de erro
       setDailyXpButtonDisabled(false);
@@ -332,7 +336,7 @@ const DashboardPage = () => {
             )}
           </Avatar>
         </div>
-        
+
         {/* Search Bar */}
         <div className="relative mb-2">
           <Input
@@ -365,7 +369,7 @@ const DashboardPage = () => {
             </CardContent>
           </Card>
         )}
-        
+
         {/* Mensagem quando XP já foi reclamado */}
         {dailyXpClaimed && (
           <Card className="border-none shadow-md overflow-hidden bg-gradient-to-r from-green-100 to-blue-100">
@@ -411,7 +415,7 @@ const DashboardPage = () => {
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-lg font-bold text-gray-800">{profile?.full_name?.split(' ')[0] || "Aluno"}, vamos continuar os estudos?</h2>
             </div>
-            
+
             <Card className="overflow-hidden border-none shadow-md rounded-xl">
               <CardContent className="p-0">
                 <div className="bg-[#FFF6F0] p-4">
@@ -435,7 +439,7 @@ const DashboardPage = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="mt-4">
                     <Link 
                       to={`/modulo/${nextModule.id}`}
@@ -489,7 +493,7 @@ const DashboardPage = () => {
               <p className="text-xs text-gray-600 mt-1 mb-3">
                 Aprenda como otimizar seus estudos com estas estratégias comprovadas
               </p>
-              
+
               <ul className="space-y-2">
                 <li className="flex items-center gap-2 text-xs text-gray-700">
                   <div className="h-2 w-2 rounded-full bg-[#E36322]"></div>
