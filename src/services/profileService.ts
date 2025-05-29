@@ -162,13 +162,9 @@ export const updateUserStreak = async (userId: string): Promise<boolean> => {
     // Criar uma nova instância de Date para hoje
     const today = new Date();
     
-    // Extrair apenas ano, mês e dia de hoje
-    // Nota: getMonth() retorna valores de 0-11, então adicionamos 1 para exibição
-    const todayYear = today.getFullYear();
-    const todayMonth = today.getMonth() + 1; // Corrigido: Janeiro é 1, Dezembro é 12
-    const todayDay = today.getDate();
-    
     // Processar a data do último login
+    // Vamos preservar o valor original do banco de dados para comparação
+    const lastLoginRaw = profile?.last_login;
     const lastLogin = profile?.last_login ? new Date(profile.last_login) : null;
     
     if (!lastLogin) {
@@ -183,24 +179,23 @@ export const updateUserStreak = async (userId: string): Promise<boolean> => {
       return true;
     }
     
-    // Extrair apenas ano, mês e dia do último login
-    const lastLoginYear = lastLogin.getFullYear();
-    const lastLoginMonth = lastLogin.getMonth() + 1; // Corrigido: Janeiro é 1, Dezembro é 12
-    const lastLoginDay = lastLogin.getDate();
+    // Extrair as datas em formato YYYY-MM-DD para comparação
+    const todayFormatted = today.toISOString().split('T')[0];
+    const lastLoginFormatted = lastLoginRaw.split('T')[0];
     
     // Adicionar logs para depuração
     console.log("Valores de data para comparação:");
-    console.log("Today:", todayYear, todayMonth, todayDay);
-    console.log("Last Login:", lastLoginYear, lastLoginMonth, lastLoginDay);
-    console.log("Raw last_login from DB:", profile.last_login);
-    console.log("Parsed lastLogin:", lastLogin);
-    console.log("É o mesmo dia?", lastLoginYear === todayYear && lastLoginMonth === todayMonth && lastLoginDay === todayDay);
+    console.log("Today (raw):", today);
+    console.log("Last Login (raw):", lastLogin);
+    console.log("Today (formatted):", todayFormatted);
+    console.log("Last Login (formatted):", lastLoginFormatted);
+    console.log("Raw last_login from DB:", lastLoginRaw);
+    console.log("É o mesmo dia?", todayFormatted === lastLoginFormatted);
     
-    // Verificar se o último login foi hoje (mesmo ano, mês e dia)
-    if (lastLoginYear === todayYear && lastLoginMonth === todayMonth && lastLoginDay === todayDay) {
+    // Verificar se o último login foi hoje (comparando as strings de data)
+    if (todayFormatted === lastLoginFormatted) {
       // Se o último login foi hoje, não fazer nada
       console.log("CONDIÇÃO VERDADEIRA: Último login foi hoje!");
-      toast.success("Que legal que você voltou no mesmo dia!");
       return true;
     }
     
@@ -212,17 +207,13 @@ export const updateUserStreak = async (userId: string): Promise<boolean> => {
     // Criar uma data para ontem
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
+    const yesterdayFormatted = yesterday.toISOString().split('T')[0];
     
-    // Extrair apenas ano, mês e dia de ontem
-    const yesterdayYear = yesterday.getFullYear();
-    const yesterdayMonth = yesterday.getMonth() + 1; // Corrigido: Janeiro é 1, Dezembro é 12
-    const yesterdayDay = yesterday.getDate();
+    console.log("Yesterday (formatted):", yesterdayFormatted);
+    console.log("É ontem?", lastLoginFormatted === yesterdayFormatted);
     
-    console.log("Yesterday:", yesterdayYear, yesterdayMonth, yesterdayDay);
-    console.log("É ontem?", lastLoginYear === yesterdayYear && lastLoginMonth === yesterdayMonth && lastLoginDay === yesterdayDay);
-    
-    // Verificar se o último login foi ontem (mesmo ano, mês e dia de ontem)
-    if (lastLoginYear === yesterdayYear && lastLoginMonth === yesterdayMonth && lastLoginDay === yesterdayDay) {
+    // Verificar se o último login foi ontem (comparando as strings de data)
+    if (lastLoginFormatted === yesterdayFormatted) {
       // Se o último login foi ontem, incrementar streak
       console.log("Incrementando streak porque último login foi ontem");
       newStreakDays += 1;
