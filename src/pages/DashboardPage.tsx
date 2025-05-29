@@ -219,8 +219,8 @@ const DashboardPage = () => {
 
       if (error) throw error;
 
-      const currentXp = data?.xp || 0;
-      const currentLevel = data?.level || 1;
+      const currentXp = data ? data.xp || 0 : 0;
+      const currentLevel = data ? data.level || 1 : 1;
       const newXp = currentXp + 50;
 
       // Verificar se o usuário subiu de nível

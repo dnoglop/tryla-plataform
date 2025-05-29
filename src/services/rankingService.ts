@@ -71,7 +71,7 @@ export const getUserRankPosition = async (userId: string, period: RankingPeriod 
 };
 
 /**
- * Atualiza o XP do usuário com base nos módulos concluídos
+ * Atualiza o XP do usuário com base nos módulos concluídos e XP diário
  */
 export const updateUserXpFromModules = async (userId: string): Promise<number> => {
   try {
@@ -87,8 +87,21 @@ export const updateUserXpFromModules = async (userId: string): Promise<number> =
       return 0;
     }
 
-    // Calcular XP total (50 XP por fase completada)
-    const totalXp = (completedPhases?.length || 0) * 50;
+    // Buscar todo o XP diário reivindicado pelo usuário
+    const { data: dailyXpClaims, error: dailyXpError } = await supabase
+      .from('daily_xp_claims')
+      .select('xp_amount')
+      .eq('user_id', userId);
+
+    if (dailyXpError) {
+      console.error("Erro ao buscar XP diário:", dailyXpError);
+      return 0;
+    }
+
+    // Calcular XP total (50 XP por fase completada + XP diário)
+    const phasesXp = (completedPhases?.length || 0) * 50;
+    const dailyXp = dailyXpClaims?.reduce((total, claim) => total + (claim.xp_amount || 0), 0) || 0;
+    const totalXp = phasesXp + dailyXp;
 
     // Buscar perfil atual
     const { data: profile, error: profileError } = await supabase
