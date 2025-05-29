@@ -30,12 +30,12 @@ const PhaseDetailPage = () => {
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const [videoNotes, setVideoNotes] = useState("");
-  
+
   const handleQuizAnswer = async (isCorrect: boolean) => {
     if (isCorrect) {
       setCorrectAnswers(prev => prev + 1);
     }
-    
+
     if (questions && currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
     } else {
@@ -45,33 +45,33 @@ const PhaseDetailPage = () => {
       }
     }
   };
-  
+
   const handleCompletePhase = async () => {
     if (!user) {
       console.error("Usuário não autenticado");
       toast.error("Você precisa estar logado para completar esta fase.");
       return;
     }
-    
+
     if (!phaseId) {
       console.error("ID da fase não disponível");
       toast.error("Erro ao identificar a fase. Por favor, tente novamente.");
       return;
     }
-    
+
     try {
       setLoading(true);
       console.log("Updating phase status:", { userId: user.id, phaseId: Number(phaseId) });
-      
+
       const result = await updateUserPhaseStatus(user.id, Number(phaseId), "completed");
-      
+
       if (!result) {
         throw new Error("Falha ao atualizar o status da fase");
       }
-      
+
       toast.success("Fase completada com sucesso!");
       queryClient.invalidateQueries({ queryKey: ['phases'] });
-      
+
       if (nextPhase) {
         navigate(`/fase/${moduleId}/${nextPhase.id}`);
       } else {
@@ -94,7 +94,7 @@ const PhaseDetailPage = () => {
         setUser(data.user);
       }
     };
-    
+
     getUser();
   }, []);
 
@@ -145,11 +145,11 @@ const PhaseDetailPage = () => {
       console.log('Questões carregadas:', questions);
       console.log('Índice atual da questão:', currentQuestionIndex);
       console.log('Questão atual:', questions[currentQuestionIndex]);
-      
+
       if (questions.length === 0) {
         console.warn('Nenhuma questão encontrada para este quiz');
       }
-      
+
       if (questions[currentQuestionIndex] && (!questions[currentQuestionIndex].options || !Array.isArray(questions[currentQuestionIndex].options))) {
         console.error('Opções inválidas para a questão atual:', questions[currentQuestionIndex]);
       }
@@ -190,7 +190,7 @@ const PhaseDetailPage = () => {
         .from('phases')
         .update({ video_notes: notes })
         .eq('id', phaseId);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {
@@ -215,7 +215,6 @@ const PhaseDetailPage = () => {
     updatePhaseVideoNotesMutation.mutate({
       phaseId: Number(phaseId),
       notes: videoNotes
-    }); videoNotes
     });
   };
 
@@ -227,7 +226,7 @@ const PhaseDetailPage = () => {
       try {
         console.log("Testando conexão com o Supabase...");
         const { data, error } = await supabase.from('phases').select('count').limit(1);
-        
+
         if (error) {
           console.error("Erro na conexão com o Supabase:", error);
           toast.error("Erro na conexão com o banco de dados. Verifique sua conexão com a internet.");
@@ -238,7 +237,7 @@ const PhaseDetailPage = () => {
         console.error("Exceção ao testar conexão:", e);
       }
     };
-    
+
     testDatabaseConnection();
   }, []);
 
@@ -344,7 +343,7 @@ const PhaseDetailPage = () => {
                 Recarregar Perguntas
               </Button>
             </div>
-            
+
             {isLoadingQuestions ? (
               <div className="flex items-center justify-center p-6">
                 <div className="animate-spin rounded-full h-8 w-8 border-4 border-trilha-orange border-t-transparent"></div>
