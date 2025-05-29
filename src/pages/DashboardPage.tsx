@@ -49,11 +49,14 @@ const DashboardPage = () => {
               .from('daily_xp_claims')
               .select('claimed_at')
               .eq('user_id', userId)
-              .eq('claimed_at', today)
-              .single();
+              .eq('claimed_at', today);
             
-            // Se não houver erro ou se o erro não for 'não encontrado', significa que o usuário já reclamou hoje
-            if (claimData && !claimError) {
+            if (claimError) {
+              console.error("Erro ao verificar XP diário:", claimError);
+            }
+            
+            // Se há dados, significa que o usuário já reclamou hoje
+            if (claimData && claimData.length > 0) {
               setDailyXpClaimed(true);
               setDailyXpButtonDisabled(true);
             } else {
@@ -190,16 +193,13 @@ const DashboardPage = () => {
         .from('daily_xp_claims')
         .select('id')
         .eq('user_id', userId)
-        .eq('claimed_at', today)
-        .single();
+        .eq('claimed_at', today);
       
-      // Se houver erro de 'não encontrado', significa que o usuário não reclamou hoje
-      // Qualquer outro erro deve ser tratado como exceção
-      if (checkError && !checkError.message.includes('No rows found')) {
+      if (checkError) {
         throw checkError;
       }
       
-      if (existingClaim) {
+      if (existingClaim && existingClaim.length > 0) {
         setDailyXpClaimed(true);
         toast({
           title: "Aviso",

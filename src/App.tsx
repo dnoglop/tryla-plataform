@@ -1,4 +1,3 @@
-
 import {
   BrowserRouter as Router,
   Routes,
@@ -20,6 +19,7 @@ import ModuleDetailPage from "./pages/ModuleDetailPage";
 import JournalPage from "./pages/JournalPage";
 import PhaseDetailPage from "./pages/PhaseDetailPage";
 import TutorPage from "./pages/TutorPage";
+import { Toaster } from "@/components/ui/sonner"; // Assuming the path is correct
 
 function App() {
   const [session, setSession] = useState(null);
@@ -90,6 +90,7 @@ function App() {
           element={session ? <TutorPage /> : <Navigate to="/login" />}
         />
       </Routes>
+      <Toaster /> {/* Added Toaster component here */}
     </Router>
   );
 }
