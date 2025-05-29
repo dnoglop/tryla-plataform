@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export interface Profile {
   id: string;
@@ -158,11 +159,17 @@ export const updateUserStreak = async (userId: string): Promise<boolean> => {
       return false;
     }
 
+    // Criar uma nova instância de Date para hoje
     const today = new Date();
-    const todayStr = today.toDateString();
+    
+    // Extrair apenas ano, mês e dia de hoje
+    const todayYear = today.getFullYear();
+    const todayMonth = today.getMonth();
+    const todayDay = today.getDate();
+    
+    // Processar a data do último login
     const lastLogin = profile?.last_login ? new Date(profile.last_login) : null;
-    const lastLoginStr = lastLogin ? lastLogin.toDateString() : null;
-
+    
     if (!lastLogin) {
       // Se o usuário não tem last_login, definir streak como 1
       await supabase
@@ -174,34 +181,54 @@ export const updateUserStreak = async (userId: string): Promise<boolean> => {
         .eq("id", userId);
       return true;
     }
-
-    // Se o último login foi hoje, não fazer nada
-    if (lastLoginStr === todayStr) {
+    
+    // Extrair apenas ano, mês e dia do último login
+    const lastLoginYear = lastLogin.getFullYear();
+    const lastLoginMonth = lastLogin.getMonth();
+    const lastLoginDay = lastLogin.getDate();
+    
+    // Verificar se o último login foi hoje (mesmo ano, mês e dia)
+    if (lastLoginYear === todayYear && lastLoginMonth === todayMonth && lastLoginDay === todayDay) {
+      // Se o último login foi hoje, não fazer nada
+      toast.success("Que legal que você voltou no mesmo dia!");
       return true;
     }
-
+    
+    // Se chegou aqui, é um novo dia
     let newStreakDays = profile?.streak_days || 0;
-
-    // Se o último login foi ontem, incrementar streak
-
-    if (
-      lastLoginStr ===
-      new Date(today.setDate(today.getDate() - 1)).toDateString()
-    ) {
+    
+    // Criar uma data para ontem
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    
+    // Extrair apenas ano, mês e dia de ontem
+    const yesterdayYear = yesterday.getFullYear();
+    const yesterdayMonth = yesterday.getMonth();
+    const yesterdayDay = yesterday.getDate();
+    
+    // Verificar se o último login foi ontem (mesmo ano, mês e dia de ontem)
+    if (lastLoginYear === yesterdayYear && lastLoginMonth === yesterdayMonth && lastLoginDay === yesterdayDay) {
+      // Se o último login foi ontem, incrementar streak
       newStreakDays += 1;
     } else {
       // Reiniciar streak se não acessado ontem
       newStreakDays = 1;
     }
-
-    await supabase
+    
+    // Atualizar o perfil com o novo streak e o timestamp atual
+    const { error: updateError } = await supabase
       .from("profiles")
       .update({
         streak_days: newStreakDays,
         last_login: today.toISOString(),
       })
       .eq("id", userId);
-
+    
+    if (updateError) {
+      console.error("Erro ao atualizar streak:", updateError);
+      return false;
+    }
+    
     return true;
   } catch (error) {
     console.error("Erro inesperado ao atualizar streak days:", error);

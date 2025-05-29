@@ -223,7 +223,7 @@ const ModuleDetailPage = () => {
           >
             <PlayCircle className="mr-2 h-5 w-5" />
             {moduleProgress > 0 ? "Continuar módulo" : "Iniciar módulo"}
-          </Button>tton>
+          </Button>
         </div>
       </div>
 
