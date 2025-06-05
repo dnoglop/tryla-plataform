@@ -214,17 +214,11 @@ const PhaseDetailPage = () => {
         {phase.type === "video" && (
           <div className="mt-6 mb-8 p-6 bg-white shadow-lg rounded-lg">
             <div className="flex justify-between items-center mb-3">
-              <h3 className="text-xl font-semibold text-gray-700">Suas Observações</h3>
-              <Button onClick={() => setIsEditing(!isEditing)} variant="outline" size="sm">
-                {isEditing ? "Cancelar" : "Editar"}
-              </Button>
+              <h3 className="text-xl font-semibold text-gray-700">Para pensar um pouco:</h3>
             </div>
             {isEditing ? (
               <>
                 <RichTextEditor value={videoNotes} onChange={setVideoNotes} />
-                <Button onClick={handleSaveVideoNotes} className="mt-3 bg-trilha-orange hover:bg-trilha-orange-dark">
-                  Salvar Observações
-                </Button>
               </>
             ) : (
               <div 
@@ -236,8 +230,9 @@ const PhaseDetailPage = () => {
         )}
 
         {(phase.type === "text" || phase.type === "challenge") && phase.content && (
-          <div className="mt-6 mb-8 p-6 bg-white shadow-lg rounded-lg">
-            <div className="mb-6 mt-6 flex flex-wrap items-center gap-4">
+          <div className="mt-6 mb-8 p-6 bg-white items-center shadow-lg rounded-lg">
+            <p className="text-xs italic text-center text-gray-600 mb-1">aguarde alguns segundos para ouvir, a IA está analisando o texto (se não começar, tente novamente!)</p>
+            <div className="flex flex-wrap justify-center items-center gap-4 mb-4">
               <Button
                 onClick={handleReadContent}
                 variant="outline"
@@ -245,9 +240,9 @@ const PhaseDetailPage = () => {
               >
                 {/* Alterado para não mostrar o estado "Processando" */}
                 {(isLoadingAudio || isPlaying) ? (
-                  <><VolumeX className="h-5 w-5 mr-2" /> Parar Leitura</>
+                  <><VolumeX className="h-5 w-5 mr-2" /> Parar a leitura</>
                 ) : (
-                  <><Volume2 className="h-5 w-5 mr-2" /> Ler Conteúdo</>
+                  <><Volume2 className="h-5 w-5 mr-2" /> Ouvir o conteúdo</>
                 )}
               </Button>
               <Button
@@ -333,10 +328,6 @@ const PhaseDetailPage = () => {
                 {nextPhase ? "Concluir e Próxima Lição" : "Concluir Módulo"}
               </Button>
             )}
-
-            {nextPhase && (phase.type === 'quiz' && !quizCompleted && questions.length > 0) ? ( <div className="hidden sm:block sm:w-1/3"></div> 
-            ) : nextPhase ? ( <Button variant="outline" onClick={() => navigate(`/fase/${moduleId}/${nextPhase.id}`)} className="w-full sm:w-auto">Próxima Lição <ArrowRight className="ml-2 h-4 w-4" /></Button>
-            ) : <div className="hidden sm:block sm:w-1/3"></div>}
         </div>
       </div>
       <BottomNavigation />
