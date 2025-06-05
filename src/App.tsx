@@ -1,96 +1,60 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
-import { useEffect, useState } from "react";
-import { supabase } from "./integrations/supabase/client";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+
+// Importe seus novos componentes de estrutura
+import ProtectedRoute from "./components/ProtectedRoute";
+import Layout from "@/components/Layout";
+
+// Importe suas páginas
 import SplashScreen from "./pages/SplashScreen";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
-import ProfilePage from "./pages/ProfilePage";
-import EditProfilePage from "./pages/EditProfilePage";
-import RewardsPage from "./pages/RewardsPage";
-import CommunityPage from "./pages/CommunityPage";
-import DashboardPage from "./pages/DashboardPage"; 
+import DashboardPage from "./pages/DashboardPage";
 import ModulesPage from "./pages/ModulesPage";
 import ModuleDetailPage from "./pages/ModuleDetailPage";
-import JournalPage from "./pages/JournalPage";
 import PhaseDetailPage from "./pages/PhaseDetailPage";
+import RewardsPage from "./pages/RewardsPage";
+import CommunityPage from "./pages/CommunityPage";
+import ProfilePage from "./pages/ProfilePage";
+import EditProfilePage from "./pages/EditProfilePage";
+import JournalPage from "./pages/JournalPage";
 import TutorPage from "./pages/TutorPage";
-import { Toaster } from "@/components/ui/sonner"; // Assuming the path is correct
+
+import { Toaster } from "@/components/ui/sonner";
 
 function App() {
-  const [session, setSession] = useState(null);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
-
-    supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-  }, []);
-
   return (
     <Router>
       <Routes>
-        <Route
-          path="/"
-          element={<SplashScreen />}
-        />
-        <Route
-          path="/login"
-          element={session ? <Navigate to="/dashboard" /> : <LoginPage />}
-        />
-        <Route
-          path="/cadastro"
-          element={session ? <Navigate to="/dashboard" /> : <SignupPage />}
-        />
-        <Route
-          path="/dashboard"
-          element={session ? <DashboardPage /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/perfil"
-          element={session ? <ProfilePage /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/editar-perfil"
-          element={session ? <EditProfilePage /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/recompensas"
-          element={session ? <RewardsPage /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/comunidade"
-          element={session ? <CommunityPage /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/modulos"
-          element={session ? <ModulesPage /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/modulo/:id"
-          element={session ? <ModuleDetailPage /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/fase/:moduleId/:phaseId"
-          element={session ? <PhaseDetailPage /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/diario"
-          element={session ? <JournalPage /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/tutor"
-          element={session ? <TutorPage /> : <Navigate to="/login" />}
-        />
+        {/* --- Rotas Públicas --- */}
+        {/* Estas rotas não exigem login e não têm o layout com rodapé */}
+        <Route path="/" element={<SplashScreen />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/cadastro" element={<SignupPage />} />
+
+        {/* --- Rotas Protegidas --- */}
+        {/* O componente ProtectedRoute vai cuidar da lógica de autenticação para TODAS as rotas aninhadas abaixo dele. */}
+        <Route element={<ProtectedRoute />}>
+
+          {/* Grupo de rotas que USAM o layout com rodapé */}
+          <Route element={<Layout />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/modulos" element={<ModulesPage />} />
+            <Route path="/recompensas" element={<RewardsPage />} />
+            <Route path="/comunidade" element={<CommunityPage />} />
+            <Route path="/tutor" element={<TutorPage />} />
+            <Route path="/perfil" element={<ProfilePage />} />
+            <Route path="/diario" element={<JournalPage />} />
+          </Route>
+
+          {/* Grupo de rotas que NÃO USAM o layout (ex: tela cheia) */}
+          {/* Elas ainda são protegidas, mas não mostram o BottomNavigation */}
+          <Route path="/editar-perfil" element={<EditProfilePage />} />
+          <Route path="/modulo/:id" element={<ModuleDetailPage />} />
+          <Route path="/fase/:moduleId/:phaseId" element={<PhaseDetailPage />} />
+
+        </Route>
       </Routes>
-      <Toaster /> {/* Added Toaster component here */}
+      <Toaster />
     </Router>
   );
 }
