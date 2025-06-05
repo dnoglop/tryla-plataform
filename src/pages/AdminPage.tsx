@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -337,7 +336,7 @@ const AdminPage = () => {
     setVideoUrl(phase.video_url || "");
     setContent(phase.content || "");
     setPhaseDuration(phase.duration || 15);
-    setActiveTab("conteudo");eTab("conteudo");
+    setActiveTab("conteudo");
   };
 
   const handleUpdatePhase = () => {
@@ -375,7 +374,7 @@ const AdminPage = () => {
     setContent("");
     setPhaseType("text");
     setIconType("video");
-    setPhaseDuration(15);tPhaseDuration(15);
+    setPhaseDuration(15);
   };
 
   const handleAddEvent = () => {
@@ -416,7 +415,7 @@ const AdminPage = () => {
     setModuleName(module.name);
     setModuleDescription(module.description || "");
     setModuleEmoji(module.emoji || "📚");
-    setActiveTab("modulos");etActiveTab("modulos");
+    setActiveTab("modulos");
   };
 
   const handleUpdateModule = () => {
