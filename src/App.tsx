@@ -54,7 +54,24 @@ function App() {
 
         </Route>
       </Routes>
-      <Toaster />
+      <Toaster 
+        position="top-center" // Posição no topo, como solicitado
+        richColors // Estilos pré-definidos para success, error, info
+        toastOptions={{
+          duration: 3000, // Duração padrão de 3 segundos
+          style: {
+            background: '#ffffff',
+            color: '#1f2937',
+            border: '1px solid #e5e7eb',
+          },
+          // Estilos específicos para cada tipo
+          classNames: {
+            success: 'bg-green-50 border-green-200 text-green-800',
+            error: 'bg-red-50 border-red-200 text-red-800',
+            info: 'bg-blue-50 border-blue-200 text-blue-800',
+          },
+        }}
+      />
     </Router>
   );
 }
