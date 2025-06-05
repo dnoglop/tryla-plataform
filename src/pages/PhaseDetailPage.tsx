@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Trash2, Volume2, VolumeX } from "lucide-react";
 import YoutubeEmbed from "@/components/YoutubeEmbed";
 import Header from "@/components/Header";
 import BottomNavigation from "@/components/BottomNavigation";
@@ -30,6 +30,7 @@ const PhaseDetailPage = () => {
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const [videoNotes, setVideoNotes] = useState("");
+  const [isReading, setIsReading] = useState(false);
 
   const handleQuizAnswer = async (isCorrect: boolean) => {
     if (isCorrect) {
@@ -85,6 +86,63 @@ const PhaseDetailPage = () => {
     }
   };
 
+  const handleReadContent = () => {
+    if (!phase?.content) return;
+
+    if (isReading) {
+      // Para a leitura
+      speechSynthesis.cancel();
+      setIsReading(false);
+      return;
+    }
+
+    // Remove HTML tags do conteúdo para obter apenas o texto
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = phase.content;
+    const textContent = tempDiv.textContent || tempDiv.innerText || '';
+
+    if (!textContent.trim()) {
+      toast.error("Não há conteúdo de texto para ler.");
+      return;
+    }
+
+    // Cria uma nova instância de SpeechSynthesisUtterance
+    const utterance = new SpeechSynthesisUtterance(textContent);
+    
+    // Configura a voz (português brasileiro se disponível)
+    const voices = speechSynthesis.getVoices();
+    const portugueseVoice = voices.find(voice => voice.lang.includes('pt-BR') || voice.lang.includes('pt'));
+    if (portugueseVoice) {
+      utterance.voice = portugueseVoice;
+    }
+
+    utterance.rate = 0.9; // Velocidade um pouco mais lenta
+    utterance.pitch = 1; // Tom normal
+
+    utterance.onstart = () => {
+      setIsReading(true);
+    };
+
+    utterance.onend = () => {
+      setIsReading(false);
+    };
+
+    utterance.onerror = () => {
+      setIsReading(false);
+      toast.error("Erro ao reproduzir o áudio. Tente novamente.");
+    };
+
+    // Inicia a leitura
+    speechSynthesis.speak(utterance);
+  };
+
+  // Cleanup: para a leitura quando o componente é desmontado
+  useEffect(() => {
+    return () => {
+      speechSynthesis.cancel();
+    };
+  }, []);
+
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -116,7 +174,6 @@ const PhaseDetailPage = () => {
     retryDelay: 1000,
   });
 
-  // Adicione este useEffect para monitorar erros
   useEffect(() => {
     if (phaseError) {
       console.error("Erro ao carregar fase:", phaseError);
@@ -218,9 +275,6 @@ const PhaseDetailPage = () => {
     });
   };
 
-  // Removendo o useEffect duplicado que estava causando erros
-
-  // Adicione este useEffect para testar a conexão com o Supabase
   useEffect(() => {
     const testDatabaseConnection = async () => {
       try {
@@ -306,11 +360,42 @@ const PhaseDetailPage = () => {
           </div>
         )}
 
-        {phase.type === "text" && (
-          <div
-            className="mt-6 prose max-w-none"
-            dangerouslySetInnerHTML={{ __html: phase.content || "" }}
-          />
+        {(phase.type === "text" || phase.type === "challenge") && (
+          <div className="mt-6">
+            {/* Botão de leitura para conteúdo de texto */}
+            {phase.content && (
+              <div className="mb-4">
+                <Button
+                  onClick={handleReadContent}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                  disabled={!('speechSynthesis' in window)}
+                >
+                  {isReading ? (
+                    <>
+                      <VolumeX className="h-4 w-4" />
+                      Parar leitura
+                    </>
+                  ) : (
+                    <>
+                      <Volume2 className="h-4 w-4" />
+                      Ler conteúdo
+                    </>
+                  )}
+                </Button>
+                {!('speechSynthesis' in window) && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    Seu navegador não suporta a funcionalidade de leitura de texto.
+                  </p>
+                )}
+              </div>
+            )}
+            
+            <div
+              className="prose max-w-none"
+              dangerouslySetInnerHTML={{ __html: phase.content || "" }}
+            />
+          </div>
         )}
 
         {phase.type === "text" && phase.images && phase.images.length > 0 && (
@@ -392,24 +477,6 @@ const PhaseDetailPage = () => {
                     <p>Carregando pergunta... {isLoadingQuestions ? "(Aguarde)" : "(Clique em Recarregar Perguntas)"}</p>
                   </div>
                 )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {phase.type === "challenge" && (
-          <div className="mt-6">
-            <h3 className="text-lg font-medium mb-3">Desafio</h3>
-            {phase.content ? (
-              <div className="p-6 bg-white rounded-lg shadow-sm border">
-                <div 
-                  className="prose max-w-none"
-                  dangerouslySetInnerHTML={{ __html: phase.content || "" }} 
-                />
-              </div>
-            ) : (
-              <div className="p-6 bg-white rounded-lg shadow-sm border text-center">
-                <p className="text-lg text-gray-500">Conteúdo do desafio não disponível.</p>
               </div>
             )}
           </div>

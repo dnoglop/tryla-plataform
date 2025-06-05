@@ -78,6 +78,30 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_xp_claims: {
+        Row: {
+          claimed_at: string
+          created_at: string
+          id: string
+          user_id: string
+          xp_amount: number
+        }
+        Insert: {
+          claimed_at: string
+          created_at?: string
+          id?: string
+          user_id: string
+          xp_amount?: number
+        }
+        Update: {
+          claimed_at?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+          xp_amount?: number
+        }
+        Relationships: []
+      }
       learning_journals: {
         Row: {
           content: string
@@ -221,8 +245,7 @@ export type Database = {
           created_at: string | null
           full_name: string | null
           id: string
-          last_login_date: string | null
-      last_login: string | null
+          last_login: string | null
           level: number | null
           linkedin_url: string | null
           streak_days: number | null
@@ -236,8 +259,7 @@ export type Database = {
           created_at?: string | null
           full_name?: string | null
           id: string
-          last_login_date?: string | null
-      last_login?: string | null
+          last_login?: string | null
           level?: number | null
           linkedin_url?: string | null
           streak_days?: number | null
@@ -251,8 +273,7 @@ export type Database = {
           created_at?: string | null
           full_name?: string | null
           id?: string
-          last_login_date?: string | null
-      last_login?: string | null
+          last_login?: string | null
           level?: number | null
           linkedin_url?: string | null
           streak_days?: number | null
