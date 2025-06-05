@@ -19,6 +19,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import RichTextEditor from "@/components/RichTextEditor";
+import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 
 const PhaseDetailPage = () => {
   const { moduleId, phaseId } = useParams<{ moduleId: string; phaseId: string }>();
@@ -31,6 +32,7 @@ const PhaseDetailPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [videoNotes, setVideoNotes] = useState("");
   const [isReading, setIsReading] = useState(false);
+  const { isPlaying, isLoading, playText } = useTextToSpeech();
 
   const handleQuizAnswer = async (isCorrect: boolean) => {
     if (isCorrect) {
@@ -88,60 +90,8 @@ const PhaseDetailPage = () => {
 
   const handleReadContent = () => {
     if (!phase?.content) return;
-
-    if (isReading) {
-      // Para a leitura
-      speechSynthesis.cancel();
-      setIsReading(false);
-      return;
-    }
-
-    // Remove HTML tags do conteúdo para obter apenas o texto
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = phase.content;
-    const textContent = tempDiv.textContent || tempDiv.innerText || '';
-
-    if (!textContent.trim()) {
-      toast.error("Não há conteúdo de texto para ler.");
-      return;
-    }
-
-    // Cria uma nova instância de SpeechSynthesisUtterance
-    const utterance = new SpeechSynthesisUtterance(textContent);
-    
-    // Configura a voz (português brasileiro se disponível)
-    const voices = speechSynthesis.getVoices();
-    const portugueseVoice = voices.find(voice => voice.lang.includes('pt-BR') || voice.lang.includes('pt'));
-    if (portugueseVoice) {
-      utterance.voice = portugueseVoice;
-    }
-
-    utterance.rate = 0.9; // Velocidade um pouco mais lenta
-    utterance.pitch = 1; // Tom normal
-
-    utterance.onstart = () => {
-      setIsReading(true);
-    };
-
-    utterance.onend = () => {
-      setIsReading(false);
-    };
-
-    utterance.onerror = () => {
-      setIsReading(false);
-      toast.error("Erro ao reproduzir o áudio. Tente novamente.");
-    };
-
-    // Inicia a leitura
-    speechSynthesis.speak(utterance);
+    playText(phase.content);
   };
-
-  // Cleanup: para a leitura quando o componente é desmontado
-  useEffect(() => {
-    return () => {
-      speechSynthesis.cancel();
-    };
-  }, []);
 
   const queryClient = useQueryClient();
 
@@ -369,9 +319,14 @@ const PhaseDetailPage = () => {
                   onClick={handleReadContent}
                   variant="outline"
                   className="flex items-center gap-2"
-                  disabled={!('speechSynthesis' in window)}
+                  disabled={isLoading}
                 >
-                  {isReading ? (
+                  {isLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-trilha-orange border-t-transparent"></div>
+                      Gerando áudio...
+                    </>
+                  ) : isPlaying ? (
                     <>
                       <VolumeX className="h-4 w-4" />
                       Parar leitura
@@ -383,11 +338,6 @@ const PhaseDetailPage = () => {
                     </>
                   )}
                 </Button>
-                {!('speechSynthesis' in window) && (
-                  <p className="text-sm text-gray-500 mt-1">
-                    Seu navegador não suporta a funcionalidade de leitura de texto.
-                  </p>
-                )}
               </div>
             )}
             
