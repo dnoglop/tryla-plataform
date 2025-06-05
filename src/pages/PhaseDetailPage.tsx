@@ -197,7 +197,6 @@ const PhaseDetailPage = () => {
         title={phase.name} 
         showBackButton={true}
         backButtonTarget={moduleId ? `/modulo/${moduleId}` : '/modulos'}
-        rightContent={ user && ( <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700" onClick={handleDelete} aria-label="Excluir fase"><Trash2 className="h-5 w-5" /></Button> )}
       />
 
       <div className="container px-4 sm:px-6 lg:px-8 py-6">
@@ -230,29 +229,33 @@ const PhaseDetailPage = () => {
         )}
 
         {(phase.type === "text" || phase.type === "challenge") && phase.content && (
-          <div className="mt-6 mb-8 p-6 bg-white items-center shadow-lg rounded-lg">
-            <p className="text-xs italic text-center text-gray-600 mb-1">aguarde alguns segundos para ouvir, a IA está analisando o texto (se não começar, tente novamente!)</p>
-            <div className="flex flex-wrap justify-center items-center gap-4 mb-4">
-              <Button
-                onClick={handleReadContent}
-                variant="outline"
-                className="flex items-center gap-2 py-2.5 text-base"
-              >
-                {/* Alterado para não mostrar o estado "Processando" */}
-                {(isLoadingAudio || isPlaying) ? (
-                  <><VolumeX className="h-5 w-5 mr-2" /> Parar a leitura</>
-                ) : (
-                  <><Volume2 className="h-5 w-5 mr-2" /> Ouvir o conteúdo</>
-                )}
-              </Button>
-              <Button
-                onClick={handleSpeedChange}
-                variant="outline"
-                disabled={isPlaying || isLoadingAudio}
-                aria-label={`Mudar velocidade da leitura, atual: ${speechRate}x`}
-              >
-                Velocidade: {speechRate.toFixed(2)}x
-              </Button>
+          <div className="mt-6 mb-8 p-6 bg-white shadow-lg rounded-lg">
+            <div className="flex flex-col items-center mb-6">
+              <p className="text-xs italic text-center text-gray-500 mb-4">
+                aguarde alguns segundos para ouvir, a IA está analisando o texto (se não começar, tente novamente!)
+              </p>
+              <div className="flex flex-wrap justify-center items-center gap-4">
+                {/* Botão Principal (Ouvir/Parar) */}
+                <Button
+                  onClick={handleReadContent}
+                  className="bg-trilha-orange text-white font-semibold rounded-full px-6 py-2 flex items-center gap-2 shadow-md hover:shadow-lg hover:bg-trilha-orange-dark transition-all duration-300 ease-in-out disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {(isLoadingAudio || isPlaying) ? (
+                    <><VolumeX className="h-5 w-5" /> Parar</>
+                  ) : (
+                    <><Volume2 className="h-5 w-5" /> Ouvir</>
+                  )}
+                </Button>
+                {/* Botão Secundário (Velocidade) */}
+                <Button
+                  onClick={handleSpeedChange}
+                  disabled={isPlaying || isLoadingAudio}
+                  aria-label={`Mudar velocidade da leitura, atual: ${speechRate}x`}
+                  className="border border-trilha-orange text-trilha-orange font-semibold bg-white rounded-full px-5 py-2 hover:bg-trilha-orange hover:text-white transition-all duration-300 ease-in-out disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {speechRate.toFixed(2)}x
+                </Button>
+              </div>
             </div>
             
             <div className="prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none" dangerouslySetInnerHTML={{ __html: phase.content }} />
