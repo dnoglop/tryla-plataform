@@ -31,7 +31,7 @@ const PhaseDetailPage = () => {
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const [videoNotes, setVideoNotes] = useState("");
-  const { isPlaying, isLoading: isLoadingAudio, playText } = useTextToSpeech();
+  const { isPlaying, isLoading: isLoadingAudio, playText, stopAudio } = useTextToSpeech();
 
   const handleQuizAnswer = async (isCorrect: boolean) => {
     if (isCorrect) {
@@ -92,7 +92,7 @@ const PhaseDetailPage = () => {
       toast.error("Não há conteúdo para ler.");
       return;
     }
-    playText(phase.content);
+    playText(phase.content, 'pt-BR');
   };
 
   const queryClient = useQueryClient();
