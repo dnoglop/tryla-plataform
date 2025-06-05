@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Trash2, Volume2, VolumeX } from "lucide-react";
 import YoutubeEmbed from "@/components/YoutubeEmbed";
 import Header from "@/components/Header";
@@ -24,67 +24,68 @@ import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 const PhaseDetailPage = () => {
   const { moduleId, phaseId } = useParams<{ moduleId: string; phaseId: string }>();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const [videoNotes, setVideoNotes] = useState("");
-  const { isPlaying, isLoading: isLoadingAudio, playText, stopAudio } = useTextToSpeech();
 
-  const handleQuizAnswer = async (isCorrect: boolean) => {
-    if (isCorrect) {
-      setCorrectAnswers(prev => prev + 1);
+  // Alterado para as novas opções de velocidade
+  const [speechRate, setSpeechRate] = useState(1.0);
+  const speedOptions = [1.0, 1.15, 1.25, 1.5];
+
+  const {
+    isPlaying,
+    isLoading: isLoadingAudio,
+    playText,
+    getVoicesByLang,
+  } = useTextToSpeech();
+
+  const [preferredPtVoice, setPreferredPtVoice] = useState<SpeechSynthesisVoice | null>(null);
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data?.user) setUser(data.user);
+    };
+    getUser();
+  }, []);
+
+  const { data: phase, isLoading: isLoadingPhase, error: phaseError } = useQuery<Phase | null, Error>({
+    queryKey: ['phase', Number(phaseId)],
+    queryFn: () => getPhaseById(Number(phaseId)),
+    enabled: !!phaseId,
+  });
+  
+  const { data: phases = [] } = useQuery<Phase[], Error>({
+    queryKey: ['phases', Number(moduleId)],
+    queryFn: () => getPhasesByModuleId(Number(moduleId)),
+    enabled: !!moduleId,
+  });
+
+  const { data: questions = [], isLoading: isLoadingQuestions, refetch: refetchQuestions } = useQuery<Question[], Error>({
+    queryKey: ['questions', Number(phaseId)],
+    queryFn: () => getQuestionsByPhaseId(Number(phaseId)),
+    enabled: !!phaseId && phase?.type === 'quiz',
+  });
+  
+  useEffect(() => {
+    if (phaseError) {
+      console.error("Erro ao carregar fase:", phaseError);
+      toast.error("Erro ao carregar dados da fase.");
     }
+  }, [phaseError]);
 
-    if (questions && currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
-    } else {
-      setQuizCompleted(true);
-      if (user) {
-        await handleCompletePhase();
-      }
-    }
-  };
+  useEffect(() => {
+    if (phase?.video_notes) setVideoNotes(phase.video_notes);
+  }, [phase]);
 
-  const handleCompletePhase = async () => {
-    if (!user) {
-      console.error("Usuário não autenticado");
-      toast.error("Você precisa estar logado para completar esta fase.");
-      return;
-    }
-
-    if (!phaseId) {
-      console.error("ID da fase não disponível");
-      toast.error("Erro ao identificar a fase. Por favor, tente novamente.");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      console.log("Updating phase status:", { userId: user.id, phaseId: Number(phaseId) });
-
-      const result = await updateUserPhaseStatus(user.id, Number(phaseId), "completed");
-
-      if (!result) {
-        throw new Error("Falha ao atualizar o status da fase");
-      }
-
-      toast.success("Fase completada com sucesso!");
-      queryClient.invalidateQueries({ queryKey: ['phases'] });
-
-      if (nextPhase) {
-        navigate(`/fase/${moduleId}/${nextPhase.id}`);
-      } else {
-        navigate(`/modulo/${moduleId}`);
-      }
-    } catch (error: any) {
-      console.error("Erro ao completar fase:", error);
-      toast.error(error.message || "Erro ao completar fase. Por favor, tente novamente.");
-    } finally {
-      setLoading(false);
-    }
+  const handleSpeedChange = () => {
+    const currentIndex = speedOptions.indexOf(speechRate);
+    const nextIndex = (currentIndex + 1) % speedOptions.length;
+    setSpeechRate(speedOptions[nextIndex]);
   };
 
   const handleReadContent = () => {
@@ -92,162 +93,84 @@ const PhaseDetailPage = () => {
       toast.error("Não há conteúdo para ler.");
       return;
     }
-    playText(phase.content, 'pt-BR');
+    
+    playText(phase.content, {
+      lang: 'pt-BR',
+      rate: speechRate,
+      pitch: 1.0, 
+      voice: preferredPtVoice,
+    });
   };
 
-  const queryClient = useQueryClient();
+  const handleCompletePhase = async () => {
+    if (!user || !phaseId) {
+      toast.error(user ? "Erro ao identificar a fase." : "Você precisa estar logado.");
+      return;
+    }
+    try {
+      await updateUserPhaseStatus(user.id, Number(phaseId), "completed");
+      toast.success("Fase completada!");
+      queryClient.invalidateQueries({ queryKey: ['phases', Number(moduleId)] });
+      const currentIdx = phases.findIndex(p => p.id === Number(phaseId));
+      const nextPh = currentIdx !== -1 && currentIdx < phases.length - 1 ? phases[currentIdx + 1] : null;
+      if (nextPh) navigate(`/fase/${moduleId}/${nextPh.id}`);
+      else navigate(`/modulo/${moduleId}`);
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao completar fase.");
+    }
+  };
 
-  useEffect(() => {
-    const getUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (data?.user) {
-        setUser(data.user);
-      }
-    };
-
-    getUser();
-  }, []);
-
-  const { data: phase, isLoading: isLoadingPhase, error: phaseError } = useQuery({
-    queryKey: ['phase', Number(phaseId)],
-    queryFn: async () => {
-      console.log("Iniciando busca da fase:", phaseId);
-      try {
-        const result = await getPhaseById(Number(phaseId));
-        console.log("Resultado da busca da fase:", result);
-        return result;
-      } catch (error) {
-        console.error("Erro ao buscar fase:", error);
-        throw error;
-      }
+  const handleQuizAnswer = (isCorrect: boolean) => {
+    if (isCorrect) setCorrectAnswers(prev => prev + 1);
+    if (questions && currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+    } else {
+      setQuizCompleted(true);
+    }
+  };
+  
+  const deletePhaseMutation = useMutation<void, Error, number>({
+    mutationFn: async (id: number) => { 
+      await deletePhaseFunc(id);
     },
-    enabled: !!phaseId,
-    retry: 3,
-    retryDelay: 1000,
-  });
-
-  useEffect(() => {
-    if (phaseError) {
-      console.error("Erro ao carregar fase:", phaseError);
-      toast.error("Erro ao carregar dados da fase. Verifique sua conexão com o banco de dados.");
-    }
-  }, [phaseError]);
-
-  const { data: phases = [], isLoading: isLoadingPhases } = useQuery({
-    queryKey: ['phases', Number(moduleId)],
-    queryFn: () => getPhasesByModuleId(Number(moduleId)),
-    enabled: !!moduleId,
-  });
-
-  const { data: questions = [], isLoading: isLoadingQuestions, refetch: refetchQuestions } = useQuery({
-    queryKey: ['questions', Number(phaseId)],
-    queryFn: () => getQuestionsByPhaseId(Number(phaseId)),
-    enabled: !!phaseId && phase?.type === 'quiz',
-    staleTime: 0,
-    refetchOnMount: true,
-    retry: 3,
-    retryDelay: 1000,
-  });
-
-  useEffect(() => {
-    if (phase?.type === 'quiz') {
-      console.log('Questões carregadas:', questions);
-      console.log('Índice atual da questão:', currentQuestionIndex);
-      console.log('Questão atual:', questions[currentQuestionIndex]);
-
-      if (questions.length === 0) {
-        console.warn('Nenhuma questão encontrada para este quiz');
-      }
-
-      if (questions[currentQuestionIndex] && (!questions[currentQuestionIndex].options || !Array.isArray(questions[currentQuestionIndex].options))) {
-        console.error('Opções inválidas para a questão atual:', questions[currentQuestionIndex]);
-      }
-    }
-  }, [questions, currentQuestionIndex, phase]);
-
-  useEffect(() => {
-    if (!isLoadingPhase && !isLoadingPhases && (!isLoadingQuestions || phase?.type !== 'quiz')) {
-      setLoading(false);
-    }
-  }, [isLoadingPhase, isLoadingPhases, isLoadingQuestions, phase]);
-
-  const currentPhaseIndex = phases.findIndex(p => p.id === Number(phaseId));
-  const prevPhase = currentPhaseIndex > 0 ? phases[currentPhaseIndex - 1] : null;
-  const nextPhase = currentPhaseIndex < phases.length - 1 ? phases[currentPhaseIndex + 1] : null;
-
-  useEffect(() => {
-    if (phase?.video_notes) {
-      setVideoNotes(phase.video_notes);
-    }
-  }, [phase]);
-
-  const deletePhaseMutation = useMutation({
-    mutationFn: (phaseId: number) => deletePhaseFunc(phaseId),
     onSuccess: () => {
-      toast.success("Fase excluída com sucesso!");
-      navigate(`/modulo/${moduleId}`);
+      toast.success("Fase excluída!");
+      if (moduleId) navigate(`/modulo/${moduleId}`); else navigate('/');
+      queryClient.invalidateQueries({ queryKey: ['phases', Number(moduleId)] });
     },
-    onError: (error) => {
-      toast.error("Erro ao excluir fase");
-      console.error("Erro ao excluir fase:", error);
-    }
+    onError: (error) => toast.error(`Erro ao excluir: ${error.message}`),
   });
 
-  const updatePhaseVideoNotesMutation = useMutation({
-    mutationFn: async ({ phaseId, notes }: { phaseId: number; notes: string }) => {
-      const { error } = await supabase
-        .from('phases')
-        .update({ video_notes: notes })
-        .eq('id', phaseId);
-
+  const updatePhaseVideoNotesMutation = useMutation<void, Error, { phaseId: number; notes: string }>({
+    mutationFn: async ({ phaseId, notes }) => {
+      const { error } = await supabase.from('phases').update({ video_notes: notes }).eq('id', phaseId);
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Observações atualizadas com sucesso!");
-      queryClient.invalidateQueries({ queryKey: ['phase'] });
+      toast.success("Observações salvas!");
+      queryClient.invalidateQueries({ queryKey: ['phase', Number(phaseId)] });
       setIsEditing(false);
     },
-    onError: (error) => {
-      toast.error("Erro ao atualizar observações");
-      console.error("Erro ao atualizar anotações do vídeo:", error);
-    }
+    onError: (error) => toast.error(`Erro ao salvar: ${error.message}`),
   });
 
-  const handleDelete = async () => {
-    if (window.confirm("Tem certeza que deseja excluir esta fase?")) {
+  const handleDelete = () => {
+    if (phaseId && window.confirm("Tem certeza que deseja excluir esta fase?")) {
       deletePhaseMutation.mutate(Number(phaseId));
     }
   };
 
   const handleSaveVideoNotes = () => {
-    if (!phaseId) return;
-    updatePhaseVideoNotesMutation.mutate({
-      phaseId: Number(phaseId),
-      notes: videoNotes
-    });
+    if (phaseId) {
+      updatePhaseVideoNotesMutation.mutate({ phaseId: Number(phaseId), notes: videoNotes });
+    }
   };
+  
+  const currentPhaseIndex = phases.findIndex(p => p.id === Number(phaseId));
+  const prevPhase = currentPhaseIndex > 0 ? phases[currentPhaseIndex - 1] : null;
+  const nextPhase = currentPhaseIndex < phases.length - 1 && phases.length > 1 ? phases[currentPhaseIndex + 1] : null;
 
-  useEffect(() => {
-    const testDatabaseConnection = async () => {
-      try {
-        console.log("Testando conexão com o Supabase...");
-        const { data, error } = await supabase.from('phases').select('count').limit(1);
-
-        if (error) {
-          console.error("Erro na conexão com o Supabase:", error);
-          toast.error("Erro na conexão com o banco de dados. Verifique sua conexão com a internet.");
-        } else {
-          console.log("Conexão com o Supabase bem-sucedida:", data);
-        }
-      } catch (e) {
-        console.error("Exceção ao testar conexão:", e);
-      }
-    };
-
-    testDatabaseConnection();
-  }, []);
-
-  if (loading) {
+  if (isLoadingPhase) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-trilha-orange border-t-transparent"></div>
@@ -255,112 +178,102 @@ const PhaseDetailPage = () => {
     );
   }
 
-  if (!phase) {
+  if (phaseError || !phase) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <p className="text-gray-500">Fase não encontrada.</p>
+      <div className="flex flex-col items-center justify-center h-screen text-center px-4">
+        <p className="text-gray-600 text-lg mb-4">
+          {phaseError ? "Ocorreu um erro ao carregar os dados desta fase." : "Fase não encontrada ou indisponível."}
+        </p>
+        <Button onClick={() => navigate(moduleId ? `/modulo/${moduleId}` : '/')}>
+          Voltar
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-16">
+    <div className="min-h-screen bg-gray-50 pb-24">
       <Header 
         title={phase.name} 
         showBackButton={true}
-        rightContent={
-          user && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-red-500 hover:text-red-700"
-              onClick={handleDelete}
-            >
-              <Trash2 className="h-5 w-5" />
-            </Button>
-          )
-        }
+        backButtonTarget={moduleId ? `/modulo/${moduleId}` : '/modulos'}
+        rightContent={ user && ( <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700" onClick={handleDelete} aria-label="Excluir fase"><Trash2 className="h-5 w-5" /></Button> )}
       />
 
-      <div className="container px-4 py-6">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">{phase.name}</h2>
-          {phase.description && (
-            <p className="text-gray-600 mt-2">{phase.description}</p>
-          )}
+      <div className="container px-4 sm:px-6 lg:px-8 py-6">
+        <div className="mb-8 p-6 bg-white shadow-lg rounded-lg">
+          <h2 className="text-3xl font-bold text-gray-800 mb-2">{phase.name}</h2>
+          {phase.description && <p className="text-gray-700 mt-1 text-base">{phase.description}</p>}
         </div>
 
         {phase.type === "video" && phase.video_url && (
-          <YoutubeEmbed videoId={phase.video_url} />
+          <div className="mb-6 shadow-lg rounded-lg overflow-hidden">
+            <YoutubeEmbed videoId={phase.video_url} />
+          </div>
         )}
-
         {phase.type === "video" && (
-          <div className="mt-6">
+          <div className="mt-6 mb-8 p-6 bg-white shadow-lg rounded-lg">
             <div className="flex justify-between items-center mb-3">
-              <h3 className="text-lg font-medium">Algumas observações sobre o vídeo</h3>
+              <h3 className="text-xl font-semibold text-gray-700">Suas Observações</h3>
+              <Button onClick={() => setIsEditing(!isEditing)} variant="outline" size="sm">
+                {isEditing ? "Cancelar" : "Editar"}
+              </Button>
             </div>
-            <div className="bg-gray-50 p-4 rounded-lg border">
-              {isEditing ? (
+            {isEditing ? (
+              <>
                 <RichTextEditor value={videoNotes} onChange={setVideoNotes} />
-              ) : (
-                <div 
-                  className="prose max-w-none"
-                  dangerouslySetInnerHTML={{ __html: phase.video_notes || "" }}
-                />
-              )}
-            </div>
+                <Button onClick={handleSaveVideoNotes} className="mt-3 bg-trilha-orange hover:bg-trilha-orange-dark">
+                  Salvar Observações
+                </Button>
+              </>
+            ) : (
+              <div 
+                className="prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none"
+                dangerouslySetInnerHTML={{ __html: videoNotes || "<p class='text-gray-500'>Nenhuma observação ainda.</p>" }}
+              />
+            )}
           </div>
         )}
 
-        {(phase.type === "text" || phase.type === "challenge") && (
-          <div className="mt-6">
-            {/* Botão de leitura para conteúdo de texto */}
-            {phase.content && (
-              <div className="mb-4">
-                <Button
-                  onClick={handleReadContent}
-                  variant="outline"
-                  className="flex items-center gap-2"
-                  disabled={isLoadingAudio}
-                >
-                  {isLoadingAudio ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-trilha-orange border-t-transparent"></div>
-                      Gerando áudio...
-                    </>
-                  ) : isPlaying ? (
-                    <>
-                      <VolumeX className="h-4 w-4" />
-                      Parar leitura
-                    </>
-                  ) : (
-                    <>
-                      <Volume2 className="h-4 w-4" />
-                      Ler conteúdo
-                    </>
-                  )}
-                </Button>
-              </div>
-            )}
+        {(phase.type === "text" || phase.type === "challenge") && phase.content && (
+          <div className="mt-6 mb-8 p-6 bg-white shadow-lg rounded-lg">
+            <div className="mb-6 mt-6 flex flex-wrap items-center gap-4">
+              <Button
+                onClick={handleReadContent}
+                variant="outline"
+                className="flex items-center gap-2 py-2.5 text-base"
+              >
+                {/* Alterado para não mostrar o estado "Processando" */}
+                {(isLoadingAudio || isPlaying) ? (
+                  <><VolumeX className="h-5 w-5 mr-2" /> Parar Leitura</>
+                ) : (
+                  <><Volume2 className="h-5 w-5 mr-2" /> Ler Conteúdo</>
+                )}
+              </Button>
+              <Button
+                onClick={handleSpeedChange}
+                variant="outline"
+                disabled={isPlaying || isLoadingAudio}
+                aria-label={`Mudar velocidade da leitura, atual: ${speechRate}x`}
+              >
+                Velocidade: {speechRate.toFixed(2)}x
+              </Button>
+            </div>
             
-            <div
-              className="prose max-w-none"
-              dangerouslySetInnerHTML={{ __html: phase.content || "" }}
-            />
+            <div className="prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none" dangerouslySetInnerHTML={{ __html: phase.content }} />
           </div>
         )}
 
         {phase.type === "text" && phase.images && phase.images.length > 0 && (
-          <div className="mt-6">
-            <h3 className="text-lg font-medium mb-3">Imagens</h3>
-            <div className="flex flex-wrap gap-4">
+          <div className="mt-6 mb-8 p-6 bg-white shadow-lg rounded-lg">
+            <h3 className="text-xl font-semibold text-gray-700 mb-4">Imagens Adicionais</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
               {phase.images.map((image, index) => (
                 <img
                   key={index}
                   src={image}
-                  alt={`Imagem ${index + 1}`}
-                  className="rounded-lg shadow-md"
-                  style={{ maxWidth: '200px', maxHeight: '200px', objectFit: 'cover' }}
+                  alt={`Imagem da fase ${index + 1}`}
+                  className="rounded-lg shadow-md object-cover aspect-square hover:opacity-90 transition-opacity"
                 />
               ))}
             </div>
@@ -368,83 +281,64 @@ const PhaseDetailPage = () => {
         )}
 
         {phase.type === "quiz" && (
-          <div className="mt-6">
-            <h3 className="text-lg font-medium mb-3">Questionário</h3>
-            <div className="mb-3">
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={() => refetchQuestions()}
-                className="mb-3"
-              >
-                Recarregar Perguntas
-              </Button>
+          <div className="mt-6 mb-8 p-6 bg-white shadow-lg rounded-lg">
+            <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-semibold text-gray-700">Questionário</h3>
+                {!quizCompleted && questions.length > 0 && (
+                    <Button size="sm" variant="outline" onClick={() => refetchQuestions()} disabled={isLoadingQuestions}>
+                        {isLoadingQuestions ? "Recarregando..." : "Recarregar"}
+                    </Button>
+                )}
             </div>
-
-            {isLoadingQuestions ? (
-              <div className="flex items-center justify-center p-6">
-                <div className="animate-spin rounded-full h-8 w-8 border-4 border-trilha-orange border-t-transparent"></div>
-              </div>
-            ) : questions.length === 0 ? (
-              <p>Nenhuma pergunta disponível para este questionário.</p>
+            {isLoadingQuestions ? ( <div className="flex justify-center p-10"><div className="animate-spin rounded-full h-10 w-10 border-4 border-trilha-orange border-t-transparent"></div></div>
+            ) : questions.length === 0 ? ( <p className="text-gray-600">Nenhuma pergunta disponível.</p>
             ) : quizCompleted ? (
-              <div className="p-6 bg-white rounded-lg shadow-sm border text-center">
-                <h4 className="text-xl font-bold mb-4">Resultado do Questionário</h4>
-                <p className="text-lg">
-                  Você acertou {correctAnswers} de {questions.length} perguntas!
-                </p>
-                <p className="text-lg mt-4">
-                  {correctAnswers === questions.length ? 
-                    "Parabéns! Você acertou todas as perguntas!" : 
-                    "Continue praticando para melhorar seu conhecimento!"}
+              <div className="p-6 text-center">
+                <h4 className="text-2xl font-bold text-gray-800 mb-3">Resultado</h4>
+                <p className="text-lg text-gray-700">Você acertou {correctAnswers} de {questions.length}!</p>
+                <p className="text-lg mt-4 font-medium">
+                  {correctAnswers / questions.length >= 0.7 ? "Excelente!" : "Continue praticando!"}
                 </p>
               </div>
             ) : (
-              <div className="p-6 bg-white rounded-lg shadow-sm border">
-                <div className="flex justify-between mb-4">
-                  <span className="text-sm font-medium">
-                    Pergunta {currentQuestionIndex + 1} de {questions.length}
-                  </span>
-                  <span className="text-sm text-gray-500">
-                    {Math.round(((currentQuestionIndex + 1) / questions.length) * 100)}% completo
-                  </span>
+              <div>
+                <div className="flex justify-between text-sm text-gray-600 mb-2">
+                  <span>Pergunta {currentQuestionIndex + 1} de {questions.length}</span>
+                  <span>{Math.round(((currentQuestionIndex + 1) / questions.length) * 100)}%</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2 mb-6">
-                  <div 
-                    className="bg-trilha-orange h-2 rounded-full" 
-                    style={{ width: `${Math.round(((currentQuestionIndex + 1) / questions.length) * 100)}%` }}
-                  ></div>
+                <div className="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+                  <div className="bg-trilha-orange h-2.5 rounded-full transition-all duration-500 ease-out" style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}></div>
                 </div>
-                {questions && questions.length > 0 && currentQuestionIndex < questions.length ? (
+                {questions[currentQuestionIndex] && (
                   <QuizQuestion
-                    key={`question-${questions[currentQuestionIndex].id}-${currentQuestionIndex}`}
+                    key={questions[currentQuestionIndex].id + '-' + currentQuestionIndex}
                     questionId={questions[currentQuestionIndex].id}
                     question={questions[currentQuestionIndex].question}
                     options={Array.isArray(questions[currentQuestionIndex].options) ? questions[currentQuestionIndex].options : []}
                     correctAnswer={questions[currentQuestionIndex].correct_answer}
                     onAnswer={handleQuizAnswer}
                   />
-                ) : (
-                  <div className="text-center p-4">
-                    <p>Carregando pergunta... {isLoadingQuestions ? "(Aguarde)" : "(Clique em Recarregar Perguntas)"}</p>
-                  </div>
                 )}
               </div>
             )}
           </div>
         )}
 
-        <div className="mt-8">
-          <div className="flex items-center justify-center border-t pt-4">
-            {(phase.type !== 'quiz' || quizCompleted) && (
-              <Button onClick={handleCompletePhase} className="bg-trilha-orange hover:bg-trilha-orange/90">
-                Concluir lição
+        <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-200 pt-6">
+            {prevPhase ? ( <Button variant="outline" onClick={() => navigate(`/fase/${moduleId}/${prevPhase.id}`)} className="w-full sm:w-auto"><ArrowLeft className="mr-2 h-4 w-4" /> Anterior</Button>
+            ) : <div className="hidden sm:block sm:w-1/3"></div>}
+            
+            {(phase.type !== 'quiz' || quizCompleted || questions.length === 0) && (
+              <Button onClick={handleCompletePhase} className="bg-trilha-orange hover:bg-trilha-orange-dark w-full sm:w-auto order-first sm:order-none py-2.5 text-base">
+                {nextPhase ? "Concluir e Próxima Lição" : "Concluir Módulo"}
               </Button>
             )}
-          </div>
+
+            {nextPhase && (phase.type === 'quiz' && !quizCompleted && questions.length > 0) ? ( <div className="hidden sm:block sm:w-1/3"></div> 
+            ) : nextPhase ? ( <Button variant="outline" onClick={() => navigate(`/fase/${moduleId}/${nextPhase.id}`)} className="w-full sm:w-auto">Próxima Lição <ArrowRight className="ml-2 h-4 w-4" /></Button>
+            ) : <div className="hidden sm:block sm:w-1/3"></div>}
         </div>
       </div>
-
       <BottomNavigation />
     </div>
   );
