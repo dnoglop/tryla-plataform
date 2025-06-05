@@ -21,6 +21,10 @@ import { toast } from "sonner";
 import RichTextEditor from "@/components/RichTextEditor";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 
+// Estilos de Botão Padronizados
+const primaryButtonClass = "bg-trilha-orange text-white font-semibold rounded-full px-8 py-3 text-base shadow-md hover:shadow-lg hover:bg-trilha-orange-dark transition-all duration-300 ease-in-out disabled:opacity-60 disabled:cursor-not-allowed";
+const secondaryButtonClass = "bg-white text-gray-700 font-semibold border border-gray-200 rounded-full px-6 py-2 shadow-md hover:shadow-lg hover:bg-gray-50 transform hover:-translate-y-px transition-all duration-300 ease-in-out disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2";
+
 const PhaseDetailPage = () => {
   const { moduleId, phaseId } = useParams<{ moduleId: string; phaseId: string }>();
   const navigate = useNavigate();
@@ -31,9 +35,8 @@ const PhaseDetailPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [videoNotes, setVideoNotes] = useState("");
 
-  // Alterado para as novas opções de velocidade
-  const [speechRate, setSpeechRate] = useState(1.0);
-  const speedOptions = [1.0, 1.15, 1.25, 1.5];
+  const [speechRate, setSpeechRate] = useState(1.15);
+  const speedOptions = [1.15, 1.25, 1.5];
 
   const {
     isPlaying,
@@ -184,8 +187,8 @@ const PhaseDetailPage = () => {
         <p className="text-gray-600 text-lg mb-4">
           {phaseError ? "Ocorreu um erro ao carregar os dados desta fase." : "Fase não encontrada ou indisponível."}
         </p>
-        <Button onClick={() => navigate(moduleId ? `/modulo/${moduleId}` : '/')}>
-          Voltar
+        <Button onClick={() => navigate(moduleId ? `/modulo/${moduleId}` : '/')} className={secondaryButtonClass}>
+          <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
         </Button>
       </div>
     );
@@ -197,6 +200,7 @@ const PhaseDetailPage = () => {
         title={phase.name} 
         showBackButton={true}
         backButtonTarget={moduleId ? `/modulo/${moduleId}` : '/modulos'}
+        rightContent={ user && ( <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700" onClick={handleDelete} aria-label="Excluir fase"><Trash2 className="h-5 w-5" /></Button> )}
       />
 
       <div className="container px-4 sm:px-6 lg:px-8 py-6">
@@ -214,10 +218,16 @@ const PhaseDetailPage = () => {
           <div className="mt-6 mb-8 p-6 bg-white shadow-lg rounded-lg">
             <div className="flex justify-between items-center mb-3">
               <h3 className="text-xl font-semibold text-gray-700">Para pensar um pouco:</h3>
+              <Button onClick={() => setIsEditing(!isEditing)} className={`${secondaryButtonClass} px-4 py-1.5`}>
+                {isEditing ? "Cancelar" : "Editar"}
+              </Button>
             </div>
             {isEditing ? (
               <>
                 <RichTextEditor value={videoNotes} onChange={setVideoNotes} />
+                <Button onClick={handleSaveVideoNotes} className={`${primaryButtonClass} mt-4`}>
+                  Salvar Observações
+                </Button>
               </>
             ) : (
               <div 
@@ -235,18 +245,12 @@ const PhaseDetailPage = () => {
                 aguarde alguns segundos para ouvir, a IA está analisando o texto (se não começar, tente novamente!)
               </p>
               <div className="flex flex-wrap justify-center items-center gap-4">
-                {/* Botão Principal (Ouvir/Parar) */}
                 <Button
                   onClick={handleReadContent}
                   className="bg-trilha-orange text-white font-semibold rounded-full px-6 py-2 flex items-center gap-2 shadow-md hover:shadow-lg hover:bg-trilha-orange-dark transition-all duration-300 ease-in-out disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  {(isLoadingAudio || isPlaying) ? (
-                    <><VolumeX className="h-5 w-5" /> Parar</>
-                  ) : (
-                    <><Volume2 className="h-5 w-5" /> Ouvir</>
-                  )}
+                  {(isLoadingAudio || isPlaying) ? ( <><VolumeX className="h-5 w-5" /> Parar</> ) : ( <><Volume2 className="h-5 w-5" /> Ouvir</> )}
                 </Button>
-                {/* Botão Secundário (Velocidade) */}
                 <Button
                   onClick={handleSpeedChange}
                   disabled={isPlaying || isLoadingAudio}
@@ -257,7 +261,6 @@ const PhaseDetailPage = () => {
                 </Button>
               </div>
             </div>
-            
             <div className="prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none" dangerouslySetInnerHTML={{ __html: phase.content }} />
           </div>
         )}
@@ -266,14 +269,7 @@ const PhaseDetailPage = () => {
           <div className="mt-6 mb-8 p-6 bg-white shadow-lg rounded-lg">
             <h3 className="text-xl font-semibold text-gray-700 mb-4">Imagens Adicionais</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {phase.images.map((image, index) => (
-                <img
-                  key={index}
-                  src={image}
-                  alt={`Imagem da fase ${index + 1}`}
-                  className="rounded-lg shadow-md object-cover aspect-square hover:opacity-90 transition-opacity"
-                />
-              ))}
+              {phase.images.map((image, index) => ( <img key={index} src={image} alt={`Imagem da fase ${index + 1}`} className="rounded-lg shadow-md object-cover aspect-square hover:opacity-90 transition-opacity" /> ))}
             </div>
           </div>
         )}
@@ -283,7 +279,7 @@ const PhaseDetailPage = () => {
             <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-semibold text-gray-700">Questionário</h3>
                 {!quizCompleted && questions.length > 0 && (
-                    <Button size="sm" variant="outline" onClick={() => refetchQuestions()} disabled={isLoadingQuestions}>
+                    <Button onClick={() => refetchQuestions()} disabled={isLoadingQuestions} className={`${secondaryButtonClass} px-4 py-1.5`}>
                         {isLoadingQuestions ? "Recarregando..." : "Recarregar"}
                     </Button>
                 )}
@@ -308,26 +304,27 @@ const PhaseDetailPage = () => {
                   <div className="bg-trilha-orange h-2.5 rounded-full transition-all duration-500 ease-out" style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}></div>
                 </div>
                 {questions[currentQuestionIndex] && (
-                  <QuizQuestion
-                    key={questions[currentQuestionIndex].id + '-' + currentQuestionIndex}
-                    questionId={questions[currentQuestionIndex].id}
-                    question={questions[currentQuestionIndex].question}
-                    options={Array.isArray(questions[currentQuestionIndex].options) ? questions[currentQuestionIndex].options : []}
-                    correctAnswer={questions[currentQuestionIndex].correct_answer}
-                    onAnswer={handleQuizAnswer}
-                  />
+                  <QuizQuestion key={questions[currentQuestionIndex].id + '-' + currentQuestionIndex} questionId={questions[currentQuestionIndex].id} question={questions[currentQuestionIndex].question} options={Array.isArray(questions[currentQuestionIndex].options) ? questions[currentQuestionIndex].options : []} correctAnswer={questions[currentQuestionIndex].correct_answer} onAnswer={handleQuizAnswer} />
                 )}
               </div>
             )}
           </div>
         )}
 
-        <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-200 pt-6">
-            {prevPhase ? ( <Button variant="outline" onClick={() => navigate(`/fase/${moduleId}/${prevPhase.id}`)} className="w-full sm:w-auto"><ArrowLeft className="mr-2 h-4 w-4" /> Anterior</Button>
-            ) : <div className="hidden sm:block sm:w-1/3"></div>}
+<div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-200 pt-6">
+            {/* Botão Anterior (Esquerda) */}
+            {prevPhase && ( 
+              <Button onClick={() => navigate(`/fase/${moduleId}/${prevPhase.id}`)} className={`${secondaryButtonClass} w-full sm:w-auto`}>
+                 <ArrowLeft className="mr-2 h-4 w-4" /> Anterior
+              </Button>
+            )}
             
+            {/* Botão Concluir (Direita) */}
             {(phase.type !== 'quiz' || quizCompleted || questions.length === 0) && (
-              <Button onClick={handleCompletePhase} className="bg-trilha-orange hover:bg-trilha-orange-dark w-full sm:w-auto order-first sm:order-none py-2.5 text-base">
+              <Button 
+                onClick={handleCompletePhase} 
+                className={`${primaryButtonClass} w-full sm:w-auto order-first sm:order-none ${!prevPhase ? 'ml-auto' : ''}`}
+              >
                 {nextPhase ? "Concluir e Próxima Lição" : "Concluir Módulo"}
               </Button>
             )}
