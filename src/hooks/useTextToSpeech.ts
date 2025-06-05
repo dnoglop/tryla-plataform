@@ -34,18 +34,23 @@ export const useTextToSpeech = () => {
         return;
       }
 
+      console.log('Gerando áudio para o texto:', textContent.substring(0, 100) + '...');
+
       // Chama a edge function para gerar o áudio
       const { data, error } = await supabase.functions.invoke('text-to-speech', {
         body: { text: textContent, voice }
       });
 
       if (error) {
+        console.error('Erro na edge function:', error);
         throw error;
       }
 
       if (!data?.audioContent) {
         throw new Error('Nenhum conteúdo de áudio foi gerado');
       }
+
+      console.log('Áudio gerado com sucesso');
 
       // Converte base64 para blob e cria URL
       const audioBlob = base64ToBlob(data.audioContent, 'audio/mp3');
@@ -58,15 +63,18 @@ export const useTextToSpeech = () => {
       audio.onplay = () => {
         setIsPlaying(true);
         setIsLoading(false);
+        console.log('Reprodução iniciada');
       };
 
       audio.onended = () => {
         setIsPlaying(false);
         URL.revokeObjectURL(audioUrl);
         audioRef.current = null;
+        console.log('Reprodução finalizada');
       };
 
-      audio.onerror = () => {
+      audio.onerror = (e) => {
+        console.error('Erro ao reproduzir áudio:', e);
         setIsPlaying(false);
         setIsLoading(false);
         toast.error("Erro ao reproduzir o áudio.");
@@ -89,6 +97,7 @@ export const useTextToSpeech = () => {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
       setIsPlaying(false);
+      console.log('Áudio interrompido');
     }
   };
 

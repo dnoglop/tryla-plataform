@@ -31,8 +31,7 @@ const PhaseDetailPage = () => {
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const [videoNotes, setVideoNotes] = useState("");
-  const [isReading, setIsReading] = useState(false);
-  const { isPlaying, isLoading, playText } = useTextToSpeech();
+  const { isPlaying, isLoading: isLoadingAudio, playText } = useTextToSpeech();
 
   const handleQuizAnswer = async (isCorrect: boolean) => {
     if (isCorrect) {
@@ -89,7 +88,10 @@ const PhaseDetailPage = () => {
   };
 
   const handleReadContent = () => {
-    if (!phase?.content) return;
+    if (!phase?.content) {
+      toast.error("Não há conteúdo para ler.");
+      return;
+    }
     playText(phase.content);
   };
 
@@ -319,9 +321,9 @@ const PhaseDetailPage = () => {
                   onClick={handleReadContent}
                   variant="outline"
                   className="flex items-center gap-2"
-                  disabled={isLoading}
+                  disabled={isLoadingAudio}
                 >
-                  {isLoading ? (
+                  {isLoadingAudio ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-2 border-trilha-orange border-t-transparent"></div>
                       Gerando áudio...
