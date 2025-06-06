@@ -1,359 +1,272 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Search, ArrowRight, Clock, Gift, PartyPopper } from "lucide-react";
-import BottomNavigation from "@/components/BottomNavigation";
-import { toast } from "sonner";
 import { useQuery } from '@tanstack/react-query';
-import { getModules, Module, getUserNextPhase, getModuleProgress, isModuleCompleted } from "@/services/moduleService";
-import { getProfile } from "@/services/profileService";
-import { updateUserXpFromModules } from "@/services/rankingService";
 import { supabase } from "@/integrations/supabase/client";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { useIsMobile } from "@/hooks/use-mobile";
-import ProgressBar from "@/components/ProgressBar";
-import ModuleCard from "@/components/ModuleCard";
-import { Skeleton } from "@/components/ui/skeleton";
+import * as Dialog from '@radix-ui/react-dialog';
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
-// Componente de Skeleton para um loading state mais elegante
+// Ícones e Componentes
+import { ArrowRight, Flame, Sparkles, X, Gift, CheckCircle } from "lucide-react";
+import BottomNavigation from "@/components/BottomNavigation";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getModules, Module, getUserNextPhase, isModuleCompleted } from "@/services/moduleService";
+import { getProfile, Profile, updateUserStreak, updateUserXp } from "@/services/profileService";
+import ForumThread from "@/components/ForumThread";
+
+// --- INÍCIO: COMPONENTES VISUAIS AUXILIARES (sem alterações) ---
+
 const DashboardSkeleton = () => (
-  <div className="pb-20 min-h-screen bg-white">
-    <div className="bg-[#e36322] px-4 pt-6 pb-4 rounded-b-3xl">
-      <div className="flex justify-between items-center mb-4">
-        <Skeleton className="h-7 w-40 bg-white/20" />
-        <Skeleton className="h-10 w-10 rounded-full bg-white/20" />
-      </div>
-      <Skeleton className="h-10 w-full rounded-full bg-white/10" />
+    <div className="bg-slate-50 min-h-screen p-4 sm:p-6 lg:p-8 space-y-6 animate-pulse">
+        <header className="flex justify-between items-center">
+            <div className="space-y-2">
+                <Skeleton className="h-5 w-32 bg-slate-200" />
+                <Skeleton className="h-8 w-48 bg-slate-200" />
+            </div>
+            <Skeleton className="h-14 w-14 rounded-full bg-slate-200" />
+        </header>
+        <main className="pt-4 space-y-6">
+            <Skeleton className="h-24 rounded-2xl bg-slate-200" />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <Skeleton className="lg:col-span-2 h-48 rounded-2xl bg-slate-200" />
+                <Skeleton className="h-48 rounded-2xl bg-slate-200" />
+            </div>
+            <Skeleton className="h-40 rounded-2xl bg-slate-200" />
+        </main>
     </div>
-    <div className="container px-4 py-5 space-y-6">
-      <Skeleton className="h-20 w-full rounded-lg" />
-      <Skeleton className="h-28 w-full rounded-lg" />
-      <Skeleton className="h-24 w-full rounded-lg" />
-      <div className="flex justify-between items-center mt-4">
-        <Skeleton className="h-6 w-48" />
-        <Skeleton className="h-5 w-20" />
-      </div>
-      <Skeleton className="h-24 w-full rounded-lg mt-2" />
-      <Skeleton className="h-24 w-full rounded-lg" />
-    </div>
-    <BottomNavigation />
-  </div>
 );
 
-const DashboardPage = () => {
-  const [profile, setProfile] = useState<any>(null);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [nextPhase, setNextPhase] = useState<any>(null);
-  const [nextModule, setNextModule] = useState<Module | null>(null);
-  const [moduleProgress, setModuleProgress] = useState<{[key: number]: number}>({});
-  const [completedModules, setCompletedModules] = useState<{[key: number]: boolean}>({});
-  const [totalProgress, setTotalProgress] = useState(0);
-  const [dailyXpClaimed, setDailyXpClaimed] = useState(false);
-  const [dailyXpButtonDisabled, setDailyXpButtonDisabled] = useState(false);
-  const isMobile = useIsMobile();
-
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const { data } = await supabase.auth.getUser();
-        if (data?.user) {
-          const userId = data.user.id;
-          setUserId(userId);
-          const userProfile = await getProfile(userId);
-
-          if (userProfile) {
-            setProfile(userProfile);
-            const today = new Date().toISOString().split('T')[0];
-            const { data: claimData, error: claimError } = await supabase
-              .from('daily_xp_claims').select('claimed_at').eq('user_id', userId).eq('claimed_at', today);
-
-            if (claimError) console.error("Erro ao verificar XP diário:", claimError);
-            
-            if (claimData && claimData.length > 0) {
-              setDailyXpClaimed(true);
-              setDailyXpButtonDisabled(true);
-            } else {
-              setDailyXpClaimed(false);
-              setDailyXpButtonDisabled(false);
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Erro ao carregar perfil:", error);
-        toast.error("Não foi possível carregar seu perfil.");
-      }
-    };
-    fetchUserProfile();
-  }, []);
-
-  const { data: modules = [], isLoading } = useQuery({
-    queryKey: ['modules'],
-    queryFn: getModules,
-    enabled: !!userId,
-  });
-
-  useEffect(() => {
-    const fetchNextContent = async () => {
-      if (!userId || modules.length === 0) return;
-      try {
-        for (const module of modules) {
-          const isCompleted = await isModuleCompleted(userId, module.id);
-          if (!isCompleted) {
-            const nextPhaseData = await getUserNextPhase(userId, module.id);
-            if (nextPhaseData) {
-              setNextPhase(nextPhaseData);
-              setNextModule(module);
-              break;
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching next content:", error);
-      }
-    };
-    fetchNextContent();
-  }, [userId, modules]);
-
-  useEffect(() => {
-    const fetchProgressData = async () => {
-      if (!userId || modules.length === 0) return;
-      const progressData: {[key: number]: number} = {};
-      const completedData: {[key: number]: boolean} = {};
-      let totalProgressSum = 0;
-      for (const module of modules) {
-        try {
-          const progress = await getModuleProgress(userId, module.id);
-          const completed = await isModuleCompleted(userId, module.id);
-          progressData[module.id] = progress;
-          completedData[module.id] = completed;
-          totalProgressSum += progress;
-        } catch (error) {
-          console.error(`Error loading progress for module ${module.id}:`, error);
-        }
-      }
-      setModuleProgress(progressData);
-      setCompletedModules(completedData);
-      if (modules.length > 0) {
-        const overallProgress = Math.round(totalProgressSum / modules.length);
-        setTotalProgress(overallProgress);
-      }
-    };
-    fetchProgressData();
-  }, [userId, modules]);
-
-  const groupedModules = modules.reduce<Record<string, Module[]>>((acc, module) => {
-    const type = module.type || "autoconhecimento";
-    if (!acc[type]) acc[type] = [];
-    acc[type].push(module);
-    return acc;
-  }, {});
-
-  const isModuleLocked = (index: number, moduleId: number) => {
-    if (index === 0) return false;
-    if (moduleProgress[moduleId] > 0) return false;
-    const prevModuleId = modules[index - 1]?.id;
-    return !(prevModuleId && completedModules[prevModuleId]);
-  };
-
-  const getModuleTypeTitle = (type: string) => {
-    const types: Record<string, string> = {
-      autoconhecimento: "Autoconhecimento", empatia: "Empatia",
-      growth: "Desenvolvimento Pessoal", comunicacao: "Comunicação", futuro: "Futuro"
-    };
-    return types[type] || type.charAt(0).toUpperCase() + type.slice(1);
-  };
-
-  const handleClaimDailyXp = async () => {
-    if (!userId || dailyXpClaimed) return;
-    setDailyXpButtonDisabled(true);
-    
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      const { data: existingClaim } = await supabase
-        .from('daily_xp_claims').select('id').eq('user_id', userId).eq('claimed_at', today);
-
-      if (existingClaim && existingClaim.length > 0) {
-        setDailyXpClaimed(true);
-        toast.info("Você já reclamou seu XP diário hoje!");
-        return;
-      }
-
-      const { data } = await supabase.from('profiles').select('xp, level').eq('id', userId).single();
-      const currentXp = data?.xp || 0;
-      const currentLevel = data?.level || 1;
-      const newXp = currentXp + 50;
-      const newLevel = Math.floor(newXp / 100) + 1;
-      const leveledUp = newLevel > currentLevel;
-
-      await supabase.from('profiles').update({ xp: newXp, level: newLevel }).eq('id', userId);
-      await supabase.from('daily_xp_claims').insert({ user_id: userId, claimed_at: today, xp_amount: 50 });
-
-      setProfile(prev => ({ ...prev, xp: newXp, level: newLevel }));
-      setDailyXpClaimed(true);
-      if (userId) await updateUserXpFromModules(userId);
-
-      if (leveledUp) {
-        const mensagemNivel = `🎉 INCRÍVEL! Você subiu para o nível ${newLevel}! Sua dedicação está dando frutos! 🌟`;
-        toast.success(mensagemNivel, {
-          duration: 5000,
-          icon: <PartyPopper className="h-5 w-5" />
-        });
-      } else {
-        const mensagensMotivacionais = [
-          "Incrível! +50 XP para sua jornada! 🚀",
-          "Você está arrasando! Continue assim! 💪",
-          "Parabéns pela dedicação! Seu esforço diário faz a diferença! 🏆"
-        ];
-        const mensagemAleatoria = mensagensMotivacionais[Math.floor(Math.random() * mensagensMotivacionais.length)];
-        toast.success(mensagemAleatoria);
-      }
-    } catch (error) {
-      console.error("Erro ao reclamar XP diário:", error);
-      toast.error("Não foi possível reclamar seu XP diário.");
-      setDailyXpButtonDisabled(false);
-    }
-  };
-
-  if (isLoading || !profile) {
-    return <DashboardSkeleton />;
-  }
-
-  return (
-    <div className="pb-20 min-h-screen bg-white">
-      <div className="bg-[#e36322] px-4 pt-6 pb-4 rounded-b-3xl">
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h2 className="text-white text-lg font-semibold">Olá, {profile?.full_name?.split(' ')[0] || "Aluno"}</h2>
-          </div>
-          <Avatar className="h-10 w-10 border-2 border-white">
-            {profile?.avatar_url ? (
-              <AvatarImage src={profile.avatar_url} alt="Foto de perfil" />
-            ) : (
-              <AvatarFallback className="bg-white/20 text-white">
-                {profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : "U"}
-              </AvatarFallback>
-            )}
-          </Avatar>
-        </div>
-        <div className="relative mb-2">
-          <Input
-            className="bg-white/10 border-0 text-white placeholder-white/60 rounded-full pl-10 pr-4 py-2"
-            placeholder="Pesquisar"
-          />
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/60" />
-        </div>
-      </div>
-
-      <div className="container px-4 py-5 space-y-6">
-        <Card className={`border-none shadow-md overflow-hidden transition-all duration-300 ${
-            dailyXpClaimed ? 'bg-gradient-to-r from-green-100 to-blue-100' : 'bg-gradient-to-r from-purple-100 to-blue-100'
-          }`}>
-            <CardContent className="p-3 sm:p-5">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h2 className="font-bold text-base sm:text-lg">Bônus Diário</h2>
-                  <p className="text-xs sm:text-sm text-gray-600">
-                    {dailyXpClaimed 
-                      ? "Você já recebeu seu XP hoje! Volte amanhã!"
-                      : "Ganhe 50 XP pelo seu acesso hoje!"
-                    }
-                  </p>
+const PerformanceChart = ({ streak }: { streak: number }) => {
+    const weeklyData = [70, 90, 50, 80, 100, 60, 75];
+    const days = ["D", "S", "T", "Q", "Q", "S", "S"];
+    return (
+        <div className="rounded-2xl bg-white p-4 sm:p-6 shadow-sm border border-slate-200/50">
+            <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold text-slate-700">Progresso Semanal</h3>
+                <div className="flex items-center gap-1.5 bg-orange-100 text-orange-600 px-3 py-1.5 rounded-full text-sm font-bold">
+                    <Flame size={16} />
+                    <span>{streak || 0} dias</span>
                 </div>
-                {dailyXpClaimed ? (
-                  <div className="bg-green-500 text-white rounded-full p-2">
-                    <Gift className="h-4 w-4" />
-                  </div>
-                ) : (
-                  <Button 
-                    onClick={handleClaimDailyXp}
-                    disabled={dailyXpButtonDisabled}
-                    className="bg-[#9b87f5] hover:bg-[#8a74e8] text-white"
-                  >
-                    <Gift className="h-4 w-4 mr-2" />
-                    Receber XP
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-        <Card className="border-none shadow-md overflow-hidden">
-          <CardContent className="p-3 sm:p-5 bg-[#FFF6F0]">
-            <h2 className="mb-2 font-bold text-base sm:text-lg">Progresso Total</h2>
-            <ProgressBar 
-              progress={totalProgress} 
-              className="h-2 sm:h-3" 
-              showIcon={totalProgress === 100}
-              compact={isMobile}
-            />
-            <div className="mt-2 flex justify-between items-center">
-              <p className="text-xs sm:text-sm text-gray-600">{totalProgress}% completo</p>
-              {totalProgress < 100 && (
-                <span className="text-xs sm:text-sm font-medium text-[#E36322]">Continue!</span>
-              )}
-              {totalProgress === 100 && (
-                <span className="text-xs sm:text-sm font-medium text-green-600">Concluído!</span>
-              )}
             </div>
-          </CardContent>
-        </Card>
-
-        {nextModule && nextPhase && (
-          <div>
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-800">{profile?.full_name?.split(' ')[0] || "Aluno"}, vamos continuar?</h2>
-            </div>
-            <Card className="overflow-hidden border-none shadow-md rounded-xl">
-              <CardContent className="p-0">
-                <div className="bg-[#FFF6F0] p-4">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <Badge className="bg-[#E36322] text-white text-xs">{getModuleTypeTitle(nextModule.type)}</Badge>
-                        {nextPhase.type && <Badge variant="outline" className="text-xs">{nextPhase.type === 'video' ? 'Vídeo' : nextPhase.type === 'text' ? 'Texto' : nextPhase.type === 'quiz' ? 'Quiz' : 'Conteúdo'}</Badge>}
-                      </div>
-                      <h3 className="font-bold text-base text-gray-800 mt-2">{nextModule.name}: {nextPhase.name}</h3>
-                      <p className="text-xs text-gray-600 mt-1">{nextPhase.description || 'Continue seu aprendizado'}</p>
-                      <div className="mt-3 flex items-center gap-2">
-                        <Clock className="h-3 w-3 text-gray-500" />
-                        <span className="text-xs text-gray-500">{nextPhase.duration || 10} mins</span>
-                      </div>
+            <div className="flex justify-between items-end h-24 gap-2">
+                {weeklyData.map((percentage, index) => (
+                    <div key={index} className="flex-1 flex flex-col items-center gap-2">
+                        <div className="w-full h-full flex items-end">
+                            <div className="w-full bg-gradient-to-t from-orange-400 to-orange-500 rounded-lg transition-all duration-700 ease-out" style={{ height: `${percentage}%` }} />
+                        </div>
+                        <span className="text-xs font-medium text-slate-500">{days[index]}</span>
                     </div>
-                  <div className="mt-4">
-                    <Link to={`/modulo/${nextModule.id}`} className="bg-[#E36322] text-white px-4 py-2 rounded-full text-xs sm:text-sm font-medium inline-flex items-center">Continuar</Link>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        <div>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-gray-800">Módulos para você</h2>
-            <Link to="/modulos" className="text-xs sm:text-sm font-medium text-[#E36322] flex items-center">
-              Ver tudo <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1" />
-            </Link>
-          </div>
-          <div className="flex flex-col space-y-3">
-            {modules.slice(0, 4).map((module, index) => (
-              <ModuleCard 
-                key={module.id} id={module.id} title={module.name}
-                type={module.type || "autoconhecimento"}
-                progress={moduleProgress[module.id] || 0}
-                completed={completedModules[module.id] || false}
-                locked={isModuleLocked(index, module.id)}
-                description={module.description} vertical={true}
-              />
-            ))}
-          </div>
+                ))}
+            </div>
         </div>
-      </div>
-      <BottomNavigation />
-    </div>
-  );
+    );
 };
 
-export default DashboardPage;
+const WelcomeModal = ({ open, onOpenChange, username, quote }: { open: boolean, onOpenChange: (open: boolean) => void, username: string, quote: string }) => (
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+        <Dialog.Portal>
+            <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out" />
+            <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-md bg-white/80 backdrop-blur-2xl border p-8 rounded-3xl shadow-2xl data-[state=open]:animate-in data-[state=closed]:animate-out">
+                <div className="text-center">
+                    <Sparkles className="mx-auto h-12 w-12 text-orange-500" />
+                    <Dialog.Title className="text-2xl font-bold text-slate-800 mt-4">Olá, {username}!</Dialog.Title>
+                    <Dialog.Description className="text-slate-600 mt-2 italic">"{quote}"</Dialog.Description>
+                </div>
+                <Dialog.Close asChild>
+                    <button className="mt-6 w-full px-4 py-2.5 rounded-xl bg-orange-500 text-white font-semibold text-sm shadow-lg transition-all hover:bg-orange-600 hover:-translate-y-1 active:translate-y-0 active:scale-95">Começar o dia!</button>
+                </Dialog.Close>
+                <Dialog.Close asChild>
+                    <button className="absolute top-4 right-4 rounded-full p-1.5 transition-colors hover:bg-black/10"><X className="h-5 w-5 text-slate-500" /></button>
+                </Dialog.Close>
+            </Dialog.Content>
+        </Dialog.Portal>
+    </Dialog.Root>
+);
+
+// --- FIM: COMPONENTES VISUAIS AUXILIARES ---
+
+export default function DashboardPage() {
+    const [profile, setProfile] = useState<Profile | null>(null);
+    const [userId, setUserId] = useState<string | null>(null);
+    const [nextPhase, setNextPhase] = useState<any>(null);
+    const [nextModule, setNextModule] = useState<Module | null>(null);
+    const [completedModulesCount, setCompletedModulesCount] = useState(0);
+    const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+    const [motivationalQuote] = useState("A única maneira de fazer um ótimo trabalho é amar o que você faz.");
+    const [dailyXpClaimed, setDailyXpClaimed] = useState(false);
+    const [isClaiming, setIsClaiming] = useState(false);
+
+    useEffect(() => {
+        const fetchInitialData = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                setUserId(user.id);
+                await updateUserStreak(user.id);
+                const userProfile = await getProfile(user.id);
+                if (userProfile) {
+                    setProfile(userProfile);
+                    const today = new Date().toISOString().split('T')[0];
+                    const lastVisit = localStorage.getItem('lastVisit');
+                    if (lastVisit !== today) { setShowWelcomeModal(true); localStorage.setItem('lastVisit', today); }
+                    const { data: claimData, error: claimError } = await supabase.from('daily_xp_claims').select('id').eq('user_id', user.id).eq('claimed_at', today).single();
+                    if (claimError && claimError.code !== 'PGRST116') { console.error("Erro ao verificar XP diário:", claimError); }
+                    if (claimData) { setDailyXpClaimed(true); }
+                }
+            }
+        };
+        fetchInitialData();
+    }, []);
+
+    const { data: modules = [], isLoading: isLoadingModules } = useQuery({
+        queryKey: ['modules'],
+        queryFn: getModules,
+        enabled: !!userId,
+    });
+
+    useEffect(() => {
+        if (!userId || modules.length === 0) return;
+        const fetchProgress = async () => {
+            let completedCount = 0;
+            let nextPhaseFound = false;
+            for (const module of modules) {
+                if (await isModuleCompleted(userId, module.id)) {
+                    completedCount++;
+                } else if (!nextPhaseFound) {
+                    const nextPhaseData = await getUserNextPhase(userId, module.id);
+                    if (nextPhaseData) { setNextPhase(nextPhaseData); setNextModule(module); nextPhaseFound = true; }
+                }
+            }
+            setCompletedModulesCount(completedCount);
+        };
+        fetchProgress();
+    }, [userId, modules]);
+
+    const handleClaimDailyXp = async () => {
+        if (!userId || dailyXpClaimed || isClaiming) return;
+        setIsClaiming(true);
+
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            const xpAmount = 50;
+            
+            await supabase.from('daily_xp_claims').insert({ user_id: userId, claimed_at: today, xp_amount: xpAmount });
+            
+            // <<< A CORREÇÃO ESTÁ AQUI >>>
+            const { newXp, newLevel } = await updateUserXp(userId, xpAmount);
+
+            setProfile(prev => prev ? { ...prev, xp: newXp, level: newLevel } : null);
+            setDailyXpClaimed(true);
+
+            toast.custom((t) => (
+                <div className="flex items-center gap-3 bg-white border border-slate-200 shadow-lg rounded-xl p-4 w-full max-w-sm">
+                    <div className="bg-orange-100 p-2 rounded-full"><Gift className="h-6 w-6 text-orange-500" /></div>
+                    <div className="flex-grow">
+                        <p className="font-bold text-slate-800">Bônus Diário!</p>
+                        <p className="text-sm text-slate-600">Você ganhou +{xpAmount} XP por sua dedicação!</p>
+                    </div>
+                    <button onClick={() => toast.dismiss(t)} className="opacity-50 hover:opacity-100"><X size={18} /></button>
+                </div>
+            ), { duration: 5000 });
+
+        } catch (error) {
+            console.error("Erro ao reclamar XP diário:", error);
+            toast.error("Ops! Não foi possível reclamar seu bônus. Tente mais tarde.");
+        } finally {
+            setIsClaiming(false);
+        }
+    };
+    
+    const communityPosts = [
+        { id: 1, title: "Dicas para a primeira entrevista", author: "Mariana", authorAvatar: "https://i.pravatar.cc/150?img=5", replies: 5, likes: 12, tags: [] },
+        { id: 2, title: "O que acharam do módulo de Growth Mindset?", author: "Lucas", authorAvatar: "https://i.pravatar.cc/150?img=3", replies: 8, likes: 21, tags: [] },
+    ];
+    
+    if (isLoadingModules || !profile) {
+        return <DashboardSkeleton />;
+    }
+
+    return (
+        <div className="bg-slate-50 min-h-screen">
+            <WelcomeModal open={showWelcomeModal} onOpenChange={setShowWelcomeModal} username={profile?.full_name?.split(' ')[0] || "Jovem"} quote={motivationalQuote} />
+            <header className="p-4 sm:p-6 lg:p-8">
+                <div className="flex justify-between items-center">
+                    <div>
+                        <p className="text-slate-500">Bem-vindo(a) de volta,</p>
+                        <h1 className="text-2xl md:text-3xl font-bold text-slate-900">{profile?.full_name?.split(' ')[0]}!</h1>
+                    </div>
+                    <Link to="/perfil">
+                        <img src={profile.avatar_url} alt="Perfil" className="h-14 w-14 rounded-full border-2 border-white shadow-md transition-transform hover:scale-110" />
+                    </Link>
+                </div>
+            </header>
+            
+            <main className="p-4 sm:p-6 pt-0 space-y-6">
+                <div className={`rounded-2xl p-5 shadow-sm border transition-all duration-300 ${dailyXpClaimed ? 'bg-emerald-50 border-emerald-200' : 'bg-orange-50 border-orange-200'}`}>
+                    <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <div className="flex items-center gap-4">
+                            <div className={`p-3 rounded-full ${dailyXpClaimed ? 'bg-emerald-100' : 'bg-orange-100'}`}>
+                                {dailyXpClaimed ? <CheckCircle className="h-6 w-6 text-emerald-500" /> : <Gift className="h-6 w-6 text-orange-500" />}
+                            </div>
+                            <div>
+                                <h2 className="font-bold text-slate-800">Bônus Diário</h2>
+                                <p className="text-sm text-slate-600">
+                                    {dailyXpClaimed ? "Você já pegou sua recompensa hoje. Volte amanhã!" : "Reclame 50 XP por sua dedicação!"}
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={handleClaimDailyXp}
+                            disabled={dailyXpClaimed || isClaiming}
+                            className={cn( "w-full sm:w-auto px-6 py-2.5 rounded-xl font-semibold text-white shadow-md transition-all duration-200", dailyXpClaimed ? "bg-slate-300 cursor-not-allowed" : "bg-orange-500 hover:bg-orange-600 hover:-translate-y-1 active:translate-y-0")}
+                        >
+                            {dailyXpClaimed ? "Coletado" : isClaiming ? "Coletando..." : "Coletar 50 XP"}
+                        </button>
+                    </div>
+                </div>
+                <h2 className="font-bold text-lg text-slate-800">Sua Atividade Recente</h2>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2"><PerformanceChart streak={profile.streak_days || 0} /></div>
+                    <div className="p-6 bg-white rounded-2xl shadow-sm border border-slate-200/50 flex flex-col justify-around text-center">
+                        <div><p className="text-4xl font-bold text-orange-500">{profile.xp || 0}</p><p className="text-sm text-slate-500 font-medium">XP Total</p></div>
+                        <div><p className="text-4xl font-bold text-orange-500">{completedModulesCount}</p><p className="text-sm text-slate-500 font-medium">Módulos Concluídos</p></div>
+                    </div>
+                </div>
+                <h2 className="font-bold text-lg text-slate-800">Continue sua Jornada</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {nextModule && nextPhase ? (
+                        <Link to={`/modulo/${nextModule.id}`} className="group relative p-6 bg-orange-50 rounded-2xl shadow-sm border border-orange-200/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1.5 flex flex-col justify-between">
+                            <div>
+                                <div className="flex justify-between items-start">
+                                    <h3 className="text-xl font-bold text-orange-900">Continuar Trilha</h3>
+                                    <div className="p-3 bg-orange-500 rounded-lg"><ArrowRight className="h-5 w-5 text-white" /></div>
+                                </div>
+                                <p className="font-semibold text-orange-800 mt-2">{nextModule.name}</p>
+                                <p className="text-sm text-orange-700/80">{nextPhase.name}</p>
+                            </div>
+                        </Link>
+                    ) : (
+                        <div className="p-6 bg-green-50 rounded-2xl text-center flex flex-col justify-center items-center">
+                            <Sparkles className="h-10 w-10 text-green-600 mb-2" />
+                            <h3 className="font-bold text-green-800">Parabéns!</h3>
+                            <p className="text-sm text-green-700">Você concluiu todas as trilhas!</p>
+                        </div>
+                    )}
+                    <Link to="/modulos" className="group p-6 bg-white rounded-2xl shadow-sm border border-slate-200/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1.5 flex flex-col justify-center items-center text-center">
+                        <div className="p-3 bg-slate-100 rounded-lg mb-3"><ArrowRight className="h-5 w-5 text-slate-600 transition-transform group-hover:translate-x-1" /></div>
+                        <h3 className="font-bold text-slate-800">Ver todos os Módulos</h3>
+                        <p className="text-sm text-slate-500">Explore novas trilhas de aprendizado.</p>
+                    </Link>
+                </div>
+                <div className="flex justify-between items-center">
+                    <h2 className="font-bold text-lg text-slate-800">Últimas na Comunidade</h2>
+                    <Link to="/social" className="text-sm font-medium text-orange-600 flex items-center gap-1">Ver tudo <ArrowRight size={14} /></Link>
+                </div>
+                <div className="space-y-3">
+                    {communityPosts.map(post => (<ForumThread key={post.id} {...post} />))}
+                </div>
+            </main>
+            <div className="h-24"></div>
+            <BottomNavigation />
+        </div>
+    );
+}
