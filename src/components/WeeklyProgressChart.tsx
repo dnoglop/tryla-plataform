@@ -22,7 +22,7 @@ export const WeeklyProgressChart: React.FC<WeeklyProgressChartProps> = ({ streak
     queryKey: ['weeklyXpProgress', userId],
     queryFn: () => userId ? getFormattedWeeklyData(userId) : Promise.resolve([]),
     enabled: !!userId,
-    refetchInterval: 30000, // Atualizar a cada 30 segundos
+    refetchInterval: 30000,
   });
 
   // Debug logs
@@ -67,12 +67,14 @@ export const WeeklyProgressChart: React.FC<WeeklyProgressChartProps> = ({ streak
       <div className="flex justify-between items-end h-24 gap-2">
         {weeklyData.map((item, index) => {
           const percentage = maxXp > 0 ? (item.xp / maxXp) * 100 : 0;
+          const minHeight = item.xp > 0 ? Math.max(percentage, 8) : 0;
+          
           return (
             <div key={`${item.date}-${index}`} className="flex-1 flex flex-col items-center gap-2">
               <div className="w-full h-full flex items-end relative group">
                 <div
                   className="w-full bg-gradient-to-t from-orange-400 to-orange-500 rounded-lg transition-all duration-700 ease-out hover:from-orange-500 hover:to-orange-600"
-                  style={{ height: `${Math.max(percentage, 5)}%` }}
+                  style={{ height: `${minHeight}%` }}
                   title={`${item.day}: ${item.xp} XP`}
                 />
                 {/* Tooltip */}

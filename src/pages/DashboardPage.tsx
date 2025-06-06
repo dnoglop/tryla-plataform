@@ -42,7 +42,7 @@ const WelcomeModal = ({ open, onOpenChange, username, quote }: { open: boolean, 
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
         <Dialog.Portal>
             <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out" />
-            <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-md bg-white/80 backdrop-blur-2xl border p-8 rounded-3xl shadow-2xl data-[state=open]:animate-in data-[state=closed]:animate-out">
+            <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-md bg-white/90 backdrop-blur-2xl border border-white/20 p-8 rounded-3xl shadow-2xl data-[state=open]:animate-in data-[state=closed]:animate-out">
                 <div className="text-center">
                     <Sparkles className="mx-auto h-12 w-12 text-orange-500" />
                     <Dialog.Title className="text-2xl font-bold text-slate-800 mt-4">Olá, {username}!</Dialog.Title>
@@ -81,9 +81,9 @@ export default function DashboardPage() {
                 const userProfile = await getProfile(user.id);
                 if (userProfile) {
                     setProfile(userProfile);
+                    // Sempre mostrar o modal de boas-vindas ao fazer login
+                    setShowWelcomeModal(true);
                     const today = new Date().toISOString().split('T')[0];
-                    const lastVisit = localStorage.getItem('lastVisit');
-                    if (lastVisit !== today) { setShowWelcomeModal(true); localStorage.setItem('lastVisit', today); }
                     const { data: claimData, error: claimError } = await supabase.from('daily_xp_claims').select('id').eq('user_id', user.id).eq('claimed_at', today).single();
                     if (claimError && claimError.code !== 'PGRST116') { console.error("Erro ao verificar XP diário:", claimError); }
                     if (claimData) { setDailyXpClaimed(true); }
@@ -133,7 +133,7 @@ export default function DashboardPage() {
             setDailyXpClaimed(true);
 
             toast.custom((t) => (
-                <div className="flex items-center gap-3 bg-white border border-slate-200 shadow-lg rounded-xl p-4 w-full max-w-sm">
+                <div className="flex items-center gap-3 bg-white/80 backdrop-blur-xl border border-white/20 shadow-2xl rounded-2xl p-4 w-full max-w-sm">
                     <div className="bg-orange-100 p-2 rounded-full"><Gift className="h-6 w-6 text-orange-500" /></div>
                     <div className="flex-grow">
                         <p className="font-bold text-slate-800">Bônus Diário!</p>

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from '@tanstack/react-query';
@@ -25,6 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getProfile, Profile, updateUserStreak } from "@/services/profileService";
 import { getModules, isModuleCompleted } from "@/services/moduleService";
 import { getUserRanking } from "@/services/rankingService";
+import { WeeklyProgressChart } from "@/components/WeeklyProgressChart";
 import BottomNavigation from "@/components/BottomNavigation";
 
 // --- INTERFACES ---
@@ -34,10 +36,6 @@ interface StatsCardProps {
   label: string;
 }
 
-interface PerformanceChartProps {
-  streak: number;
-}
-
 interface ProfileData {
   userProfile: Profile | null;
   completedCount: number;
@@ -45,37 +43,6 @@ interface ProfileData {
 }
 
 // --- COMPONENTES AUXILIARES ---
-
-const PerformanceChart: React.FC<PerformanceChartProps> = ({ streak }) => {
-  const weeklyData = [70, 90, 50, 80, 100, 60, 75];
-  const days = ["D", "S", "T", "Q", "Q", "S", "S"];
-
-  return (
-    <div className="rounded-2xl bg-white p-4 sm:p-6 shadow-sm border border-slate-200/50">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="font-bold text-slate-700">Progresso Semanal</h3>
-        <div className="flex items-center gap-1.5 bg-orange-100 text-orange-600 px-3 py-1.5 rounded-full text-sm font-bold">
-          <Flame size={16} aria-hidden="true" />
-          <span>{streak || 0} dias</span>
-        </div>
-      </div>
-      <div className="flex justify-between items-end h-24 gap-2" role="img" aria-label={`Gráfico de progresso semanal com streak de ${streak} dias`}>
-        {weeklyData.map((percentage, index) => (
-          <div key={`chart-day-${index}`} className="flex-1 flex flex-col items-center gap-2">
-            <div className="w-full h-full flex items-end">
-              <div
-                className="w-full bg-gradient-to-t from-orange-400 to-orange-500 rounded-lg transition-all duration-700 ease-out"
-                style={{ height: `${percentage}%` }}
-                aria-label={`${days[index]}: ${percentage}% de progresso`}
-              />
-            </div>
-            <span className="text-xs font-medium text-slate-500">{days[index]}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
 
 const StatsCard: React.FC<StatsCardProps> = ({ icon: Icon, value, label }) => (
   <div className="flex-1 flex flex-col items-center justify-center rounded-2xl bg-white p-4 text-center shadow-sm border border-slate-200/50">
@@ -276,6 +243,7 @@ export default function ProfilePage(): JSX.Element {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [completedModulesCount, setCompletedModulesCount] = useState(0);
   const [userRank, setUserRank] = useState(0);
+  const [userId, setUserId] = useState<string | null>(null);
 
   const { data, isLoading, error, refetch } = useProfileData();
 
@@ -286,6 +254,16 @@ export default function ProfilePage(): JSX.Element {
       setUserRank(data.userRank);
     }
   }, [data]);
+
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+    getCurrentUser();
+  }, []);
 
   useEffect(() => {
     if (error) {
@@ -350,8 +328,8 @@ export default function ProfilePage(): JSX.Element {
           {/* Seção Sobre */}
           <AboutSection profile={profile} />
 
-          {/* Gráfico de Performance */}
-          <PerformanceChart streak={profile.streak_days || 0} />
+          {/* Gráfico de Performance - usando o mesmo componente do Dashboard */}
+          <WeeklyProgressChart streak={profile.streak_days || 0} userId={userId} />
 
           {/* Ações do Perfil */}
           <ProfileActions onSignOut={handleSignOut} />
