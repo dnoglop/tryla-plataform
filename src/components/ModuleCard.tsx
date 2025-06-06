@@ -41,7 +41,6 @@ const ModuleCard = ({ id, title, description, emoji, type, progress, completed, 
           : `${bgColor} cursor-pointer hover:shadow-xl hover:-translate-y-1`
       }`}
     >
-      {/* Conteúdo do Card */}
       <div className={`flex flex-col flex-grow ${locked ? 'opacity-40' : ''}`}>
         <div className="flex justify-between items-start mb-2">
           <div className="flex-grow">
@@ -50,7 +49,6 @@ const ModuleCard = ({ id, title, description, emoji, type, progress, completed, 
           </div>
           <span className="text-3xl ml-3">{emoji || "✨"}</span>
         </div>
-        
         <div className="mt-auto pt-4">
           {completed ? (
              <div className="flex items-center gap-2 text-sm font-semibold text-green-600">
@@ -59,17 +57,15 @@ const ModuleCard = ({ id, title, description, emoji, type, progress, completed, 
              </div>
           ) : (
             <div>
-              <Progress value={progress} className="h-1.5 bg-gray-200 [&>*]:bg-trilha-orange" />
+              <Progress value={progress} className="h-1.5 bg-gray-200 [&>*]:bg-orange-500" />
               <p className="text-xs text-gray-500 mt-1">{Math.round(progress)}%</p>
             </div>
           )}
         </div>
       </div>
-      
-      {/* Overlay de Bloqueio */}
       {locked && (
         <div className="absolute inset-0 bg-gray-300/40 backdrop-blur-sm flex flex-col items-center justify-center rounded-2xl">
-          <Lock className="text-gray-500" size={24} />
+          <Lock className="h-5 w-5 text-gray-500" />
           <span className="text-sm font-semibold text-gray-600 mt-1">Bloqueado</span>
         </div>
       )}

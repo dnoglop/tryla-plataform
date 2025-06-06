@@ -9,6 +9,7 @@ import { CheckCircle, AlertTriangle, Info, XCircle, Loader2 } from 'lucide-react
 
 // Páginas
 import SplashScreen from "./pages/SplashScreen";
+import AdminPage from "./pages/AdminPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import DashboardPage from "./pages/DashboardPage";
@@ -85,6 +86,7 @@ function App() {
           </Route>
 
           {/* Rotas sem o Layout (tela cheia) */}
+          <Route path="/admin" element={<AdminPage />} />
           <Route path="/editar-perfil" element={<EditProfilePage />} />
           <Route path="/modulo/:id" element={<ModuleDetailPage />} />
           <Route path="/fase/:moduleId/:phaseId" element={<PhaseDetailPage />} />

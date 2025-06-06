@@ -1,4 +1,3 @@
-
 import { Calendar } from "lucide-react";
 
 interface CommunityEventProps {
@@ -10,29 +9,23 @@ interface CommunityEventProps {
   onClick?: () => void;
 }
 
-const CommunityEvent = ({
-  title,
-  date,
-  time,
-  description,
-  location,
-  onClick,
-}: CommunityEventProps) => {
-  // Formatar a data para exibição em pt-BR
-  const formattedDate = new Date(date).toLocaleDateString('pt-BR');
+const CommunityEvent = ({ title, date, time, description, location, onClick }: CommunityEventProps) => {
+  const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' });
   
   return (
-    <div onClick={onClick} className="card-trilha p-4 cursor-pointer hover:border-trilha-orange">
-      <div className="flex items-center gap-2 mb-2">
-        <Calendar className="h-5 w-5 text-trilha-orange" />
-        <h3 className="font-bold">{title}</h3>
+    <div onClick={onClick} className="bg-white p-4 rounded-xl shadow-sm hover:bg-slate-50 transition-colors cursor-pointer">
+      <div className="flex items-center gap-3 mb-2">
+        <div className="flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-lg bg-orange-50">
+          <Calendar className="h-5 w-5 text-orange-600" />
+        </div>
+        <h3 className="font-bold text-slate-800">{title}</h3>
       </div>
       
-      <p className="text-sm text-gray-600 mb-3">{description}</p>
+      <p className="text-sm text-slate-600 mb-3">{description}</p>
       
-      <div className="flex flex-wrap justify-between text-xs text-gray-500">
+      <div className="flex flex-wrap justify-between text-xs text-slate-500 border-t border-slate-100 pt-3">
         <div>
-          <span className="font-medium">Data:</span> {formattedDate} às {time}
+          <span className="font-medium">Data:</span> {formattedDate} {time && `às ${time}`}
         </div>
         <div>
           <span className="font-medium">Local:</span> {location}

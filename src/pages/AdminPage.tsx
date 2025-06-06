@@ -1,1255 +1,258 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import AdminChart from "@/components/AdminChart";
-import Header from "@/components/Header";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import PhaseForm from "@/components/PhaseForm";
-import ModuleForm from "@/components/ModuleForm";
+import { supabase } from "@/integrations/supabase/client";
 import { 
-  getModules, 
-  getPhasesByModuleId, 
-  createModule, 
-  updateModule, 
-  deleteModule, 
-  createPhase as createPhaseFunc, 
-  updatePhase as updatePhaseFunc, 
-  deletePhase, 
-  saveQuiz as saveQuizFunc,
-  getQuestionsByPhaseId as getQuestionsByPhaseIdFunc,
-  Phase,
-  PhaseType,
-  IconType,
-  ModuleType,
-  Module
+    getModules, 
+    deleteModule, 
+    Module, 
+    getPhasesByModuleId, 
+    deletePhase, 
+    Phase 
 } from "@/services/moduleService";
-import { 
-  BarChart3, 
-  BrainCircuit, 
-  FilePlus, 
-  FileText, 
-  Calendar, 
-  Users, 
-  Star, 
-  Edit, 
-  Trash2, 
-  AlertCircle, 
-  Search, 
-  PlusCircle, 
-  Edit2
-} from "lucide-react";
 import { toast } from "sonner";
-import { useForm } from "react-hook-form";
-import { useToast } from "@/hooks/use-toast";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import ProgressBar from "@/components/ProgressBar";
+import * as Dialog from '@radix-ui/react-dialog';
 
-const AdminPage = () => {
-  const { toast: toastHook } = useToast();
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("dashboard");
-  const queryClient = useQueryClient();
-  
-  const [editingModule, setEditingModule] = useState<Module | null>(null);
-  const [editingPhase, setEditingPhase] = useState<Phase | null>(null);
-  
-  const [selectedModule, setSelectedModule] = useState<number>(1);
-  const [phaseName, setPhaseName] = useState("");
-  const [phaseDescription, setPhaseDescription] = useState("");
-  const [videoUrl, setVideoUrl] = useState("");
-  const [content, setContent] = useState("");
-  const [phaseType, setPhaseType] = useState<PhaseType>("text");
-  const [iconType, setIconType] = useState<IconType>("video");
-  const [phaseDuration, setPhaseDuration] = useState<number>(15);
-  
-  const [editingQuiz, setEditingQuiz] = useState<{
-    phaseId: number;
-    questions: {
-      id?: number;
-      question: string;
-      options: string[];
-      correct_answer: number;
-      order_index: number;
-    }[];
-  } | null>(null);
-  
-  const [communityEvents, setCommunityEvents] = useState([
-    { 
-      id: 1, 
-      title: "Workshop de Comunicação", 
-      date: "2025-04-15", 
-      time: "15:00", 
-      description: "Aprenda técnicas para se comunicar melhor em entrevistas de emprego",
-      location: "Online (Zoom)"
-    },
-    { 
-      id: 2, 
-      title: "Roda de Conversa: Mercado de Trabalho", 
-      date: "2025-04-20", 
-      time: "16:30", 
-      description: "Vamos conversar sobre o mercado de trabalho para jovens",
-      location: "Centro Comunitário"
-    }
-  ]);
+// Ícones e Componentes
+import { BarChart3, BrainCircuit, Users, Star, LogOut, Edit, Trash2, PlusCircle, FileText, Calendar, HelpCircle, ArrowLeft, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import ModuleForm from "@/components/ModuleForm";
+import PhaseForm from "@/components/PhaseForm";
 
-  const usersData = [
-    { name: "Jan", value: 150 },
-    { name: "Fev", value: 220 },
-    { name: "Mar", value: 280 },
-    { name: "Abr", value: 360 },
-    { name: "Mai", value: 320 },
-    { name: "Jun", value: 390 },
-    { name: "Jul", value: 450 }
-  ];
+// Tipos para controle de visualização
+type AdminView = 'hub' | 'modules' | 'phases' | 'quizzes' | 'events';
 
-  const completionsData = [
-    { name: "Jan", value: 80 },
-    { name: "Fev", value: 120 },
-    { name: "Mar", value: 180 },
-    { name: "Abr", value: 250 },
-    { name: "Mai", value: 230 },
-    { name: "Jun", value: 320 },
-    { name: "Jul", value: 380 }
-  ];
-
-  const engagementData = [
-    { name: "Jan", value: 65 },
-    { name: "Fev", value: 72 },
-    { name: "Mar", value: 68 },
-    { name: "Abr", value: 75 },
-    { name: "Mai", value: 70 },
-    { name: "Jun", value: 82 },
-    { name: "Jul", value: 78 }
-  ];
-  
-  const [eventTitle, setEventTitle] = useState("");
-  const [eventDate, setEventDate] = useState("");
-  const [eventTime, setEventTime] = useState("");
-  const [eventDescription, setEventDescription] = useState("");
-  const [eventLocation, setEventLocation] = useState("");
-
-  const [topModules, setTopModules] = useState([
-    { id: 1, name: "Autoconhecimento", completions: 327, engagement: 85 },
-    { id: 2, name: "Empatia", completions: 245, engagement: 72 },
-    { id: 4, name: "Comunicação", completions: 152, engagement: 68 },
-    { id: 3, name: "Growth Mindset", completions: 127, engagement: 63 },
-  ]);
-  
-  const [topPhases, setTopPhases] = useState([
-    { id: 1, moduleId: 1, name: "Quem sou eu?", completions: 198, rating: 4.8 },
-    { id: 2, moduleId: 1, name: "Reconhecendo emoções", completions: 165, rating: 4.6 },
-    { id: 5, moduleId: 4, name: "Comunicação assertiva", completions: 142, rating: 4.7 },
-    { id: 3, moduleId: 2, name: "Entendendo o outro", completions: 135, rating: 4.5 },
-  ]);
-
-  const { data: modules = [] } = useQuery({
-    queryKey: ['modules'],
-    queryFn: getModules,
-  });
-
-  const { data: phases = [], refetch: refetchPhases } = useQuery({
-    queryKey: ['phases', selectedModule],
-    queryFn: () => getPhasesByModuleId(selectedModule),
-    enabled: !!selectedModule,
-  });
-
-  const createModuleMutation = useMutation({
-    mutationFn: createModule,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['modules'] });
-      toastHook({
-        title: "Módulo adicionado",
-        description: "O módulo foi adicionado com sucesso"
-      });
-      clearModuleForm();
-    },
-    onError: (error) => {
-      toastHook({
-        title: "Erro ao adicionar módulo",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  });
-
-  const updateModuleMutation = useMutation({
-    mutationFn: ({ id, module }: { id: number; module: Partial<Module> }) => 
-      updateModule(id, module),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['modules'] });
-      toastHook({
-        title: "Módulo atualizado",
-        description: "O módulo foi atualizado com sucesso"
-      });
-      clearModuleForm();
-    },
-    onError: (error) => {
-      toastHook({
-        title: "Erro ao atualizar módulo",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  });
-
-  const deleteModuleMutation = useMutation({
-    mutationFn: deleteModule,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['modules'] });
-      toastHook({
-        title: "Módulo removido",
-        description: "O módulo foi removido com sucesso"
-      });
-    },
-    onError: (error) => {
-      toastHook({
-        title: "Erro ao remover módulo",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  });
-
-  const createPhaseMutation = useMutation({
-    mutationFn: createPhaseFunc,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['phases', selectedModule] });
-      toastHook({
-        title: "Fase adicionada",
-        description: "A fase foi adicionada com sucesso ao módulo selecionado"
-      });
-      resetPhaseForm();
-    },
-    onError: (error) => {
-      toastHook({
-        title: "Erro ao adicionar fase",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  });
-
-  const updatePhaseMutation = useMutation({
-    mutationFn: ({ id, phase }: { id: number; phase: Partial<Phase> }) => 
-      updatePhaseFunc(id, phase),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['phases'] });
-      toastHook({
-        title: "Fase atualizada",
-        description: "A fase foi atualizada com sucesso"
-      });
-      resetPhaseForm();
-    },
-    onError: (error) => {
-      toastHook({
-        title: "Erro ao atualizar fase",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  });
-
-  const deletePhaseMutation = useMutation({
-    mutationFn: deletePhase,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['phases'] });
-      toastHook({
-        title: "Fase removida",
-        description: "A fase foi removida com sucesso"
-      });
-    },
-    onError: (error) => {
-      toastHook({
-        title: "Erro ao remover fase",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  });
-
-  const saveQuizMutation = useMutation({
-    mutationFn: ({ phaseId, questions }: { phaseId: number; questions: any[] }) =>
-      saveQuizFunc(phaseId, questions),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['questions'] });
-      toastHook({
-        title: "Quiz salvo",
-        description: "O quiz foi salvo com sucesso"
-      });
-      setEditingQuiz(null);
-    },
-    onError: (error) => {
-      toastHook({
-        title: "Erro ao salvar quiz",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  });
-
-  const handleAddPhase = () => {
-    if (!phaseName || !phaseDescription) {
-      toastHook({
-        title: "Campos incompletos",
-        description: "Preencha pelo menos o nome e a descrição da fase",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    const newPhase = {
-      module_id: selectedModule,
-      name: phaseName,
-      description: phaseDescription,
-      type: phaseType,
-      icon_type: iconType,
-      content: content,
-      video_url: videoUrl,
-      duration: phaseDuration,
-      order_index: phases.length
-    };
-    
-    createPhaseMutation.mutate(newPhase as any);
-  };
-
-  const handleEditPhase = (phase: Phase) => {
-    setEditingPhase(phase);
-    setSelectedModule(phase.module_id || 0);
-    setPhaseName(phase.name);
-    setPhaseDescription(phase.description || "");
-    setPhaseType(phase.type as PhaseType || "video");
-    setIconType(phase.icon_type as IconType || "video");
-    setVideoUrl(phase.video_url || "");
-    setContent(phase.content || "");
-    setPhaseDuration(phase.duration || 15);
-    setActiveTab("conteudo");
-  };
-
-  const handleUpdatePhase = () => {
-    if (!editingPhase || !phaseName || !phaseDescription) {
-      toastHook({
-        title: "Campos incompletos",
-        description: "Preencha pelo menos o nome e a descrição da fase",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    const updatedPhase = {
-      module_id: selectedModule,
-      name: phaseName,
-      description: phaseDescription,
-      type: phaseType,
-      icon_type: iconType,
-      content: content,
-      video_url: videoUrl,
-      duration: phaseDuration,
-    };
-    
-    updatePhaseMutation.mutate({
-      id: editingPhase.id,
-      phase: updatedPhase
-    });
-  };
-  
-  const resetPhaseForm = () => {
-    setEditingPhase(null);
-    setPhaseName("");
-    setPhaseDescription("");
-    setVideoUrl("");
-    setContent("");
-    setPhaseType("text");
-    setIconType("video");
-    setPhaseDuration(15);
-  };
-
-  const handleAddEvent = () => {
-    if (!eventTitle || !eventDate || !eventDescription) {
-      toastHook({
-        title: "Campos incompletos",
-        description: "Preencha pelo menos o título, data e descrição do evento",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    const newEvent = {
-      id: communityEvents.length + 1,
-      title: eventTitle,
-      date: eventDate,
-      time: eventTime,
-      description: eventDescription,
-      location: eventLocation
-    };
-    
-    setCommunityEvents([...communityEvents, newEvent]);
-    
-    setEventTitle("");
-    setEventDate("");
-    setEventTime("");
-    setEventDescription("");
-    setEventLocation("");
-    
-    toastHook({
-      title: "Evento adicionado",
-      description: "O evento foi adicionado com sucesso à comunidade"
-    });
-  };
-
-  const handleEditModule = (module: Module) => {
-    setEditingModule(module);
-    setModuleName(module.name);
-    setModuleDescription(module.description || "");
-    setModuleEmoji(module.emoji || "📚");
-    setActiveTab("modulos");
-  };
-
-  const handleUpdateModule = () => {
-    if (!editingModule || !moduleName || !moduleDescription) {
-      toastHook({
-        title: "Campos incompletos",
-        description: "Preencha pelo menos o nome e a descrição do módulo",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    const updatedModule = {
-      name: moduleName,
-      description: moduleDescription,
-      type: moduleType as "autoconhecimento" | "empatia" | "growth" | "comunicacao" | "futuro",
-      emoji: moduleEmoji
-    };
-    
-    updateModuleMutation.mutate({
-      id: editingModule.id,
-      module: updatedModule
-    });
-  };
-
-  const clearModuleForm = () => {
-    setEditingModule(null);
-    setModuleName("");
-    setModuleDescription("");
-    setModuleType("autoconhecimento");
-    setModuleEmoji("🧠");
-  };
-
-  const handleAddModule = () => {
-    if (!moduleName || !moduleDescription) {
-      toastHook({
-        title: "Campos incompletos",
-        description: "Preencha pelo menos o nome e a descrição do módulo",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    const lastOrderIndex = modules.length > 0 
-      ? Math.max(...modules.map(m => m.order_index || 0)) + 1 
-      : 0;
-    
-    const newModule = {
-      name: moduleName,
-      description: moduleDescription,
-      type: moduleType as "autoconhecimento" | "empatia" | "growth" | "comunicacao" | "futuro",
-      emoji: moduleEmoji,
-      order_index: lastOrderIndex,
-      content: ""
-    };
-    
-    createModuleMutation.mutate(newModule);
-  };
-
-  const handleQuizEdit = async (phaseId: number) => {
-    try {
-      console.log("Buscando perguntas para a fase:", phaseId);
-      const questions = await getQuestionsByPhaseIdFunc(phaseId);
-      console.log("Perguntas recebidas:", questions);
-      
-      // Verifica se questions é um array válido
-      if (Array.isArray(questions) && questions.length > 0) {
-        // Verifica se cada pergunta tem opções válidas
-        const validQuestions = questions.map(q => {
-          // Se options não for um array, converte para array
-          if (!Array.isArray(q.options)) {
-            console.log("Convertendo opções para array:", q.options);
-            // Tenta converter string JSON para array se for string
-            try {
-              if (typeof q.options === 'string') {
-                q.options = JSON.parse(q.options);
-              } else {
-                // Fallback para array vazio se não for possível converter
-                q.options = ["", "", "", ""];
-              }
-            } catch (e) {
-              console.error("Erro ao converter opções:", e);
-              q.options = ["", "", "", ""];
-            }
-          }
-          return q;
-        });
-        
-        setEditingQuiz({
-          phaseId,
-          questions: validQuestions
-        });
-      } else {
-        // Cria um quiz vazio se não houver perguntas
-        setEditingQuiz({
-          phaseId,
-          questions: [
-            {
-              question: "",
-              options: ["", "", "", ""],
-              correct_answer: 0,
-              order_index: 0
-            }
-          ]
-        });
-      }
-      
-      setActiveTab("quizzes");
-    } catch (error) {
-      console.error("Error fetching quiz questions:", error);
-      toastHook({
-        title: "Erro",
-        description: "Não foi possível carregar as perguntas do quiz",
-        variant: "destructive"
-      });
-      
-      // Mesmo com erro, cria um quiz vazio para permitir edição
-      setEditingQuiz({
-        phaseId,
-        questions: [
-          {
-            question: "",
-            options: ["", "", "", ""],
-            correct_answer: 0,
-            order_index: 0
-          }
-        ]
-      });
-      setActiveTab("quizzes");
-    }
-  };
-
-  const handleUpdateQuiz = () => {
-    if (!editingQuiz) return;
-    
-    const invalidQuestions = editingQuiz.questions.filter(
-      q => !q.question || q.options.some(o => !o)
-    );
-    
-    if (invalidQuestions.length > 0) {
-      toastHook({
-        title: "Dados inválidos",
-        description: "Preencha todas as perguntas e opções",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    saveQuizMutation.mutate({
-      phaseId: editingQuiz.phaseId,
-      questions: editingQuiz.questions
-    });
-  };
-
-  const addQuestion = () => {
-    if (!editingQuiz) return;
-    
-    const newQuestion = {
-      question: "",
-      options: ["", "", "", ""],
-      correct_answer: 0,
-      order_index: editingQuiz.questions.length
-    };
-    
-    setEditingQuiz({
-      ...editingQuiz,
-      questions: [...editingQuiz.questions, newQuestion]
-    });
-  };
-
-  const updateQuestion = (index: number, field: string, value: string | number) => {
-    if (!editingQuiz) return;
-    
-    const updatedQuestions = editingQuiz.questions.map((q, i) => {
-      if (i === index) {
-        if (field === "question") {
-          return { ...q, question: value as string };
-        } else if (field === "correctAnswer") {
-          return { ...q, correct_answer: value as number };
-        } else if (field.startsWith("option")) {
-          const optionIndex = parseInt(field.replace("option", ""));
-          const newOptions = [...q.options];
-          newOptions[optionIndex] = value as string;
-          return { ...q, options: newOptions };
-        }
-      }
-      return q;
-    });
-    
-    setEditingQuiz({
-      ...editingQuiz,
-      questions: updatedQuestions
-    });
-  };
-
-  const removeQuestion = (index: number) => {
-    if (!editingQuiz || editingQuiz.questions.length <= 1) return;
-    
-    const updatedQuestions = editingQuiz.questions.filter((_, i) => i !== index);
-    
-    setEditingQuiz({
-      ...editingQuiz,
-      questions: updatedQuestions
-    });
-  };
-
-  const deleteEvent = (id: number) => {
-    setCommunityEvents(communityEvents.filter(event => event.id !== id));
-    toastHook({
-      title: "Evento removido",
-      description: "O evento foi removido com sucesso"
-    });
-  };
-
-  const getModuleNameById = (id: number) => {
-    return modules.find(m => m.id === id)?.name || "Módulo Desconhecido";
-  };
-
-  const getPhaseNameById = (id: number) => {
-    return phases.find(p => p.id === id)?.name || "Fase Desconhecida";
-  };
-
-  const handlePhaseTypeChange = (value: PhaseType) => {
-    setPhaseType(value);
-  };
-
-  const handleIconTypeChange = (value: IconType) => {
-    setIconType(value);
-  };
-
-  const [moduleName, setModuleName] = useState("");
-  const [moduleDescription, setModuleDescription] = useState("");
-  const [moduleType, setModuleType] = useState("autoconhecimento");
-  const [moduleEmoji, setModuleEmoji] = useState("🧠");
-
-  const handleDeletePhase = (phaseId: number) => {
-    if (window.confirm("Tem certeza que deseja excluir esta fase? Esta ação não pode ser desfeita.")) {
-      deletePhaseMutation.mutate(phaseId);
-    }
-  };
-
-  return (
-    <div className="container px-4 py-6 min-h-screen bg-gray-50">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-trilha-orange">Painel de Administração</h1>
-        <Button variant="outline" onClick={() => navigate("/dashboard")}>
-          Voltar ao App
-        </Button>
-      </div>
-      
-      <Tabs defaultValue="dashboard" value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full mb-4 grid grid-cols-5">
-          <TabsTrigger value="dashboard" className="flex gap-2 items-center">
-            <BarChart3 className="h-4 w-4" /> Dashboard
-          </TabsTrigger>
-          <TabsTrigger value="modulos" className="flex gap-2 items-center">
-            <BrainCircuit className="h-4 w-4" /> Módulos
-          </TabsTrigger>
-          <TabsTrigger value="conteudo" className="flex gap-2 items-center">
-            <FilePlus className="h-4 w-4" /> Conteúdos
-          </TabsTrigger>
-          <TabsTrigger value="quizzes" className="flex gap-2 items-center">
-            <FileText className="h-4 w-4" /> Quizzes
-          </TabsTrigger>
-          <TabsTrigger value="eventos" className="flex gap-2 items-center">
-            <Calendar className="h-4 w-4" /> Eventos
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="dashboard">
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="p-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-medium">Total de Usuários</h3>
-                  <Users className="h-5 w-5 text-trilha-orange" />
-                </div>
-                <div className="mt-2">
-                  <p className="text-3xl font-bold">450</p>
-                  <p className="text-sm text-green-600">+12% este mês</p>
-                </div>
-              </Card>
-              
-              <Card className="p-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-medium">Fases Completadas</h3>
-                  <Star className="h-5 w-5 text-trilha-orange" />
-                </div>
-                <div className="mt-2">
-                  <p className="text-3xl font-bold">1,283</p>
-                  <p className="text-sm text-green-600">+23% este mês</p>
-                </div>
-              </Card>
-              
-              <Card className="p-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-medium">Taxa de Engajamento</h3>
-                  <BrainCircuit className="h-5 w-5 text-trilha-orange" />
-                </div>
-                <div className="mt-2">
-                  <p className="text-3xl font-bold">78%</p>
-                  <p className="text-sm text-green-600">+5% este mês</p>
-                </div>
-              </Card>
-            </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <AdminChart 
-                data={usersData} 
-                title="Novos Usuários" 
-                color="#F97316"
-                growth={{ value: 12, positive: true }}
-              />
-              
-              <AdminChart 
-                data={completionsData} 
-                title="Fases Completadas" 
-                color="#3B82F6"
-                growth={{ value: 23, positive: true }}
-              />
-              
-              <AdminChart 
-                data={engagementData} 
-                title="Taxa de Engajamento (%)" 
-                color="#10B981"
-                growth={{ value: 5, positive: true }}
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="p-4">
-                <h3 className="text-lg font-medium mb-4">Módulos Mais Populares</h3>
-                <div className="space-y-4">
-                  {topModules.map((module, index) => (
-                    <div key={module.id} className="space-y-1">
-                      <div className="flex justify-between">
-                        <span className="font-medium">{index + 1}. {module.name}</span>
-                        <span className="text-sm text-gray-500">{module.completions} completados</span>
-                      </div>
-                      <ProgressBar progress={module.engagement} className="h-1.5" />
-                    </div>
-                  ))}
-                </div>
-              </Card>
-              
-              <Card className="p-4">
-                <h3 className="text-lg font-medium mb-4">Fases Melhor Avaliadas</h3>
-                <div className="space-y-4">
-                  {topPhases.map((phase) => (
-                    <div key={phase.id} className="flex justify-between items-center">
-                      <div>
-                        <p className="font-medium">{phase.name}</p>
-                        <p className="text-sm text-gray-500">{getModuleNameById(phase.moduleId)}</p>
-                      </div>
-                      <div className="flex items-center">
-                        <span className="text-yellow-400 mr-1">★</span>
-                        <span>{phase.rating}</span>
-                        <Badge variant="outline" className="ml-2">
-                          {phase.completions} completados
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            </div>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="modulos">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1">
-              <Card className="p-4">
-                <h2 className="text-lg font-semibold mb-4">
-                  {editingModule ? "Editar Módulo" : "Adicionar Módulo"}
-                </h2>
-                
-                <ModuleForm
-                  module={editingModule || undefined}
-                  onSuccess={() => {
-                    setActiveTab("modulos");
-                    clearModuleForm();
-                  }}
-                />
-              </Card>
-            </div>
-            
-            <div className="lg:col-span-2">
-              <Card className="p-4">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-semibold">Módulos Cadastrados</h2>
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="Pesquisar módulos..."
-                      className="pl-8"
-                    />
-                  </div>
-                </div>
-
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Fases</TableHead>
-                        <TableHead>Progresso Médio</TableHead>
-                        <TableHead>Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {modules.map((module) => {
-                        const modulePhases = phases.filter(phase => phase.module_id === module.id);
-                        const avgProgress = topModules.find(m => m.id === module.id)?.engagement || 0;
-                        
-                        return (
-                          <TableRow key={module.id}>
-                            <TableCell>{module.id}</TableCell>
-                            <TableCell className="font-medium">{module.name}</TableCell>
-                            <TableCell>{modulePhases.length}</TableCell>
-                            <TableCell>
-                              <div className="w-32">
-                                <ProgressBar progress={avgProgress} className="h-1.5" />
-                                <div className="text-xs text-right mt-1">
-                                  {avgProgress}%
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex space-x-2">
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => handleEditModule(module)}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => navigate(`/modulo/${module.id}`)}
-                                >
-                                  Visualizar
-                                </Button>
-                                <Button 
-                                  variant="destructive" 
-                                  size="sm" 
-                                  onClick={() => deleteModuleMutation.mutate(module.id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              </Card>
-            </div>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="conteudo">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1">
-              <Card className="p-4">
-                <h2 className="text-lg font-semibold mb-4">
-                  {editingPhase ? "Editar Fase" : "Adicionar Nova Fase"}
-                </h2>
-                
-                {/* Adicionar o seletor de módulos para filtrar fases */}
-                <div className="mb-4">
-                  <Label htmlFor="module-selector">Selecionar Módulo</Label>
-                  <Select 
-                    value={selectedModule.toString()} 
-                    onValueChange={(value) => setSelectedModule(parseInt(value))}
-                  >
-                    <SelectTrigger id="module-selector">
-                      <SelectValue placeholder="Selecione um módulo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {modules.map(module => (
-                        <SelectItem key={module.id} value={module.id.toString()}>
-                          {module.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Selecione o módulo ao qual deseja adicionar novas fases
-                  </p>
-                </div>
-                
-                <PhaseForm
-                  moduleId={selectedModule}
-                  phase={editingPhase || undefined}
-                  onSuccess={() => {
-                    refetchPhases();
-                    resetPhaseForm();
-                  }}
-                  onCancel={resetPhaseForm}
-                />
-              </Card>
-            </div>
-            
-            <div className="lg:col-span-2">
-              <Card className="p-4">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-semibold">
-                    Fases do Módulo: {getModuleNameById(selectedModule)}
-                  </h2>
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="Pesquisar fases..."
-                      className="pl-8"
-                    />
-                  </div>
-                </div>
-                
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead>Duração (min)</TableHead>
-                        <TableHead>Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {phases.map((phase) => (
-                        <TableRow key={phase.id}>
-                          <TableCell>{phase.id}</TableCell>
-                          <TableCell className="font-medium">{phase.name}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">
-                              {phase.type === "text" ? "Texto" : 
-                              phase.type === "video" ? "Vídeo" :
-                              phase.type === "quiz" ? "Quiz" : 
-                              phase.type}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{phase.duration || 15} min</TableCell>
-                          <TableCell>
-                            <div className="flex space-x-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => handleEditPhase(phase)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              
-                              {phase.type === "quiz" && (
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => handleQuizEdit(phase.id)}
-                                >
-                                  <FileText className="h-4 w-4" />
-                                </Button>
-                              )}
-                              
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => navigate(`/fase/${phase.id}`)}
-                              >
-                                Visualizar
-                              </Button>
-                              
-                              <Button 
-                                variant="destructive" 
-                                size="sm" 
-                                onClick={() => handleDeletePhase(phase.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </Card>
-            </div>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="quizzes">
-          {editingQuiz ? (
-            <Card className="p-4">
-              <h2 className="text-lg font-semibold mb-4">
-                Editar Quiz: {getPhaseNameById(editingQuiz.phaseId)}
-              </h2>
-              
-              <div className="space-y-6">
-                {editingQuiz.questions.map((question, index) => (
-                  <div key={index} className="p-4 border rounded-md bg-gray-50">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-medium">Pergunta {index + 1}</h3>
-                      {editingQuiz.questions.length > 1 && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => removeQuestion(index)}
-                          className="text-red-500 h-8 p-0"
-                        >
-                          <Trash2 className="h-4 w-4 mr-1" /> Remover
-                        </Button>
-                      )}
-                    </div>
-                    
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor={`question-${index}`}>Pergunta</Label>
-                        <Input
-                          id={`question-${index}`}
-                          value={question.question}
-                          onChange={(e) => updateQuestion(index, "question", e.target.value)}
-                          placeholder="Digite a pergunta aqui"
-                        />
-                      </div>
-                      
-                      <div className="space-y-3">
-                        <Label>Opções de Resposta</Label>
-                        {question.options.map((option, optIndex) => (
-                          <div key={optIndex} className="flex gap-2 items-center">
-                            <div className="flex-1">
-                              <Input
-                                value={option}
-                                onChange={(e) => updateQuestion(
-                                  index, 
-                                  `option${optIndex}`, 
-                                  e.target.value
-                                )}
-                                placeholder={`Opção ${optIndex + 1}`}
-                                className={question.correct_answer === optIndex ? "border-green-500" : ""}
-                              />
-                            </div>
-                            <div>
-                              <Button
-                                type="button"
-                                variant={question.correct_answer === optIndex ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => updateQuestion(index, "correctAnswer", optIndex)}
-                              >
-                                Correta
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                
-                <div className="flex justify-between">
-                  <Button 
-                    variant="outline" 
-                    onClick={addQuestion}
-                    className="flex items-center"
-                  >
-                    <PlusCircle className="h-4 w-4 mr-1" /> Adicionar Pergunta
-                  </Button>
-                  
-                  <div className="space-x-2">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setEditingQuiz(null)}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button onClick={handleUpdateQuiz}>
-                      Salvar Quiz
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-64">
-              <AlertCircle className="h-16 w-16 text-gray-400 mb-4" />
-              <h3 className="text-xl font-medium text-gray-600">
-                Selecione uma fase do tipo Quiz para editar
-              </h3>
-              <p className="text-gray-500 mt-2 mb-4">
-                Vá para a aba Conteúdos, encontre uma fase do tipo Quiz e clique no ícone do quiz
-              </p>
-              <Button 
-                variant="outline" 
-                onClick={() => setActiveTab("conteudo")}
-              >
-                Ir para Conteúdos
-              </Button>
-            </div>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="eventos">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1">
-              <Card className="p-4">
-                <h2 className="text-lg font-semibold mb-4">Adicionar Evento</h2>
-                
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="event-title">Título do Evento *</Label>
-                    <Input
-                      id="event-title"
-                      value={eventTitle}
-                      onChange={(e) => setEventTitle(e.target.value)}
-                      placeholder="Workshop, palestra, roda de conversa, etc."
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="event-date">Data *</Label>
-                      <Input
-                        id="event-date"
-                        type="date"
-                        value={eventDate}
-                        onChange={(e) => setEventDate(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="event-time">Horário</Label>
-                      <Input
-                        id="event-time"
-                        type="time"
-                        value={eventTime}
-                        onChange={(e) => setEventTime(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="event-location">Local</Label>
-                    <Input
-                      id="event-location"
-                      value={eventLocation}
-                      onChange={(e) => setEventLocation(e.target.value)}
-                      placeholder="Presencial ou link para evento online"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="event-description">Descrição *</Label>
-                    <Textarea
-                      id="event-description"
-                      value={eventDescription}
-                      onChange={(e) => setEventDescription(e.target.value)}
-                      placeholder="Descreva o evento em detalhes..."
-                      rows={4}
-                    />
-                  </div>
-                  
-                  <div className="flex justify-end pt-2">
-                    <Button onClick={handleAddEvent}>
-                      Adicionar Evento
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            </div>
-            
-            <div className="lg:col-span-2">
-              <Card className="p-4">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-semibold">Eventos da Comunidade</h2>
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="Pesquisar eventos..."
-                      className="pl-8"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  {communityEvents.length === 0 ? (
-                    <div className="text-center py-8">
-                      <p className="text-gray-500">Nenhum evento cadastrado</p>
-                    </div>
-                  ) : (
-                    communityEvents.map((event) => (
-                      <div key={event.id} className="p-4 border rounded-md hover:bg-gray-50">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="font-medium">{event.title}</h3>
-                            <div className="flex items-center text-sm text-gray-500 mt-1">
-                              <Calendar className="h-3.5 w-3.5 mr-1" />
-                              {new Date(event.date).toLocaleDateString('pt-BR')}
-                              {event.time && ` às ${event.time}`}
-                              {event.location && ` • ${event.location}`}
-                            </div>
-                            <p className="mt-2">{event.description}</p>
-                          </div>
-                          <div className="flex space-x-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="h-8"
-                            >
-                              <Edit2 className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button 
-                              variant="destructive" 
-                              size="sm" 
-                              onClick={() => deleteEvent(event.id)} 
-                              className="h-8"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </Card>
-            </div>
-          </div>
-        </TabsContent>
-      </Tabs>
+// --- COMPONENTES AUXILIARES ---
+const AdminSkeleton = (): JSX.Element => (
+    <div className="min-h-screen p-4 sm:p-6 lg:p-8 animate-pulse bg-slate-100">
+        <div className="flex justify-between items-center mb-8"><Skeleton className="h-9 w-64 rounded-lg" /><Skeleton className="h-10 w-32 rounded-lg" /></div>
+        <div className="flex gap-2 mb-8"><Skeleton className="h-10 w-32 rounded-lg" /><Skeleton className="h-10 w-32 rounded-lg" /></div>
+        <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6"><Skeleton className="h-28 rounded-2xl" /><Skeleton className="h-28 rounded-2xl" /><Skeleton className="h-28 rounded-2xl" /><Skeleton className="h-28 rounded-2xl" /></div>
+            <Skeleton className="h-80 rounded-2xl" />
+        </div>
     </div>
-  );
-};
+);
+const StatCard = ({ title, value, icon: Icon, change }: { title: string, value: string, icon: React.ElementType, change: string }) => (
+    <div className="glass-card p-6 rounded-2xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1.5">
+        <div className="flex justify-between items-start"><h3 className="text-base font-semibold text-slate-700">{title}</h3><Icon className="h-6 w-6 text-slate-500" /></div>
+        <p className="text-3xl font-bold text-slate-900 mt-2">{value}</p>
+        <p className="text-sm text-green-600 mt-1">{change}</p>
+    </div>
+);
 
-export default AdminPage;
+// --- COMPONENTE PRINCIPAL ---
+export default function AdminPage() {
+    const navigate = useNavigate();
+    const queryClient = useQueryClient();
+    
+    const [currentView, setCurrentView] = useState<AdminView>('hub');
+    const [isModuleModalOpen, setIsModuleModalOpen] = useState(false);
+    const [editingModule, setEditingModule] = useState<Module | null>(null);
+    const [isPhaseModalOpen, setIsPhaseModalOpen] = useState(false);
+    const [editingPhase, setEditingPhase] = useState<Phase | null>(null);
+    const [selectedModuleIdForPhases, setSelectedModuleIdForPhases] = useState<number | null>(null);
+
+    const { data: modules = [], isLoading } = useQuery({ queryKey: ['adminModules'], queryFn: getModules });
+
+    const { data: phases = [], refetch: refetchPhases } = useQuery({
+        queryKey: ['adminPhases', selectedModuleIdForPhases],
+        queryFn: () => selectedModuleIdForPhases ? getPhasesByModuleId(selectedModuleIdForPhases) : Promise.resolve([]),
+        enabled: !!selectedModuleIdForPhases,
+    });
+    
+    useEffect(() => {
+        if (modules.length > 0 && !selectedModuleIdForPhases) {
+            setSelectedModuleIdForPhases(modules[0].id);
+        }
+    }, [modules, selectedModuleIdForPhases]);
+
+    const deleteModuleMutation = useMutation({
+        mutationFn: deleteModule,
+        onSuccess: () => { toast.success("Módulo removido!"); queryClient.invalidateQueries({ queryKey: ['adminModules'] }); },
+        onError: (error) => toast.error(`Erro: ${error.message}`),
+    });
+
+    const deletePhaseMutation = useMutation({
+        mutationFn: deletePhase,
+        onSuccess: () => { toast.success("Fase removida!"); refetchPhases(); },
+        onError: (error) => toast.error(`Erro: ${error.message}`),
+    });
+
+    const handleOpenModuleModal = (module: Module | null = null) => { setEditingModule(module); setIsModuleModalOpen(true); };
+    const handleOpenPhaseModal = (phase: Phase | null = null) => {
+        if (!selectedModuleIdForPhases) { toast.error("Por favor, selecione um módulo primeiro."); return; }
+        setEditingPhase(phase);
+        setIsPhaseModalOpen(true);
+    };
+    
+    if (isLoading) return <AdminSkeleton />;
+
+    const renderContent = (): JSX.Element => {
+        switch (currentView) {
+            case 'modules':
+                return (
+                    <div>
+                        <Button variant="ghost" onClick={() => setCurrentView('hub')} className="mb-4 text-slate-600 hover:text-slate-900"><ArrowLeft className="mr-2 h-4 w-4" /> Voltar</Button>
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between">
+                                <CardTitle>Gerenciar Módulos</CardTitle>
+                                <Button className="bg-orange-500 hover:bg-orange-600" onClick={() => handleOpenModuleModal()}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Módulo</Button>
+                            </CardHeader>
+                            <CardContent>
+                                <Table>
+                                    <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Tipo</TableHead><TableHead className="text-right">Ações</TableHead></TableRow></TableHeader>
+                                    <TableBody>
+                                        {modules.map((module) => (
+                                            <TableRow key={module.id}>
+                                                <TableCell className="font-medium">{module.name}</TableCell>
+                                                <TableCell className="capitalize">{module.type}</TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button variant="ghost" size="icon" onClick={() => handleOpenModuleModal(module)}><Edit className="h-4 w-4" /></Button>
+                                                    <Button variant="ghost" size="icon" onClick={() => deleteModuleMutation.mutate(module.id)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </CardContent>
+                        </Card>
+                    </div>
+                );
+            case 'phases':
+                 return (
+                    <div>
+                        <Button variant="ghost" onClick={() => setCurrentView('hub')} className="mb-4 text-slate-600 hover:text-slate-900"><ArrowLeft className="mr-2 h-4 w-4" /> Voltar</Button>
+                        <Card>
+                             <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                <div className="space-y-1.5">
+                                    <CardTitle>Gerenciar Fases</CardTitle>
+                                    <Select value={selectedModuleIdForPhases?.toString()} onValueChange={(v) => setSelectedModuleIdForPhases(Number(v))}>
+                                        <SelectTrigger className="w-full sm:w-[280px] bg-white"><SelectValue placeholder="Selecione um módulo..." /></SelectTrigger>
+                                        <SelectContent>{modules.map(m => <SelectItem key={m.id} value={m.id.toString()}>{m.name}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                </div>
+                                <Button className="bg-orange-500 hover:bg-orange-600 w-full sm:w-auto" onClick={() => handleOpenPhaseModal()}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Fase</Button>
+                            </CardHeader>
+                            <CardContent>
+                                <Table>
+                                    <TableHeader><TableRow><TableHead>Nome da Fase</TableHead><TableHead>Tipo</TableHead><TableHead className="text-right">Ações</TableHead></TableRow></TableHeader>
+                                    <TableBody>
+                                        {phases.map((phase) => (
+                                            <TableRow key={phase.id}>
+                                                <TableCell className="font-medium">{phase.name}</TableCell>
+                                                <TableCell className="capitalize">{phase.type}</TableCell>
+                                                <TableCell className="text-right">
+                                                     <Button variant="ghost" size="icon" onClick={() => handleOpenPhaseModal(phase)}><Edit className="h-4 w-4" /></Button>
+                                                     <Button variant="ghost" size="icon" onClick={() => deletePhaseMutation.mutate(phase.id)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </CardContent>
+                        </Card>
+                    </div>
+                );
+            case 'quizzes':
+            case 'events':
+                return (
+                    <div>
+                        <Button variant="ghost" onClick={() => setCurrentView('hub')} className="mb-4 text-slate-600 hover:text-slate-900"><ArrowLeft className="mr-2 h-4 w-4" /> Voltar</Button>
+                        <Card><CardHeader><CardTitle>Em Desenvolvimento</CardTitle></CardHeader><CardContent><p>A área de gerenciamento de "{currentView}" está em construção.</p></CardContent></Card>
+                    </div>
+                );
+            case 'hub':
+            default:
+                return (
+                     <div className="text-center">
+                         <h2 className="text-xl font-bold text-slate-800">Gerenciamento de Conteúdo</h2>
+                         <p className="text-slate-600 mb-6">Aqui você pode criar, editar e remover todo o conteúdo das trilhas.</p>
+                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <Button className="py-6 text-base bg-orange-500 hover:bg-orange-600" onClick={() => setCurrentView('modules')}><Edit className="mr-2 h-5 w-5" /> Módulos</Button>
+                            <Button className="py-6 text-base bg-orange-500 hover:bg-orange-600" onClick={() => setCurrentView('phases')}><FileText className="mr-2 h-5 w-5" /> Fases</Button>
+                            <Button className="py-6 text-base bg-orange-500 hover:bg-orange-600" onClick={() => setCurrentView('quizzes')}><HelpCircle className="mr-2 h-5 w-5" /> Quizzes</Button>
+                            <Button className="py-6 text-base bg-orange-500 hover:bg-orange-600" onClick={() => setCurrentView('events')}><Calendar className="mr-2 h-5 w-5" /> Eventos</Button>
+                         </div>
+                    </div>
+                );
+        }
+    };
+    
+    return (
+        <div className="min-h-screen p-4 sm:p-6 lg:p-8 bg-slate-100">
+            <style>{`.glass-card { background: rgba(255, 255, 255, 0.6); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }`}</style>
+            
+            <header className="flex justify-between items-center mb-8">
+                <div><h1 className="text-3xl font-bold text-slate-900">Painel de Admin</h1><p className="text-slate-500 mt-1">Visão geral do desempenho.</p></div>
+                <Button variant="outline" onClick={() => navigate("/dashboard")} className="bg-white/50"><LogOut className="h-4 w-4 mr-2" /> Voltar ao App</Button>
+            </header>
+            
+            <Tabs defaultValue="conteudo" className="w-full">
+                <TabsList className="mb-6 inline-flex h-auto items-center justify-center rounded-lg bg-slate-200 p-1.5 text-muted-foreground">
+                    <TabsTrigger value="dashboard" className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-4 py-2 text-sm font-semibold ring-offset-background transition-all data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm"><BarChart3 className="h-4 w-4 mr-2" />Dashboard</TabsTrigger>
+                    <TabsTrigger value="conteudo" className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-4 py-2 text-sm font-semibold ring-offset-background transition-all data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm"><BrainCircuit className="h-4 w-4 mr-2" />Gerenciar Conteúdo</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="dashboard">
+                    <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <StatCard title="Total de Usuários" value="450" icon={Users} change="+12% este mês" />
+                            <StatCard title="Módulos Ativos" value={modules.length.toString()} icon={BrainCircuit} change="Total de trilhas" />
+                            <StatCard title="Fases Concluídas" value="1,283" icon={Star} change="+23% este mês" />
+                            <StatCard title="Engajamento" value="78%" icon={BarChart3} change="+5% este mês" />
+                        </div>
+                    </div>
+                </TabsContent>
+                
+                <TabsContent value="conteudo">
+                    <div className="bg-white/60 backdrop-blur-xl border border-white/20 rounded-2xl p-6">
+                        {renderContent()}
+                    </div>
+                </TabsContent>
+            </Tabs>
+            
+            <Dialog.Root open={isModuleModalOpen} onOpenChange={setIsModuleModalOpen}>
+                <Dialog.Portal>
+                    <Dialog.Overlay className="fixed inset-0 bg-black/60 data-[state=open]:animate-in data-[state=closed]:animate-out" />
+                    <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-lg bg-white p-0 rounded-2xl shadow-xl flex flex-col max-h-[90vh]">
+                        <div className="p-6 border-b flex-shrink-0">
+                            <Dialog.Title className="text-lg font-bold text-slate-900">{editingModule ? "Editar Módulo" : "Novo Módulo"}</Dialog.Title>
+                            <Dialog.Description className="text-sm text-slate-500 mt-1">Preencha as informações do módulo.</Dialog.Description>
+                        </div>
+                        <div className="flex-grow overflow-y-auto p-6">
+                            <ModuleForm module={editingModule || undefined} onSuccess={() => setIsModuleModalOpen(false)} />
+                        </div>
+                        <Dialog.Close asChild><button aria-label="Fechar" className="absolute top-4 right-4 rounded-full p-1.5 transition-colors hover:bg-slate-100"><X className="h-5 w-5 text-slate-500" /></button></Dialog.Close>
+                    </Dialog.Content>
+                </Dialog.Portal>
+            </Dialog.Root>
+
+            <Dialog.Root open={isPhaseModalOpen} onOpenChange={setIsPhaseModalOpen}>
+                 <Dialog.Portal>
+                    <Dialog.Overlay className="fixed inset-0 bg-black/60 data-[state=open]:animate-in data-[state=closed]:animate-out" />
+                    <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-lg bg-white p-0 rounded-2xl shadow-xl flex flex-col max-h-[90vh]">
+                         <div className="p-6 border-b flex-shrink-0">
+                            <Dialog.Title className="text-lg font-bold">{editingPhase ? "Editar Fase" : "Nova Fase"}</Dialog.Title>
+                            <Dialog.Description className="text-sm text-slate-500 mt-1">Vincule esta fase a um módulo e preencha suas informações.</Dialog.Description>
+                         </div>
+                         <div className="flex-grow overflow-y-auto p-6">
+                            <PhaseForm 
+                                moduleId={selectedModuleIdForPhases!} 
+                                phase={editingPhase || undefined} 
+                                onSuccess={() => setIsPhaseModalOpen(false)} 
+                                onCancel={() => setIsPhaseModalOpen(false)}
+                            />
+                         </div>
+                         <Dialog.Close asChild><button aria-label="Fechar" className="absolute top-4 right-4 rounded-full p-1.5 transition-colors hover:bg-slate-100"><X className="h-5 w-5 text-slate-500" /></button></Dialog.Close>
+                    </Dialog.Content>
+                 </Dialog.Portal>
+            </Dialog.Root>
+        </div>
+    );
+}
