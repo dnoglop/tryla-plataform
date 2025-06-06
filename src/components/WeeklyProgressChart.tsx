@@ -18,12 +18,20 @@ interface WeeklyDataItem {
 }
 
 export const WeeklyProgressChart: React.FC<WeeklyProgressChartProps> = ({ streak, userId }) => {
-  const { data: weeklyData = [], isLoading } = useQuery({
+  const { data: weeklyData = [], isLoading, error } = useQuery({
     queryKey: ['weeklyXpProgress', userId],
     queryFn: () => userId ? getFormattedWeeklyData(userId) : Promise.resolve([]),
     enabled: !!userId,
-    refetchInterval: 60000, // Atualizar a cada minuto
+    refetchInterval: 30000, // Atualizar a cada 30 segundos
   });
+
+  // Debug logs
+  useEffect(() => {
+    console.log('WeeklyProgressChart - userId:', userId);
+    console.log('WeeklyProgressChart - weeklyData:', weeklyData);
+    console.log('WeeklyProgressChart - isLoading:', isLoading);
+    console.log('WeeklyProgressChart - error:', error);
+  }, [userId, weeklyData, isLoading, error]);
 
   // Calcular porcentagem máxima para normalizar o gráfico
   const maxXp = Math.max(...weeklyData.map(item => item.xp), 1);
