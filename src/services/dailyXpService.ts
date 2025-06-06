@@ -1,24 +1,35 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
-export interface DailyXpProgress {
-  id: string;
-  user_id: string;
+interface WeeklyDataItem {
+  day: string;
+  xp: number;
   date: string;
-  xp_earned: number;
-  created_at: string;
-  updated_at: string;
 }
 
 /**
- * Adiciona XP para o dia atual do usuário
+ * Adiciona um registro de XP para o dia atual na tabela daily_xp_progress.
+ * Esta função deve ser chamada quando um usuário completa uma ação que concede XP.
  */
 export const addDailyXp = async (userId: string, xpAmount: number): Promise<void> => {
+  if (!userId || xpAmount <= 0) return;
+
   try {
-    const { error } = await supabase.rpc('add_daily_xp', {
-      user_id_param: userId,
-      xp_amount: xpAmount
-    });
+    const today = new Date().toISOString().split('T')[0];
+
+    // Chama uma função RPC (ou faz um upsert) para adicionar/atualizar o XP do dia.
+    // Usar uma RPC 'add_or_update_daily_xp' é o ideal para evitar duplicatas.
+    // Por simplicidade, vamos usar um upsert aqui.
+    const { error } = await supabase
+      .from('daily_xp_progress')
+      .upsert(
+        { 
+          user_id: userId,
+          date: today, 
+          xp_earned: xpAmount // Aqui, você pode querer somar ao valor existente.
+                               // Uma RPC é melhor para isso: `SET xp_earned = xp_earned + xpAmount`
+        },
+        { onConflict: 'user_id, date' } // Se já existir um registro para este usuário neste dia, ele será atualizado.
+      );
 
     if (error) {
       console.error('Erro ao adicionar XP diário:', error);
@@ -30,69 +41,41 @@ export const addDailyXp = async (userId: string, xpAmount: number): Promise<void
   }
 };
 
-/**
- * Busca o progresso de XP dos últimos 7 dias do usuário
- */
-export const getWeeklyXpProgress = async (userId: string): Promise<DailyXpProgress[]> => {
-  try {
-    // Calcular as datas dos últimos 7 dias
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(endDate.getDate() - 6); // 7 dias incluindo hoje
 
-    const { data, error } = await supabase
-      .from('daily_xp_progress')
-      .select('*')
-      .eq('user_id', userId)
-      .gte('date', startDate.toISOString().split('T')[0])
-      .lte('date', endDate.toISOString().split('T')[0])
-      .order('date', { ascending: true });
+/**
+ * Busca o progresso de XP da semana atual (Seg-Dom) usando uma RPC no Supabase.
+ */
+export const getFormattedWeeklyData = async (userId: string): Promise<WeeklyDataItem[]> => {
+  if (!userId) return [];
+
+  try {
+    // Chama a função RPC que criamos no Supabase
+    const { data: weeklySum, error } = await supabase.rpc('get_weekly_xp_sum', {
+      user_id_param: userId
+    });
 
     if (error) {
-      console.error('Erro ao buscar progresso semanal:', error);
+      console.error("Erro ao chamar a RPC get_weekly_xp_sum:", error);
       throw error;
     }
 
-    return data || [];
-  } catch (error) {
-    console.error('Erro inesperado ao buscar progresso semanal:', error);
-    throw error;
-  }
-};
-
-/**
- * Gera dados dos últimos 7 dias, preenchendo dias sem XP com 0
- */
-export const getFormattedWeeklyData = async (userId: string) => {
-  try {
-    const xpData = await getWeeklyXpProgress(userId);
-    
-    // Criar array dos últimos 7 dias
-    const weeklyData = [];
-    const today = new Date();
-    
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(today.getDate() - i);
-      const dateString = date.toISOString().split('T')[0];
-      
-      // Encontrar XP para este dia
-      const dayData = xpData.find(item => item.date === dateString);
-      const xpEarned = dayData ? dayData.xp_earned : 0;
-      
-      // Obter nome do dia da semana abreviado
-      const dayName = date.toLocaleDateString('pt-BR', { weekday: 'narrow' }).toUpperCase();
-      
-      weeklyData.push({
-        day: dayName,
-        xp: xpEarned,
-        date: dateString
-      });
+    if (!weeklySum) {
+      return [];
     }
-    
-    return weeklyData;
-  } catch (error) {
-    console.error('Erro ao formatar dados semanais:', error);
+
+    // Formata os dados para o componente do gráfico
+    return weeklySum.map((item: { day: string, total_xp: number }) => {
+        const date = new Date(item.day + 'T00:00:00Z'); // Trata a data como UTC
+        const dayName = date.toLocaleDateString('pt-BR', { weekday: 'narrow', timeZone: 'UTC' }).toUpperCase();
+        return {
+            date: item.day,
+            day: dayName,
+            xp: item.total_xp,
+        };
+    });
+
+  } catch (err) {
+    console.error("Erro inesperado ao formatar dados semanais:", err);
     return [];
   }
 };
