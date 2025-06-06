@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { addDailyXp } from "./dailyXpService";
 
@@ -54,6 +53,38 @@ export const updateProfile = async (userId: string, updates: Partial<Profile>): 
     return data;
   } catch (error) {
     console.error('Erro inesperado ao atualizar perfil:', error);
+    return null;
+  }
+};
+
+export const generateUsername = (fullName: string): string => {
+  const firstName = fullName.split(' ')[0].toLowerCase();
+  const randomNumbers = Math.floor(1000 + Math.random() * 9000);
+  return `${firstName}${randomNumbers}`;
+};
+
+export const uploadAvatar = async (userId: string, file: File): Promise<string | null> => {
+  try {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${userId}.${fileExt}`;
+    const filePath = `avatars/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, file, { upsert: true });
+
+    if (uploadError) {
+      console.error('Erro ao fazer upload do avatar:', uploadError);
+      return null;
+    }
+
+    const { data } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  } catch (error) {
+    console.error('Erro inesperado ao fazer upload do avatar:', error);
     return null;
   }
 };

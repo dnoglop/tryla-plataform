@@ -5,7 +5,7 @@ interface ForumThreadProps {
   title: string;
   author: string;
   authorAvatar: string;
-  date: string;
+  date?: string;
   replies: number;
   likes: number;
   tags?: string[];
@@ -16,7 +16,7 @@ const ForumThread = ({
   title,
   author,
   authorAvatar,
-  date,
+  date = "Hoje",
   replies,
   likes,
   tags = [],
