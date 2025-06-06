@@ -22,7 +22,7 @@ export const WeeklyProgressChart: React.FC<WeeklyProgressChartProps> = ({ streak
     queryKey: ['weeklyXpProgress', userId],
     queryFn: () => userId ? getFormattedWeeklyData(userId) : Promise.resolve([]),
     enabled: !!userId,
-    refetchInterval: 30000,
+    refetchInterval: 10000, // Atualiza a cada 10 segundos
   });
 
   // Debug logs
@@ -34,7 +34,7 @@ export const WeeklyProgressChart: React.FC<WeeklyProgressChartProps> = ({ streak
   }, [userId, weeklyData, isLoading, error]);
 
   // Calcular porcentagem máxima para normalizar o gráfico
-  const maxXp = Math.max(...weeklyData.map(item => item.xp), 1);
+  const maxXp = Math.max(...weeklyData.map(item => item.xp), 100); // Mínimo de 100 para escala
   
   if (isLoading) {
     return (
@@ -66,19 +66,33 @@ export const WeeklyProgressChart: React.FC<WeeklyProgressChartProps> = ({ streak
       </div>
       <div className="flex justify-between items-end h-24 gap-2">
         {weeklyData.map((item, index) => {
-          const percentage = maxXp > 0 ? (item.xp / maxXp) * 100 : 0;
-          const minHeight = item.xp > 0 ? Math.max(percentage, 8) : 0;
+          // Calcular altura da barra
+          let barHeight = '0%';
+          if (item.xp > 0) {
+            const percentage = (item.xp / maxXp) * 100;
+            barHeight = `${Math.max(percentage, 15)}%`; // Mínimo de 15% para ser visível
+          }
+          
+          console.log(`Dia ${item.day}: XP=${item.xp}, altura=${barHeight}`);
           
           return (
             <div key={`${item.date}-${index}`} className="flex-1 flex flex-col items-center gap-2">
               <div className="w-full h-full flex items-end relative group">
-                <div
-                  className="w-full bg-gradient-to-t from-orange-400 to-orange-500 rounded-lg transition-all duration-700 ease-out hover:from-orange-500 hover:to-orange-600"
-                  style={{ height: `${minHeight}%` }}
-                  title={`${item.day}: ${item.xp} XP`}
-                />
+                {item.xp > 0 ? (
+                  <div
+                    className="w-full bg-orange-500 rounded-lg transition-all duration-700 ease-out hover:bg-orange-600 shadow-sm"
+                    style={{ height: barHeight }}
+                    title={`${item.day}: ${item.xp} XP`}
+                  />
+                ) : (
+                  <div
+                    className="w-full bg-slate-200 rounded-lg"
+                    style={{ height: '4px' }}
+                    title={`${item.day}: 0 XP`}
+                  />
+                )}
                 {/* Tooltip */}
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
                   {item.xp} XP
                 </div>
               </div>
