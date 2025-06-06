@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from '@tanstack/react-query';
@@ -10,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { ArrowRight, Flame, Sparkles, X, Gift, CheckCircle } from "lucide-react";
 import BottomNavigation from "@/components/BottomNavigation";
 import { Skeleton } from "@/components/ui/skeleton";
+import { WeeklyProgressChart } from "@/components/WeeklyProgressChart";
 import { getModules, Module, getUserNextPhase, isModuleCompleted } from "@/services/moduleService";
 import { getProfile, Profile, updateUserStreak, updateUserXp } from "@/services/profileService";
 import ForumThread from "@/components/ForumThread";
@@ -35,32 +37,6 @@ const DashboardSkeleton = () => (
         </main>
     </div>
 );
-
-const PerformanceChart = ({ streak }: { streak: number }) => {
-    const weeklyData = [70, 90, 50, 80, 100, 60, 75];
-    const days = ["D", "S", "T", "Q", "Q", "S", "S"];
-    return (
-        <div className="rounded-2xl bg-white p-4 sm:p-6 shadow-sm border border-slate-200/50">
-            <div className="flex justify-between items-center mb-4">
-                <h3 className="font-bold text-slate-700">Progresso Semanal</h3>
-                <div className="flex items-center gap-1.5 bg-orange-100 text-orange-600 px-3 py-1.5 rounded-full text-sm font-bold">
-                    <Flame size={16} />
-                    <span>{streak || 0} dias</span>
-                </div>
-            </div>
-            <div className="flex justify-between items-end h-24 gap-2">
-                {weeklyData.map((percentage, index) => (
-                    <div key={index} className="flex-1 flex flex-col items-center gap-2">
-                        <div className="w-full h-full flex items-end">
-                            <div className="w-full bg-gradient-to-t from-orange-400 to-orange-500 rounded-lg transition-all duration-700 ease-out" style={{ height: `${percentage}%` }} />
-                        </div>
-                        <span className="text-xs font-medium text-slate-500">{days[index]}</span>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-};
 
 const WelcomeModal = ({ open, onOpenChange, username, quote }: { open: boolean, onOpenChange: (open: boolean) => void, username: string, quote: string }) => (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -151,7 +127,6 @@ export default function DashboardPage() {
             
             await supabase.from('daily_xp_claims').insert({ user_id: userId, claimed_at: today, xp_amount: xpAmount });
             
-            // <<< A CORREÇÃO ESTÁ AQUI >>>
             const { newXp, newLevel } = await updateUserXp(userId, xpAmount);
 
             setProfile(prev => prev ? { ...prev, xp: newXp, level: newLevel } : null);
@@ -225,7 +200,9 @@ export default function DashboardPage() {
                 </div>
                 <h2 className="font-bold text-lg text-slate-800">Sua Atividade Recente</h2>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-2"><PerformanceChart streak={profile.streak_days || 0} /></div>
+                    <div className="lg:col-span-2">
+                        <WeeklyProgressChart streak={profile.streak_days || 0} userId={userId} />
+                    </div>
                     <div className="p-6 bg-white rounded-2xl shadow-sm border border-slate-200/50 flex flex-col justify-around text-center">
                         <div><p className="text-4xl font-bold text-orange-500">{profile.xp || 0}</p><p className="text-sm text-slate-500 font-medium">XP Total</p></div>
                         <div><p className="text-4xl font-bold text-orange-500">{completedModulesCount}</p><p className="text-sm text-slate-500 font-medium">Módulos Concluídos</p></div>

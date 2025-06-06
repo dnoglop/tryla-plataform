@@ -102,6 +102,33 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_xp_progress: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          updated_at: string
+          user_id: string
+          xp_earned: number
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          updated_at?: string
+          user_id: string
+          xp_earned?: number
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+          xp_earned?: number
+        }
+        Relationships: []
+      }
       learning_journals: {
         Row: {
           content: string
@@ -572,6 +599,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_daily_xp: {
+        Args: { user_id_param: string; xp_amount: number }
+        Returns: undefined
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
