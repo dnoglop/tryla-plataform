@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
 import * as Dialog from '@radix-ui/react-dialog';
 import { toast } from "sonner";
+import { useDashboardData } from "@/hooks/useDashboardData";
 import { cn } from "@/lib/utils";
 import { useSessionStore } from '@/stores/sessionStore';
 
@@ -79,7 +80,7 @@ const fetchDailyQuote = async () => {
 // --- COMPONENTE PRINCIPAL ---
 export default function DashboardPage() {
     const { hasShownWelcomeModal, setHasShownWelcomeModal } = useSessionStore();
-
+    const { data, isLoading, error } = useDashboardData();
     const [profile, setProfile] = useState<Profile | null>(null);
     const [userId, setUserId] = useState<string | null>(null);
     const [nextPhase, setNextPhase] = useState<any>(null);
@@ -171,7 +172,7 @@ export default function DashboardPage() {
                     </div>
                     <button onClick={() => toast.dismiss(t)} className="opacity-50 hover:opacity-100"><X size={18} /></button>
                 </div>
-            ), { duration: 5000 });
+            ), { duration: 3000 });
         } catch (error) {
             console.error("Erro ao reclamar XP diário:", error);
             toast.error("Ops! Não foi possível reclamar seu bônus.");

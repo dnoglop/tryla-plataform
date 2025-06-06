@@ -1,3 +1,4 @@
+// src/components/ui/toaster.tsx
 
 import { useToast } from "@/hooks/use-toast"
 import {
@@ -13,26 +14,28 @@ export function Toaster() {
   const { toasts } = useToast()
 
   return (
+    // <<< A CORREÇÃO ESTÁ AQUI >>>
     <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, ...props }) {
+      {toasts.map(function ({ id, title, description, action, duration, ...props }) {
         return (
           <Toast 
             key={id} 
             {...props}
-            className="glass-card border-white/20 shadow-2xl backdrop-blur-xl bg-white/80 text-slate-800"
+            // A duração é passada para o componente Toast individualmente
+            duration={duration || 5000} // Padrão de 5 segundos
           >
             <div className="grid gap-1">
-              {title && <ToastTitle className="font-semibold text-slate-900">{title}</ToastTitle>}
+              {title && <ToastTitle>{title}</ToastTitle>}
               {description && (
-                <ToastDescription className="text-slate-700">{description}</ToastDescription>
+                <ToastDescription>{description}</ToastDescription>
               )}
             </div>
             {action}
-            <ToastClose className="text-slate-500 hover:text-slate-700" />
+            <ToastClose />
           </Toast>
         )
       })}
-      <ToastViewport className="fixed top-4 right-4 z-[100] flex max-h-screen w-full flex-col p-4 md:max-w-[420px]" />
+      <ToastViewport />
     </ToastProvider>
   )
 }
