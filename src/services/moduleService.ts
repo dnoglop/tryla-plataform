@@ -352,66 +352,24 @@ export const saveQuiz = async (phaseId: number, questions: any[]): Promise<boole
 
 export const updateUserPhaseStatus = async (userId: string, phaseId: number, status: PhaseStatus): Promise<boolean> => {
   try {
-    if (!userId || !phaseId) {
-      console.error("Invalid parameters:", { userId, phaseId });
-      throw new Error("Invalid parameters: userId and phaseId are required");
-    }
+    if (!userId || !phaseId) throw new Error("ID do usuário e da fase são obrigatórios.");
 
-    const { data: existingStatus, error: selectError } = await supabase
-      .from('user_phases')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('phase_id', phaseId)
-      .single();
+    const { error } = await supabase.from('user_phases').upsert(
+      { 
+        user_id: userId,
+        phase_id: phaseId,
+        status,
+        completed_at: status === 'completed' ? new Date().toISOString() : null
+      },
+      { onConflict: 'user_id, phase_id' }
+    );
 
-    if (selectError && selectError.code !== 'PGRST116') {
-      console.error("Error checking existing status:", selectError);
-      throw selectError;
-    }
-
-    const timestamp = new Date().toISOString();
-    const updateData = {
-      status,
-      completed_at: status === 'completed' ? timestamp : null
-    };
-
-    if (existingStatus) {
-      const { error: updateError } = await supabase
-        .from('user_phases')
-        .update(updateData)
-        .eq('user_id', userId)
-        .eq('phase_id', phaseId);
-
-      if (updateError) {
-        console.error("Error updating status:", updateError);
-        throw updateError;
-      }
-    } else {
-      const { error: insertError } = await supabase
-        .from('user_phases')
-        .insert([{
-          user_id: userId,
-          phase_id: phaseId,
-          ...updateData
-        }]);
-
-      if (insertError) {
-        console.error("Error inserting status:", insertError);
-        throw insertError;
-      }
-    }
-
-    // Ganhar XP quando completa uma fase
-    if (status === 'completed') {
-      // Importar dinamicamente para evitar dependência circular
-      const { updateUserXp } = await import('@/services/profileService');
-      await updateUserXp(userId, 50); // 50 XP por fase completada
-    }
-
+    if (error) throw error;
+    
     return true;
-  } catch (error) {
-    console.error("Error updating user phase status:", error);
-    return false;
+  } catch (error: any) {
+    console.error("Erro ao atualizar status da fase do usuário:", error.message);
+    throw error;
   }
 };
 

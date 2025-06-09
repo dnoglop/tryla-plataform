@@ -1,185 +1,98 @@
-import { supabase } from "@/integrations/supabase/client";
-import { addDailyXp } from "./dailyXpService";
+// src/services/profileService.ts
 
-export interface Profile {
-  id: string;
-  username?: string;
-  full_name?: string;
-  avatar_url?: string;
-  bio?: string;
-  linkedin_url?: string;
-  xp?: number;
-  level?: number;
-  streak_days?: number;
-  last_login?: string;
-  created_at?: string;
-  updated_at?: string;
-}
+import { supabase } from "@/integrations/supabase/client";
+import { Profile } from "@/types";
+import { toast } from "sonner";
 
 export const getProfile = async (userId: string): Promise<Profile | null> => {
+  if (!userId) return null;
   try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-
-    if (error) {
-      console.error('Erro ao buscar perfil:', error);
-      return null;
-    }
-
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
+    if (error && error.code !== 'PGRST116') console.error("Erro ao buscar perfil:", error.message);
     return data;
-  } catch (error) {
-    console.error('Erro inesperado ao buscar perfil:', error);
+  } catch (err) {
+    console.error("Exceção ao buscar perfil:", err);
     return null;
   }
 };
 
-export const updateProfile = async (userId: string, updates: Partial<Profile>): Promise<Profile | null> => {
+export const updateProfile = async (userId: string, updates: Partial<Profile>): Promise<boolean> => {
+  if (!userId) return false;
   try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .update(updates)
-      .eq('id', userId)
-      .select()
-      .single();
-
+    const { error } = await supabase.from('profiles').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', userId);
     if (error) {
-      console.error('Erro ao atualizar perfil:', error);
-      return null;
+      console.error("Erro ao atualizar perfil:", error.message);
+      return false;
     }
-
-    return data;
-  } catch (error) {
-    console.error('Erro inesperado ao atualizar perfil:', error);
-    return null;
+    return true;
+  } catch (err) {
+    console.error("Exceção ao atualizar perfil:", err);
+    return false;
   }
-};
-
-export const generateUsername = (fullName: string): string => {
-  const firstName = fullName.split(' ')[0].toLowerCase();
-  const randomNumbers = Math.floor(1000 + Math.random() * 9000);
-  return `${firstName}${randomNumbers}`;
 };
 
 export const uploadAvatar = async (userId: string, file: File): Promise<string | null> => {
+  if (!userId) {
+    console.error("ID do usuário é necessário para o upload do avatar.");
+    return null;
+  }
+  
   try {
     const fileExt = file.name.split('.').pop();
-    const fileName = `${userId}.${fileExt}`;
-    const filePath = `avatars/${fileName}`;
+    const filePath = `${userId}/avatar.${fileExt}`;
 
     const { error: uploadError } = await supabase.storage
-      .from('avatars')
-      .upload(filePath, file, { upsert: true });
+      .from('profiles')
+      .upload(filePath, file, { 
+          cacheControl: '3600',
+          upsert: true 
+      });
 
     if (uploadError) {
-      console.error('Erro ao fazer upload do avatar:', uploadError);
-      return null;
+      console.error("Erro no upload do Supabase Storage:", uploadError.message);
+      throw uploadError;
     }
 
+    // Pega a URL pública do arquivo
     const { data } = supabase.storage
-      .from('avatars')
+      .from('profiles')
       .getPublicUrl(filePath);
 
-    return data.publicUrl;
+    if (!data.publicUrl) {
+        console.error("A função getPublicUrl retornou uma URL vazia.");
+        throw new Error("Não foi possível obter a URL pública do avatar.");
+    }
+    
+    // Constrói a URL final com o "cache buster"
+    const finalUrl = `${data.publicUrl}?t=${new Date().getTime()}`;
+
+    console.log("URL final gerada para o avatar:", finalUrl); // <<< ADICIONE ESTE LOG PARA VERIFICAR
+      
+    return finalUrl;
+    
   } catch (error) {
-    console.error('Erro inesperado ao fazer upload do avatar:', error);
+    console.error('Exceção na função uploadAvatar:', error);
+    toast.error("Falha ao processar a imagem do perfil.");
     return null;
   }
 };
 
-export const updateUserXp = async (userId: string, xpToAdd: number): Promise<{ newXp: number; newLevel: number }> => {
+export const updateUserStreak = async (userId: string): Promise<void> => {
+  if (!userId) return;
   try {
-    // Buscar XP atual
-    const { data: profile, error: fetchError } = await supabase
-      .from('profiles')
-      .select('xp, level')
-      .eq('id', userId)
-      .single();
-
-    if (fetchError) {
-      console.error('Erro ao buscar perfil atual:', fetchError);
-      throw fetchError;
+    const { data: profile, error: profileError } = await supabase.from('profiles').select('last_login, streak_days').eq('id', userId).single();
+    if (profileError) {
+      console.error("Não foi possível buscar o perfil para atualizar o streak.", profileError.message);
+      return;
     }
-
-    const currentXp = profile?.xp || 0;
-    const newXp = currentXp + xpToAdd;
-    const newLevel = Math.floor(newXp / 100) + 1;
-
-    // Atualizar perfil
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ 
-        xp: newXp, 
-        level: newLevel 
-      })
-      .eq('id', userId);
-
-    if (updateError) {
-      console.error('Erro ao atualizar XP do perfil:', updateError);
-      throw updateError;
-    }
-
-    // Adicionar XP ao progresso diário
-    await addDailyXp(userId, xpToAdd);
-
-    return { newXp, newLevel };
-  } catch (error) {
-    console.error('Erro inesperado ao atualizar XP:', error);
-    throw error;
-  }
-};
-
-export const updateUserStreak = async (userId: string): Promise<number> => {
-  try {
-    const { data: profile, error: fetchError } = await supabase
-      .from('profiles')
-      .select('last_login, streak_days')
-      .eq('id', userId)
-      .single();
-
-    if (fetchError) {
-      console.error('Erro ao buscar perfil para streak:', fetchError);
-      return 0;
-    }
-
     const today = new Date().toISOString().split('T')[0];
-    const lastLogin = profile?.last_login;
-    let newStreak = profile?.streak_days || 0;
-
-    if (lastLogin !== today) {
-      if (lastLogin) {
-        const lastLoginDate = new Date(lastLogin);
-        const todayDate = new Date(today);
-        const diffDays = Math.floor((todayDate.getTime() - lastLoginDate.getTime()) / (1000 * 60 * 60 * 24));
-        
-        if (diffDays === 1) {
-          newStreak += 1;
-        } else if (diffDays > 1) {
-          newStreak = 1;
-        }
-      } else {
-        newStreak = 1;
-      }
-
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ 
-          last_login: today,
-          streak_days: newStreak 
-        })
-        .eq('id', userId);
-
-      if (updateError) {
-        console.error('Erro ao atualizar streak:', updateError);
-        return profile?.streak_days || 0;
-      }
-    }
-
-    return newStreak;
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    const lastLogin = profile.last_login;
+    if (lastLogin === today) return;
+    let newStreak = (lastLogin === yesterday) ? (profile.streak_days || 0) + 1 : 1;
+    const { error: updateError } = await supabase.from('profiles').update({ streak_days: newStreak, last_login: today }).eq('id', userId);
+    if (updateError) console.error("Erro ao salvar o novo streak no banco:", updateError.message);
   } catch (error) {
-    console.error('Erro inesperado ao atualizar streak:', error);
-    return 0;
+    console.error("Exceção inesperada na função updateUserStreak:", error);
   }
 };

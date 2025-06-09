@@ -1,3 +1,5 @@
+// src/pages/PhaseDetailPage.tsx
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -5,13 +7,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 // Ícones e Componentes
-import { ArrowLeft, ArrowRight, Volume2, VolumeX } from "lucide-react";
+import { ArrowLeft, ArrowRight, Volume2, VolumeX, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import YoutubeEmbed from "@/components/YoutubeEmbed";
 import QuizQuestion from "@/components/QuizQuestion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getPhaseById, getModuleById, getPhasesByModuleId, getQuestionsByPhaseId, updateUserPhaseStatus, Phase, Module, Question } from "@/services/moduleService";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
+import { XpRewardModal } from "@/components/XpRewardModal";
 
 // --- COMPONENTES AUXILIARES ---
 const PhaseDetailSkeleton = () => (
@@ -41,6 +44,9 @@ export default function PhaseDetailPage() {
     const [quizCompleted, setQuizCompleted] = useState(false);
     const [correctAnswers, setCorrectAnswers] = useState(0);
 
+    // Estado do Modal de XP
+    const [reward, setReward] = useState<{ amount: number; title: string } | null>(null);
+
     // Estados da Leitura de Voz
     const { isPlaying, isLoading: isLoadingAudio, playText, stopAudio } = useTextToSpeech();
     const [speechRate, setSpeechRate] = useState(1.15);
@@ -53,6 +59,7 @@ export default function PhaseDetailPage() {
         };
         getUserId();
         
+        // Garante que o áudio pare se o usuário sair da página
         return () => { stopAudio(); };
     }, [stopAudio]);
 
@@ -77,8 +84,9 @@ export default function PhaseDetailPage() {
             return { phase, module, allPhases, questions };
         },
         enabled: !!phaseId && !!moduleId,
-        retry: 1,
     });
+    
+    const { phase, module, allPhases = [], questions = [] } = data || {};
 
     useEffect(() => {
         if(error) {
@@ -87,11 +95,13 @@ export default function PhaseDetailPage() {
         }
     }, [error, navigate, moduleId]);
 
-    const { phase, module, allPhases = [], questions = [] } = data || {};
-
     const currentPhaseIndex = allPhases.findIndex(p => p.id === Number(phaseId));
     const prevPhase = currentPhaseIndex > 0 ? allPhases[currentPhaseIndex - 1] : null;
     const nextPhase = currentPhaseIndex !== -1 && currentPhaseIndex < allPhases.length - 1 ? allPhases[currentPhaseIndex + 1] : null;
+
+    const showXpReward = (amount: number, title: string) => {
+        setReward({ amount, title });
+    };
 
     const handleReadContent = () => {
         if (!phase?.content) return;
@@ -112,28 +122,52 @@ export default function PhaseDetailPage() {
     };
 
     const handleCompletePhase = async () => {
-        if (!userId || !phaseId) return;
+        if (!userId || !phaseId || !phase) return;
         try {
             await updateUserPhaseStatus(userId, Number(phaseId), "completed");
-            toast.success("Fase concluída com sucesso!");
+            
+            const xpAmount = phase.type === 'challenge' ? 75 : 50;
+            showXpReward(xpAmount, "Fase Concluída!");
             
             queryClient.invalidateQueries({ queryKey: ['moduleDetailData', Number(moduleId)] });
             
-            if (nextPhase) {
-                navigate(`/fase/${moduleId}/${nextPhase.id}`);
-            } else {
-                toast.success("Módulo finalizado!", { description: "Parabéns por mais essa conquista!" });
-                navigate(`/modulo/${moduleId}`);
-            }
+            setTimeout(() => {
+                if (nextPhase) {
+                    navigate(`/fase/${moduleId}/${nextPhase.id}`);
+                } else {
+                    toast.success("Módulo finalizado!", { 
+                        description: "Parabéns por mais essa conquista!",
+                        icon: <CheckCircle className="text-green-500"/>
+                    });
+                    navigate(`/modulo/${moduleId}`);
+                }
+            }, 2500); // Espera 2.5s (mesmo tempo que o modal leva para fechar)
+
         } catch (error) { toast.error("Erro ao completar a fase."); }
     };
 
-    const handleQuizAnswer = (isCorrect: boolean) => {
+    const handleQuizAnswer = async (isCorrect: boolean) => {
         if (isCorrect) setCorrectAnswers(prev => prev + 1);
-        if (questions && currentQuestionIndex < questions.length - 1) {
-            setCurrentQuestionIndex(prev => prev + 1);
-        } else {
+        
+        if (questions && currentQuestionIndex === questions.length - 1) {
             setQuizCompleted(true);
+            
+            const isPerfect = isCorrect && (correctAnswers + 1) === questions.length;
+            if (isPerfect) {
+                try {
+                    showXpReward(25, "Quiz Perfeito!");
+                    await supabase.from('xp_history').insert({
+                        user_id: userId,
+                        xp_amount: 25,
+                        source: 'QUIZ_PERFECT_SCORE',
+                        source_id: phaseId
+                    });
+                } catch (error: any) {
+                    console.error("Erro ao conceder bônus de quiz:", error.message);
+                }
+            }
+        } else if (questions) {
+            setCurrentQuestionIndex(prev => prev + 1);
         }
     };
 
@@ -142,8 +176,15 @@ export default function PhaseDetailPage() {
 
     return (
         <div className="min-h-screen bg-slate-50 pb-24">
+            <XpRewardModal 
+                isOpen={!!reward}
+                onClose={() => setReward(null)}
+                xpAmount={reward?.amount || 0}
+                title={reward?.title || ''}
+            />
+
             <header className="p-4 sm:p-6">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 max-w-4xl mx-auto">
                     <button onClick={() => navigate(`/modulo/${moduleId}`)} className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md transition-transform hover:scale-110 active:scale-95">
                         <ArrowLeft className="h-5 w-5 text-gray-600" />
                     </button>
@@ -151,7 +192,7 @@ export default function PhaseDetailPage() {
                 </div>
             </header>
 
-            <main className="container px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+            <main className="container px-4 sm:px-6 lg:px-8 py-6 space-y-6 max-w-4xl mx-auto">
                 <div className="p-6 bg-white rounded-2xl shadow-sm border border-slate-200/50">
                     <h2 className="text-2xl md:text-3xl font-bold text-slate-800">{phase.name}</h2>
                     {phase.description && <p className="text-slate-600 mt-2 text-base">{phase.description}</p>}
@@ -164,7 +205,7 @@ export default function PhaseDetailPage() {
                 )}
                 
                 {(phase.type === "text" || phase.type === "challenge") && phase.content && (
-                    <div className="p-6 bg-white rounded-2xl shadow-sm">
+                    <div className="p-6 bg-white rounded-2xl shadow-sm border border-slate-200/50">
                         <div className="flex justify-end items-center gap-4 mb-4">
                             <Button variant="outline" size="sm" onClick={handleReadContent} disabled={isLoadingAudio} className="text-white bg-orange-500 hover:bg-orange-600">
                                 {isPlaying ? <VolumeX className="mr-2 h-4 w-4" /> : <Volume2 className="mr-2 h-4 w-4" />}
@@ -174,7 +215,7 @@ export default function PhaseDetailPage() {
                                 {speechRate.toFixed(2)}x
                             </Button>
                         </div>
-                        <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: phase.content }} />
+                        <div className="prose max-w-none prose-slate" dangerouslySetInnerHTML={{ __html: phase.content }} />
                     </div>
                 )}
 
@@ -204,7 +245,7 @@ export default function PhaseDetailPage() {
                     </div>
                 )}
 
-                <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-200 pt-6">
+                <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-200 pt-6">
                     {prevPhase ? (
                         <Button onClick={() => navigate(`/fase/${moduleId}/${prevPhase.id}`)} variant="outline" className="w-full sm:w-auto">
                             <ArrowLeft className="mr-2 h-4 w-4" /> Anterior

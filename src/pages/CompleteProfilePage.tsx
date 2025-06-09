@@ -1,3 +1,4 @@
+// src/pages/CompleteProfilePage.tsx
 
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
@@ -5,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
-import { updateProfile, uploadAvatar, generateUsername, getProfile } from "@/services/profileService";
+import { updateProfile, uploadAvatar, getProfile } from "@/services/profileService";
+import { generateUsername } from "@/lib/utils";
 import { completeOnboarding } from "@/services/onboardingService";
 import { toast } from "sonner";
 import { Camera, User, AtSign, FileText, Linkedin, ArrowLeft } from "lucide-react";
@@ -30,7 +32,6 @@ const CompleteProfilePage = () => {
       if (user) {
         setUserId(user.id);
         
-        // Carregar dados existentes do perfil
         const existingProfile = await getProfile(user.id);
         if (existingProfile) {
           setFormData({
@@ -43,6 +44,7 @@ const CompleteProfilePage = () => {
         }
         setIsLoadingProfile(false);
       } else {
+        // Redirecionamento de segurança, embora o ProtectedRoute já deva impedir isso
         navigate('/login');
       }
     };
@@ -51,43 +53,27 @@ const CompleteProfilePage = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
 
-    // Auto-generate username when full name changes and username is empty
     if (name === 'full_name' && value && !formData.username) {
       const generatedUsername = generateUsername(value);
-      setFormData(prev => ({
-        ...prev,
-        username: generatedUsername
-      }));
+      setFormData(prev => ({ ...prev, username: generatedUsername }));
     }
   };
 
   const handleAvatarClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
+    fileInputRef.current?.click();
   };
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || !e.target.files[0] || !userId) return;
-    
     const file = e.target.files[0];
     
     try {
       toast.info("Enviando imagem...");
-      
       const imageUrl = await uploadAvatar(userId, file);
-      
       if (imageUrl) {
-        setFormData(prev => ({
-          ...prev,
-          avatar_url: imageUrl
-        }));
-        
+        setFormData(prev => ({ ...prev, avatar_url: imageUrl }));
         toast.success("Foto de perfil adicionada!");
       }
     } catch (error) {
@@ -98,7 +84,6 @@ const CompleteProfilePage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!userId || !formData.full_name || !formData.username) {
       toast.error("Por favor, preencha pelo menos o nome e usuário");
       return;
@@ -106,13 +91,9 @@ const CompleteProfilePage = () => {
     
     setIsLoading(true);
     try {
-      // Atualizar perfil
       const success = await updateProfile(userId, formData);
-      
       if (success) {
-        // Marcar onboarding como completo
         await completeOnboarding(userId);
-        
         toast.success("Perfil criado com sucesso! Bem-vindo(a) à Tryla!");
         navigate('/dashboard');
       } else {
@@ -136,7 +117,6 @@ const CompleteProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
-      {/* Header */}
       <div className="flex items-center justify-between mb-8 max-w-md mx-auto">
         <button
           onClick={() => navigate('/onboarding')}
@@ -162,100 +142,32 @@ const CompleteProfilePage = () => {
 
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200/50 p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Avatar Upload */}
-            <div className="flex flex-col items-center mb-6">
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                accept="image/*"
-                onChange={handleAvatarChange}
-              />
-              <div 
-                className="w-24 h-24 rounded-full border-2 border-trilha-orange overflow-hidden cursor-pointer bg-trilha-orange-light flex items-center justify-center hover:border-trilha-orange/80 transition-all duration-300"
-                onClick={handleAvatarClick}
-              >
-                {formData.avatar_url ? (
-                  <img 
-                    src={formData.avatar_url} 
-                    alt="Foto de perfil" 
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <Camera className="h-8 w-8 text-trilha-orange" />
-                )}
+             {/* ... seu formulário JSX completo aqui ... */}
+             <div className="flex flex-col items-center mb-6">
+              <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarChange} />
+              <div className="w-24 h-24 rounded-full border-2 border-trilha-orange overflow-hidden cursor-pointer bg-orange-100 flex items-center justify-center hover:border-orange-500/80 transition-all duration-300" onClick={handleAvatarClick}>
+                {formData.avatar_url ? <img src={formData.avatar_url} alt="Foto de perfil" className="w-full h-full object-cover" /> : <Camera className="h-8 w-8 text-trilha-orange" />}
               </div>
               <p className="text-sm text-trilha-orange mt-3 font-medium">Adicionar foto de perfil</p>
             </div>
-
-            {/* Nome completo */}
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
-                <User className="inline h-4 w-4 mr-2" />
-                Nome completo *
-              </label>
-              <Input
-                name="full_name"
-                value={formData.full_name}
-                onChange={handleInputChange}
-                className="border-slate-200 focus:border-trilha-orange focus:ring-trilha-orange/20 rounded-xl h-12"
-                placeholder="Seu nome completo"
-                required
-              />
+              <label className="block text-sm font-semibold text-slate-700 mb-2"><User className="inline h-4 w-4 mr-2" />Nome completo *</label>
+              <Input name="full_name" value={formData.full_name} onChange={handleInputChange} className="border-slate-200 focus:border-trilha-orange focus:ring-trilha-orange/20 rounded-xl h-12" placeholder="Seu nome completo" required />
             </div>
-            
-            {/* Nome de usuário */}
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
-                <AtSign className="inline h-4 w-4 mr-2" />
-                Nome de usuário *
-              </label>
-              <Input
-                name="username"
-                value={formData.username}
-                onChange={handleInputChange}
-                className="border-slate-200 focus:border-trilha-orange focus:ring-trilha-orange/20 rounded-xl h-12"
-                placeholder="@seu_username"
-                required
-              />
+              <label className="block text-sm font-semibold text-slate-700 mb-2"><AtSign className="inline h-4 w-4 mr-2" />Nome de usuário *</label>
+              <Input name="username" value={formData.username} onChange={handleInputChange} className="border-slate-200 focus:border-trilha-orange focus:ring-trilha-orange/20 rounded-xl h-12" placeholder="@seu_username" required />
             </div>
-            
-            {/* LinkedIn URL */}
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
-                <Linkedin className="inline h-4 w-4 mr-2" />
-                LinkedIn (opcional)
-              </label>
-              <Input
-                name="linkedin_url"
-                value={formData.linkedin_url}
-                onChange={handleInputChange}
-                className="border-slate-200 focus:border-trilha-orange focus:ring-trilha-orange/20 rounded-xl h-12"
-                placeholder="https://linkedin.com/in/seu-perfil"
-              />
+              <label className="block text-sm font-semibold text-slate-700 mb-2"><Linkedin className="inline h-4 w-4 mr-2" />LinkedIn (opcional)</label>
+              <Input name="linkedin_url" value={formData.linkedin_url} onChange={handleInputChange} className="border-slate-200 focus:border-trilha-orange focus:ring-trilha-orange/20 rounded-xl h-12" placeholder="https://linkedin.com/in/seu-perfil" />
             </div>
-            
-            {/* Sobre mim */}
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
-                <FileText className="inline h-4 w-4 mr-2" />
-                Sobre mim (opcional)
-              </label>
-              <Textarea
-                name="bio"
-                value={formData.bio}
-                onChange={handleInputChange}
-                className="border-slate-200 focus:border-trilha-orange focus:ring-trilha-orange/20 min-h-[100px] rounded-xl resize-none"
-                placeholder="Conte um pouco sobre você, seus sonhos e objetivos..."
-              />
+              <label className="block text-sm font-semibold text-slate-700 mb-2"><FileText className="inline h-4 w-4 mr-2" />Sobre mim (opcional)</label>
+              <Textarea name="bio" value={formData.bio} onChange={handleInputChange} className="border-slate-200 focus:border-trilha-orange focus:ring-trilha-orange/20 min-h-[100px] rounded-xl resize-none" placeholder="Conte um pouco sobre você, seus sonhos e objetivos..." />
             </div>
-            
-            <Button 
-              type="submit" 
-              className="w-full bg-trilha-orange hover:bg-trilha-orange/90 text-white font-semibold py-4 text-lg rounded-xl shadow-sm transition-all duration-300 hover:shadow-md" 
-              disabled={isLoading}
-            >
-              {isLoading ? "Criando perfil..." : "Finalizar Cadastro"}
+            <Button type="submit" className="w-full bg-trilha-orange hover:bg-trilha-orange/90 text-white font-semibold py-4 text-lg rounded-xl shadow-sm transition-all duration-300 hover:shadow-md" disabled={isLoading}>
+              {isLoading ? "Finalizando..." : "Finalizar Cadastro"}
             </Button>
           </form>
         </div>

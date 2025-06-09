@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { generateUsername } from "@/services/profileService";
+import { generateUsername } from "@/lib/utils";
 
 const SignupPage = () => {
   const [name, setName] = useState("");
