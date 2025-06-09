@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
 
@@ -24,6 +25,8 @@ import LabPage from "./pages/LabPage";
 import { VocationalTestPage } from "./pages/VocationalTestPage";
 import SocialPage from "./pages/SocialPage";
 import { PomodoroPage } from "./pages/PomodoroPage";
+import OnboardingPage from "./pages/OnboardingPage";
+import CompleteProfilePage from "./pages/CompleteProfilePage";
 
 function App() {
   // Opcional: Lógica para adicionar sons aos toasts
@@ -70,6 +73,10 @@ function App() {
         <Route path="/" element={<SplashScreen />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/cadastro" element={<SignupPage />} />
+
+        {/* --- Rotas de Onboarding (após login) --- */}
+        <Route path="/onboarding" element={<OnboardingPage />} />
+        <Route path="/complete-profile" element={<CompleteProfilePage />} />
 
         {/* --- Rotas Protegidas --- */}
         <Route element={<ProtectedRoute />}>

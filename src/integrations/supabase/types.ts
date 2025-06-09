@@ -483,6 +483,27 @@ export type Database = {
           },
         ]
       }
+      user_onboarding: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_phase_progress: {
         Row: {
           completed_at: string | null
@@ -602,6 +623,13 @@ export type Database = {
       add_daily_xp: {
         Args: { user_id_param: string; xp_amount: number }
         Returns: undefined
+      }
+      get_weekly_xp_sum: {
+        Args: { user_id_param: string }
+        Returns: {
+          day: string
+          total_xp: number
+        }[]
       }
       is_admin: {
         Args: Record<PropertyKey, never>

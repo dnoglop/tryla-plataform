@@ -1,7 +1,7 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { checkOnboardingStatus } from "@/services/onboardingService";
 import { Button } from "@/components/ui/button";
 
 const motivationalPhrases = [
@@ -52,9 +52,18 @@ const Index = () => {
     );
   };
 
-  const handleGetStarted = () => {
+  const handleGetStarted = async () => {
     if (isAuthenticated) {
-      navigate("/dashboard");
+      // Verificar se o usuário já completou o onboarding
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user) {
+        const onboardingCompleted = await checkOnboardingStatus(data.session.user.id);
+        if (onboardingCompleted) {
+          navigate("/dashboard");
+        } else {
+          navigate("/onboarding");
+        }
+      }
     } else {
       navigate("/login");
     }
