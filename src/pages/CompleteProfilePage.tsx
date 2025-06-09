@@ -128,21 +128,21 @@ const CompleteProfilePage = () => {
 
   if (isLoadingProfile) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-trilha-orange-light to-white flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-trilha-orange"></div>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-trilha-orange"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-trilha-orange-light to-white p-4">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8 pt-4">
+      <div className="flex items-center justify-between mb-8 max-w-md mx-auto">
         <button
           onClick={() => navigate('/onboarding')}
-          className="p-2 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm border border-slate-200 transition-all hover:shadow-md"
         >
-          <ArrowLeft className="h-6 w-6 text-trilha-orange" />
+          <ArrowLeft className="h-5 w-5 text-slate-600" />
         </button>
         <div className="w-16 h-16 flex items-center justify-center">
           <img 
@@ -156,11 +156,11 @@ const CompleteProfilePage = () => {
 
       <div className="max-w-md mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-trilha-orange mb-3">Complete seu Perfil</h1>
-          <p className="text-gray-600 text-lg">Conte-nos mais sobre você para personalizar sua experiência</p>
+          <h1 className="text-2xl font-bold text-slate-900 mb-3">Complete seu Perfil</h1>
+          <p className="text-slate-600">Conte-nos mais sobre você para personalizar sua experiência</p>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-xl p-6 border border-gray-100">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/50 p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Avatar Upload */}
             <div className="flex flex-col items-center mb-6">
@@ -172,7 +172,7 @@ const CompleteProfilePage = () => {
                 onChange={handleAvatarChange}
               />
               <div 
-                className="w-28 h-28 rounded-full border-4 border-trilha-orange overflow-hidden cursor-pointer bg-trilha-orange-light flex items-center justify-center hover:border-trilha-orange/80 transition-all duration-300 hover:scale-105"
+                className="w-24 h-24 rounded-full border-2 border-trilha-orange overflow-hidden cursor-pointer bg-trilha-orange-light flex items-center justify-center hover:border-trilha-orange/80 transition-all duration-300"
                 onClick={handleAvatarClick}
               >
                 {formData.avatar_url ? (
@@ -182,15 +182,15 @@ const CompleteProfilePage = () => {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <Camera className="h-10 w-10 text-trilha-orange" />
+                  <Camera className="h-8 w-8 text-trilha-orange" />
                 )}
               </div>
               <p className="text-sm text-trilha-orange mt-3 font-medium">Adicionar foto de perfil</p>
             </div>
 
             {/* Nome completo */}
-            <div className="relative">
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
                 <User className="inline h-4 w-4 mr-2" />
                 Nome completo *
               </label>
@@ -198,15 +198,15 @@ const CompleteProfilePage = () => {
                 name="full_name"
                 value={formData.full_name}
                 onChange={handleInputChange}
-                className="border-2 border-gray-200 focus:border-trilha-orange focus:ring-trilha-orange rounded-xl h-12 text-base"
+                className="border-slate-200 focus:border-trilha-orange focus:ring-trilha-orange/20 rounded-xl h-12"
                 placeholder="Seu nome completo"
                 required
               />
             </div>
             
             {/* Nome de usuário */}
-            <div className="relative">
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
                 <AtSign className="inline h-4 w-4 mr-2" />
                 Nome de usuário *
               </label>
@@ -214,15 +214,15 @@ const CompleteProfilePage = () => {
                 name="username"
                 value={formData.username}
                 onChange={handleInputChange}
-                className="border-2 border-gray-200 focus:border-trilha-orange focus:ring-trilha-orange rounded-xl h-12 text-base"
+                className="border-slate-200 focus:border-trilha-orange focus:ring-trilha-orange/20 rounded-xl h-12"
                 placeholder="@seu_username"
                 required
               />
             </div>
             
             {/* LinkedIn URL */}
-            <div className="relative">
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
                 <Linkedin className="inline h-4 w-4 mr-2" />
                 LinkedIn (opcional)
               </label>
@@ -230,14 +230,14 @@ const CompleteProfilePage = () => {
                 name="linkedin_url"
                 value={formData.linkedin_url}
                 onChange={handleInputChange}
-                className="border-2 border-gray-200 focus:border-trilha-orange focus:ring-trilha-orange rounded-xl h-12 text-base"
+                className="border-slate-200 focus:border-trilha-orange focus:ring-trilha-orange/20 rounded-xl h-12"
                 placeholder="https://linkedin.com/in/seu-perfil"
               />
             </div>
             
             {/* Sobre mim */}
-            <div className="relative">
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
                 <FileText className="inline h-4 w-4 mr-2" />
                 Sobre mim (opcional)
               </label>
@@ -245,14 +245,14 @@ const CompleteProfilePage = () => {
                 name="bio"
                 value={formData.bio}
                 onChange={handleInputChange}
-                className="border-2 border-gray-200 focus:border-trilha-orange focus:ring-trilha-orange min-h-[100px] rounded-xl text-base resize-none"
+                className="border-slate-200 focus:border-trilha-orange focus:ring-trilha-orange/20 min-h-[100px] rounded-xl resize-none"
                 placeholder="Conte um pouco sobre você, seus sonhos e objetivos..."
               />
             </div>
             
             <Button 
               type="submit" 
-              className="w-full bg-trilha-orange hover:bg-trilha-orange/90 text-white font-bold py-4 text-lg rounded-xl shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl" 
+              className="w-full bg-trilha-orange hover:bg-trilha-orange/90 text-white font-semibold py-4 text-lg rounded-xl shadow-sm transition-all duration-300 hover:shadow-md" 
               disabled={isLoading}
             >
               {isLoading ? "Criando perfil..." : "Finalizar Cadastro"}

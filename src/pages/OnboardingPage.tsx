@@ -35,24 +35,21 @@ const OnboardingPage = () => {
       title: "Bem-vindo(a) à Tryla!",
       subtitle: "Sua jornada de crescimento pessoal começa agora",
       description: "Prepare-se para descobrir seus talentos, desenvolver novas habilidades e construir o futuro que você sempre sonhou.",
-      icon: <Sparkles className="h-20 w-20 text-white" />,
-      bgGradient: "from-trilha-orange via-orange-400 to-red-400",
+      icon: <Sparkles className="h-16 w-16 text-trilha-orange" />,
       quote: "\"O futuro pertence àqueles que acreditam na beleza de seus sonhos.\""
     },
     {
       title: "Defina Seus Objetivos",
       subtitle: "Cada grande jornada começa com um primeiro passo",
       description: "Aqui você vai descobrir seus pontos fortes, definir metas claras e criar um plano personalizado para alcançar seus objetivos profissionais.",
-      icon: <Target className="h-20 w-20 text-white" />,
-      bgGradient: "from-blue-400 via-trilha-orange to-purple-400",
+      icon: <Target className="h-16 w-16 text-trilha-orange" />,
       quote: "\"O sucesso é a soma de pequenos esforços repetidos dia após dia.\""
     },
     {
       title: "Conecte-se com a Comunidade",
       subtitle: "Juntos chegamos mais longe",
       description: "Faça parte de uma comunidade inspiradora de jovens determinados a construir um futuro brilhante. Compartilhe experiências e cresça junto com outros.",
-      icon: <Users className="h-20 w-20 text-white" />,
-      bgGradient: "from-green-400 via-trilha-orange to-cyan-400",
+      icon: <Users className="h-16 w-16 text-trilha-orange" />,
       quote: "\"Sozinhos podemos fazer tão pouco; juntos podemos fazer muito.\""
     }
   ];
@@ -60,19 +57,11 @@ const OnboardingPage = () => {
   const currentStepData = onboardingSteps[currentStep - 1];
 
   return (
-    <div className={`min-h-screen flex flex-col items-center justify-center bg-gradient-to-br ${currentStepData.bgGradient} p-6 relative overflow-hidden`}>
-      {/* Background Pattern - matching the style from other pages */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-10 left-10 w-32 h-32 bg-white rounded-full animate-bounce-slow"></div>
-        <div className="absolute top-40 right-20 w-20 h-20 bg-white rounded-full animation-delay-200 animate-bounce-slow"></div>
-        <div className="absolute bottom-20 left-20 w-24 h-24 bg-white rounded-full animation-delay-400 animate-bounce-slow"></div>
-        <div className="absolute bottom-40 right-10 w-16 h-16 bg-white rounded-full animation-delay-600 animate-bounce-slow"></div>
-      </div>
-
-      <div className="relative z-10 max-w-lg w-full text-center text-white animate-fade-in">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
+      <div className="max-w-lg mx-auto">
         {/* Logo */}
-        <div className="mb-8 animate-scale-in">
-          <div className="w-24 h-24 mx-auto mb-4 flex items-center justify-center">
+        <div className="text-center mb-8 pt-8">
+          <div className="w-20 h-20 mx-auto mb-6 flex items-center justify-center">
             <img 
               src="https://i.imgur.com/TmfqRTD.gif" 
               alt="Logo Tryla" 
@@ -82,60 +71,61 @@ const OnboardingPage = () => {
         </div>
 
         {/* Progress Indicator */}
-        <div className="flex justify-center mb-8 animate-slide-up">
+        <div className="flex justify-center mb-8">
           {[1, 2, 3].map((step) => (
             <div
               key={step}
-              className={`w-4 h-4 rounded-full mx-2 transition-all duration-500 ${
+              className={`w-3 h-3 rounded-full mx-2 transition-all duration-300 ${
                 step <= currentStep 
-                  ? 'bg-white scale-110 shadow-lg' 
-                  : 'bg-white/30 hover:bg-white/50'
+                  ? 'bg-trilha-orange shadow-md' 
+                  : 'bg-slate-300'
               }`}
             />
           ))}
         </div>
 
-        {/* Icon */}
-        <div className="flex justify-center mb-8 animate-scale-in">
-          <div className="p-6 bg-white/20 rounded-full backdrop-blur-sm border border-white/30 shadow-xl">
-            {currentStepData.icon}
+        {/* Content Card */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/50 p-6 mb-6">
+          {/* Icon */}
+          <div className="flex justify-center mb-6">
+            <div className="p-4 bg-trilha-orange-light rounded-full">
+              {currentStepData.icon}
+            </div>
+          </div>
+
+          {/* Text Content */}
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold text-slate-900 mb-3">{currentStepData.title}</h1>
+            <p className="text-lg font-semibold text-trilha-orange mb-4">{currentStepData.subtitle}</p>
+            <p className="text-slate-600 leading-relaxed">{currentStepData.description}</p>
+          </div>
+
+          {/* Quote */}
+          <div className="bg-slate-50 rounded-xl p-4 mb-6 border border-slate-200">
+            <p className="text-sm italic text-slate-700 text-center">{currentStepData.quote}</p>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="animate-slide-up">
-          <h1 className="text-4xl font-bold mb-4 drop-shadow-lg">{currentStepData.title}</h1>
-          <p className="text-xl font-semibold mb-6 opacity-90 drop-shadow-md">{currentStepData.subtitle}</p>
-          <p className="text-lg mb-8 opacity-80 leading-relaxed drop-shadow-sm max-w-md mx-auto">{currentStepData.description}</p>
-        </div>
-
-        {/* Quote */}
-        <div className="bg-white/15 backdrop-blur-lg rounded-2xl p-6 mb-8 border border-white/20 shadow-xl animate-scale-in">
-          <p className="text-base italic opacity-90 drop-shadow-sm">{currentStepData.quote}</p>
-        </div>
-
         {/* Button */}
-        <div className="animate-slide-up">
-          <Button
-            onClick={handleNext}
-            className="w-full bg-white text-gray-800 hover:bg-white/90 font-bold py-4 text-xl rounded-2xl shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl border-2 border-white/20"
-          >
-            {currentStep < 3 ? (
-              <>
-                Continuar
-                <ArrowRight className="ml-3 h-6 w-6" />
-              </>
-            ) : (
-              <>
-                Vamos começar!
-                <Sparkles className="ml-3 h-6 w-6" />
-              </>
-            )}
-          </Button>
-        </div>
+        <Button
+          onClick={handleNext}
+          className="w-full bg-trilha-orange hover:bg-trilha-orange/90 text-white font-semibold py-4 text-lg rounded-xl shadow-sm transition-all duration-300 hover:shadow-md"
+        >
+          {currentStep < 3 ? (
+            <>
+              Continuar
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </>
+          ) : (
+            <>
+              Vamos começar!
+              <Sparkles className="ml-2 h-5 w-5" />
+            </>
+          )}
+        </Button>
 
         {/* Step indicator text */}
-        <p className="text-sm opacity-70 mt-6 font-medium drop-shadow-sm">{currentStep} de 3</p>
+        <p className="text-sm text-slate-500 mt-4 text-center font-medium">{currentStep} de 3</p>
       </div>
     </div>
   );
