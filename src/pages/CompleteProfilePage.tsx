@@ -119,7 +119,7 @@ const CompleteProfilePage = () => {
     <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
       <div className="flex items-center justify-between mb-8 max-w-md mx-auto">
         <button
-          onClick={() => navigate('/onboarding')}
+          onClick={() => navigate('/dashboard')}
           className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm border border-slate-200 transition-all hover:shadow-md"
         >
           <ArrowLeft className="h-5 w-5 text-slate-600" />
