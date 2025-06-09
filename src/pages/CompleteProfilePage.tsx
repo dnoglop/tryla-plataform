@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   updateProfile,
   uploadAvatar,
+  Profile,
   getProfile,
 } from "@/services/profileService";
 import { generateUsername } from "@/lib/utils";
@@ -30,7 +31,7 @@ const CompleteProfilePage = () => {
   const navigate = useNavigate();
   // <<< AJUSTE: INICIAR O QUERY CLIENT >>>
   const queryClient = useQueryClient();
-
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
@@ -102,7 +103,7 @@ const CompleteProfilePage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userId || !formData.full_name || !formData.username) {
-      toast.error("Por favor, preencha pelo menos o nome e usuário");
+      toast.error("Por favor, preencha pelo menos o nome e o usuário");
       return;
     }
 
@@ -150,18 +151,11 @@ const CompleteProfilePage = () => {
         >
           <ArrowLeft className="h-5 w-5 text-slate-600" />
         </button>
-        <div className="w-16 h-16 flex items-center justify-center">
-          <img
-            src="https://i.imgur.com/TmfqRTD.gif"
-            alt="Logo Tryla"
-            className="w-full h-auto"
-          />
-        </div>
         <div className="w-10"></div>
       </div>
 
       <div className="max-w-md mx-auto">
-        <div className="text-center mb-8">
+        <div className="text-center mb-2">
           <h1 className="text-2xl font-bold text-slate-900 mb-3">
             Complete seu Perfil
           </h1>
@@ -194,7 +188,7 @@ const CompleteProfilePage = () => {
                 )}
               </div>
               <p className="text-sm text-trilha-orange mt-3 font-medium">
-                Adicionar foto de perfil
+                Adicionar sua foto de perfil
               </p>
             </div>
             <div>
@@ -247,8 +241,8 @@ const CompleteProfilePage = () => {
                 name="bio"
                 value={formData.bio}
                 onChange={handleInputChange}
-                className="border-slate-200 focus:border-trilha-orange focus:ring-trilha-orange/20 min-h-[100px] rounded-xl resize-none"
-                placeholder="Conte um pouco sobre você, seus sonhos e objetivos..."
+                className="border-slate-200 focus:border-trilha-orange text-italic focus:ring-trilha-orange/20 min-h-[100px] rounded-xl resize-none"
+                placeholder="Conte um pouco sobre você para as pessoas da comunidade"
               />
             </div>
             <Button

@@ -1,5 +1,3 @@
-// src/pages/LoginPage.tsx
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +11,6 @@ const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // --- MELHORIA ADICIONADA ---
   // Verifica se o usuário já tem uma sessão ativa ao carregar a página.
   // Se tiver, não faz sentido mostrar a tela de login para ele.
   useEffect(() => {
@@ -90,6 +87,7 @@ const LoginPage = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                
                 // Suas classes de estilo estão ótimas
                 className="w-full rounded-lg border text-gray-700 border-gray-300 p-3 h-11 focus:border-[#E36322] focus:outline-none focus:ring-1 focus:ring-[#E36322]"
                 placeholder="seu.email@exemplo.com"
@@ -130,7 +128,7 @@ const LoginPage = () => {
               to="/cadastro"
               className="text-sm text-[#E36322] hover:underline font-medium"
             >
-              Não tem uma conta? Cadastre-se
+              Não tem uma conta? Cadastre-se!
             </Link>
           </div>
         </div>

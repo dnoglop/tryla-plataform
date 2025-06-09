@@ -1,5 +1,3 @@
-// src/pages/SignupPage.tsx (Versão Final SEM Confirmação de Email)
-
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -20,7 +18,7 @@ const SignupPage = () => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      toast.error("As senhas não coincidem.");
+      toast.error("As senhas não coincidem, verifique novamente.");
       return;
     }
     if (password.length < 6) {
@@ -43,7 +41,7 @@ const SignupPage = () => {
       });
 
       if (error) {
-        if (error.message.includes("User already registered")) {
+        if (error.message.includes("Usuário já cadastrado!")) {
           toast.error("Este e-mail já está em uso. Tente fazer login.");
         } else {
           throw error;
@@ -52,15 +50,10 @@ const SignupPage = () => {
         return;
       }
 
-      // <<< MUDANÇA PRINCIPAL AQUI >>>
-      // Como a confirmação está desativada, `data.user` e `data.session`
       // serão preenchidos imediatamente.
       if (data.user) {
         toast.success("Conta criada com sucesso!");
 
-        // Redireciona o usuário para o dashboard.
-        // O `ProtectedRoute` irá interceptar, ver que o onboarding não foi feito,
-        // e redirecionar para a página correta (/onboarding).
         navigate("/dashboard");
       }
     } catch (error: any) {
@@ -83,7 +76,7 @@ const SignupPage = () => {
           />
         </div>
         <p className="text-gray-500 text-center mb-6">
-          Comece sua jornada de aprendizado!
+          Comece a sua jornada de aprendizado!
         </p>
 
         <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200/50">
@@ -101,7 +94,7 @@ const SignupPage = () => {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 className="w-full h-11 rounded-lg border border-gray-300 p-3 focus:border-trilha-orange focus:outline-none focus:ring-1 focus:ring-trilha-orange"
-                placeholder="Seu nome completo"
+                placeholder="Qual o seu nome?"
                 required
                 disabled={isLoading}
               />
