@@ -78,57 +78,6 @@ export type Database = {
         }
         Relationships: []
       }
-      daily_xp_claims: {
-        Row: {
-          claimed_at: string
-          created_at: string
-          id: string
-          user_id: string
-          xp_amount: number
-        }
-        Insert: {
-          claimed_at: string
-          created_at?: string
-          id?: string
-          user_id: string
-          xp_amount?: number
-        }
-        Update: {
-          claimed_at?: string
-          created_at?: string
-          id?: string
-          user_id?: string
-          xp_amount?: number
-        }
-        Relationships: []
-      }
-      daily_xp_progress: {
-        Row: {
-          created_at: string
-          date: string
-          id: string
-          updated_at: string
-          user_id: string
-          xp_earned: number
-        }
-        Insert: {
-          created_at?: string
-          date: string
-          id?: string
-          updated_at?: string
-          user_id: string
-          xp_earned?: number
-        }
-        Update: {
-          created_at?: string
-          date?: string
-          id?: string
-          updated_at?: string
-          user_id?: string
-          xp_earned?: number
-        }
-        Relationships: []
-      }
       learning_journals: {
         Row: {
           content: string
@@ -615,6 +564,41 @@ export type Database = {
           },
         ]
       }
+      xp_history: {
+        Row: {
+          created_at: string
+          id: string
+          source: string
+          source_id: string | null
+          user_id: string
+          xp_amount: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          source: string
+          source_id?: string | null
+          user_id: string
+          xp_amount: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          source?: string
+          source_id?: string | null
+          user_id?: string
+          xp_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "xp_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -623,6 +607,13 @@ export type Database = {
       add_daily_xp: {
         Args: { user_id_param: string; xp_amount: number }
         Returns: undefined
+      }
+      get_weekly_xp_history: {
+        Args: { p_user_id: string }
+        Returns: {
+          day: string
+          total_xp: number
+        }[]
       }
       get_weekly_xp_sum: {
         Args: { user_id_param: string }
