@@ -1,8 +1,24 @@
+
 // src/services/profileService.ts
 
 import { supabase } from "@/integrations/supabase/client";
-import { Profile } from "@/types";
 import { toast } from "sonner";
+
+// Exportar o tipo Profile baseado na tabela profiles do Supabase
+export type Profile = {
+  id: string;
+  username: string | null;
+  full_name: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  linkedin_url: string | null;
+  xp: number | null;
+  level: number | null;
+  streak_days: number | null;
+  last_login: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+};
 
 export const getProfile = async (userId: string): Promise<Profile | null> => {
   if (!userId) return null;
@@ -42,7 +58,7 @@ export const uploadAvatar = async (userId: string, file: File): Promise<string |
     const filePath = `${userId}/avatar.${fileExt}`;
 
     const { error: uploadError } = await supabase.storage
-      .from('profiles')
+      .from('avatars')
       .upload(filePath, file, { 
           cacheControl: '3600',
           upsert: true 
@@ -55,7 +71,7 @@ export const uploadAvatar = async (userId: string, file: File): Promise<string |
 
     // Pega a URL pública do arquivo
     const { data } = supabase.storage
-      .from('profiles')
+      .from('avatars')
       .getPublicUrl(filePath);
 
     if (!data.publicUrl) {
@@ -66,7 +82,7 @@ export const uploadAvatar = async (userId: string, file: File): Promise<string |
     // Constrói a URL final com o "cache buster"
     const finalUrl = `${data.publicUrl}?t=${new Date().getTime()}`;
 
-    console.log("URL final gerada para o avatar:", finalUrl); // <<< ADICIONE ESTE LOG PARA VERIFICAR
+    console.log("URL final gerada para o avatar:", finalUrl);
       
     return finalUrl;
     

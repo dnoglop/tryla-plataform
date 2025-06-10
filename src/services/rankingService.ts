@@ -1,5 +1,5 @@
+
 import { supabase } from "@/integrations/supabase/client";
-import { Profile } from "./profileService";
 
 export interface RankingUser {
   id: string;
@@ -76,7 +76,7 @@ export const getUserRankPosition = async (
 };
 
 /**
- * Atualiza o XP do usuário com base nos módulos concluídos e XP diário
+ * Atualiza o XP do usuário com base nos módulos concluídos e XP do histórico
  */
 export const updateUserXpFromModules = async (
   userId: string,
@@ -94,25 +94,25 @@ export const updateUserXpFromModules = async (
       return 0;
     }
 
-    // Buscar todo o XP diário reivindicado pelo usuário
-    const { data: dailyXpClaims, error: dailyXpError } = await supabase
-      .from("daily_xp_claims")
+    // Buscar todo o XP do histórico
+    const { data: xpHistory, error: xpHistoryError } = await supabase
+      .from("xp_history")
       .select("xp_amount")
       .eq("user_id", userId);
 
-    if (dailyXpError) {
-      console.error("Erro ao buscar XP diário:", dailyXpError);
+    if (xpHistoryError) {
+      console.error("Erro ao buscar XP do histórico:", xpHistoryError);
       return 0;
     }
 
-    // Calcular XP total (50 XP por fase completada + XP diário)
+    // Calcular XP total (50 XP por fase completada + XP do histórico)
     const phasesXp = (completedPhases?.length || 0) * 50;
-    const dailyXp =
-      dailyXpClaims?.reduce(
-        (total, claim) => total + (claim.xp_amount || 0),
+    const historyXp =
+      xpHistory?.reduce(
+        (total, record) => total + (record.xp_amount || 0),
         0,
       ) || 0;
-    const totalXp = phasesXp + dailyXp;
+    const totalXp = phasesXp + historyXp;
 
     // Buscar perfil atual
     const { data: profile, error: profileError } = await supabase
