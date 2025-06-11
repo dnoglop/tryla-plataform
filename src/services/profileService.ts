@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-// A sua definição de tipo Profile está perfeita.
+// Exportar o tipo Profile baseado na tabela profiles do Supabase
 export type Profile = {
   id: string;
   username: string | null;
@@ -16,7 +16,6 @@ export type Profile = {
   updated_at: string | null;
 };
 
-// As funções getProfile e updateProfile estão corretas.
 export const getProfile = async (userId: string): Promise<Profile | null> => {
   if (!userId) return null;
   try {
@@ -46,11 +45,6 @@ export const updateProfile = async (userId: string, updates: Partial<Profile>): 
   }
 };
 
-
-/**
- * --- FUNÇÃO CORRIGIDA ---
- * Garante que todos os avatares sejam enviados para a pasta 'avatars'.
- */
 export const uploadAvatar = async (userId: string, file: File | Blob): Promise<string | null> => {
   if (!userId || !file) {
     console.error("ID do usuário ou arquivo não fornecido para upload.");
@@ -60,14 +54,8 @@ export const uploadAvatar = async (userId: string, file: File | Blob): Promise<s
   try {
     const fileExt = file.type.split("/")[1] || 'jpeg';
     const fileName = `avatar-${userId}-${Date.now()}.${fileExt}`;
-    
-    // <<< ESTA É A LINHA CORRIGIDA E MAIS IMPORTANTE >>>
-    // Garante que o caminho sempre comece com "avatars/", mantendo tudo organizado.
     const filePath = `avatars/${fileName}`;
-    
     const bucketName = "profiles";
-
-    console.log(`[uploadAvatar] Iniciando upload para: ${bucketName}/${filePath}`);
 
     const { error: uploadError } = await supabase.storage
       .from(bucketName)
@@ -78,13 +66,9 @@ export const uploadAvatar = async (userId: string, file: File | Blob): Promise<s
       throw uploadError;
     }
 
-    console.log("[uploadAvatar] Upload concluído com sucesso.");
-
     const { data } = supabase.storage
       .from(bucketName)
       .getPublicUrl(filePath);
-
-    console.log(`[uploadAvatar] URL pública obtida: ${data.publicUrl}`);
 
     return data.publicUrl;
 
@@ -94,47 +78,93 @@ export const uploadAvatar = async (userId: string, file: File | Blob): Promise<s
   }
 };
 
-export const updateUserStreak = async (userId: string): Promise<void> => {
-  if (!userId) return;
-  try {
-    const { data: profile, error: profileError } = await supabase.from('profiles').select('last_login, streak_days').eq('id', userId).single();
-    if (profileError) {
-      console.error("Não foi possível buscar o perfil para atualizar o streak.", profileError.message);
-      return;
-    }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Zera a hora para comparar apenas a data
+/**
+ * --- VERSÃO FINAL E CORRIGIDA ---
+ * Verifica e atualiza o streak usando comparação de strings de data (AAAA-MM-DD),
+ * o que é imune a problemas de fuso horário e garante a atualização apenas uma vez por dia.
+ * @param {string} userId - O ID do usuário.
+ * @returns {Promise<boolean>} - Retorna `true` se o streak foi modificado, `false` caso contrário.
+ */
+export const updateUserStreak = async (userId: string): Promise<boolean> => {
+    if (!userId) return false;
 
-    const lastLoginDate = profile.last_login ? new Date(profile.last_login) : null;
-    if (lastLoginDate) {
-      lastLoginDate.setHours(0, 0, 0, 0);
-    }
-    
-    // Se o último login foi hoje, não faz nada
-    if (lastLoginDate && lastLoginDate.getTime() === today.getTime()) {
-      return;
-    }
-    
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    yesterday.setHours(0, 0, 0, 0);
-    
-    let newStreak = 1; // Começa o streak em 1 por padrão
-    if (lastLoginDate && lastLoginDate.getTime() === yesterday.getTime()) {
-      // Se o último login foi ontem, incrementa o streak
-      newStreak = (profile.streak_days || 0) + 1;
-    }
-    
-    const { error: updateError } = await supabase.from('profiles').update({ 
-        streak_days: newStreak, 
-        last_login: new Date().toISOString() 
-    }).eq('id', userId);
+    try {
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('last_login, streak_days')
+            .eq('id', userId)
+            .single();
 
-    if (updateError) {
-        console.error("Erro ao salvar o novo streak no banco:", updateError.message);
+        if (profileError) {
+            console.error("Streak: Não foi possível buscar o perfil.", profileError.message);
+            return false;
+        }
+
+        // Pega a data de hoje como uma string 'AAAA-MM-DD' no fuso horário UTC.
+        const todayStr = new Date().toISOString().split('T')[0];
+        
+        // CASO 1: Primeiro login do usuário.
+        if (!profile.last_login) {
+            console.log("Streak: Primeiro login detectado. Iniciando streak em 1.");
+            const { error } = await supabase
+                .from('profiles')
+                .update({ streak_days: 1, last_login: new Date().toISOString() })
+                .eq('id', userId);
+            
+            if (error) {
+                console.error("Streak: Erro ao iniciar o primeiro streak.", error.message);
+                return false;
+            }
+            return true;
+        }
+
+        // Pega a data do último login como uma string 'AAAA-MM-DD'.
+        const lastLoginStr = profile.last_login.split('T')[0];
+
+        // CASO 2: O usuário já fez login no dia de hoje.
+        // Esta comparação de strings é a chave para a correção.
+        if (todayStr === lastLoginStr) {
+            console.log(`Streak: Login já registrado hoje (${todayStr}). Nenhuma ação necessária.`);
+            return false; // A contagem para aqui, como esperado.
+        }
+
+        // CASO 3: O usuário está fazendo login em um novo dia.
+        // Agora, calculamos a diferença para ver se o streak continua ou quebra.
+        const today = new Date(todayStr); // Cria a data de hoje à meia-noite UTC
+        const lastLoginDate = new Date(lastLoginStr); // Cria a data do último login à meia-noite UTC
+        
+        const diffTime = today.getTime() - lastLoginDate.getTime();
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+        let newStreak: number;
+        if (diffDays === 1) {
+            // Último login foi ontem, continua o streak.
+            newStreak = (profile.streak_days || 0) + 1;
+            console.log(`Streak: Continuando para ${newStreak} dias.`);
+        } else {
+            // Streak quebrado (mais de 1 dia de diferença). Reseta para 1.
+            newStreak = 1;
+            console.log(`Streak: Quebrado (${diffDays} dias de diferença). Resetando para 1.`);
+        }
+        
+        const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ 
+                streak_days: newStreak, 
+                last_login: new Date().toISOString()
+            })
+            .eq('id', userId);
+
+        if (updateError) {
+            console.error("Streak: Erro ao salvar o novo streak no banco:", updateError.message);
+            return false;
+        }
+        
+        return true;
+
+    } catch (error) {
+        console.error("Exceção inesperada na função updateUserStreak:", error);
+        return false;
     }
-  } catch (error) {
-    console.error("Exceção inesperada na função updateUserStreak:", error);
-  }
 };

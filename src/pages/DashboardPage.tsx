@@ -1,9 +1,6 @@
-
-// src/pages/DashboardPage.tsx
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
 import * as Dialog from '@radix-ui/react-dialog';
 import { toast } from "sonner";
@@ -79,10 +76,11 @@ const fetchDailyQuote = async () => {
     }
 };
 
-// --- COMPONENTE PRINCIPAL ---
+// --- COMPONENTE PRINCIPAL COM A ARQUITETURA CORRIGIDA ---
 export default function DashboardPage() {
+    const queryClient = useQueryClient();
     const { hasShownWelcomeModal, setHasShownWelcomeModal } = useSessionStore();
-    const [profile, setProfile] = useState<Profile | null>(null);
+    
     const [userId, setUserId] = useState<string | null>(null);
     const [nextPhase, setNextPhase] = useState<any>(null);
     const [nextModule, setNextModule] = useState<Module | null>(null);
@@ -90,73 +88,90 @@ export default function DashboardPage() {
     const [showWelcomeModal, setShowWelcomeModal] = useState(false);
     const [dailyXpClaimed, setDailyXpClaimed] = useState(false);
     const [isClaiming, setIsClaiming] = useState(false);
-    const [isLoadingPage, setIsLoadingPage] = useState(true);
 
     useEffect(() => {
-        const fetchInitialData = async () => {
+        const fetchUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                setIsLoadingPage(false);
-                return;
+            if (user) {
+                setUserId(user.id);
             }
-            setUserId(user.id);
-            await updateUserStreak(user.id);
-            const userProfile = await getProfile(user.id);
-            setProfile(userProfile);
-            
-            if (userProfile) {
-                const today = new Date().toISOString().split('T')[0];
-                const lastModalShowDate = localStorage.getItem('lastWelcomeModalShow');
-                if (!hasShownWelcomeModal && lastModalShowDate !== today) {
-                    setShowWelcomeModal(true); 
-                    localStorage.setItem('lastWelcomeModalShow', today);
-                    setHasShownWelcomeModal(true);
-                }
-
-                // --- LÓGICA DE VERIFICAÇÃO DE BÔNUS ATUALIZADA ---
-                // Verifica na tabela 'xp_history' se já existe um registro de 'DAILY_BONUS' para hoje.
-                const { data: claimData, error: claimError } = await supabase
-                    .from('xp_history')
-                    .select('id', { count: 'exact' })
-                    .eq('user_id', user.id)
-                    .eq('source', 'DAILY_BONUS')
-                    .gte('created_at', `${today}T00:00:00.000Z`)
-                    .lte('created_at', `${today}T23:59:59.999Z`);
-                
-                if (claimError) {
-                    console.error("Erro ao verificar bônus diário:", claimError.message);
-                } else if (claimData && claimData.length > 0) {
-                    setDailyXpClaimed(true);
-                }
-            }
-            setIsLoadingPage(false);
         };
-        fetchInitialData();
-    }, [hasShownWelcomeModal, setHasShownWelcomeModal]);
+        fetchUser();
+    }, []);
 
-    const { data: dailyQuote, isLoading: isLoadingQuote } = useQuery({
-        queryKey: ['dailyQuote', new Date().toISOString().split('T')[0]], 
-        queryFn: fetchDailyQuote,
-        enabled: showWelcomeModal,
-    });
-
-    const { data: modules = [] } = useQuery({
-        queryKey: ['modules', userId],
-        queryFn: () => getModules(),
+    const { data: profile, isLoading: isLoadingPage } = useQuery({
+        queryKey: ['profile', userId],
+        queryFn: async () => {
+            if (!userId) return null;
+            return getProfile(userId);
+        },
         enabled: !!userId,
     });
 
+    // Efeito para rodar AÇÕES ÚNICAS (uma vez por dia/sessão)
     useEffect(() => {
-        if (!userId || modules.length === 0) return;
+        if (!userId) return;
+
+        const handleDailyTasks = async () => {
+            // AÇÃO 1: Atualizar o streak. A função `updateUserStreak` agora é inteligente.
+            const wasStreakUpdated = await updateUserStreak(userId);
+            if (wasStreakUpdated) {
+                // Invalida o cache apenas se uma atualização realmente ocorreu.
+                console.log("Streak foi atualizado. Invalidando cache do perfil...");
+                queryClient.invalidateQueries({ queryKey: ['profile', userId] });
+            }
+
+            // AÇÃO 2: Verificar o bônus diário
+            const todayStr = new Date().toISOString().split('T')[0];
+            const { count } = await supabase
+                .from('xp_history')
+                .select('id', { count: 'exact' })
+                .eq('user_id', userId)
+                .eq('source', 'DAILY_BONUS')
+                .gte('created_at', `${todayStr}T00:00:00.000Z`);
+            
+            if (count && count > 0) {
+                setDailyXpClaimed(true);
+            }
+
+            // AÇÃO 3: Verificar se o modal de boas-vindas deve ser exibido
+            const lastModalShowDate = localStorage.getItem('lastWelcomeModalShow');
+            if (!hasShownWelcomeModal && lastModalShowDate !== todayStr) {
+                setShowWelcomeModal(true);
+                localStorage.setItem('lastWelcomeModalShow', todayStr);
+                setHasShownWelcomeModal(true);
+            }
+        };
+
+        handleDailyTasks();
+
+    // CORREÇÃO: As dependências foram ajustadas. Este efeito agora roda apenas
+    // quando o userId é identificado, e não mais quando o estado do modal muda.
+    }, [userId, queryClient]);
+
+    // Hook para buscar os módulos
+    const { data: modules = [] } = useQuery({
+        queryKey: ['modules'],
+        queryFn: getModules,
+    });
+
+    useEffect(() => {
+        if (!userId || !modules || modules.length === 0) return;
+        
         const fetchProgress = async () => {
             let completedCount = 0;
             let nextPhaseFound = false;
             for (const module of modules) {
-                if (await isModuleCompleted(userId, module.id)) {
+                const isCompleted = await isModuleCompleted(userId, module.id);
+                if (isCompleted) {
                     completedCount++;
                 } else if (!nextPhaseFound) {
                     const nextPhaseData = await getUserNextPhase(userId, module.id);
-                    if (nextPhaseData) { setNextPhase(nextPhaseData); setNextModule(module); nextPhaseFound = true; }
+                    if (nextPhaseData) {
+                        setNextPhase(nextPhaseData);
+                        setNextModule(module);
+                        nextPhaseFound = true;
+                    }
                 }
             }
             setCompletedModulesCount(completedCount);
@@ -164,42 +179,37 @@ export default function DashboardPage() {
         fetchProgress();
     }, [userId, modules]);
 
-    // --- LÓGICA DE REIVINDICAÇÃO DE BÔNUS ATUALIZADA ---
+    const { data: dailyQuote, isLoading: isLoadingQuote } = useQuery({
+        queryKey: ['dailyQuote', new Date().toISOString().split('T')[0]], 
+        queryFn: fetchDailyQuote,
+        enabled: showWelcomeModal,
+    });
+
     const handleClaimDailyXp = async () => {
         if (!userId || isClaiming || dailyXpClaimed) return;
         setIsClaiming(true);
         
         try {
             const xpAmount = 50;
-            
-            // Insere diretamente na tabela de histórico. O trigger no Supabase fará o resto.
             const { error } = await supabase.from('xp_history').insert({ 
                 user_id: userId, 
                 xp_amount: xpAmount,
                 source: 'DAILY_BONUS'
             });
 
-            if (error) {
-                // Se o erro for de RLS ou outro, ele será capturado aqui.
-                throw error;
-            }
+            if (error) throw error;
             
-            // Atualiza a UI otimisticamente para dar feedback imediato
             setDailyXpClaimed(true);
-            setProfile(prev => prev ? { ...prev, xp: (prev.xp || 0) + xpAmount } : null);
+            queryClient.invalidateQueries({ queryKey: ['profile', userId] });
 
             toast.custom((t) => (
                 <div className="flex items-center gap-3 bg-white border border-slate-200 shadow-lg rounded-xl p-4 w-full max-w-sm">
-                    <div className="bg-orange-100 p-2 rounded-full">
-                        <Gift className="h-6 w-6 text-orange-500" />
-                    </div>
+                    <div className="bg-orange-100 p-2 rounded-full"><Gift className="h-6 w-6 text-orange-500" /></div>
                     <div className="flex-grow">
                         <p className="font-bold text-slate-800">Bônus Diário!</p>
                         <p className="text-sm text-slate-600">Você ganhou +{xpAmount} XP por sua dedicação!</p>
                     </div>
-                    <button onClick={() => toast.dismiss(t)} className="opacity-50 hover:opacity-100">
-                        <X size={18} />
-                    </button>
+                    <button onClick={() => toast.dismiss(t)} className="opacity-50 hover:opacity-100"><X size={18} /></button>
                 </div>
             ), { duration: 3000 });
 
@@ -288,9 +298,7 @@ export default function DashboardPage() {
                                 <div>
                                     <div className="flex justify-between items-start">
                                         <h3 className="text-xl font-bold text-orange-900">Continuar Trilha</h3>
-                                        <div className="p-3 bg-orange-500 rounded-lg">
-                                            <ArrowRight className="h-5 w-5 text-white" />
-                                        </div>
+                                        <div className="p-3 bg-orange-500 rounded-lg"><ArrowRight className="h-5 w-5 text-white" /></div>
                                     </div>
                                     <p className="font-semibold text-orange-800 mt-2">{nextModule.name}</p>
                                     <p className="text-sm text-orange-700/80">{nextPhase.name}</p>
@@ -304,23 +312,17 @@ export default function DashboardPage() {
                             </div>
                         )}
                         <Link to="/modulos" className="group p-6 bg-white rounded-2xl shadow-sm border border-slate-200/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1.5 flex flex-col justify-center items-center text-center">
-                            <div className="p-3 bg-slate-100 rounded-lg mb-3">
-                                <ArrowRight className="h-5 w-5 text-slate-600 transition-transform group-hover:translate-x-1" />
-                            </div>
+                            <div className="p-3 bg-slate-100 rounded-lg mb-3"><ArrowRight className="h-5 w-5 text-slate-600 transition-transform group-hover:translate-x-1" /></div>
                             <h3 className="font-bold text-slate-800">Ver todos os Módulos</h3>
                             <p className="text-sm text-slate-500">Explore novas trilhas de aprendizado.</p>
                         </Link>
                     </div>
                     <div className="flex justify-between items-center">
                         <h2 className="font-bold text-lg text-slate-800">Últimas na Comunidade</h2>
-                        <Link to="/social" className="text-sm font-medium text-orange-600 flex items-center gap-1">
-                            Ver tudo <ArrowRight size={14} />
-                        </Link>
+                        <Link to="/social" className="text-sm font-medium text-orange-600 flex items-center gap-1">Ver tudo <ArrowRight size={14} /></Link>
                     </div>
                     <div className="space-y-3">
-                        {communityPosts.map(post => (
-                            <ForumThread key={post.id} {...post} />
-                        ))}
+                        {communityPosts.map(post => (<ForumThread key={post.id} {...post} />))}
                     </div>
                 </main>
                 <div className="h-24"></div>
