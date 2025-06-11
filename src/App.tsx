@@ -1,13 +1,12 @@
-// src/App.tsx
-
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 // Componentes e Layout
 import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "@/components/Layout";
-import { Toaster, toast } from "sonner";
-import { CheckCircle, AlertTriangle, Info, XCircle, Loader2 } from 'lucide-react';
+import { Toaster } from "sonner";
 
 // Páginas
 import SplashScreen from "./pages/SplashScreen";
@@ -30,10 +29,21 @@ import OnboardingPage from "./pages/OnboardingPage";
 import CompleteProfilePage from "./pages/CompleteProfilePage";
 
 function App() {
-  // Sua lógica de toast pode ser mantida aqui
+  const queryClient = useQueryClient();
+
   useEffect(() => {
-    // ...
-  }, []);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event) => {
+        if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+          queryClient.invalidateQueries({ queryKey: ["userAuthStatus"] });
+        }
+      }
+    );
+    
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [queryClient]);
 
   return (
     <Router>
@@ -45,8 +55,7 @@ function App() {
 
         {/* --- Rotas Protegidas --- */}
         <Route element={<ProtectedRoute />}>
-          
-          {/* Rotas de Onboarding (protegidas, acessíveis apenas a usuários logados) */}
+          {/* Rotas de Onboarding (acessíveis apenas a usuários logados sem onboarding) */}
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/complete-profile" element={<CompleteProfilePage />} />
 
@@ -70,17 +79,7 @@ function App() {
           <Route path="/teste-vocacional" element={<VocationalTestPage />} />
         </Route>
       </Routes>
-      
-      <Toaster 
-        position="top-center"
-        closeButton
-        toastOptions={{
-          // ... suas opções de toast
-        }}
-        icons={{
-          // ... seus ícones de toast
-        }}
-      />
+      <Toaster position="top-center" closeButton />
     </Router>
   );
 }

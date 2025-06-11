@@ -16,6 +16,7 @@ import { getModules, isModuleCompleted, Module as ModuleType } from "@/services/
 import { getUserRanking, RankingUser } from "@/services/rankingService";
 import { WeeklyProgressChart } from "@/components/WeeklyProgressChart";
 import BottomNavigation from "@/components/BottomNavigation";
+import { profile } from "console";
 
 // --- INTERFACES LOCAIS ---
 interface StatsCardProps {
@@ -261,7 +262,7 @@ export default function ProfilePage(): JSX.Element {
       
       queryClient.clear();
       
-      toast.success("Você foi desconectado com sucesso.");
+      toast.success(`Esperamos você de volta!`);
       navigate('/login', { replace: true });
 
     } catch (err: any) {

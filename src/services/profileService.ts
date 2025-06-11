@@ -1,10 +1,6 @@
-
-// src/services/profileService.ts
-
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
-// Exportar o tipo Profile baseado na tabela profiles do Supabase
+// A sua definição de tipo Profile está perfeita.
 export type Profile = {
   id: string;
   username: string | null;
@@ -20,11 +16,14 @@ export type Profile = {
   updated_at: string | null;
 };
 
+// As funções getProfile e updateProfile estão corretas.
 export const getProfile = async (userId: string): Promise<Profile | null> => {
   if (!userId) return null;
   try {
     const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
-    if (error && error.code !== 'PGRST116') console.error("Erro ao buscar perfil:", error.message);
+    if (error && error.code !== 'PGRST116') {
+        console.error("Erro ao buscar perfil:", error.message);
+    }
     return data;
   } catch (err) {
     console.error("Exceção ao buscar perfil:", err);
@@ -47,48 +46,50 @@ export const updateProfile = async (userId: string, updates: Partial<Profile>): 
   }
 };
 
-export const uploadAvatar = async (userId: string, file: File): Promise<string | null> => {
-  if (!userId) {
-    console.error("ID do usuário é necessário para o upload do avatar.");
+
+/**
+ * --- FUNÇÃO CORRIGIDA ---
+ * Garante que todos os avatares sejam enviados para a pasta 'avatars'.
+ */
+export const uploadAvatar = async (userId: string, file: File | Blob): Promise<string | null> => {
+  if (!userId || !file) {
+    console.error("ID do usuário ou arquivo não fornecido para upload.");
     return null;
   }
-  
+
   try {
-    const fileExt = file.name.split('.').pop();
-    const filePath = `${userId}/avatar.${fileExt}`;
+    const fileExt = file.type.split("/")[1] || 'jpeg';
+    const fileName = `avatar-${userId}-${Date.now()}.${fileExt}`;
+    
+    // <<< ESTA É A LINHA CORRIGIDA E MAIS IMPORTANTE >>>
+    // Garante que o caminho sempre comece com "avatars/", mantendo tudo organizado.
+    const filePath = `avatars/${fileName}`;
+    
+    const bucketName = "profiles";
+
+    console.log(`[uploadAvatar] Iniciando upload para: ${bucketName}/${filePath}`);
 
     const { error: uploadError } = await supabase.storage
-      .from('avatars')
-      .upload(filePath, file, { 
-          cacheControl: '3600',
-          upsert: true 
-      });
+      .from(bucketName)
+      .upload(filePath, file);
 
     if (uploadError) {
-      console.error("Erro no upload do Supabase Storage:", uploadError.message);
+      console.error("[uploadAvatar] ERRO DO SUPABASE DURANTE O UPLOAD:", uploadError);
       throw uploadError;
     }
 
-    // Pega a URL pública do arquivo
+    console.log("[uploadAvatar] Upload concluído com sucesso.");
+
     const { data } = supabase.storage
-      .from('avatars')
+      .from(bucketName)
       .getPublicUrl(filePath);
 
-    if (!data.publicUrl) {
-        console.error("A função getPublicUrl retornou uma URL vazia.");
-        throw new Error("Não foi possível obter a URL pública do avatar.");
-    }
-    
-    // Constrói a URL final com o "cache buster"
-    const finalUrl = `${data.publicUrl}?t=${new Date().getTime()}`;
+    console.log(`[uploadAvatar] URL pública obtida: ${data.publicUrl}`);
 
-    console.log("URL final gerada para o avatar:", finalUrl);
-      
-    return finalUrl;
-    
+    return data.publicUrl;
+
   } catch (error) {
-    console.error('Exceção na função uploadAvatar:', error);
-    toast.error("Falha ao processar a imagem do perfil.");
+    console.error("[uploadAvatar] Exceção final no processo de upload do avatar:", error);
     return null;
   }
 };
@@ -101,13 +102,38 @@ export const updateUserStreak = async (userId: string): Promise<void> => {
       console.error("Não foi possível buscar o perfil para atualizar o streak.", profileError.message);
       return;
     }
-    const today = new Date().toISOString().split('T')[0];
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-    const lastLogin = profile.last_login;
-    if (lastLogin === today) return;
-    let newStreak = (lastLogin === yesterday) ? (profile.streak_days || 0) + 1 : 1;
-    const { error: updateError } = await supabase.from('profiles').update({ streak_days: newStreak, last_login: today }).eq('id', userId);
-    if (updateError) console.error("Erro ao salvar o novo streak no banco:", updateError.message);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Zera a hora para comparar apenas a data
+
+    const lastLoginDate = profile.last_login ? new Date(profile.last_login) : null;
+    if (lastLoginDate) {
+      lastLoginDate.setHours(0, 0, 0, 0);
+    }
+    
+    // Se o último login foi hoje, não faz nada
+    if (lastLoginDate && lastLoginDate.getTime() === today.getTime()) {
+      return;
+    }
+    
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setHours(0, 0, 0, 0);
+    
+    let newStreak = 1; // Começa o streak em 1 por padrão
+    if (lastLoginDate && lastLoginDate.getTime() === yesterday.getTime()) {
+      // Se o último login foi ontem, incrementa o streak
+      newStreak = (profile.streak_days || 0) + 1;
+    }
+    
+    const { error: updateError } = await supabase.from('profiles').update({ 
+        streak_days: newStreak, 
+        last_login: new Date().toISOString() 
+    }).eq('id', userId);
+
+    if (updateError) {
+        console.error("Erro ao salvar o novo streak no banco:", updateError.message);
+    }
   } catch (error) {
     console.error("Exceção inesperada na função updateUserStreak:", error);
   }

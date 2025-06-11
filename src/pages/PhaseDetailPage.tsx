@@ -1,5 +1,3 @@
-// src/pages/PhaseDetailPage.tsx
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from '@tanstack/react-query';

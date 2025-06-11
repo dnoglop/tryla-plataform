@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 const SignupPage = () => {
   const [fullName, setFullName] = useState("");
@@ -12,8 +13,6 @@ const SignupPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Verifique se o gatilho SQL da resposta anterior foi criado.
-  // Ele é responsável por criar o perfil automaticamente no backend.
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -29,11 +28,10 @@ const SignupPage = () => {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          // A metadata é importante para o gatilho SQL criar o perfil com o nome correto
           data: {
             full_name: fullName,
           },
@@ -41,25 +39,26 @@ const SignupPage = () => {
       });
 
       if (error) {
-        if (error.message.includes("Usuário já cadastrado!")) {
-          toast.error("Este e-mail já está em uso. Tente fazer login.");
-        } else {
-          throw error;
-        }
-        // Retorna para não continuar a execução
-        return;
+        throw error;
       }
 
-      // serão preenchidos imediatamente.
-      if (data.user) {
-        toast.success("Conta criada com sucesso!");
-
-        navigate("/dashboard");
-      }
-    } catch (error: any) {
-      toast.error("Erro no cadastro", {
-        description: error.message || "Ocorreu um erro ao criar sua conta.",
+      toast.success("Conta criada com sucesso!", {
+        description: "Agora faça o login para continuar sua jornada.",
       });
+
+      navigate("/login");
+
+    } catch (error: any) {
+      if (error.message.includes("User already registered")) {
+        toast.error("Este e-mail já está em uso.", {
+          description: "Tente fazer login ou use um e-mail diferente."
+        });
+      } else {
+        toast.error("Erro ao criar sua conta.", {
+          description: error.message || "Por favor, tente novamente mais tarde.",
+        });
+      }
+      console.error("Erro no cadastro:", error);
     } finally {
       setIsLoading(false);
     }
@@ -82,88 +81,40 @@ const SignupPage = () => {
         <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200/50">
           <form onSubmit={handleSignup} className="space-y-4">
             <div>
-              <label
-                htmlFor="name"
-                className="block text-sm font-medium text-slate-700 mb-1"
-              >
+              <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1">
                 Nome completo
               </label>
-              <input
-                id="name"
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="w-full h-11 rounded-lg border border-gray-300 p-3 focus:border-trilha-orange focus:outline-none focus:ring-1 focus:ring-trilha-orange"
-                placeholder="Qual o seu nome?"
-                required
-                disabled={isLoading}
-              />
+              <input id="name" type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className="w-full h-11 rounded-lg border border-gray-300 p-3 focus:border-trilha-orange focus:outline-none focus:ring-1 focus:ring-trilha-orange" placeholder="Qual o seu nome?" required disabled={isLoading}/>
             </div>
 
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-slate-700 mb-1"
-              >
+              <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
                 Email
               </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full h-11 rounded-lg border border-gray-300 p-3 focus:border-trilha-orange focus:outline-none focus:ring-1 focus:ring-trilha-orange"
-                placeholder="seu.email@exemplo.com"
-                required
-                disabled={isLoading}
-              />
+              <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full h-11 rounded-lg border border-gray-300 p-3 focus:border-trilha-orange focus:outline-none focus:ring-1 focus:ring-trilha-orange" placeholder="seu.email@exemplo.com" required disabled={isLoading}/>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium text-slate-700 mb-1"
-                >
+                <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1">
                   Senha
                 </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full h-11 rounded-lg border border-gray-300 p-3 focus:border-trilha-orange focus:outline-none focus:ring-1 focus:ring-trilha-orange"
-                  placeholder="••••••••"
-                  required
-                  disabled={isLoading}
-                />
+                <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full h-11 rounded-lg border border-gray-300 p-3 focus:border-trilha-orange focus:outline-none focus:ring-1 focus:ring-trilha-orange" placeholder="••••••••" required disabled={isLoading}/>
               </div>
               <div>
-                <label
-                  htmlFor="confirmPassword"
-                  className="block text-sm font-medium text-slate-700 mb-1"
-                >
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 mb-1">
                   Confirmar senha
                 </label>
-                <input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full h-11 rounded-lg border border-gray-300 p-3 focus:border-trilha-orange focus:outline-none focus:ring-1 focus:ring-trilha-orange"
-                  placeholder="••••••••"
-                  required
-                  disabled={isLoading}
-                />
+                <input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full h-11 rounded-lg border border-gray-300 p-3 focus:border-trilha-orange focus:outline-none focus:ring-1 focus:ring-trilha-orange" placeholder="••••••••" required disabled={isLoading}/>
               </div>
             </div>
 
             <Button
               type="submit"
-              className="w-full h-12 bg-trilha-orange text-white hover:bg-trilha-orange/90 font-semibold text-base"
+              className="w-full h-12 bg-trilha-orange text-white hover:bg-trilha-orange/90 font-semibold text-base flex items-center justify-center"
               disabled={isLoading}
             >
-              {isLoading ? "Criando conta..." : "Criar minha conta"}
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Criar minha conta"}
             </Button>
           </form>
 
