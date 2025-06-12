@@ -268,6 +268,7 @@ export type Database = {
           order_index: number
           question: string
           quiz_id: number | null
+          tips_question: string | null
           updated_at: string | null
         }
         Insert: {
@@ -278,6 +279,7 @@ export type Database = {
           order_index: number
           question: string
           quiz_id?: number | null
+          tips_question?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -288,6 +290,7 @@ export type Database = {
           order_index?: number
           question?: string
           quiz_id?: number | null
+          tips_question?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -394,44 +397,6 @@ export type Database = {
           },
         ]
       }
-      user_module_progress: {
-        Row: {
-          completed: boolean | null
-          completed_at: string | null
-          id: number
-          module_id: number | null
-          progress: number | null
-          started_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          completed?: boolean | null
-          completed_at?: string | null
-          id?: number
-          module_id?: number | null
-          progress?: number | null
-          started_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          completed?: boolean | null
-          completed_at?: string | null
-          id?: number
-          module_id?: number | null
-          progress?: number | null
-          started_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_module_progress_module_id_fkey"
-            columns: ["module_id"]
-            isOneToOne: false
-            referencedRelation: "modules"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_onboarding: {
         Row: {
           completed_at: string | null
@@ -452,47 +417,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      user_phase_progress: {
-        Row: {
-          completed_at: string | null
-          id: number
-          phase_id: number | null
-          rating: number | null
-          started_at: string | null
-          status: string | null
-          time_spent: number | null
-          user_id: string | null
-        }
-        Insert: {
-          completed_at?: string | null
-          id?: number
-          phase_id?: number | null
-          rating?: number | null
-          started_at?: string | null
-          status?: string | null
-          time_spent?: number | null
-          user_id?: string | null
-        }
-        Update: {
-          completed_at?: string | null
-          id?: number
-          phase_id?: number | null
-          rating?: number | null
-          started_at?: string | null
-          status?: string | null
-          time_spent?: number | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_phase_progress_phase_id_fkey"
-            columns: ["phase_id"]
-            isOneToOne: false
-            referencedRelation: "phases"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       user_phases: {
         Row: {
@@ -525,41 +449,6 @@ export type Database = {
             columns: ["phase_id"]
             isOneToOne: false
             referencedRelation: "phases"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_quiz_answers: {
-        Row: {
-          answered_at: string | null
-          id: number
-          is_correct: boolean
-          question_id: number | null
-          selected_answer: number
-          user_id: string | null
-        }
-        Insert: {
-          answered_at?: string | null
-          id?: number
-          is_correct: boolean
-          question_id?: number | null
-          selected_answer: number
-          user_id?: string | null
-        }
-        Update: {
-          answered_at?: string | null
-          id?: number
-          is_correct?: boolean
-          question_id?: number | null
-          selected_answer?: number
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_quiz_answers_question_id_fkey"
-            columns: ["question_id"]
-            isOneToOne: false
-            referencedRelation: "questions"
             referencedColumns: ["id"]
           },
         ]

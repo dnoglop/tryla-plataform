@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import BottomNavigation from "@/components/BottomNavigation";
@@ -115,12 +116,13 @@ export default function ModuleDetailPage() {
 
             const progress = await getModuleProgress(user.id, moduleId);
             
-            const statusPromises = phases.map(phase => getUserPhaseStatus(user.id, phase.id));
-            const statuses = await Promise.all(statusPromises);
+            // CORREÇÃO: Busca os status de todas as fases de uma vez
             const statusMap: {[key: number]: PhaseStatus} = {};
-            phases.forEach((phase, index) => {
-                statusMap[phase.id] = (statuses[index] as PhaseStatus) || "notStarted";
-            });
+            for (const phase of phases) {
+                const status = await getUserPhaseStatus(user.id, phase.id);
+                statusMap[phase.id] = status;
+                console.log(`Phase ${phase.id} (${phase.name}) status: ${status}`);
+            }
             
             const completedModulesMap: {[key: number]: boolean} = {};
             for (const m of allModules) {
@@ -145,27 +147,64 @@ export default function ModuleDetailPage() {
     
     const { userProfile, module, allModules, phases, progress, statusMap, completedModulesMap } = data;
     
+    // CORREÇÃO: Lógica de bloqueio de fases corrigida
     const isPhaseLocked = (phaseIndex: number): boolean => {
-        if (phaseIndex === 0) return false;
-        const prevPhaseId = phases[phaseIndex - 1]?.id;
-        if (!prevPhaseId) return true;
-        return statusMap[prevPhaseId] !== 'completed';
+        // A primeira fase nunca está bloqueada
+        if (phaseIndex === 0) {
+            console.log(`Phase ${phaseIndex} is first, unlocked`);
+            return false;
+        }
+        
+        // Verifica se a fase anterior está concluída
+        const prevPhase = phases[phaseIndex - 1];
+        if (!prevPhase) {
+            console.log(`No previous phase found for index ${phaseIndex}`);
+            return true;
+        }
+        
+        const prevPhaseStatus = statusMap[prevPhase.id];
+        const isLocked = prevPhaseStatus !== 'completed';
+        
+        console.log(`Phase ${phaseIndex} (${phases[phaseIndex]?.name}) - Previous phase ${prevPhase.id} status: ${prevPhaseStatus}, locked: ${isLocked}`);
+        
+        return isLocked;
     };
 
     const startModule = () => {
-        const firstIncompletePhase = phases.find((_, index) => !isPhaseLocked(index) && statusMap[phases[index].id] !== "completed");
-        const targetPhase = firstIncompletePhase || phases[0];
+        // Encontra a primeira fase não bloqueada e não concluída
+        let targetPhase = null;
+        
+        for (let i = 0; i < phases.length; i++) {
+            if (!isPhaseLocked(i)) {
+                const phaseStatus = statusMap[phases[i].id];
+                if (phaseStatus !== 'completed') {
+                    targetPhase = phases[i];
+                    break;
+                }
+            }
+        }
+        
+        // Se não encontrou fase não concluída, vai para a primeira
+        if (!targetPhase && phases.length > 0) {
+            targetPhase = phases[0];
+        }
         
         if (targetPhase) {
-            const targetIndex = phases.findIndex(p => p.id === targetPhase.id);
-            if(isPhaseLocked(targetIndex)) {
-                toast.error("Você precisa completar a fase anterior primeiro!");
-                return;
-            }
+            console.log(`Starting phase: ${targetPhase.id} (${targetPhase.name})`);
             navigate(`/fase/${moduleId}/${targetPhase.id}`);
         } else {
-            toast.info("Não há fases para iniciar ou todas já foram concluídas.");
+            toast.info("Não há fases disponíveis para iniciar.");
         }
+    };
+
+    const handlePhaseClick = (phase: Phase, phaseIndex: number) => {
+        if (isPhaseLocked(phaseIndex)) {
+            toast.error("Você precisa completar a fase anterior primeiro!");
+            return;
+        }
+        
+        console.log(`Navigating to phase: ${phase.id} (${phase.name})`);
+        navigate(`/fase/${moduleId}/${phase.id}`);
     };
 
     const isModuleComplete = phases.length > 0 && phases.every(p => statusMap[p.id] === 'completed');
@@ -213,7 +252,7 @@ export default function ModuleDetailPage() {
                                 phase={phase} 
                                 status={statusMap[phase.id]} 
                                 isLocked={isPhaseLocked(index)}
-                                onClick={() => navigate(`/fase/${moduleId}/${phase.id}`)}
+                                onClick={() => handlePhaseClick(phase, index)}
                             />
                         ))}
                     </div>

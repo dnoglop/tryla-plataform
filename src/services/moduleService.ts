@@ -1,3 +1,4 @@
+
 // ARQUIVO: services/moduleService.ts
 // CÓDIGO COMPLETO E ATUALIZADO
 
@@ -220,14 +221,58 @@ export const saveQuiz = async (phaseId: number, questions: any[]): Promise<boole
   }
 };
 
-export const getUserPhaseStatus = async (userId: string, phaseId: number): Promise<string | null> => {
+// FUNÇÃO CORRIGIDA: Busca o status com tratamento correto para casos não encontrados
+export const getUserPhaseStatus = async (userId: string, phaseId: number): Promise<PhaseStatus> => {
   try {
-    const { data, error } = await supabase.from('user_phases').select('status').eq('user_id', userId).eq('phase_id', phaseId).single();
-    if (error && error.code !== 'PGRST116') { throw error; }
-    return data?.status || null;
+    console.log(`Checking status for user ${userId}, phase ${phaseId}`);
+    
+    const { data, error } = await supabase
+      .from('user_phases')
+      .select('status')
+      .eq('user_id', userId)
+      .eq('phase_id', phaseId)
+      .maybeSingle(); // Use maybeSingle() ao invés de single()
+
+    if (error) {
+      console.error("Error fetching user phase status:", error);
+      return 'notStarted';
+    }
+
+    const status = data?.status as PhaseStatus || 'notStarted';
+    console.log(`Status for phase ${phaseId}: ${status}`);
+    return status;
   } catch (error) {
     console.error("Error getting user phase status:", error);
-    return null;
+    return 'notStarted';
+  }
+};
+
+// FUNÇÃO CORRIGIDA: Atualiza ou insere o status da fase
+export const updateUserPhaseStatus = async (userId: string, phaseId: number, status: PhaseStatus): Promise<void> => {
+  try {
+    console.log(`Updating phase ${phaseId} status to ${status} for user ${userId}`);
+    
+    const { error } = await supabase
+      .from('user_phases')
+      .upsert({
+        user_id: userId,
+        phase_id: phaseId,
+        status: status,
+        started_at: status === 'inProgress' ? new Date().toISOString() : undefined,
+        completed_at: status === 'completed' ? new Date().toISOString() : undefined
+      }, {
+        onConflict: 'user_id,phase_id'
+      });
+
+    if (error) {
+      console.error("Error updating user phase status:", error);
+      throw error;
+    }
+
+    console.log(`Successfully updated phase ${phaseId} status to ${status}`);
+  } catch (error) {
+    console.error("Error updating user phase status:", error);
+    throw error;
   }
 };
 
@@ -235,9 +280,19 @@ export const getModuleProgress = async (userId: string, moduleId: number): Promi
   try {
     const phases = await getPhasesByModuleId(moduleId);
     if (phases.length === 0) return 0;
+    
     const phaseIds = phases.map(phase => phase.id);
-    const { data, error } = await supabase.from('user_phases').select('phase_id, status').eq('user_id', userId).in('phase_id', phaseIds);
-    if (error) { console.error("Error getting module progress:", error); return 0; }
+    const { data, error } = await supabase
+      .from('user_phases')
+      .select('phase_id, status')
+      .eq('user_id', userId)
+      .in('phase_id', phaseIds);
+    
+    if (error) { 
+      console.error("Error getting module progress:", error); 
+      return 0; 
+    }
+    
     const completedPhases = (data || []).filter(p => p.status === 'completed').length;
     return Math.round((completedPhases / phases.length) * 100);
   } catch (error) {
@@ -250,9 +305,19 @@ export const isModuleCompleted = async (userId: string, moduleId: number): Promi
   try {
     const phases = await getPhasesByModuleId(moduleId);
     if (phases.length === 0) return false;
+    
     const phaseIds = phases.map(phase => phase.id);
-    const { data, error } = await supabase.from('user_phases').select('phase_id, status').eq('user_id', userId).in('phase_id', phaseIds);
-    if (error) { console.error("Error checking module completion:", error); return false; }
+    const { data, error } = await supabase
+      .from('user_phases')
+      .select('phase_id, status')
+      .eq('user_id', userId)
+      .in('phase_id', phaseIds);
+    
+    if (error) { 
+      console.error("Error checking module completion:", error); 
+      return false; 
+    }
+    
     const completedPhases = (data || []).filter(p => p.status === 'completed').length;
     return completedPhases === phases.length;
   } catch (error) {
@@ -265,24 +330,39 @@ export const getUserNextPhase = async (userId: string, moduleId: number): Promis
   try {
     const phases = await getPhasesByModuleId(moduleId);
     if (phases.length === 0) return null;
+    
     const phaseIds = phases.map(phase => phase.id);
-    const { data, error } = await supabase.from('user_phases').select('phase_id, status').eq('user_id', userId).in('phase_id', phaseIds);
-    if (error && error.code !== 'PGRST116') { console.error("Error getting user phases:", error); return null; }
-    if (!data || data.length === 0) { return phases[0]; }
+    const { data, error } = await supabase
+      .from('user_phases')
+      .select('phase_id, status')
+      .eq('user_id', userId)
+      .in('phase_id', phaseIds);
+    
+    if (error && error.code !== 'PGRST116') { 
+      console.error("Error getting user phases:", error); 
+      return null; 
+    }
+    
+    if (!data || data.length === 0) { 
+      return phases[0]; 
+    }
+    
     const userPhaseStatus = new Map();
     data.forEach(p => userPhaseStatus.set(p.phase_id, p.status));
+    
     for (const phase of phases) {
       const status = userPhaseStatus.get(phase.id) || 'notStarted';
-      if (status !== 'completed') { return phase; }
+      if (status !== 'completed') { 
+        return phase; 
+      }
     }
+    
     return null;
   } catch (error) {
     console.error("Error getting next phase:", error);
     return null;
   }
 };
-
-// --- ALTERAÇÃO 1: NOVAS FUNÇÕES DE GAMIFICAÇÃO ATUALIZADAS PARA A TABELA 'xp_history' ---
 
 /**
  * Concede XP para um quiz, garantindo que seja concedido apenas uma vez.
@@ -295,14 +375,14 @@ export const awardQuizXp = async (userId: string, phaseId: number, xpAmount: num
       .from('xp_history')
       .select('id')
       .eq('user_id', userId)
-      .eq('source', 'QUIZ_TIME_BONUS') // Usamos uma 'source' específica para o bônus de tempo
-      .eq('source_id', phaseId)
+      .eq('source', 'QUIZ_TIME_BONUS')
+      .eq('source_id', phaseId.toString())
       .maybeSingle();
 
     if (checkError) throw checkError;
     if (existingLog) {
       console.log(`XP para o quiz ${phaseId} já foi concedido.`);
-      return false; // XP já foi dado, não faz nada.
+      return false;
     }
 
     // 2. Se não existir, insere o novo registro de XP
@@ -310,11 +390,11 @@ export const awardQuizXp = async (userId: string, phaseId: number, xpAmount: num
       user_id: userId,
       xp_amount: xpAmount,
       source: 'QUIZ_TIME_BONUS',
-      source_id: String(phaseId),
+      source_id: phaseId.toString(),
     });
 
     if (insertError) throw insertError;
-    return true; // XP concedido com sucesso
+    return true;
   } catch (error) {
     console.error("Erro ao conceder XP do quiz:", error);
     return false;
@@ -322,62 +402,70 @@ export const awardQuizXp = async (userId: string, phaseId: number, xpAmount: num
 };
 
 /**
- * Marca uma fase como concluída e concede XP (5 para fase, 15 para módulo) se for a primeira vez.
- * Retorna o total de XP ganho para exibir no modal.
+ * Marca uma fase como concluída e concede XP se for a primeira vez.
+ * VERSÃO CORRIGIDA que garante a atualização correta do status.
  */
 export const completePhaseAndAwardXp = async (userId: string, phaseId: number, moduleId: number, isQuiz: boolean): Promise<{ xpFromPhase: number; xpFromModule: number }> => {
   if (!userId || !phaseId || !moduleId) throw new Error("ID do usuário, fase e módulo são obrigatórios.");
 
   let awardedXp = { xpFromPhase: 0, xpFromModule: 0 };
 
-  // 1. Verifica se a fase já foi concluída na tabela 'user_phases'
-  const currentStatus = await getUserPhaseStatus(userId, phaseId);
+  try {
+    // 1. Verifica se a fase já foi concluída
+    const currentStatus = await getUserPhaseStatus(userId, phaseId);
+    console.log(`Current phase status: ${currentStatus}`);
 
-  // Se a fase ainda não foi concluída, prossiga
-  if (currentStatus !== 'completed') {
-    // 2. Marca a fase como concluída no banco de dados
-    await supabase.from('user_phases').upsert(
-      { user_id: userId, phase_id: phaseId, status: 'completed', completed_at: new Date().toISOString() },
-      { onConflict: 'user_id, phase_id' }
-    );
-    
-    // 3. Concede 5 XP pela conclusão da fase (exceto para quizzes, que têm pontuação própria)
-    if (!isQuiz) {
-        const { error } = await supabase.from('xp_history').insert({
-            user_id: userId,
-            xp_amount: 5, // Valor fixo de 5XP por fase
-            source: 'PHASE_COMPLETION',
-            source_id: String(phaseId),
-        });
-        // Se não houver erro, atualiza o valor de XP ganho. Ignora erro de duplicata.
-        if (!error) {
-            awardedXp.xpFromPhase = 5;
-        }
-    }
-    
-    // 4. Verifica se a conclusão desta fase completou o módulo
-    const moduleIsNowComplete = await isModuleCompleted(userId, moduleId);
-
-    if (moduleIsNowComplete) {
-      // 5. Verifica se o XP do módulo já foi concedido
-      const { data: moduleLog } = await supabase.from('xp_history').select('id').eq('user_id', userId).eq('source', 'MODULE_COMPLETION').eq('source_id', moduleId).maybeSingle();
+    // Se a fase ainda não foi concluída, prossiga
+    if (currentStatus !== 'completed') {
+      // 2. Marca a fase como concluída no banco de dados
+      await updateUserPhaseStatus(userId, phaseId, 'completed');
       
-      if (!moduleLog) {
-        // Se não foi, concede 15 XP por ele
-        const { error: moduleXpError } = await supabase.from('xp_history').insert({
+      // 3. Concede 5 XP pela conclusão da fase (exceto para quizzes)
+      if (!isQuiz) {
+        const { error } = await supabase.from('xp_history').insert({
           user_id: userId,
-          xp_amount: 15, // Valor fixo de 15XP por módulo
-          source: 'MODULE_COMPLETION',
-          source_id: String(moduleId),
+          xp_amount: 5,
+          source: 'PHASE_COMPLETION',
+          source_id: phaseId.toString(),
         });
+        
+        if (!error) {
+          awardedXp.xpFromPhase = 5;
+        }
+      }
+      
+      // 4. Verifica se a conclusão desta fase completou o módulo
+      const moduleIsNowComplete = await isModuleCompleted(userId, moduleId);
+      console.log(`Module ${moduleId} completed: ${moduleIsNowComplete}`);
 
-        if (!moduleXpError) {
+      if (moduleIsNowComplete) {
+        // 5. Verifica se o XP do módulo já foi concedido
+        const { data: moduleLog } = await supabase
+          .from('xp_history')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('source', 'MODULE_COMPLETION')
+          .eq('source_id', moduleId.toString())
+          .maybeSingle();
+        
+        if (!moduleLog) {
+          const { error: moduleXpError } = await supabase.from('xp_history').insert({
+            user_id: userId,
+            xp_amount: 15,
+            source: 'MODULE_COMPLETION',
+            source_id: moduleId.toString(),
+          });
+
+          if (!moduleXpError) {
             awardedXp.xpFromModule = 15;
+          }
         }
       }
     }
-  }
 
-  // Retorna os valores de XP para o front-end exibir o modal
-  return awardedXp;
+    return awardedXp;
+  } catch (error) {
+    console.error("Error in completePhaseAndAwardXp:", error);
+    throw error;
+  }
 };
