@@ -1,11 +1,15 @@
+// ARQUIVO: components/QuizQuestion.tsx
+// CÓDIGO COMPLETO E ATUALIZADO
 
 import { useState, useEffect } from "react";
+import { Lightbulb } from "lucide-react";
 
 interface QuizQuestionProps {
   question: string;
   options: string[];
   correctAnswer: number;
-  onAnswer: (correct: boolean) => void;
+  tip: string | null;
+  onCorrectAnswer: () => void; // Alterado para ser chamado apenas na resposta correta
   questionId?: number;
 }
 
@@ -13,51 +17,62 @@ const QuizQuestion = ({
   question,
   options,
   correctAnswer,
-  onAnswer,
+  tip,
+  onCorrectAnswer,
   questionId
 }: QuizQuestionProps) => {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [isLocked, setIsLocked] = useState(false); // Para bloquear cliques durante a animação
+  const [showHintButton, setShowHintButton] = useState(false);
+  const [showHint, setShowHint] = useState(false);
 
   useEffect(() => {
-    // Reset state when question changes
+    // Resetar estado quando a pergunta muda
     setSelectedOption(null);
     setShowFeedback(false);
-  }, [question, questionId]);
+    setIsLocked(false);
+    setShowHintButton(false);
+    setShowHint(false);
+  }, [questionId]);
 
-  console.log(`Rendering question "${question}" (ID: ${questionId}) with correct answer: ${correctAnswer} and options:`, options);
-  
-  // Check if options is a valid array
-  if (!Array.isArray(options)) {
-    console.error("Invalid options provided for question:", question, "Options:", options);
-    return <div>Erro ao carregar as opções desta pergunta. As opções não são um array válido.</div>;
-  }
-  
-  if (options.length === 0) {
-    console.error("Empty options array for question:", question);
-    return <div>Erro ao carregar as opções desta pergunta. Nenhuma opção disponível.</div>;
-  }
-  
-  // Ensure correctAnswer is a valid index
-  if (correctAnswer === undefined || correctAnswer === null || correctAnswer < 0 || correctAnswer >= options.length) {
-    console.error("Invalid correct answer index:", correctAnswer, "for question:", question);
-    return <div>Erro ao carregar a resposta correta desta pergunta.</div>;
+  if (!Array.isArray(options) || options.length === 0 || correctAnswer === undefined) {
+    return <div>Erro ao carregar dados da pergunta.</div>;
   }
 
   const handleOptionClick = (index: number) => {
-    if (selectedOption !== null || showFeedback) return;
-    
+    if (isLocked) return; // Não faz nada se já estiver bloqueado
+
+    setIsLocked(true);
     setSelectedOption(index);
     setShowFeedback(true);
     
     const isCorrect = index === correctAnswer;
-    console.log(`User selected option ${index}, correct answer is ${correctAnswer}, isCorrect: ${isCorrect}`);
-    
-    setTimeout(() => {
-      onAnswer(isCorrect);
-      setSelectedOption(null);
-      setShowFeedback(false);
-    }, 1500);
+
+    if (isCorrect) {
+      // Esconde a dica caso o usuário acerte
+      setShowHintButton(false);
+      setShowHint(false);
+
+      // (Item 2) Aumentar o tempo da animação para 3 segundos
+      setTimeout(() => {
+        // (Item 1) Avança apenas se a resposta for correta
+        onCorrectAnswer();
+        // O reset do estado acontecerá pelo useEffect quando a próxima pergunta carregar
+      }, 3000);
+    } else {
+      // (Item 3) Se errar, mostra o botão de dica
+      if (tip) { // Só mostra o botão se houver uma dica disponível
+        setShowHintButton(true);
+      }
+      
+      // Permite nova tentativa após 2 segundos
+      setTimeout(() => {
+        setIsLocked(false);
+        setSelectedOption(null);
+        setShowFeedback(false); // Esconde o GIF para não poluir a tela na nova tentativa
+      }, 2000);
+    }
   };
 
   const getFeedbackGif = (isCorrect: boolean) => {
@@ -92,7 +107,7 @@ const QuizQuestion = ({
                 : "border-gray-200 hover:border-trilha-orange hover:bg-trilha-orange/5"
             }`}
             onClick={() => handleOptionClick(index)}
-            disabled={showFeedback}
+            disabled={isLocked} // Desabilita o botão quando está bloqueado
           >
             <div className="flex items-center gap-3">
               <div
@@ -111,23 +126,44 @@ const QuizQuestion = ({
           </button>
         ))}
       </div>
-
-      {showFeedback && (
-        <div className="mt-6 text-center">
-          <div className="h-32 w-full overflow-hidden rounded-lg">
-            <img
-              src={getFeedbackGif(selectedOption === correctAnswer)}
-              alt="Feedback"
-              className="h-full w-full object-cover"
-            />
+      
+      {/* Container para Dica e Feedback */}
+      <div className="mt-6 space-y-4 text-center">
+        {showFeedback && (
+          <div>
+            <div className="h-32 w-full overflow-hidden rounded-lg">
+              <img
+                src={getFeedbackGif(selectedOption === correctAnswer)}
+                alt="Feedback"
+                className="h-full w-full object-cover"
+              />
+            </div>
+            <p className="mt-2 text-lg font-bold">
+              {selectedOption === correctAnswer
+                ? "Acertou! 🔥 Você é fera!"
+                : "Opa, não foi dessa vez. Tente de novo! 😅"}
+            </p>
           </div>
-          <p className="mt-2 text-lg font-bold">
-            {selectedOption === correctAnswer
-              ? "Acertou! 🔥 Você é fera!"
-              : "Opa, não foi dessa vez 😅"}
-          </p>
-        </div>
-      )}
+        )}
+
+        {showHintButton && !showHint && (
+          <button
+            onClick={() => setShowHint(true)}
+            className="inline-flex items-center gap-2 rounded-full bg-yellow-100 px-4 py-2 text-sm font-semibold text-yellow-800 transition hover:bg-yellow-200"
+          >
+            <Lightbulb className="h-4 w-4" />
+            Quer uma dica?
+          </button>
+        )}
+
+        {showHint && tip && (
+          <div className="rounded-lg border-2 border-dashed border-yellow-400 bg-yellow-50 p-4 text-yellow-900">
+            <p className="font-bold">Dica:</p>
+            <p>{tip}</p>
+          </div>
+        )}
+
+      </div>
     </div>
   );
 };
