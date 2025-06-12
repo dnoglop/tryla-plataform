@@ -1,4 +1,3 @@
-
 // ARQUIVO: services/moduleService.ts
 // CÓDIGO COMPLETO E ATUALIZADO
 
@@ -231,7 +230,7 @@ export const getUserPhaseStatus = async (userId: string, phaseId: number): Promi
       .select('status')
       .eq('user_id', userId)
       .eq('phase_id', phaseId)
-      .maybeSingle(); // Use maybeSingle() ao invés de single()
+      .maybeSingle();
 
     if (error) {
       console.error("Error fetching user phase status:", error);
@@ -247,26 +246,52 @@ export const getUserPhaseStatus = async (userId: string, phaseId: number): Promi
   }
 };
 
-// FUNÇÃO CORRIGIDA: Atualiza ou insere o status da fase
+// FUNÇÃO CORRIGIDA: Atualiza ou insere o status da fase sem usar onConflict problemático
 export const updateUserPhaseStatus = async (userId: string, phaseId: number, status: PhaseStatus): Promise<void> => {
   try {
     console.log(`Updating phase ${phaseId} status to ${status} for user ${userId}`);
     
-    const { error } = await supabase
+    // Primeiro, tenta verificar se o registro já existe
+    const { data: existing } = await supabase
       .from('user_phases')
-      .upsert({
-        user_id: userId,
-        phase_id: phaseId,
-        status: status,
-        started_at: status === 'inProgress' ? new Date().toISOString() : undefined,
-        completed_at: status === 'completed' ? new Date().toISOString() : undefined
-      }, {
-        onConflict: 'user_id,phase_id'
-      });
+      .select('id')
+      .eq('user_id', userId)
+      .eq('phase_id', phaseId)
+      .maybeSingle();
 
-    if (error) {
-      console.error("Error updating user phase status:", error);
-      throw error;
+    const updateData = {
+      user_id: userId,
+      phase_id: phaseId,
+      status: status,
+      started_at: status === 'inProgress' ? new Date().toISOString() : undefined,
+      completed_at: status === 'completed' ? new Date().toISOString() : undefined
+    };
+
+    if (existing) {
+      // Atualiza o registro existente
+      const { error } = await supabase
+        .from('user_phases')
+        .update({
+          status: status,
+          started_at: status === 'inProgress' ? new Date().toISOString() : undefined,
+          completed_at: status === 'completed' ? new Date().toISOString() : undefined
+        })
+        .eq('id', existing.id);
+
+      if (error) {
+        console.error("Error updating user phase status:", error);
+        throw error;
+      }
+    } else {
+      // Insere um novo registro
+      const { error } = await supabase
+        .from('user_phases')
+        .insert([updateData]);
+
+      if (error) {
+        console.error("Error inserting user phase status:", error);
+        throw error;
+      }
     }
 
     console.log(`Successfully updated phase ${phaseId} status to ${status}`);
