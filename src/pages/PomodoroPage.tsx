@@ -1,14 +1,17 @@
+// ARQUIVO: PomodoroPage.tsx
+// CÓDIGO ATUALIZADO APENAS COM O ACCORDION
+
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getProfile, Profile } from '@/services/profileService';
 
 // Ícones e Componentes
-import { ArrowLeft, Play, Pause, RotateCcw, SkipForward } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ArrowLeft, Play, Pause, RotateCcw, SkipForward, ArrowUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+// 1. IMPORTAR OS COMPONENTES DO ACCORDION
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 // --- CONFIGURAÇÕES DO POMODORO ---
 const FOCUS_TIME = 25 * 60; // 25 minutos
@@ -84,7 +87,6 @@ export function PomodoroPage() {
     const toggleTimer = () => setIsActive(!isActive);
     const resetTimer = () => switchMode(mode);
     
-    // Formatação do tempo para exibição (ex: 25:00)
     const formatTime = (seconds: number) => {
         const minutes = Math.floor(seconds / 60);
         const secs = seconds % 60;
@@ -117,8 +119,67 @@ export function PomodoroPage() {
                 </div>
             </header>
 
+            {/* Explicação sobre a Técnica Pomodoro */}
+            <div className="mx-4 sm:mx-6 lg:mx-8 mb-6">
+                <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200/80">
+                    <h2 className="text-lg font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                        <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                        Técnica Pomodoro
+                    </h2>
+                    <div className="text-sm text-slate-600 space-y-3">
+                        <p>A Técnica Pomodoro é um método de gerenciamento de tempo desenvolvido por Francesco Cirillo no final dos anos 1980. O nome deriva do timer de cozinha em formato de tomate que ele usava durante seus estudos universitários.</p>
+                        
+                        <p>Esta técnica divide o trabalho em intervalos de tempo focados, tradicionalmente de 25 minutos, seguidos por pausas curtas de 5 minutos. Após completar 4 ciclos de foco, você faz uma pausa mais longa de 15-30 minutos.</p>
+                        
+                        {/* 2. INÍCIO DA MUDANÇA: SUBSTITUINDO OS BLOCOS DE INFO PELO ACCORDION */}
+                        <Accordion type="single" collapsible className="w-full">
+                            <AccordionItem value="como-funciona" className="border-b-0">
+                                <AccordionTrigger className="bg-slate-50 hover:no-underline px-4 rounded-lg font-medium text-slate-700">
+                                    Como funciona
+                                </AccordionTrigger>
+                                <AccordionContent className="p-4">
+                                    <div className="space-y-2 text-xs">
+                                        <div className="flex items-start gap-2">
+                                            <div className="w-2 h-2 bg-orange-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                                            <div><strong>Foco (25 minutos):</strong> Trabalhe em uma tarefa específica com total concentração, sem distrações</div>
+                                        </div>
+                                        <div className="flex items-start gap-2">
+                                            <div className="w-2 h-2 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                                            <div><strong>Pausa Curta (5 minutos):</strong> Faça uma pausa rápida - alongue-se, beba água ou apenas relaxe</div>
+                                        </div>
+                                        <div className="flex items-start gap-2">
+                                            <div className="w-2 h-2 bg-green-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                                            <div><strong>Pausa Longa (15 minutos):</strong> Após 4 ciclos, faça uma pausa maior para recarregar as energias</div>
+                                        </div>
+                                    </div>
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
+                        
+                        <Accordion type="single" collapsible className="w-full">
+                             <AccordionItem value="beneficios" className="border-b-0">
+                                 <AccordionTrigger className="bg-orange-50 hover:no-underline px-4 rounded-lg font-medium text-orange-800">
+                                     Benefícios da técnica
+                                 </AccordionTrigger>
+                                 <AccordionContent className="p-4">
+                                     <ul className="text-xs space-y-1 text-orange-700">
+                                         <li>• Melhora o foco e a concentração</li>
+                                         <li>• Reduz a procrastinação</li>
+                                         <li>• Aumenta a produtividade</li>
+                                         <li>• Ajuda a gerenciar melhor o tempo</li>
+                                         <li>• Diminui a fadiga mental</li>
+                                         <li>• Proporciona sensação de progresso</li>
+                                     </ul>
+                                 </AccordionContent>
+                             </AccordionItem>
+                        </Accordion>
+                         {/* FIM DA MUDANÇA */}
+                    </div>
+                </div>
+            </div>
+
             {/* Corpo da Ferramenta */}
-            <main className="flex flex-col items-center justify-center p-4 text-center" style={{ minHeight: 'calc(100vh - 104px)' }}>
+            <main className="flex flex-col items-center justify-center p-4 text-center">
                 <div className="w-full max-w-sm bg-white p-8 rounded-3xl shadow-lg border border-slate-200/80">
                     {/* Abas de Modo */}
                     <div className="flex justify-center bg-slate-100 p-1 rounded-full mb-8">
@@ -131,12 +192,13 @@ export function PomodoroPage() {
                     <div className="relative w-48 h-48 sm:w-60 sm:h-60 mx-auto mb-8">
                         <svg className="w-full h-full" viewBox="0 0 100 100">
                             {/* Círculo de fundo */}
-                            <circle className="text-slate-200" strokeWidth="7" cx="50" cy="50" r="45" fill="transparent" />
+                            <circle className="text-slate-200" strokeWidth="7" stroke="currentColor" cx="50" cy="50" r="45" fill="transparent" />
                             {/* Círculo de progresso */}
                             <circle
                                 className="text-orange-500"
                                 strokeWidth="7"
                                 strokeLinecap="round"
+                                stroke="currentColor"
                                 cx="50" cy="50" r="45"
                                 fill="transparent"
                                 strokeDasharray="282.743"
@@ -158,7 +220,19 @@ export function PomodoroPage() {
                         <Button variant="ghost" size="icon" onClick={handleTimerEnd} className="h-12 w-12 rounded-full bg-slate-100 hover:bg-slate-200"><SkipForward className="h-6 w-6 text-slate-500" /></Button>
                     </div>
                 </div>
-                <p className="text-sm text-slate-500 mt-4">Ciclos de foco completados: {cycles}</p>
+                
+                {/* Contador de Ciclos */}
+                <p className="text-sm text-slate-500 mt-4 mb-6">Ciclos de foco completados: {cycles}</p>
+
+                {/* Botão para voltar ao Lab */}
+                <Button 
+                    onClick={() => navigate('/lab')}
+                    variant="outline"
+                    className="flex items-center gap-2 bg-white hover:bg-slate-50 border-slate-200 text-slate-700 px-6 py-3 rounded-full shadow-sm"
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    Voltar ao Lab
+                </Button>
             </main>
         </div>
     );
