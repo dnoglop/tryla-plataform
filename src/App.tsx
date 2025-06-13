@@ -1,107 +1,178 @@
-// src/App.tsx
 
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-
-// Componentes e Layout
-import ProtectedRoute from "./components/ProtectedRoute";
-import Layout from "@/components/Layout";
-import { Toaster } from "sonner";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { QueryProvider } from "@/providers/QueryProvider";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { Toaster } from "@/components/ui/sonner";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import { RewardModalProvider } from "@/components/XpRewardModal/RewardModalContext";
-import { ThemeProvider } from "./components/theme/ThemeProvider"; // Importar ThemeProvider
 
-// Páginas
-import SplashScreen from "./pages/SplashScreen";
-import AdminPage from "./pages/AdminPage";
-import LoginPage from "./pages/LoginPage";
-import SignupPage from "./pages/SignupPage";
-import DashboardPage from "./pages/DashboardPage";
-import ModulesPage from "./pages/ModulesPage";
-import ModuleDetailPage from "./pages/ModuleDetailPage";
-import PhaseDetailPage from "./pages/PhaseDetailPage";
-import ProfilePage from "./pages/ProfilePage";
-import EditProfilePage from "./pages/EditProfilePage";
-import JournalPage from "./pages/JournalPage";
-import TutorPage from "./pages/TutorPage";
-import LabPage from "./pages/LabPage";
-import { VocationalTestPage } from "./pages/VocationalTestPage";
-import SocialPage from "./pages/SocialPage";
-import { PomodoroPage } from "./pages/PomodoroPage";
-import OnboardingPage from "./pages/OnboardingPage";
-import CompleteProfilePage from "./pages/CompleteProfilePage";
-import SettingsPage from "./pages/SettingsPage"; // Importar SettingsPage
+// Pages
+import SplashScreen from "@/pages/SplashScreen";
+import LoginPage from "@/pages/LoginPage";
+import SignupPage from "@/pages/SignupPage";
+import OnboardingPage from "@/pages/OnboardingPage";
+import CompleteProfilePage from "@/pages/CompleteProfilePage";
+import DashboardPage from "@/pages/DashboardPage";
+import ModulesPage from "@/pages/ModulesPage";
+import ModuleDetailPage from "@/pages/ModuleDetailPage";
+import PhaseDetailPage from "@/pages/PhaseDetailPage";
+import ProfilePage from "@/pages/ProfilePage";
+import EditProfilePage from "@/pages/EditProfilePage";
+import VocationalTestPage from "@/pages/VocationalTestPage";
+import JournalPage from "@/pages/JournalPage";
+import TutorPage from "@/pages/TutorPage";
+import PomodoroPage from "@/pages/PomodoroPage";
+import SocialPage from "@/pages/SocialPage";
+import LabPage from "@/pages/LabPage";
+import AdminPage from "@/pages/AdminPage";
+import SettingsPage from "@/pages/SettingsPage";
+import NotFound from "@/pages/NotFound";
 
 function App() {
-  const queryClient = useQueryClient();
-
-  useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
-        queryClient.invalidateQueries({ queryKey: ["userAuthStatus"] });
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [queryClient]);
-
   return (
-    // Envolver a aplicação com o ThemeProvider
-    <ThemeProvider defaultTheme="system" storageKey="app-ui-theme">
-      <RewardModalProvider>
-        <Router>
-          <Routes>
-            {/* --- Rotas Públicas --- */}
-            <Route path="/" element={<SplashScreen />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/cadastro" element={<SignupPage />} />
-
-            {/* --- Rotas Protegidas --- */}
-            <Route element={<ProtectedRoute />}>
-              {/* Rotas de Onboarding (acessíveis apenas a usuários logados sem onboarding) */}
-              <Route path="/onboarding" element={<OnboardingPage />} />
+    <QueryProvider>
+      <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+        <RewardModalProvider>
+          <Router>
+            <Routes>
+              <Route path="/" element={<SplashScreen />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
               <Route
-                path="/complete-profile"
-                element={<CompleteProfilePage />}
+                path="/onboarding"
+                element={
+                  <ProtectedRoute>
+                    <OnboardingPage />
+                  </ProtectedRoute>
+                }
               />
-              {/* Rotas principais com o Layout (disponíveis após o onboarding) */}
-              <Route element={<Layout />}>
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/modulos" element={<ModulesPage />} />
-                <Route path="/social" element={<SocialPage />} />
-                <Route path="/lab" element={<LabPage />} />
-                <Route path="/perfil" element={<ProfilePage />} />
-                <Route path="/diario" element={<JournalPage />} />
-                <Route path="/tutor" element={<TutorPage />} />
-              </Route>
-              {/* Rotas de tela cheia (disponíveis após o onboarding) */}
-              <Route path="/admin" element={<AdminPage />} />
-              <Route path="/editar-perfil" element={<EditProfilePage />} />
-              <Route path="/configuracoes" element={<SettingsPage />} />{" "}
-              {/* ROTA ADICIONADA */}
-              <Route path="/modulo/:id" element={<ModuleDetailPage />} />
               <Route
-                path="/fase/:moduleId/:phaseId"
-                element={<PhaseDetailPage />}
+                path="/completar-perfil"
+                element={
+                  <ProtectedRoute>
+                    <CompleteProfilePage />
+                  </ProtectedRoute>
+                }
               />
-              <Route path="/lab/pomodoro" element={<PomodoroPage />} />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <DashboardPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/modulos"
+                element={
+                  <ProtectedRoute>
+                    <ModulesPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/modulo/:id"
+                element={
+                  <ProtectedRoute>
+                    <ModuleDetailPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/modulo/:moduleId/fase/:id"
+                element={
+                  <ProtectedRoute>
+                    <PhaseDetailPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/perfil"
+                element={
+                  <ProtectedRoute>
+                    <ProfilePage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/editar-perfil"
+                element={
+                  <ProtectedRoute>
+                    <EditProfilePage />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/teste-vocacional"
-                element={<VocationalTestPage />}
+                element={
+                  <ProtectedRoute>
+                    <VocationalTestPage />
+                  </ProtectedRoute>
+                }
               />
-            </Route>
-          </Routes>
-
-          {/* Toaster para notificações */}
-          <Toaster position="top-center" closeButton richColors />
-        </Router>
-      </RewardModalProvider>
-    </ThemeProvider>
+              <Route
+                path="/diario"
+                element={
+                  <ProtectedRoute>
+                    <JournalPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/tutor"
+                element={
+                  <ProtectedRoute>
+                    <TutorPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/pomodoro"
+                element={
+                  <ProtectedRoute>
+                    <PomodoroPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/social"
+                element={
+                  <ProtectedRoute>
+                    <SocialPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/lab"
+                element={
+                  <ProtectedRoute>
+                    <LabPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute>
+                    <AdminPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/configuracoes"
+                element={
+                  <ProtectedRoute>
+                    <SettingsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <Toaster />
+          </Router>
+        </RewardModalProvider>
+      </ThemeProvider>
+    </QueryProvider>
   );
 }
 
