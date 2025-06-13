@@ -1,9 +1,11 @@
+
 // src/pages/LabPage.tsx
 
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { getProfile, Profile } from "@/services/profileService";
+import { Button } from "@/components/ui/button";
 import {
   BrainCircuit,
   BookOpen,

@@ -3,9 +3,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-// ... (todas as outras funções e interfaces permanecem como estão) ...
-// ... (omiti as outras funções para focar na correção, mas elas devem continuar no seu arquivo) ...
-
 export type PhaseStatus = "notStarted" | "inProgress" | "completed";
 export type ModuleType =
   | "autoconhecimento"
@@ -58,13 +55,16 @@ export interface Question {
 
 export const getModules = async (): Promise<Module[]> => {
   try {
-    // Excluímos 'content' que pode ser grande e não é usado na listagem de módulos.
     const { data, error } = await supabase
       .from("modules")
-      .select("id, created_at, name, description, type, emoji, order_index")
+      .select("id, created_at, name, description, type, emoji, order_index, content")
       .order("order_index", { ascending: true });
     if (error) throw error;
-    return data || [];
+    return (data || []).map(module => ({
+      ...module,
+      type: module.type as ModuleType,
+      content: module.content || null
+    }));
   } catch (error) {
     console.error("Error fetching modules:", error);
     throw error;
@@ -79,7 +79,10 @@ export const getModuleById = async (id: number): Promise<Module | null> => {
       .eq("id", id)
       .single();
     if (error) throw error;
-    return data;
+    return data ? {
+      ...data,
+      type: data.type as ModuleType
+    } : null;
   } catch (error) {
     console.error("Error fetching module by id:", error);
     throw error;
@@ -143,16 +146,22 @@ export const getPhasesByModuleId = async (
   moduleId: number,
 ): Promise<Phase[]> => {
   try {
-    // Excluímos colunas grandes como 'content' e 'video_notes' da listagem inicial.
     const { data, error } = await supabase
       .from("phases")
       .select(
-        "id, created_at, module_id, name, description, type, icon_type, duration, order_index",
+        "id, created_at, module_id, name, description, type, icon_type, duration, order_index, content, video_url, video_notes",
       )
       .eq("module_id", moduleId)
       .order("order_index", { ascending: true });
     if (error) throw error;
-    return data || [];
+    return (data || []).map(phase => ({
+      ...phase,
+      type: phase.type as PhaseType,
+      icon_type: phase.icon_type as IconType,
+      content: phase.content || null,
+      video_url: phase.video_url || null,
+      video_notes: phase.video_notes || null
+    }));
   } catch (error) {
     console.error("Error fetching phases by module id:", error);
     throw error;
@@ -167,7 +176,11 @@ export const getPhaseById = async (id: number): Promise<Phase | null> => {
       .eq("id", id)
       .single();
     if (error) throw error;
-    return data;
+    return data ? {
+      ...data,
+      type: data.type as PhaseType,
+      icon_type: data.icon_type as IconType
+    } : null;
   } catch (error) {
     console.error("Error fetching phase by id:", error);
     throw error;
@@ -224,11 +237,9 @@ export const getQuestionsByPhaseId = async (
   phaseId: number,
 ): Promise<Question[]> => {
   try {
-    // Otimização: Uma única chamada à API em vez de duas.
-    // Buscamos 'questions' e filtramos usando a coluna 'phase_id' da tabela relacionada 'quizzes'.
     const { data: questions, error } = await supabase
       .from("questions")
-      .select("*, tips_question, quizzes!inner(phase_id)") // Usamos !inner para garantir que só retorne questões de quizzes existentes
+      .select("*, tips_question, quizzes!inner(phase_id)")
       .eq("quizzes.phase_id", phaseId)
       .order("order_index", { ascending: true });
 
@@ -249,7 +260,7 @@ export const getQuestionsByPhaseId = async (
       }
       return {
         ...question,
-        options,
+        options: options.map(opt => String(opt)),
         tips_question: question.tips_question,
         phase_id: phaseId,
       };
@@ -353,9 +364,6 @@ export const getModuleProgress = async (
   moduleId: number,
 ): Promise<number> => {
   try {
-    // Otimização: Deixa o banco de dados contar em vez de processar no cliente.
-
-    // 1. Contar o total de fases no módulo
     const { count: totalPhases, error: totalError } = await supabase
       .from("phases")
       .select("*", { count: "exact", head: true })
@@ -364,7 +372,6 @@ export const getModuleProgress = async (
     if (totalError) throw totalError;
     if (totalPhases === 0 || totalPhases === null) return 0;
 
-    // 2. Contar as fases completas pelo usuário para esse módulo
     const { count: completedPhases, error: completedError } = await supabase
       .from("user_phases")
       .select("*, phases!inner(module_id)", { count: "exact", head: true })
@@ -386,7 +393,6 @@ export const isModuleCompleted = async (
   moduleId: number,
 ): Promise<boolean> => {
   try {
-    // Otimização: A mesma lógica de contagem do getModuleProgress
     const { count: totalPhases, error: totalError } = await supabase
       .from("phases")
       .select("*", { count: "exact", head: true })
@@ -481,7 +487,6 @@ export const awardQuizXp = async (
   }
 };
 
-// A função original foi removida e substituída por esta chamada RPC.
 export const completePhaseAndAwardXp = async (
   userId: string,
   phaseId: number,
@@ -508,7 +513,6 @@ export const completePhaseAndAwardXp = async (
       throw error;
     }
 
-    // A RPC retorna uma linha com os valores de XP.
     if (data && data.length > 0) {
       return {
         xpFromPhase: data[0].xp_from_phase,

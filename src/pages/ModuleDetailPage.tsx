@@ -1,3 +1,4 @@
+
 // src/pages/ModuleDetailPage.tsx
 
 import { useState, useEffect } from "react";
@@ -47,7 +48,13 @@ const PhaseCard = ({
 }) => {
     const isCompleted = status === "completed";
     const getPhaseTypeInPortuguese = (type: string | null): string => {
-        /* ... (código inalterado) ... */
+        switch (type) {
+            case "video": return "Vídeo";
+            case "text": return "Leitura";
+            case "quiz": return "Quiz";
+            case "challenge": return "Desafio";
+            default: return "Conteúdo";
+        }
     };
 
     const getIcon = () => {
@@ -192,10 +199,17 @@ export default function ModuleDetailPage() {
     };
 
     const startModule = () => {
-        /* ... (lógica inalterada) ... */
+        if (!data?.phases || data.phases.length === 0) return;
+        const firstPhase = data.phases[0];
+        navigate(`/modulo/${moduleId}/fase/${firstPhase.id}`);
     };
+
     const handlePhaseClick = (phase: Phase, phaseIndex: number) => {
-        /* ... (lógica inalterada) ... */
+        if (isPhaseLocked(phaseIndex)) {
+            toast.error("Complete a fase anterior para desbloquear esta.");
+            return;
+        }
+        navigate(`/modulo/${moduleId}/fase/${phase.id}`);
     };
 
     if (isLoading) return <ModuleDetailSkeleton />;

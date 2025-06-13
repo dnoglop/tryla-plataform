@@ -1,3 +1,4 @@
+
 // src/pages/PomodoroPage.tsx
 
 import { useState, useEffect, useCallback } from "react";
@@ -29,10 +30,21 @@ export function PomodoroPage() {
     const [isActive, setIsActive] = useState(false);
     const [cycles, setCycles] = useState(0);
 
-    // ... (toda a lógica do timer e fetch de perfil permanece a mesma)
     useEffect(() => {
         const fetchUserProfile = async () => {
-            /* ... */
+            try {
+                setIsLoadingProfile(true);
+                const {
+                    data: { user },
+                    error: authError,
+                } = await supabase.auth.getUser();
+                if (authError) throw new Error("Erro de autenticação");
+                if (user) setProfile(await getProfile(user.id));
+            } catch (error) {
+                console.error("Erro ao carregar perfil:", error);
+            } finally {
+                setIsLoadingProfile(false);
+            }
         };
         fetchUserProfile();
     }, []);
@@ -51,15 +63,42 @@ export function PomodoroPage() {
     }, [isActive, time]);
 
     const switchMode = useCallback((newMode: TimerMode) => {
-        /* ... */
+        setMode(newMode);
+        setIsActive(false);
+        switch (newMode) {
+            case "focus":
+                setTime(FOCUS_TIME);
+                break;
+            case "shortBreak":
+                setTime(SHORT_BREAK_TIME);
+                break;
+            case "longBreak":
+                setTime(LONG_BREAK_TIME);
+                break;
+        }
     }, []);
+
     const handleTimerEnd = () => {
-        /* ... */
+        setIsActive(false);
+        if (mode === "focus") {
+            const newCycles = cycles + 1;
+            setCycles(newCycles);
+            if (newCycles % CYCLES_BEFORE_LONG_BREAK === 0) {
+                switchMode("longBreak");
+            } else {
+                switchMode("shortBreak");
+            }
+        } else {
+            switchMode("focus");
+        }
     };
+
     const toggleTimer = () => setIsActive(!isActive);
     const resetTimer = () => switchMode(mode);
     const formatTime = (seconds: number) => {
-        /* ... */
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
     };
 
     const totalDuration =
@@ -73,13 +112,12 @@ export function PomodoroPage() {
     if (isLoadingProfile) {
         return (
             <div className="min-h-screen bg-background flex items-center justify-center">
-                Carregando...
+                <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
             </div>
         );
     }
 
     return (
-        // MUDANÇA: FUNDO PRINCIPAL ADAPTADO PARA TEMA
         <div className="min-h-screen w-full bg-background">
             <header className="p-4 sm:p-6 lg:p-8">
                 <div className="flex justify-between items-center">
@@ -107,7 +145,6 @@ export function PomodoroPage() {
                 </div>
             </header>
 
-            {/* MUDANÇA: CARD DE EXPLICAÇÃO COM CORES DE TEMA */}
             <div className="mx-4 sm:mx-6 lg:mx-8 mb-6">
                 <div className="bg-card p-6 rounded-2xl shadow-lg border">
                     <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
@@ -117,14 +154,13 @@ export function PomodoroPage() {
                     <div className="text-sm text-muted-foreground space-y-3">
                         <p>
                             A Técnica Pomodoro é um método de gerenciamento de
-                            tempo... (texto continua)
+                            tempo que divide o trabalho em intervalos de 25 minutos.
                         </p>
                         <p>
-                            Esta técnica divide o trabalho em intervalos...
-                            (texto continua)
+                            Esta técnica divide o trabalho em intervalos de foco
+                            seguidos por pausas curtas.
                         </p>
 
-                        {/* MUDANÇA: ACCORDION COM CORES DE TEMA */}
                         <Accordion type="single" collapsible className="w-full">
                             <AccordionItem
                                 value="como-funciona"
@@ -134,7 +170,11 @@ export function PomodoroPage() {
                                     Como funciona
                                 </AccordionTrigger>
                                 <AccordionContent className="p-4">
-                                    {/* ... (conteúdo do accordion) */}
+                                    <ul className="text-xs space-y-1 text-muted-foreground">
+                                        <li>• 25 minutos de foco intenso</li>
+                                        <li>• 5 minutos de pausa</li>
+                                        <li>• A cada 4 ciclos, uma pausa longa de 15 minutos</li>
+                                    </ul>
                                 </AccordionContent>
                             </AccordionItem>
                         </Accordion>
@@ -149,7 +189,9 @@ export function PomodoroPage() {
                                 </AccordionTrigger>
                                 <AccordionContent className="p-4">
                                     <ul className="text-xs space-y-1 text-primary/80">
-                                        {/* ... (conteúdo do accordion) */}
+                                        <li>• Melhora o foco e concentração</li>
+                                        <li>• Reduz a procrastinação</li>
+                                        <li>• Aumenta a produtividade</li>
                                     </ul>
                                 </AccordionContent>
                             </AccordionItem>
@@ -158,7 +200,6 @@ export function PomodoroPage() {
                 </div>
             </div>
 
-            {/* MUDANÇA: CARD PRINCIPAL DO TIMER COM CORES DE TEMA */}
             <main className="flex flex-col items-center justify-center p-4 text-center">
                 <div className="w-full max-w-sm bg-card p-8 rounded-3xl shadow-lg border">
                     <div className="flex justify-center bg-muted p-1 rounded-full mb-8">
@@ -194,7 +235,6 @@ export function PomodoroPage() {
                         </button>
                     </div>
 
-                    {/* MUDANÇA: CORES DO TIMER VISUAL */}
                     <div className="relative w-48 h-48 sm:w-60 sm:h-60 mx-auto mb-8">
                         <svg className="w-full h-full" viewBox="0 0 100 100">
                             <circle
@@ -234,7 +274,6 @@ export function PomodoroPage() {
                         </div>
                     </div>
 
-                    {/* MUDANÇA: CORES DOS BOTÕES DE CONTROLE */}
                     <div className="flex items-center justify-center gap-4">
                         <Button
                             variant="ghost"

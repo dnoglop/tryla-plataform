@@ -101,7 +101,6 @@ const NextModuleCard = ({
 );
 
 export default function PhaseDetailPage() {
-    // ... (lógica do componente permanece a mesma)
     const { moduleId, phaseId } = useParams<{
         moduleId: string;
         phaseId: string;
@@ -187,7 +186,6 @@ export default function PhaseDetailPage() {
         enabled: !!phaseId && !!moduleId && !!userId,
     });
 
-    // ... (lógica de hooks e handlers permanece a mesma)
     const {
         phase,
         module,
@@ -213,20 +211,83 @@ export default function PhaseDetailPage() {
             ? allModules[currentModuleIndex + 1]
             : null;
 
+    const handleReadContent = () => {
+        if (!phase?.content) return;
+        
+        if (isPlaying) {
+            stopAudio();
+        } else {
+            const textContent = phase.content.replace(/<[^>]*>/g, '');
+            playText(textContent, speechRate);
+        }
+    };
+
+    const navigateToPrevious = () => {
+        if (previousPhase) {
+            navigate(`/modulo/${moduleId}/fase/${previousPhase.id}`);
+        }
+    };
+
     const navigateToNext = () => {
-        /* ... */
+        if (nextPhase) {
+            navigate(`/modulo/${moduleId}/fase/${nextPhase.id}`);
+        } else {
+            setModuleCompleted(true);
+        }
     };
+
     const handleCompletePhase = async () => {
-        /* ... */
+        if (!userId || !phaseId || !moduleId) return;
+        
+        setIsSubmitting(true);
+        try {
+            const result = await completePhaseAndAwardXp(
+                userId,
+                Number(phaseId),
+                Number(moduleId),
+                false
+            );
+
+            if (result.xpFromPhase > 0 || result.xpFromModule > 0) {
+                showRewardModal({
+                    phaseXp: result.xpFromPhase,
+                    moduleXp: result.xpFromModule,
+                    onClose: () => navigateToNext()
+                });
+            } else {
+                navigateToNext();
+            }
+
+            queryClient.invalidateQueries({ queryKey: ["phaseDetailData"] });
+        } catch (error) {
+            console.error("Erro ao completar fase:", error);
+            toast.error("Erro ao completar fase");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
+
     const handleCorrectAnswer = async () => {
-        /* ... */
+        if (!userId || !phaseId || quizElapsedTime === null) return;
+
+        const timeBonus = calculateXpForTime(quizElapsedTime, questions.length);
+        const awarded = await awardQuizXp(userId, Number(phaseId), timeBonus);
+
+        if (awarded) {
+            toast.success(`Parabéns! +${timeBonus} XP pelo tempo!`);
+        }
+
+        setQuizCompleted(true);
     };
+
     const handleNextModule = () => {
-        /* ... */
+        if (nextModule) {
+            navigate(`/modulo/${nextModule.id}`);
+        }
     };
+
     const handleBackToModules = () => {
-        /* ... */
+        navigate("/modulos");
     };
 
     if (isLoading) return <PhaseDetailSkeleton />;
@@ -238,7 +299,6 @@ export default function PhaseDetailPage() {
         );
 
     return (
-        // MUDANÇA: FUNDO PRINCIPAL ADAPTADO PARA TEMA
         <div className="min-h-screen bg-background pb-24">
             <header className="p-4 sm:p-6">
                 <div className="flex items-center justify-between max-w-4xl mx-auto">
@@ -259,7 +319,6 @@ export default function PhaseDetailPage() {
             </header>
 
             <main className="container px-4 sm:px-6 lg:px-8 py-6 space-y-6 max-w-4xl mx-auto">
-                {/* MUDANÇA: CARD PRINCIPAL COM CORES DE TEMA */}
                 <div className="p-6 bg-card rounded-2xl shadow-sm border">
                     <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
@@ -320,7 +379,6 @@ export default function PhaseDetailPage() {
                     <YoutubeEmbed videoId={phase.video_url} />
                 )}
 
-                {/* MUDANÇA: CARD DE CONTEÚDO COM CORES DE TEMA */}
                 {(phase.type === "text" || phase.type === "challenge") &&
                     phase.content && (
                         <div className="p-6 bg-card rounded-2xl shadow-sm border">
@@ -367,10 +425,19 @@ export default function PhaseDetailPage() {
                         </div>
                     )}
 
-                {/* MUDANÇA: CARD DO QUIZ COM CORES DE TEMA */}
                 {phase.type === "quiz" && (
                     <div className="p-6 bg-card rounded-2xl shadow-sm border">
-                        {/* ... (código do quiz) */}
+                        <div className="flex flex-col gap-4">
+                            {questions.map((question, index) => (
+                                <QuizQuestion
+                                    key={question.id}
+                                    question={question}
+                                    onAnswer={handleCorrectAnswer}
+                                    currentQuestionIndex={currentQuestionIndex}
+                                    setCurrentQuestionIndex={setCurrentQuestionIndex}
+                                />
+                            ))}
+                        </div>
                         {quizCompleted && (
                             <div className="p-6 text-center bg-muted rounded-lg">
                                 <h4 className="text-2xl font-bold text-foreground mb-3">
@@ -391,7 +458,6 @@ export default function PhaseDetailPage() {
                     </div>
                 )}
 
-                {/* MUDANÇA: BOTÕES DE NAVEGAÇÃO COM CORES DE TEMA */}
                 <div className="mt-8 flex items-center justify-between gap-4 border-t pt-6">
                     <Button
                         onClick={navigateToPrevious}
@@ -433,8 +499,6 @@ export default function PhaseDetailPage() {
                         onBackToModules={handleBackToModules}
                     />
                 )}
-
-                {/* ... (código de finalização) ... */}
             </main>
         </div>
     );
