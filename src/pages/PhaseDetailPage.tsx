@@ -17,7 +17,7 @@ import {
     ArrowLeft,
     CheckCircle2,
 } from "lucide-react";
-import { speak } from 'tts-speak';
+import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import { useReward } from "@/hooks/use-reward";
 import { toast } from "sonner";
 
@@ -34,8 +34,8 @@ export default function PhaseDetailPage() {
     const queryClient = useQueryClient();
     const phaseId = parseInt(id || "0");
     const [textContent, setTextContent] = useState<string | null>(null);
-    const [isSpeaking, setIsSpeaking] = useState(false);
     const { showReward } = useReward();
+    const { isPlaying, playText, stopAudio } = useTextToSpeech();
 
     const { data: phase, isLoading: isPhaseLoading, error: phaseError } = useQuery({
         queryKey: ["phase", phaseId],
@@ -70,26 +70,21 @@ export default function PhaseDetailPage() {
     }, [phase?.content]);
 
     useEffect(() => {
-        speak.onstart(() => setIsSpeaking(true));
-        speak.onend(() => setIsSpeaking(false));
-
         return () => {
-            speak.stop();
-            speak.cancel();
+            stopAudio();
         };
     }, []);
 
     const handleTextToSpeech = () => {
         if (!textContent) return;
         
-        const options = {
-            text: textContent,
-            rate: 1,
-            pitch: 1,
-            volume: 1
-        };
-        
-        speak(options);
+        if (isPlaying) {
+            stopAudio();
+        } else {
+            // Clean HTML tags from content for better speech
+            const cleanText = textContent.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+            playText(cleanText, { lang: 'pt-BR', rate: 1.1 });
+        }
     };
 
     const handleCompletePhase = async () => {
@@ -172,12 +167,12 @@ export default function PhaseDetailPage() {
                                     size="sm"
                                     className="flex items-center gap-2"
                                 >
-                                    {isSpeaking ? (
+                                    {isPlaying ? (
                                         <Pause className="h-4 w-4" />
                                     ) : (
                                         <Play className="h-4 w-4" />
                                     )}
-                                    {isSpeaking ? "Pausar" : "Ouvir"}
+                                    {isPlaying ? "Pausar" : "Ouvir"}
                                 </Button>
                             )}
                         </div>
