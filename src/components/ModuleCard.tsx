@@ -7,27 +7,29 @@ interface ModuleCardProps {
   name: string;
   description: string;
   emoji?: string;
+  type?: string;
   estimatedTime?: string;
   progress: number;
-  isLocked?: boolean;
-  isCompleted?: boolean;
+  locked?: boolean;
+  completed?: boolean;
 }
 
 const ModuleCard = ({ 
   id, 
   name, 
   description, 
-  emoji, 
+  emoji,
+  type,
   estimatedTime, 
   progress, 
-  isLocked = false,
-  isCompleted = false
+  locked = false,
+  completed = false
 }: ModuleCardProps) => {
   const CardContent = () => (
-    <div className={`bg-card p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-sm border transition-all hover:shadow-md ${!isLocked ? 'hover:scale-[1.02] hover:border-primary cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}>
+    <div className={`bg-card p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-sm border transition-all hover:shadow-md ${!locked ? 'hover:scale-[1.02] hover:border-primary cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}>
       <div className="flex items-center gap-4 mb-4">
         <div className="flex-shrink-0 h-12 w-12 sm:h-16 sm:w-16 flex items-center justify-center rounded-xl sm:rounded-2xl bg-primary/10 text-2xl sm:text-3xl">
-          {isLocked ? <Lock className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground" /> : emoji || "📚"}
+          {locked ? <Lock className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground" /> : emoji || "📚"}
         </div>
         
         <div className="flex-1 min-w-0">
@@ -36,9 +38,9 @@ const ModuleCard = ({
         </div>
         
         <div className="flex-shrink-0">
-          {isCompleted ? (
+          {completed ? (
             <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-          ) : isLocked ? (
+          ) : locked ? (
             <Lock className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
           ) : (
             <Play className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
@@ -69,7 +71,7 @@ const ModuleCard = ({
     </div>
   );
 
-  if (isLocked) {
+  if (locked) {
     return <CardContent />;
   }
 
