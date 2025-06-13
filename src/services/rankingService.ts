@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface RankingUser {
@@ -58,91 +57,17 @@ export const getUserRanking = async (
   }
 };
 
-/**
- * Obtém a posição do usuário no ranking
- */
 export const getUserRankPosition = async (
   userId: string,
   period: RankingPeriod = "all",
 ): Promise<number> => {
   try {
+    // Reutiliza a função de ranking otimizada.
     const ranking = await getUserRanking(period);
     const userRank = ranking.find((user) => user.id === userId);
     return userRank?.rank || 0;
   } catch (error) {
     console.error("Erro ao buscar posição no ranking:", error);
-    return 0;
-  }
-};
-
-/**
- * Atualiza o XP do usuário com base nos módulos concluídos e XP do histórico
- */
-export const updateUserXpFromModules = async (
-  userId: string,
-): Promise<number> => {
-  try {
-    // Buscar todas as fases completadas pelo usuário
-    const { data: completedPhases, error: phasesError } = await supabase
-      .from("user_phases")
-      .select("phase_id")
-      .eq("user_id", userId)
-      .eq("status", "completed");
-
-    if (phasesError) {
-      console.error("Erro ao buscar fases completadas:", phasesError);
-      return 0;
-    }
-
-    // Buscar todo o XP do histórico
-    const { data: xpHistory, error: xpHistoryError } = await supabase
-      .from("xp_history")
-      .select("xp_amount")
-      .eq("user_id", userId);
-
-    if (xpHistoryError) {
-      console.error("Erro ao buscar XP do histórico:", xpHistoryError);
-      return 0;
-    }
-
-    // Calcular XP total (50 XP por fase completada + XP do histórico)
-    const phasesXp = (completedPhases?.length || 0) * 50;
-    const historyXp =
-      xpHistory?.reduce(
-        (total, record) => total + (record.xp_amount || 0),
-        0,
-      ) || 0;
-    const totalXp = phasesXp + historyXp;
-
-    // Buscar perfil atual
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("level")
-      .eq("id", userId)
-      .single();
-
-    if (profileError) {
-      console.error("Erro ao buscar perfil:", profileError);
-      return 0;
-    }
-
-    // Calcular nível com base no XP total (100 XP por nível)
-    const currentLevel = Math.floor(totalXp / 100);
-
-    // Atualizar perfil com novo XP total e nível
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({ xp: totalXp, level: currentLevel })
-      .eq("id", userId);
-
-    if (updateError) {
-      console.error("Erro ao atualizar XP do usuário:", updateError);
-      return 0;
-    }
-
-    return totalXp;
-  } catch (error) {
-    console.error("Erro inesperado ao atualizar XP:", error);
     return 0;
   }
 };

@@ -91,7 +91,7 @@ const NextModuleCard = ({
                 </p>
             </div>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
             <Button
                 onClick={onContinue}
                 className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-semibold"

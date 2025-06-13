@@ -58,9 +58,10 @@ export interface Question {
 
 export const getModules = async (): Promise<Module[]> => {
   try {
+    // Excluímos 'content' que pode ser grande e não é usado na listagem de módulos.
     const { data, error } = await supabase
       .from("modules")
-      .select("*")
+      .select("id, created_at, name, description, type, emoji, order_index")
       .order("order_index", { ascending: true });
     if (error) throw error;
     return data || [];
@@ -142,9 +143,12 @@ export const getPhasesByModuleId = async (
   moduleId: number,
 ): Promise<Phase[]> => {
   try {
+    // Excluímos colunas grandes como 'content' e 'video_notes' da listagem inicial.
     const { data, error } = await supabase
       .from("phases")
-      .select("*")
+      .select(
+        "id, created_at, module_id, name, description, type, icon_type, duration, order_index",
+      )
       .eq("module_id", moduleId)
       .order("order_index", { ascending: true });
     if (error) throw error;
@@ -220,20 +224,16 @@ export const getQuestionsByPhaseId = async (
   phaseId: number,
 ): Promise<Question[]> => {
   try {
-    const { data: quiz, error: quizError } = await supabase
-      .from("quizzes")
-      .select("id")
-      .eq("phase_id", phaseId)
-      .maybeSingle();
-    if (quizError) throw quizError;
-    if (!quiz) return [];
-
+    // Otimização: Uma única chamada à API em vez de duas.
+    // Buscamos 'questions' e filtramos usando a coluna 'phase_id' da tabela relacionada 'quizzes'.
     const { data: questions, error } = await supabase
       .from("questions")
-      .select("*, tips_question")
-      .eq("quiz_id", quiz.id)
+      .select("*, tips_question, quizzes!inner(phase_id)") // Usamos !inner para garantir que só retorne questões de quizzes existentes
+      .eq("quizzes.phase_id", phaseId)
       .order("order_index", { ascending: true });
+
     if (error) throw error;
+    if (!questions) return [];
 
     return (questions || []).map((question) => {
       let options = question.options;
@@ -353,23 +353,28 @@ export const getModuleProgress = async (
   moduleId: number,
 ): Promise<number> => {
   try {
-    const phases = await getPhasesByModuleId(moduleId);
-    if (phases.length === 0) return 0;
+    // Otimização: Deixa o banco de dados contar em vez de processar no cliente.
 
-    const phaseIds = phases.map((phase) => phase.id);
-    const { data, error } = await supabase
+    // 1. Contar o total de fases no módulo
+    const { count: totalPhases, error: totalError } = await supabase
+      .from("phases")
+      .select("*", { count: "exact", head: true })
+      .eq("module_id", moduleId);
+
+    if (totalError) throw totalError;
+    if (totalPhases === 0 || totalPhases === null) return 0;
+
+    // 2. Contar as fases completas pelo usuário para esse módulo
+    const { count: completedPhases, error: completedError } = await supabase
       .from("user_phases")
-      .select("status")
+      .select("*, phases!inner(module_id)", { count: "exact", head: true })
       .eq("user_id", userId)
-      .in("phase_id", phaseIds);
-    if (error) {
-      throw error;
-    }
+      .eq("status", "completed")
+      .eq("phases.module_id", moduleId);
 
-    const completedPhases = (data || []).filter(
-      (p) => p.status === "completed",
-    ).length;
-    return Math.round((completedPhases / phases.length) * 100);
+    if (completedError) throw completedError;
+
+    return Math.round(((completedPhases || 0) / totalPhases) * 100);
   } catch (error) {
     console.error("Error calculating module progress:", error);
     return 0;
@@ -381,21 +386,25 @@ export const isModuleCompleted = async (
   moduleId: number,
 ): Promise<boolean> => {
   try {
-    const phases = await getPhasesByModuleId(moduleId);
-    if (phases.length === 0) return false;
+    // Otimização: A mesma lógica de contagem do getModuleProgress
+    const { count: totalPhases, error: totalError } = await supabase
+      .from("phases")
+      .select("*", { count: "exact", head: true })
+      .eq("module_id", moduleId);
 
-    const phaseIds = phases.map((phase) => phase.id);
-    const { data, error } = await supabase
+    if (totalError) throw totalError;
+    if (totalPhases === 0 || totalPhases === null) return false;
+
+    const { count: completedPhases, error: completedError } = await supabase
       .from("user_phases")
-      .select("phase_id")
+      .select("*, phases!inner(module_id)", { count: "exact", head: true })
       .eq("user_id", userId)
       .eq("status", "completed")
-      .in("phase_id", phaseIds);
-    if (error) {
-      throw error;
-    }
+      .eq("phases.module_id", moduleId);
 
-    return (data || []).length === phases.length;
+    if (completedError) throw completedError;
+
+    return (completedPhases || 0) === totalPhases;
   } catch (error) {
     console.error("Error checking module completion:", error);
     return false;
@@ -472,9 +481,7 @@ export const awardQuizXp = async (
   }
 };
 
-// ======================================================================
-// FUNÇÃO PRINCIPAL FINAL E ROBUSTA
-// ======================================================================
+// A função original foi removida e substituída por esta chamada RPC.
 export const completePhaseAndAwardXp = async (
   userId: string,
   phaseId: number,
@@ -485,86 +492,33 @@ export const completePhaseAndAwardXp = async (
     throw new Error("ID do usuário, fase e módulo são obrigatórios.");
   }
 
-  const awardedXp = { xpFromPhase: 0, xpFromModule: 0 };
+  try {
+    const { data, error } = await supabase.rpc(
+      "complete_phase_and_award_xp_atomic",
+      {
+        p_user_id: userId,
+        p_phase_id: phaseId,
+        p_module_id: moduleId,
+        p_is_quiz: isQuiz,
+      },
+    );
 
-  // --- 1. LÓGICA PREDITIVA DE CONCLUSÃO DE MÓDULO ---
-  // Vamos descobrir se esta ação completará o módulo ANTES de fazer qualquer coisa.
-  const allModulePhases = await getPhasesByModuleId(moduleId);
-  const phaseIds = allModulePhases.map((p) => p.id);
-
-  const { data: completedPhasesData } = await supabase
-    .from("user_phases")
-    .select("phase_id")
-    .eq("user_id", userId)
-    .eq("status", "completed")
-    .in("phase_id", phaseIds);
-
-  const completedPhaseIds = new Set(
-    (completedPhasesData || []).map((p) => p.phase_id),
-  );
-
-  // O módulo será concluído AGORA se (N-1) fases já estão completas E a fase atual não é uma delas.
-  const willCompleteModule =
-    completedPhaseIds.size === allModulePhases.length - 1 &&
-    !completedPhaseIds.has(phaseId);
-
-  // --- 2. CONCEDER XP DE FASE ---
-  if (!isQuiz) {
-    const { data: phaseLog } = await supabase
-      .from("xp_history")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("source", "PHASE_COMPLETION")
-      .eq("source_id", String(phaseId))
-      .maybeSingle();
-
-    if (!phaseLog) {
-      const { error: insertError } = await supabase.from("xp_history").insert({
-        user_id: userId,
-        xp_amount: 5,
-        source: "PHASE_COMPLETION",
-        source_id: String(phaseId),
-      });
-
-      if (!insertError) {
-        awardedXp.xpFromPhase = 5;
-      }
+    if (error) {
+      console.error("Erro ao completar fase e conceder XP via RPC:", error);
+      throw error;
     }
-  }
 
-  // --- 3. CONCEDER XP DE MÓDULO (SE APLICÁVEL) ---
-  if (willCompleteModule) {
-    const { data: moduleLog } = await supabase
-      .from("xp_history")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("source", "MODULE_COMPLETION")
-      .eq("source_id", String(moduleId))
-      .maybeSingle();
-
-    if (!moduleLog) {
-      const { error: moduleXpError } = await supabase
-        .from("xp_history")
-        .insert({
-          user_id: userId,
-          xp_amount: 15,
-          source: "MODULE_COMPLETION",
-          source_id: String(moduleId),
-        });
-
-      if (!moduleXpError) {
-        awardedXp.xpFromModule = 15;
-      }
+    // A RPC retorna uma linha com os valores de XP.
+    if (data && data.length > 0) {
+      return {
+        xpFromPhase: data[0].xp_from_phase,
+        xpFromModule: data[0].xp_from_module,
+      };
     }
+
+    return { xpFromPhase: 0, xpFromModule: 0 };
+  } catch (error) {
+    console.error("Exceção na chamada RPC completePhaseAndAwardXp:", error);
+    throw error;
   }
-
-  // --- 4. ATUALIZAR STATUS DA FASE (SEMPRE POR ÚLTIMO) ---
-  await supabase.from("user_phases").upsert({
-    user_id: userId,
-    phase_id: phaseId,
-    status: "completed",
-    completed_at: new Date().toISOString(),
-  });
-
-  return awardedXp;
 };

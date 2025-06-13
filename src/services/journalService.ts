@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -14,11 +13,16 @@ export interface JournalEntry {
   updated_at?: string;
 }
 
-export const getJournalEntries = async (userId: string): Promise<JournalEntry[]> => {
+export const getJournalEntries = async (
+  userId: string,
+): Promise<JournalEntry[]> => {
   try {
+    // Seleciona apenas as colunas necessárias para a lista, excluindo 'content'
     const { data, error } = await supabase
       .from("learning_journals")
-      .select("*")
+      .select(
+        "id, user_id, title, emoji, is_favorite, module_id, created_at, updated_at",
+      )
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
@@ -27,6 +31,8 @@ export const getJournalEntries = async (userId: string): Promise<JournalEntry[]>
       return [];
     }
 
+    // O 'content' virá como undefined, o que é esperado para a lista.
+    // A função getJournalEntry(id) buscará o conteúdo completo quando necessário.
     return data as JournalEntry[];
   } catch (error) {
     console.error("Exceção ao buscar entradas do diário:", error);
@@ -34,7 +40,9 @@ export const getJournalEntries = async (userId: string): Promise<JournalEntry[]>
   }
 };
 
-export const getJournalEntry = async (id: string): Promise<JournalEntry | null> => {
+export const getJournalEntry = async (
+  id: string,
+): Promise<JournalEntry | null> => {
   try {
     const { data, error } = await supabase
       .from("learning_journals")
@@ -54,11 +62,13 @@ export const getJournalEntry = async (id: string): Promise<JournalEntry | null> 
   }
 };
 
-export const createJournalEntry = async (entry: JournalEntry): Promise<JournalEntry | null> => {
+export const createJournalEntry = async (
+  entry: JournalEntry,
+): Promise<JournalEntry | null> => {
   try {
     // Remove ID completely to let Supabase generate it
     const { id, ...entryData } = entry;
-    
+
     const { data, error } = await supabase
       .from("learning_journals")
       .insert([entryData])
@@ -79,9 +89,11 @@ export const createJournalEntry = async (entry: JournalEntry): Promise<JournalEn
   }
 };
 
-export const updateJournalEntry = async (entry: JournalEntry): Promise<boolean> => {
+export const updateJournalEntry = async (
+  entry: JournalEntry,
+): Promise<boolean> => {
   if (!entry.id) return false;
-  
+
   try {
     const { error } = await supabase
       .from("learning_journals")
@@ -91,7 +103,7 @@ export const updateJournalEntry = async (entry: JournalEntry): Promise<boolean> 
         emoji: entry.emoji,
         module_id: entry.module_id,
         is_favorite: entry.is_favorite,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq("id", entry.id);
 
@@ -109,13 +121,16 @@ export const updateJournalEntry = async (entry: JournalEntry): Promise<boolean> 
   }
 };
 
-export const toggleFavoriteJournalEntry = async (id: string, isFavorite: boolean): Promise<boolean> => {
+export const toggleFavoriteJournalEntry = async (
+  id: string,
+  isFavorite: boolean,
+): Promise<boolean> => {
   try {
     const { error } = await supabase
       .from("learning_journals")
       .update({
         is_favorite: isFavorite,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq("id", id);
 
@@ -158,5 +173,5 @@ export default {
   createJournalEntry,
   updateJournalEntry,
   toggleFavoriteJournalEntry,
-  deleteJournalEntry
+  deleteJournalEntry,
 };
