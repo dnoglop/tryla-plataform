@@ -1,505 +1,245 @@
-// src/pages/PhaseDetailPage.tsx
-
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import BottomNavigation from "@/components/BottomNavigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import {
-    ArrowLeft,
-    ArrowRight,
-    Volume2,
-    VolumeX,
-    CheckCircle,
-    Clock,
-    Home,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import YoutubeEmbed from "@/components/YoutubeEmbed";
-import QuizQuestion from "@/components/QuizQuestion";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
     getPhaseById,
-    getModuleById,
-    getPhasesByModuleId,
-    getQuestionsByPhaseId,
-    completePhaseAndAwardXp,
-    awardQuizXp,
-    updateUserPhaseStatus,
     getUserPhaseStatus,
-    getModuleProgress,
-    getModules,
+    completePhase,
     Phase,
-    Module,
 } from "@/services/moduleService";
-import { useTextToSpeech } from "@/hooks/useTextToSpeech";
-import { useRewardModal } from "@/components/XpRewardModal/RewardModalContext";
+import { getProfile } from "@/services/profileService";
+import { Button } from "@/components/ui/button";
+import {
+    Play,
+    Pause,
+    ArrowLeft,
+    CheckCircle2,
+} from "lucide-react";
+import { speak } from 'tts-speak';
+import { useReward } from "@/hooks/use-reward";
+import { toast } from "sonner";
 
-// --- MUDANÇA: SKELETON ATUALIZADO COM CORES DE TEMA ---
-const PhaseDetailSkeleton = () => (
-    <div className="min-h-screen bg-background animate-pulse">
-        <header className="p-4 sm:p-6">
-            <div className="flex items-center gap-4">
-                <Skeleton className="h-10 w-10 rounded-full bg-muted" />
-                <Skeleton className="h-7 w-48 bg-muted" />
-            </div>
-        </header>
-        <main className="container px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-            <Skeleton className="h-28 w-full rounded-2xl bg-muted" />
-            <Skeleton className="aspect-video w-full rounded-2xl bg-muted" />
-        </main>
-    </div>
-);
-
-// --- FUNÇÕES E COMPONENTES AUXILIARES ---
-const formatTime = (s: number | null) =>
-    s === null
-        ? "00:00"
-        : `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
-const calculateXpForTime = (s: number, q: number) => {
-    const sPerQ = s / (q || 1);
-    return sPerQ <= 10 ? 25 : sPerQ <= 20 ? 15 : 10;
-};
-
-const NextModuleCard = ({
-    nextModule,
-    onContinue,
-    onBackToModules,
-}: {
-    nextModule: Module;
-    onContinue: () => void;
-    onBackToModules: () => void;
-}) => (
-    // MUDANÇA: CORES DO CARD ADAPTADAS PARA O TEMA
-    <div className="mt-6 p-6 bg-primary/10 rounded-2xl border border-primary/20">
-        <div className="flex items-start gap-4 mb-4">
-            <div className="flex-shrink-0 h-12 w-12 flex items-center justify-center rounded-xl bg-primary/20 text-2xl">
-                {nextModule.emoji || "📚"}
-            </div>
-            <div className="flex-1">
-                <h3 className="text-lg font-bold text-foreground mb-1">
-                    Próxima Missão
-                </h3>
-                <h4 className="text-xl font-semibold text-primary mb-2">
-                    {nextModule.name}
-                </h4>
-                <p className="text-sm text-muted-foreground">
-                    {nextModule.description}
-                </p>
-            </div>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-3">
-            <Button onClick={onContinue} className="flex-1">
-                Seguir para o Próximo Módulo{" "}
-                <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-            <Button onClick={onBackToModules} variant="outline">
-                <Home className="mr-2 h-4 w-4" /> Voltar para as Trilhas
-            </Button>
-        </div>
-    </div>
-);
+interface RewardData {
+    xp: number;
+    title: string;
+    message: string;
+    type: "phase_completion" | "daily_task" | "module_completion";
+}
 
 export default function PhaseDetailPage() {
-    const { moduleId, phaseId } = useParams<{
-        moduleId: string;
-        phaseId: string;
-    }>();
+    const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const { showRewardModal } = useRewardModal();
-    const [userId, setUserId] = useState<string | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [quizCompleted, setQuizCompleted] = useState(false);
-    const [quizStartTime, setQuizStartTime] = useState<number | null>(null);
-    const [quizElapsedTime, setQuizElapsedTime] = useState<number | null>(null);
-    const [moduleCompleted, setModuleCompleted] = useState(false);
-    const {
-        isPlaying,
-        isLoading: isLoadingAudio,
-        playText,
-        stopAudio,
-    } = useTextToSpeech();
-    const [speechRate, setSpeechRate] = useState(1.15);
-    const speedOptions = [1.15, 1.25, 1.5];
+    const phaseId = parseInt(id || "0");
+    const [textContent, setTextContent] = useState<string | null>(null);
+    const [isSpeaking, setIsSpeaking] = useState(false);
+    const { showReward } = useReward();
 
-    useEffect(() => {
-        const getUserId = async () => {
+    const { data: phase, isLoading: isPhaseLoading, error: phaseError } = useQuery({
+        queryKey: ["phase", phaseId],
+        queryFn: () => getPhaseById(phaseId),
+        enabled: !!phaseId,
+    });
+
+    const { data: user, isLoading: isUserLoading, error: userError } = useQuery({
+        queryKey: ["user"],
+        queryFn: async () => {
             const {
                 data: { user },
             } = await supabase.auth.getUser();
-            if (user) {
-                setUserId(user.id);
-                if (phaseId) {
-                    const currentStatus = await getUserPhaseStatus(
-                        user.id,
-                        Number(phaseId),
-                    );
-                    if (currentStatus === "notStarted") {
-                        updateUserPhaseStatus(
-                            user.id,
-                            Number(phaseId),
-                            "inProgress",
-                        );
-                    }
-                }
+            if (!user) {
+                navigate("/login");
+                throw new Error("Usuário não autenticado.");
             }
-        };
-        getUserId();
-        return () => {
-            stopAudio();
-        };
-    }, [phaseId, stopAudio]);
-
-    const { data, isLoading, error } = useQuery({
-        queryKey: ["phaseDetailData", phaseId],
-        queryFn: async () => {
-            if (!phaseId || !moduleId || !userId)
-                throw new Error("IDs não encontrados.");
-            const pId = Number(phaseId);
-            const mId = Number(moduleId);
-            const [
-                phase,
-                module,
-                allPhases,
-                questions,
-                allModules,
-                moduleProgress,
-            ] = await Promise.all([
-                getPhaseById(pId),
-                getModuleById(mId),
-                getPhasesByModuleId(mId),
-                getQuestionsByPhaseId(pId),
-                getModules(),
-                getModuleProgress(userId, mId),
-            ]);
-            return {
-                phase,
-                module,
-                allPhases,
-                questions,
-                allModules,
-                moduleProgress,
-            };
+            return user;
         },
-        enabled: !!phaseId && !!moduleId && !!userId,
     });
 
-    const {
-        phase,
-        module,
-        allPhases = [],
-        questions = [],
-        allModules = [],
-        moduleProgress = 0,
-    } = data || {};
-    const currentPhaseIndex = allPhases.findIndex(
-        (p) => p.id === Number(phaseId),
-    );
-    const previousPhase =
-        currentPhaseIndex > 0 ? allPhases[currentPhaseIndex - 1] : null;
-    const nextPhase =
-        currentPhaseIndex !== -1 && currentPhaseIndex < allPhases.length - 1
-            ? allPhases[currentPhaseIndex + 1]
-            : null;
-    const currentModuleIndex = allModules.findIndex(
-        (m) => m.id === Number(moduleId),
-    );
-    const nextModule =
-        currentModuleIndex !== -1 && currentModuleIndex < allModules.length - 1
-            ? allModules[currentModuleIndex + 1]
-            : null;
+    const { data: status, isLoading: isStatusLoading, error: statusError } = useQuery({
+        queryKey: ["phaseStatus", user?.id, phaseId],
+        queryFn: () => getUserPhaseStatus(user?.id, phaseId),
+        enabled: !!user?.id && !!phaseId,
+    });
 
-    const handleReadContent = () => {
-        if (!phase?.content) return;
+    useEffect(() => {
+        if (phase?.content) {
+            setTextContent(phase.content);
+        }
+    }, [phase?.content]);
+
+    useEffect(() => {
+        speak.onstart(() => setIsSpeaking(true));
+        speak.onend(() => setIsSpeaking(false));
+
+        return () => {
+            speak.stop();
+            speak.cancel();
+        };
+    }, []);
+
+    const handleTextToSpeech = () => {
+        if (!textContent) return;
         
-        if (isPlaying) {
-            stopAudio();
-        } else {
-            const textContent = phase.content.replace(/<[^>]*>/g, '');
-            playText(textContent, speechRate);
-        }
-    };
-
-    const navigateToPrevious = () => {
-        if (previousPhase) {
-            navigate(`/modulo/${moduleId}/fase/${previousPhase.id}`);
-        }
-    };
-
-    const navigateToNext = () => {
-        if (nextPhase) {
-            navigate(`/modulo/${moduleId}/fase/${nextPhase.id}`);
-        } else {
-            setModuleCompleted(true);
-        }
+        const options = {
+            text: textContent,
+            rate: 1,
+            pitch: 1,
+            volume: 1
+        };
+        
+        speak(options);
     };
 
     const handleCompletePhase = async () => {
-        if (!userId || !phaseId || !moduleId) return;
+        if (!phase || !user) return;
         
-        setIsSubmitting(true);
         try {
-            const result = await completePhaseAndAwardXp(
-                userId,
-                Number(phaseId),
-                Number(moduleId),
-                false
-            );
-
-            if (result.xpFromPhase > 0 || result.xpFromModule > 0) {
-                showRewardModal({
-                    phaseXp: result.xpFromPhase,
-                    moduleXp: result.xpFromModule,
-                    onClose: () => navigateToNext()
-                });
-            } else {
-                navigateToNext();
-            }
-
-            queryClient.invalidateQueries({ queryKey: ["phaseDetailData"] });
+            await completePhase(user.id, phase.id);
+            
+            const rewardData = {
+                xp: 50,
+                title: "Fase Concluída!",
+                message: `Parabéns! Você completou a fase "${phase.name}".`,
+                type: "phase_completion" as const
+            };
+            
+            showReward(rewardData);
+            
+            queryClient.invalidateQueries({ queryKey: ["phaseStatus", user.id, phase.id] });
+            queryClient.invalidateQueries({ queryKey: ["moduleProgress", user.id, phase.module_id] });
+            
+            toast.success("Fase concluída com sucesso!");
+            navigate(`/modulo/${phase.module_id}`);
         } catch (error) {
             console.error("Erro ao completar fase:", error);
-            toast.error("Erro ao completar fase");
-        } finally {
-            setIsSubmitting(false);
+            toast.error("Erro ao completar a fase. Tente novamente.");
         }
     };
 
-    const handleCorrectAnswer = async () => {
-        if (!userId || !phaseId || quizElapsedTime === null) return;
+    if (isPhaseLoading || isUserLoading || isStatusLoading) {
+        return <div className="p-4 text-center">Carregando...</div>;
+    }
 
-        const timeBonus = calculateXpForTime(quizElapsedTime, questions.length);
-        const awarded = await awardQuizXp(userId, Number(phaseId), timeBonus);
-
-        if (awarded) {
-            toast.success(`Parabéns! +${timeBonus} XP pelo tempo!`);
-        }
-
-        setQuizCompleted(true);
-    };
-
-    const handleNextModule = () => {
-        if (nextModule) {
-            navigate(`/modulo/${nextModule.id}`);
-        }
-    };
-
-    const handleBackToModules = () => {
-        navigate("/modulos");
-    };
-
-    if (isLoading) return <PhaseDetailSkeleton />;
-    if (!phase || !module)
+    if (phaseError || userError || statusError) {
         return (
             <div className="p-4 text-center">
-                Fase ou Módulo não encontrado.
+                Erro ao carregar a fase.
             </div>
         );
+    }
+
+    if (!phase) {
+        return <div className="p-4 text-center">Fase não encontrada.</div>;
+    }
 
     return (
-        <div className="min-h-screen bg-background pb-24">
+        <div className="min-h-screen bg-background">
             <header className="p-4 sm:p-6">
-                <div className="flex items-center justify-between max-w-4xl mx-auto">
-                    <div className="flex items-center gap-4">
-                        <button
-                            onClick={() => navigate(`/modulo/${moduleId}`)}
-                            className="flex h-10 w-10 items-center justify-center rounded-full bg-card shadow-md transition-transform hover:scale-110 active:scale-95"
-                        >
-                            <ArrowLeft className="h-5 w-5 text-muted-foreground" />
-                        </button>
-                        <div>
-                            <h1 className="text-xl font-bold text-foreground truncate">
-                                {module.name}
-                            </h1>
-                        </div>
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h1 className="text-xl font-bold text-foreground">
+                            {phase.name}
+                        </h1>
+                        <p className="text-muted-foreground">
+                            {phase.description || "Sem descrição."}
+                        </p>
                     </div>
                 </div>
             </header>
-
-            <main className="container px-4 sm:px-6 lg:px-8 py-6 space-y-6 max-w-4xl mx-auto">
-                <div className="p-6 bg-card rounded-2xl shadow-sm border">
-                    <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                            <h2 className="text-2xl md:text-3xl font-bold text-card-foreground">
-                                {phase.name}
-                            </h2>
-                            {phase.description && (
-                                <p className="text-muted-foreground mt-2 text-base">
-                                    {phase.description}
-                                </p>
-                            )}
-                        </div>
-                        <div className="flex-shrink-0">
-                            <div className="relative flex items-center justify-center">
-                                <svg
-                                    width={70}
-                                    height={70}
-                                    className="transform -rotate-90"
-                                >
-                                    <circle
-                                        cx={35}
-                                        cy={35}
-                                        r={28}
-                                        stroke="hsl(var(--muted))"
-                                        strokeWidth={7}
-                                        fill="none"
-                                    />
-                                    <circle
-                                        cx={35}
-                                        cy={35}
-                                        r={28}
-                                        stroke="hsl(var(--primary))"
-                                        strokeWidth={7}
-                                        fill="none"
-                                        strokeDasharray={175.9}
-                                        strokeDashoffset={
-                                            175.9 -
-                                            (moduleProgress / 100) * 175.9
-                                        }
-                                        strokeLinecap="round"
-                                        className="transition-all duration-500 ease-in-out"
-                                    />
-                                </svg>
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <span className="text-sm font-bold text-foreground">
-                                        {Math.round(moduleProgress)}%
-                                    </span>
-                                </div>
-                            </div>
-                            <p className="text-xs text-center text-muted-foreground mt-2 font-medium">
-                                da meta concluída!
-                            </p>
-                        </div>
-                    </div>
+            
+            <main className="container px-4 py-6 space-y-6">
+                <div className="bg-card p-6 rounded-2xl shadow-sm border space-y-4">
+                    <h2 className="text-2xl font-bold text-card-foreground">
+                        {phase.name}
+                    </h2>
+                    <p className="text-muted-foreground">
+                        {phase.description || "Sem descrição."}
+                    </p>
                 </div>
 
-                {phase.type === "video" && phase.video_url && (
-                    <YoutubeEmbed videoId={phase.video_url} />
-                )}
-
-                {(phase.type === "text" || phase.type === "challenge") &&
-                    phase.content && (
-                        <div className="p-6 bg-card rounded-2xl shadow-sm border">
-                            <div className="flex justify-end items-center gap-4 mb-4">
+                {phase.type === "text" && (
+                    <div className="bg-card p-6 rounded-2xl shadow-sm border space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-xl font-bold text-card-foreground">
+                                Conteúdo da Fase
+                            </h3>
+                            {textContent && (
                                 <Button
-                                    variant="default"
-                                    size="sm"
-                                    onClick={handleReadContent}
-                                    disabled={isLoadingAudio}
-                                >
-                                    {isPlaying ? (
-                                        <VolumeX className="mr-2 h-4 w-4" />
-                                    ) : (
-                                        <Volume2 className="mr-2 h-4 w-4" />
-                                    )}
-                                    {isPlaying ? "Parar" : "Ouvir Texto"}
-                                </Button>
-                                <Button
+                                    onClick={handleTextToSpeech}
                                     variant="outline"
                                     size="sm"
-                                    onClick={() =>
-                                        setSpeechRate(
-                                            (prev) =>
-                                                speedOptions[
-                                                    (speedOptions.indexOf(
-                                                        prev,
-                                                    ) +
-                                                        1) %
-                                                        speedOptions.length
-                                                ],
-                                        )
-                                    }
-                                    disabled={isPlaying || isLoadingAudio}
+                                    className="flex items-center gap-2"
                                 >
-                                    {speechRate.toFixed(2)}x
+                                    {isSpeaking ? (
+                                        <Pause className="h-4 w-4" />
+                                    ) : (
+                                        <Play className="h-4 w-4" />
+                                    )}
+                                    {isSpeaking ? "Pausar" : "Ouvir"}
                                 </Button>
-                            </div>
-                            <div
-                                className="prose dark:prose-invert max-w-none"
-                                dangerouslySetInnerHTML={{
-                                    __html: phase.content,
-                                }}
+                            )}
+                        </div>
+                        
+                        {textContent ? (
+                            <div 
+                                className="prose prose-lg max-w-none text-card-foreground"
+                                dangerouslySetInnerHTML={{ __html: textContent }}
                             />
-                        </div>
-                    )}
-
-                {phase.type === "quiz" && (
-                    <div className="p-6 bg-card rounded-2xl shadow-sm border">
-                        <div className="flex flex-col gap-4">
-                            {questions.map((question, index) => (
-                                <QuizQuestion
-                                    key={question.id}
-                                    question={question}
-                                    onAnswer={handleCorrectAnswer}
-                                    currentQuestionIndex={currentQuestionIndex}
-                                    setCurrentQuestionIndex={setCurrentQuestionIndex}
-                                />
-                            ))}
-                        </div>
-                        {quizCompleted && (
-                            <div className="p-6 text-center bg-muted rounded-lg">
-                                <h4 className="text-2xl font-bold text-foreground mb-3">
-                                    Quiz Finalizado!
-                                </h4>
-                                <div className="flex items-center justify-center gap-2 text-lg text-foreground">
-                                    <Clock className="h-6 w-6 text-primary" />
-                                    <span>Tempo final:</span>
-                                    <span className="font-bold text-primary text-xl">
-                                        {formatTime(quizElapsedTime)}
-                                    </span>
-                                </div>
-                                <p className="text-sm text-muted-foreground mt-2">
-                                    Você já pode avançar para a próxima fase.
-                                </p>
-                            </div>
+                        ) : (
+                            <p className="text-muted-foreground">
+                                Conteúdo não disponível.
+                            </p>
                         )}
                     </div>
                 )}
 
-                <div className="mt-8 flex items-center justify-between gap-4 border-t pt-6">
+                {phase.type === "video" && (
+                    <div className="bg-card p-6 rounded-2xl shadow-sm border space-y-4">
+                        <h3 className="text-xl font-bold text-card-foreground">
+                            Vídeo
+                        </h3>
+                        <p className="text-muted-foreground">
+                            Assista ao vídeo para completar a fase.
+                        </p>
+                    </div>
+                )}
+
+                {phase.type === "quiz" && (
+                    <div className="bg-card p-6 rounded-2xl shadow-sm border space-y-4">
+                        <h3 className="text-xl font-bold text-card-foreground">
+                            Quiz
+                        </h3>
+                        <p className="text-muted-foreground">
+                            Responda ao quiz para testar seus conhecimentos.
+                        </p>
+                    </div>
+                )}
+
+                <div className="flex justify-between items-center">
                     <Button
-                        onClick={navigateToPrevious}
-                        disabled={!previousPhase}
+                        onClick={() => navigate(`/modulo/${phase.module_id}`)}
                         variant="outline"
+                        className="flex items-center gap-2"
                     >
-                        <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
+                        <ArrowLeft className="h-4 w-4" />
+                        Voltar ao Módulo
                     </Button>
-                    <div className="flex gap-3">
+                    
+                    {status !== "completed" && (
                         <Button
                             onClick={handleCompletePhase}
-                            disabled={isSubmitting || phase.type === "quiz"}
-                            className={`${phase.type === "quiz" ? "hidden" : ""}`}
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
                         >
-                            {isSubmitting
-                                ? "Processando..."
-                                : nextPhase
-                                  ? "Concluir e Próxima"
-                                  : "Finalizar Módulo"}
-                            <ArrowRight className="ml-2 h-4 w-4" />
+                            <CheckCircle2 className="mr-2 h-5 w-5" />
+                            Concluir Fase
                         </Button>
-                        <Button
-                            onClick={navigateToNext}
-                            disabled={!quizCompleted}
-                            className={`${phase.type !== "quiz" ? "hidden" : ""}`}
-                        >
-                            {nextPhase
-                                ? "Ir para Próxima Fase"
-                                : "Finalizar Módulo"}
-                            <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                    </div>
+                    )}
                 </div>
-
-                {moduleCompleted && nextModule && (
-                    <NextModuleCard
-                        nextModule={nextModule}
-                        onContinue={handleNextModule}
-                        onBackToModules={handleBackToModules}
-                    />
-                )}
             </main>
+            
+            <BottomNavigation />
         </div>
     );
 }
