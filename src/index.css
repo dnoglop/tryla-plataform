@@ -1,103 +1,88 @@
+/* 
+  Arquivo CSS Global Unificado
+  - Importa o Google Fonts e o Tailwind.
+  - Define as variáveis de cor para o tema claro (light) e escuro (dark).
+  - Define estilos base para a aplicação.
+  - Contém todas as classes de componentes personalizadas, agora adaptadas para o sistema de temas.
+*/
+
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* --- DEFINIÇÃO DAS VARIÁVEIS DE TEMA --- */
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 0%;
 
+  /* TEMA CLARO (PADRÃO) */
+  :root {
+    --background: 0 0% 98%;
+    /* Cor de fundo principal (quase branco) */
+    --foreground: 0 0% 3.9%;
+    /* Cor do texto principal (quase preto) */
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 0%;
-
+    /* Cor de fundo de cards e seções (branco) */
+    --card-foreground: 0 0% 3.9%;
+    /* Cor do texto em cards */
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 0%;
-
-    --primary: 21 74% 51%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 0%;
-
-    --muted: 240 5% 96%;
-    --muted-foreground: 0 0% 45%;
-
-    --accent: 21 74% 95%;
-    --accent-foreground: 21 74% 30%;
-
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 21 84% 51%;
+    /* Laranja principal (usado para botões e destaques) */
+    --primary-foreground: 0 0% 98%;
+    /* Texto sobre o laranja */
+    --secondary: 0 0% 96.1%;
+    /* Cor de fundo sutil para elementos secundários */
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    /* Cor para textos silenciados/secundários */
+    --accent: 21 84% 95%;
+    /* Cor de destaque sutil, geralmente um tom claro do primário */
+    --accent-foreground: 21 84% 30%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 21 74% 51%;
-
-    --radius: 1rem;
-  }
-  
-  .dark {
-    --background: 0 0% 0%;
-    --foreground: 0 0% 98%;
-
-    --card: 0 0% 3%;
-    --card-foreground: 0 0% 98%;
-
-    --popover: 0 0% 3%;
-    --popover-foreground: 0 0% 98%;
-
-    --primary: 21 74% 51%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 98%;
-
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 65%;
-
-    --accent: 21 74% 15%;
-    --accent-foreground: 0 0% 98%;
-
-    --destructive: 0 62.8% 30.6%;
+    /* Vermelho para ações destrutivas */
     --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 21 84% 51%;
+    --radius: 1rem;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 21 74% 51%;
+    /* Variável personalizada para ser usada com @apply bg-trilha-orange etc. */
+    --trilha-orange: 21 84% 51%;
+  }
+
+  /* TEMA ESCURO */
+  .dark {
+    --background: 0 0% 3.9%;
+    /* Fundo escuro */
+    --foreground: 0 0% 98%;
+    /* Texto claro */
+    --card: 0 0% 5.9%;
+    /* Cards um pouco mais claros que o fundo */
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 21 84% 51%;
+    /* Laranja se mantém vibrante */
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 21 84% 15%;
+    /* Destaque sutil no tema escuro */
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 72.2% 50.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 21 84% 51%;
+    --trilha-orange: 21 84% 51%;
   }
 }
 
-@layer base {
-  :root {
-    --trilha-orange: 227, 99, 34; /* #e36322 */
-    
-    --background: 255, 255, 255; /* #FFF */
-    --foreground: 0, 0, 0; /* #000 */
-    
-    /* Substituir outras cores por variações de preto, branco e laranja */
-    --card: 255, 255, 255;
-    --card-foreground: 0, 0, 0;
-    --popover: 255, 255, 255;
-    --popover-foreground: 0, 0, 0;
-    --primary: 227, 99, 34; /* #e36322 */
-    --primary-foreground: 255, 255, 255;
-    --secondary: 245, 245, 245; /* Cinza muito claro */
-    --secondary-foreground: 0, 0, 0;
-    --muted: 240, 240, 240;
-    --muted-foreground: 40, 40, 40;
-    --accent: 250, 250, 250;
-    --accent-foreground: 0, 0, 0;
-    --destructive: 227, 99, 34; /* #e36322 */
-    --destructive-foreground: 255, 255, 255;
-    --border: 230, 230, 230;
-    --input: 230, 230, 230;
-    --ring: 227, 99, 34; /* #e36322 */
-  }
-}
-
-
-
+/* --- ESTILOS GLOBAIS DA APLICAÇÃO --- */
 @layer base {
   * {
     @apply border-border;
@@ -105,158 +90,123 @@
 
   body {
     @apply bg-background text-foreground font-sans;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Add responsive font sizes */
   h1 {
     @apply text-xl sm:text-2xl font-bold;
   }
-  
+
   h2 {
     @apply text-lg sm:text-xl font-bold;
   }
-  
+
   h3 {
     @apply text-base sm:text-lg font-semibold;
   }
-  
+
   p {
     @apply text-sm sm:text-base;
   }
 }
 
+/* --- CLASSES DE COMPONENTES PERSONALIZADOS --- */
 @layer components {
+
+  /* Cards */
   .card-trilha {
     @apply relative overflow-hidden rounded-xl sm:rounded-2xl border bg-card shadow-sm transition-all hover:shadow-md;
   }
 
   .card-modulo {
-    @apply card-trilha flex flex-col items-center justify-between p-3 sm:p-4 hover:scale-[1.02] hover:border-trilha-orange;
+    @apply card-trilha flex flex-col items-center justify-between p-3 sm:p-4 hover:scale-[1.02] hover:border-primary;
   }
 
+  /* MELHORIA: Unificado e adaptado para tema */
   .card-fase {
-    @apply card-trilha p-3 sm:p-4 hover:scale-[1.02] hover:border-trilha-orange;
+    @apply card-trilha p-4 transition-all hover:scale-[1.02] hover:border-primary;
   }
 
+  .continue-card {
+    @apply bg-amber-50 dark:bg-amber-950/50 rounded-xl sm:rounded-2xl overflow-hidden shadow-md border-none;
+  }
+
+  /* Botões */
   .btn-trilha {
-    @apply rounded-full bg-trilha-orange px-4 py-2 sm:px-6 sm:py-3 font-semibold text-white shadow-md hover:bg-opacity-90 active:scale-95 transition-all text-sm sm:text-base;
+    @apply rounded-full bg-primary px-4 py-2 sm:px-6 sm:py-3 font-semibold text-primary-foreground shadow-md hover:bg-primary/90 active:scale-95 transition-all text-sm sm:text-base;
   }
 
   .btn-secundario {
-    @apply rounded-full bg-white border-2 border-trilha-orange px-4 py-2 sm:px-6 sm:py-3 font-semibold text-trilha-orange shadow-sm hover:bg-trilha-orange/10 active:scale-95 transition-all text-sm sm:text-base;
+    /* MELHORIA: Adaptado para tema */
+    @apply rounded-full bg-card border-2 border-primary px-4 py-2 sm:px-6 sm:py-3 font-semibold text-primary shadow-sm hover:bg-accent active:scale-95 transition-all text-sm sm:text-base;
   }
 
   .btn-icon {
-    @apply rounded-full bg-white p-1.5 sm:p-2 shadow-md hover:scale-110 active:scale-95 transition-all;
+    @apply rounded-full bg-card p-1.5 sm:p-2 shadow-md hover:scale-110 active:scale-95 transition-all;
   }
 
+  /* Barras de progresso */
   .progress-bar {
-    @apply h-1.5 sm:h-2 rounded-full bg-gray-200 overflow-hidden;
+    @apply h-1.5 sm:h-2 rounded-full bg-muted overflow-hidden;
   }
 
   .progress-value {
-    @apply h-full rounded-full bg-trilha-orange transition-all duration-500 ease-out;
+    /* MELHORIA: usa a cor primária do tema */
+    @apply h-full rounded-full bg-primary transition-all duration-500 ease-out;
   }
 
+  /* Outros Componentes */
   .badge-trilha {
-    @apply rounded-full bg-trilha-orange px-2 py-0.5 sm:px-3 sm:py-1 text-xs font-semibold text-white shadow-sm;
+    @apply rounded-full bg-primary px-2 py-0.5 sm:px-3 sm:py-1 text-xs font-semibold text-primary-foreground shadow-sm;
   }
 
-  .animated-element {
-    @apply opacity-0;
-    animation-fill-mode: forwards;
-    animation-delay: calc(var(--delay, 0) * 0.1s);
-  }
-  
-  /* Duolingo-inspired styles */
-  .module-grid {
-    @apply grid grid-cols-2 gap-2 sm:gap-3;
-  }
-  
   .stats-bar {
-    @apply flex items-center justify-between py-1 sm:py-2 px-3 sm:px-4 bg-white shadow-sm sticky top-0 z-30;
+    /* MELHORIA: Adaptado para tema */
+    @apply flex items-center justify-between py-1 sm:py-2 px-3 sm:px-4 bg-card shadow-sm sticky top-0 z-30;
   }
-  
+
   .stats-item {
     @apply flex items-center gap-1;
   }
-  
-  .continue-card {
-    @apply bg-amber-50 rounded-xl sm:rounded-2xl overflow-hidden shadow-md border-none;
-  }
-  
+
   .section-heading {
     @apply text-base sm:text-lg font-bold flex items-center justify-between;
   }
-  
+
   .section-link {
-    @apply text-xs sm:text-sm font-medium text-trilha-orange flex items-center;
+    @apply text-xs sm:text-sm font-medium text-primary flex items-center;
   }
 
-  /* --- INÍCIO: ESTILOS DO TESTE VOCACIONAL --- */
-  .glass-card {
-    background: rgba(255, 255, 255, 0.45);
-    -webkit-backdrop-filter: blur(20px);
-    backdrop-filter: blur(20px);
-    @apply border border-white/20 shadow-lg transition-all duration-300 ease-in-out;
+  /* Estilos para conteúdo de Markdown / Chat */
+  .message-content a {
+    @apply text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline;
   }
 
-  .btn-answer,
-  .btn-primary {
-    @apply transition-all duration-200 ease-in-out;
+  .message-content strong,
+  .message-content b {
+    @apply font-semibold text-foreground;
   }
 
-  .btn-answer:hover,
-  .btn-primary:hover {
-    @apply -translate-y-1 scale-105 shadow-xl;
+  .message-content em,
+  .message-content i {
+    @apply italic;
   }
 
-  .btn-answer:active,
-  .btn-primary:active {
-    @apply -translate-y-px scale-95;
+  /* Textarea com auto-redimensionamento */
+  textarea.auto-resize {
+    @apply min-h-[24px] max-h-[200px] overflow-y-hidden resize-none;
   }
-
-  .progress-bar-inner {
-    @apply transition-all duration-500 ease-out;
-  }
-
-  .animate-fadeIn {
-    animation: fadeIn 0.6s ease-out forwards;
-  }
-
-  /* Estilos para o conteúdo de resultado (Markdown) */
-  .prose h3, .prose h4 { 
-    @apply mt-6 mb-3 font-bold;
-  }
-  .prose h3 { 
-    @apply text-2xl;
-  }
-  .prose h4 { 
-    @apply text-xl text-indigo-700;
-  }
-  .prose ul { 
-    @apply list-inside p-0;
-  }
-  .prose li { 
-    list-style-type: '✓ ';
-    @apply mb-2 pl-2;
-  }
-  .prose strong { 
-    @apply text-indigo-900;
-  }
-  .prose p { 
-    @apply mb-4;
-  }
-  /* --- FIM: ESTILOS DO TESTE VOCACIONAL --- */
 }
 
-/* Progress bar modifications */
+/* --- MODIFICAÇÕES E ANIMAÇÕES GLOBAIS --- */
 .progress-bar-container {
   @apply relative w-full;
 }
 
 .progress-bar-trophy {
-  @apply absolute right-0 -top-0.5 -mr-1.5 sm:-mr-2 bg-white rounded-full border-2 border-trilha-orange w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center;
+  /* MELHORIA: Adaptado para tema */
+  @apply absolute right-0 -top-0.5 -mr-1.5 sm:-mr-2 bg-card rounded-full border-2 border-primary w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center;
   font-size: 8px;
 }
 
@@ -266,14 +216,28 @@
   }
 }
 
-/* --- ANIMAÇÕES GLOBAIS --- */
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-        /*transform: translateY(20px);*/
-    }
-    to {
-        opacity: 1;
-        /*transform: translateY(0);*/
-    }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes confetti {
+  0% {
+    transform: translateY(0) rotate(0);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+.animate-confetti {
+  animation: confetti 2s ease-out forwards;
 }

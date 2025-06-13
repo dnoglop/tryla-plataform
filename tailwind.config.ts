@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -13,109 +12,106 @@ export default {
 	theme: {
 		container: {
 			center: true,
-			padding: '2rem',
+			padding: "2rem",
 			screens: {
-				'2xl': '1400px'
-			}
+				"2xl": "1400px",
+			},
 		},
 		extend: {
 			fontFamily: {
-        sans: ['Poppins', 'sans-serif'],
-      },
+				sans: ["Poppins", "sans-serif"],
+			},
+			// --- SEÇÃO ALTERADA ---
 			colors: {
-				border: 'hsl(var(--border))',
-				input: 'hsl(var(--input))',
-				ring: 'hsl(var(--ring))',
-				background: 'hsl(var(--background))',
-				foreground: 'hsl(var(--foreground))',
+				border: "hsl(var(--border))",
+				input: "hsl(var(--input))",
+				ring: "hsl(var(--ring))",
+				background: "hsl(var(--background))",
+				foreground: "hsl(var(--foreground))",
 				primary: {
-					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))'
+					DEFAULT: "hsl(var(--primary))",
+					foreground: "hsl(var(--primary-foreground))",
 				},
 				secondary: {
-					DEFAULT: 'hsl(var(--secondary))',
-					foreground: 'hsl(var(--secondary-foreground))'
+					DEFAULT: "hsl(var(--secondary))",
+					foreground: "hsl(var(--secondary-foreground))",
 				},
 				destructive: {
-					DEFAULT: 'hsl(var(--destructive))',
-					foreground: 'hsl(var(--destructive-foreground))'
+					DEFAULT: "hsl(var(--destructive))",
+					foreground: "hsl(var(--destructive-foreground))",
 				},
 				muted: {
-					DEFAULT: 'hsl(var(--muted))',
-					foreground: 'hsl(var(--muted-foreground))'
+					DEFAULT: "hsl(var(--muted))",
+					foreground: "hsl(var(--muted-foreground))",
 				},
 				accent: {
-					DEFAULT: 'hsl(var(--accent))',
-					foreground: 'hsl(var(--accent-foreground))'
+					DEFAULT: "hsl(var(--accent))",
+					foreground: "hsl(var(--accent-foreground))",
 				},
 				popover: {
-					DEFAULT: 'hsl(var(--popover))',
-					foreground: 'hsl(var(--popover-foreground))'
+					DEFAULT: "hsl(var(--popover))",
+					foreground: "hsl(var(--popover-foreground))",
 				},
 				card: {
-					DEFAULT: 'hsl(var(--card))',
-					foreground: 'hsl(var(--card-foreground))'
+					DEFAULT: "hsl(var(--card))",
+					foreground: "hsl(var(--card-foreground))",
 				},
+				// MELHORIA: A cor 'trilha.orange' agora usa a variável CSS 'primary'.
+				// As outras cores fixas foram removidas para evitar o uso de cores
+				// que não se adaptam ao dark mode. Se precisar delas, o ideal
+				// é criar variáveis CSS para elas também.
 				trilha: {
-					orange: '#e36322',
-					"orange-light": '#FFDCCC',
-					"gray-light": '#F1F0FB',
-					"purple-light": '#E5DEFF',
-				}
+					orange: "hsl(var(--primary))",
+				},
 			},
 			borderRadius: {
-				lg: 'var(--radius)',
-				md: 'calc(var(--radius) - 2px)',
-				sm: 'calc(var(--radius) - 4px)'
+				lg: "var(--radius)",
+				md: "calc(var(--radius) - 2px)",
+				sm: "calc(var(--radius) - 4px)",
 			},
 			keyframes: {
-				'accordion-down': {
-					from: {
-						height: '0'
+				"accordion-down": {
+					from: { height: "0" },
+					to: { height: "var(--radix-accordion-content-height)" },
+				},
+				"accordion-up": {
+					from: { height: "var(--radix-accordion-content-height)" },
+					to: { height: "0" },
+				},
+				"bounce-slow": {
+					"0%, 100%": { transform: "translateY(0)" },
+					"50%": { transform: "translateY(-10px)" },
+				},
+				"fade-in": {
+					"0%": { opacity: "0" },
+					"100%": { opacity: "1" },
+				},
+				"slide-up": {
+					"0%": { transform: "translateY(20px)", opacity: "0" },
+					"100%": { transform: "translateY(0)", opacity: "1" },
+				},
+				"scale-in": {
+					"0%": { transform: "scale(0.9)", opacity: "0" },
+					"100%": { transform: "scale(1)", opacity: "1" },
+				},
+				confetti: {
+					"0%": { transform: "translateY(0) rotate(0)", opacity: "1" },
+					"100%": {
+						transform: "translateY(100vh) rotate(720deg)",
+						opacity: "0",
 					},
-					to: {
-						height: 'var(--radix-accordion-content-height)'
-					}
 				},
-				'accordion-up': {
-					from: {
-						height: 'var(--radix-accordion-content-height)'
-					},
-					to: {
-						height: '0'
-					}
-				},
-				'bounce-slow': {
-					'0%, 100%': { transform: 'translateY(0)' },
-					'50%': { transform: 'translateY(-10px)' }
-				},
-				'fade-in': {
-					'0%': { opacity: '0' },
-					'100%': { opacity: '1' }
-				},
-				'slide-up': {
-					'0%': { transform: 'translateY(20px)', opacity: '0' },
-					'100%': { transform: 'translateY(0)', opacity: '1' }
-				},
-				'scale-in': {
-					'0%': { transform: 'scale(0.9)', opacity: '0' },
-					'100%': { transform: 'scale(1)', opacity: '1' }
-				},
-				'confetti': {
-					'0%': { transform: 'translateY(0) rotate(0)', opacity: '1' },
-					'100%': { transform: 'translateY(100vh) rotate(720deg)', opacity: '0' }
-				}
 			},
 			animation: {
-				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out',
-				'bounce-slow': 'bounce-slow 3s ease-in-out infinite',
-				'fade-in': 'fade-in 0.5s ease-out forwards',
-				'slide-up': 'slide-up 0.5s ease-out forwards',
-				'scale-in': 'scale-in 0.5s ease-out forwards',
-				'confetti': 'confetti 2s ease-out forwards'
-			}
-		}
+				"accordion-down": "accordion-down 0.2s ease-out",
+				"accordion-up": "accordion-up 0.2s ease-out",
+				"bounce-slow": "bounce-slow 3s ease-in-out infinite",
+				"fade-in": "fade-in 0.5s ease-out forwards",
+				"slide-up": "slide-up 0.5s ease-out forwards",
+				"scale-in": "scale-in 0.5s ease-out forwards",
+				confetti: "confetti 2s ease-out forwards",
+			},
+		},
 	},
 	plugins: [require("tailwindcss-animate")],
 } satisfies Config;

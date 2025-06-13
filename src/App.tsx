@@ -1,3 +1,5 @@
+// src/App.tsx
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -8,6 +10,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "@/components/Layout";
 import { Toaster } from "sonner";
 import { RewardModalProvider } from "@/components/XpRewardModal/RewardModalContext";
+import { ThemeProvider } from "./components/theme/ThemeProvider"; // Importar ThemeProvider
 
 // Páginas
 import SplashScreen from "./pages/SplashScreen";
@@ -28,64 +31,77 @@ import SocialPage from "./pages/SocialPage";
 import { PomodoroPage } from "./pages/PomodoroPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import CompleteProfilePage from "./pages/CompleteProfilePage";
+import SettingsPage from "./pages/SettingsPage"; // Importar SettingsPage
 
 function App() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event) => {
-        if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
-          queryClient.invalidateQueries({ queryKey: ["userAuthStatus"] });
-        }
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+        queryClient.invalidateQueries({ queryKey: ["userAuthStatus"] });
       }
-    );
-    
+    });
+
     return () => {
       subscription.unsubscribe();
     };
   }, [queryClient]);
 
   return (
-    <RewardModalProvider>
-      <Router>
-        <Routes>
-          {/* --- Rotas Públicas --- */}
-          <Route path="/" element={<SplashScreen />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/cadastro" element={<SignupPage />} />
+    // Envolver a aplicação com o ThemeProvider
+    <ThemeProvider defaultTheme="system" storageKey="app-ui-theme">
+      <RewardModalProvider>
+        <Router>
+          <Routes>
+            {/* --- Rotas Públicas --- */}
+            <Route path="/" element={<SplashScreen />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/cadastro" element={<SignupPage />} />
 
-          {/* --- Rotas Protegidas --- */}
-          <Route element={<ProtectedRoute />}>
-            {/* Rotas de Onboarding (acessíveis apenas a usuários logados sem onboarding) */}
-            <Route path="/onboarding" element={<OnboardingPage />} />
-            <Route path="/complete-profile" element={<CompleteProfilePage />} />
-
-            {/* Rotas principais com o Layout (disponíveis após o onboarding) */}
-            <Route element={<Layout />}>
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/modulos" element={<ModulesPage />} />
-              <Route path="/social" element={<SocialPage />} />
-              <Route path="/lab" element={<LabPage />} />
-              <Route path="/perfil" element={<ProfilePage />} />
-              <Route path="/diario" element={<JournalPage />} />
-              <Route path="/tutor" element={<TutorPage />} />
+            {/* --- Rotas Protegidas --- */}
+            <Route element={<ProtectedRoute />}>
+              {/* Rotas de Onboarding (acessíveis apenas a usuários logados sem onboarding) */}
+              <Route path="/onboarding" element={<OnboardingPage />} />
+              <Route
+                path="/complete-profile"
+                element={<CompleteProfilePage />}
+              />
+              {/* Rotas principais com o Layout (disponíveis após o onboarding) */}
+              <Route element={<Layout />}>
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/modulos" element={<ModulesPage />} />
+                <Route path="/social" element={<SocialPage />} />
+                <Route path="/lab" element={<LabPage />} />
+                <Route path="/perfil" element={<ProfilePage />} />
+                <Route path="/diario" element={<JournalPage />} />
+                <Route path="/tutor" element={<TutorPage />} />
+              </Route>
+              {/* Rotas de tela cheia (disponíveis após o onboarding) */}
+              <Route path="/admin" element={<AdminPage />} />
+              <Route path="/editar-perfil" element={<EditProfilePage />} />
+              <Route path="/configuracoes" element={<SettingsPage />} />{" "}
+              {/* ROTA ADICIONADA */}
+              <Route path="/modulo/:id" element={<ModuleDetailPage />} />
+              <Route
+                path="/fase/:moduleId/:phaseId"
+                element={<PhaseDetailPage />}
+              />
+              <Route path="/lab/pomodoro" element={<PomodoroPage />} />
+              <Route
+                path="/teste-vocacional"
+                element={<VocationalTestPage />}
+              />
             </Route>
+          </Routes>
 
-            {/* Rotas de tela cheia (disponíveis após o onboarding) */}
-            <Route path="/admin" element={<AdminPage />} />
-            <Route path="/editar-perfil" element={<EditProfilePage />} />
-            <Route path="/modulo/:id" element={<ModuleDetailPage />} />
-            <Route path="/fase/:moduleId/:phaseId" element={<PhaseDetailPage />} />
-            <Route path="/lab/pomodoro" element={<PomodoroPage />} />
-            <Route path="/teste-vocacional" element={<VocationalTestPage />} />
-          </Route>
-        </Routes>
-        
-        {/* Toaster para notificações */}
-        <Toaster position="top-center" closeButton />
-      </Router>
-    </RewardModalProvider>
+          {/* Toaster para notificações */}
+          <Toaster position="top-center" closeButton richColors />
+        </Router>
+      </RewardModalProvider>
+    </ThemeProvider>
   );
 }
 
