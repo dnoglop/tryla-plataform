@@ -487,6 +487,18 @@ export const awardQuizXp = async (
   }
 };
 
+export const completePhase = async (
+  userId: string,
+  phaseId: number,
+): Promise<void> => {
+  try {
+    await updateUserPhaseStatus(userId, phaseId, "completed");
+  } catch (error) {
+    console.error("Error completing phase:", error);
+    throw error;
+  }
+};
+
 export const completePhaseAndAwardXp = async (
   userId: string,
   phaseId: number,

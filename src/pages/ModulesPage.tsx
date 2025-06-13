@@ -210,7 +210,7 @@ const ModulesPage = () => {
                   <ModuleCard
                     key={module.id}
                     id={module.id}
-                    title={module.name}
+                    name={module.name}
                     description={module.description}
                     emoji={module.emoji}
                     type={module.type || "autoconhecimento"}

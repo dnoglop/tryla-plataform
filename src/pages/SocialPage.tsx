@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from '@tanstack/react-query';
@@ -93,8 +92,28 @@ export default function SocialPage(): JSX.Element {
     }, [userProfile]);
     
     const communityPosts = [
-        { id: 1, title: "Dicas para a primeira entrevista", author: "Mariana", authorAvatar: "https://i.pravatar.cc/150?img=5", replies: 5, likes: 12, tags: [] },
-        { id: 2, title: "O que acharam do módulo de Growth Mindset?", author: "Lucas", authorAvatar: "https://i.pravatar.cc/150?img=3", replies: 8, likes: 21, tags: [] },
+        { 
+            id: 1, 
+            title: "Dicas para a primeira entrevista", 
+            author: "Mariana", 
+            preview: "Compartilho algumas dicas valiosas que me ajudaram...",
+            authorAvatar: "https://i.pravatar.cc/150?img=5", 
+            replies: 5, 
+            likes: 12, 
+            timeAgo: "2h",
+            tags: [] 
+        },
+        { 
+            id: 2, 
+            title: "O que acharam do módulo de Growth Mindset?", 
+            author: "Lucas", 
+            preview: "Gostaria de saber a opinião de vocês sobre este módulo...",
+            authorAvatar: "https://i.pravatar.cc/150?img=3", 
+            replies: 8, 
+            likes: 21, 
+            timeAgo: "4h",
+            tags: [] 
+        },
     ];
     
     if (isLoadingProfile || isLoadingRanking || !profile) {
