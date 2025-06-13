@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import BottomNavigation from "@/components/BottomNavigation";
@@ -39,7 +40,12 @@ export default function PhaseDetailPage() {
 
     const { data: phase, isLoading: isPhaseLoading, error: phaseError } = useQuery({
         queryKey: ["phase", phaseId],
-        queryFn: () => getPhaseById(phaseId),
+        queryFn: async () => {
+            console.log("Fetching phase:", phaseId);
+            const phase = await getPhaseById(phaseId);
+            console.log("Phase fetched:", phase);
+            return phase;
+        },
         enabled: !!phaseId,
     });
 
@@ -50,16 +56,24 @@ export default function PhaseDetailPage() {
                 data: { user },
             } = await supabase.auth.getUser();
             if (!user) {
+                console.error("No authenticated user found");
                 navigate("/login");
                 throw new Error("Usuário não autenticado.");
             }
+            console.log("User authenticated:", user.id);
             return user;
         },
     });
 
     const { data: status, isLoading: isStatusLoading, error: statusError } = useQuery({
         queryKey: ["phaseStatus", user?.id, phaseId],
-        queryFn: () => getUserPhaseStatus(user?.id, phaseId),
+        queryFn: async () => {
+            if (!user?.id) return "notStarted";
+            console.log("Fetching phase status for user:", user.id, "phase:", phaseId);
+            const status = await getUserPhaseStatus(user.id, phaseId);
+            console.log("Phase status:", status);
+            return status;
+        },
         enabled: !!user?.id && !!phaseId,
     });
 
@@ -73,7 +87,7 @@ export default function PhaseDetailPage() {
         return () => {
             stopAudio();
         };
-    }, []);
+    }, [stopAudio]);
 
     const handleTextToSpeech = () => {
         if (!textContent) return;
@@ -88,9 +102,13 @@ export default function PhaseDetailPage() {
     };
 
     const handleCompletePhase = async () => {
-        if (!phase || !user) return;
+        if (!phase || !user) {
+            console.error("Missing phase or user data");
+            return;
+        }
         
         try {
+            console.log("Completing phase:", phase.id, "for user:", user.id);
             await completePhase(user.id, phase.id);
             
             const rewardData = {
@@ -102,11 +120,19 @@ export default function PhaseDetailPage() {
             
             showReward(rewardData);
             
+            // Invalidate relevant queries
             queryClient.invalidateQueries({ queryKey: ["phaseStatus", user.id, phase.id] });
             queryClient.invalidateQueries({ queryKey: ["moduleProgress", user.id, phase.module_id] });
+            queryClient.invalidateQueries({ queryKey: ["moduleDetailData", phase.module_id] });
             
             toast.success("Fase concluída com sucesso!");
-            navigate(`/modulo/${phase.module_id}`);
+            
+            // Navigate back to module
+            if (phase.module_id) {
+                navigate(`/modulo/${phase.module_id}`);
+            } else {
+                navigate("/modulos");
+            }
         } catch (error) {
             console.error("Erro ao completar fase:", error);
             toast.error("Erro ao completar a fase. Tente novamente.");
@@ -114,20 +140,44 @@ export default function PhaseDetailPage() {
     };
 
     if (isPhaseLoading || isUserLoading || isStatusLoading) {
-        return <div className="p-4 text-center">Carregando...</div>;
+        return (
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                    <p className="text-muted-foreground">Carregando fase...</p>
+                </div>
+            </div>
+        );
     }
 
     if (phaseError || userError || statusError) {
+        console.error("Component errors:", { phaseError, userError, statusError });
         return (
-            <div className="p-4 text-center">
-                Erro ao carregar a fase.
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <div className="text-center">
+                    <p className="text-destructive mb-4">Erro ao carregar a fase.</p>
+                    <Button onClick={() => navigate("/modulos")}>
+                        Voltar aos Módulos
+                    </Button>
+                </div>
             </div>
         );
     }
 
     if (!phase) {
-        return <div className="p-4 text-center">Fase não encontrada.</div>;
+        return (
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <div className="text-center">
+                    <p className="text-muted-foreground mb-4">Fase não encontrada.</p>
+                    <Button onClick={() => navigate("/modulos")}>
+                        Voltar aos Módulos
+                    </Button>
+                </div>
+            </div>
+        );
     }
+
+    console.log("Rendering phase detail page:", phase.name, "Status:", status);
 
     return (
         <div className="min-h-screen bg-background">
@@ -214,7 +264,13 @@ export default function PhaseDetailPage() {
 
                 <div className="flex justify-between items-center">
                     <Button
-                        onClick={() => navigate(`/modulo/${phase.module_id}`)}
+                        onClick={() => {
+                            if (phase.module_id) {
+                                navigate(`/modulo/${phase.module_id}`);
+                            } else {
+                                navigate("/modulos");
+                            }
+                        }}
                         variant="outline"
                         className="flex items-center gap-2"
                     >
