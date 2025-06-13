@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from '@tanstack/react-query';
@@ -8,7 +9,6 @@ import { getProfile, Profile } from "@/services/profileService";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// --- Interfaces e Tipos ---
 interface Message {
   id: string;
   role: "user" | "tutor";
@@ -16,9 +16,6 @@ interface Message {
   isLoading?: boolean;
 }
 
-// --- Componentes de UI Menores ---
-
-// Bolha de Mensagem (Redesenhada)
 const MessageBubble = ({ message }: { message: Message }) => {
   const isTutor = message.role === 'tutor';
 
@@ -33,13 +30,13 @@ const MessageBubble = ({ message }: { message: Message }) => {
   if (message.isLoading) {
     return (
       <div className="flex items-center self-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-200">
-          <Bot className="h-6 w-6 text-slate-500" />
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
+          <Bot className="h-6 w-6 text-muted-foreground" />
         </div>
-        <div className="flex items-center gap-2 rounded-2xl bg-white p-4 shadow-sm border">
-          <div className="h-2 w-2 animate-bounce rounded-full bg-orange-500 [animation-delay:-0.3s]"></div>
-          <div className="h-2 w-2 animate-bounce rounded-full bg-orange-500 [animation-delay:-0.15s]"></div>
-          <div className="h-2 w-2 animate-bounce rounded-full bg-orange-500"></div>
+        <div className="flex items-center gap-2 rounded-2xl bg-card p-4 shadow-sm border">
+          <div className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.3s]"></div>
+          <div className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.15s]"></div>
+          <div className="h-2 w-2 animate-bounce rounded-full bg-primary"></div>
         </div>
       </div>
     );
@@ -48,16 +45,16 @@ const MessageBubble = ({ message }: { message: Message }) => {
   return (
     <div className={cn("flex w-full items-start gap-3", isTutor ? "justify-start" : "justify-end")}>
       {isTutor && (
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-200">
-          <Bot className="h-6 w-6 text-slate-500" />
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
+          <Bot className="h-6 w-6 text-muted-foreground" />
         </div>
       )}
       <div
         className={cn(
           "max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed",
           isTutor
-            ? "rounded-bl-none bg-white text-slate-800 shadow-sm border"
-            : "rounded-br-none bg-orange-500 text-white shadow-lg shadow-orange-500/30"
+            ? "rounded-bl-none bg-card text-card-foreground shadow-sm border"
+            : "rounded-br-none bg-primary text-primary-foreground shadow-lg"
         )}
       >
         {renderContent(message.content)}
@@ -66,7 +63,6 @@ const MessageBubble = ({ message }: { message: Message }) => {
   );
 };
 
-// --- Componente Principal da Página ---
 export default function TutorPage() {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -74,7 +70,6 @@ export default function TutorPage() {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Hook para buscar dados do perfil do usuário para personalizar a saudação
   const { data: profile, isLoading: isLoadingProfile } = useQuery({
     queryKey: ['tutorPageProfile'],
     queryFn: async () => {
@@ -133,7 +128,7 @@ export default function TutorPage() {
 
   if (isLoadingProfile) {
     return (
-        <div className="flex h-screen flex-col bg-slate-50 animate-pulse">
+        <div className="flex h-screen flex-col bg-background animate-pulse">
             <header className="p-4 sm:p-6">
                 <div className="flex justify-between items-center">
                     <div className="flex items-center gap-4">
@@ -153,32 +148,29 @@ export default function TutorPage() {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-slate-50">
-      {/* <<< A MUDANÇA ESTÁ AQUI >>> */}
+    <div className="flex h-screen flex-col bg-background">
       <header className="p-4 sm:p-6">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-4">
             <button
                 onClick={() => navigate('/lab')}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md transition-transform hover:scale-110 active:scale-95"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-card shadow-md transition-transform hover:scale-110 active:scale-95"
                 aria-label="Voltar para o Laboratório"
             >
-                <ArrowLeft className="h-5 w-5 text-gray-600" />
+                <ArrowLeft className="h-5 w-5 text-muted-foreground" />
             </button>
             <div>
-                <h1 className="text-xl md:text-2xl font-bold text-slate-800">Tutor IAê</h1>
-                <p className="text-sm text-slate-500">Sua assistente de jornada</p>
+                <h1 className="text-xl md:text-2xl font-bold text-foreground">Tutor IAê</h1>
+                <p className="text-sm text-muted-foreground">Sua assistente de jornada</p>
             </div>
           </div>
-          {/* Foto do Tutor, sem link */}
           <div className="relative">
             <img 
-                src="https://i.imgur.com/y3pNoHz.png" // URL da imagem do tutor
+                src="https://i.imgur.com/y3pNoHz.png"
                 alt="Foto do Tutor IAê" 
-                className="h-12 w-12 rounded-full object-cover border-2 border-white shadow-md"
+                className="h-12 w-12 rounded-full object-cover border-2 border-card shadow-md"
             />
-            {/* Indicador de online */}
-            <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-slate-50 bg-green-500" />
+            <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-card bg-green-500" />
           </div>
         </div>
       </header>
@@ -190,7 +182,7 @@ export default function TutorPage() {
         <div ref={messagesEndRef} />
       </main>
 
-      <footer className="sticky bottom-0 w-full border-t border-slate-200 bg-slate-50 p-4">
+      <footer className="sticky bottom-0 w-full border-t border-border bg-background p-4">
           <form onSubmit={handleSendMessage} className="flex items-center gap-3">
             <input
               type="text"
@@ -198,12 +190,12 @@ export default function TutorPage() {
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               disabled={isLoading}
-              className="w-full rounded-full border-2 border-slate-200 bg-white px-5 py-3 text-base text-slate-800 placeholder-slate-400 transition-all duration-300 focus:border-orange-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-orange-500/10"
+              className="w-full rounded-full border-2 border-border bg-card px-5 py-3 text-base text-foreground placeholder-muted-foreground transition-all duration-300 focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10"
             />
             <button
               type="submit"
               disabled={!inputMessage.trim() || isLoading}
-              className="group flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-orange-500 text-white shadow-lg shadow-orange-500/40 transition-all duration-300 hover:bg-orange-600 hover:scale-105 active:scale-95 disabled:scale-100 disabled:bg-slate-300 disabled:shadow-none"
+              className="group flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-all duration-300 hover:bg-primary/90 hover:scale-105 active:scale-95 disabled:scale-100 disabled:bg-muted disabled:shadow-none"
               aria-label="Enviar mensagem"
             >
               <Send className="h-6 w-6 transition-transform duration-300 group-hover:rotate-[-15deg]" />

@@ -497,6 +497,30 @@ export type Database = {
         Args: { user_id_param: string; xp_amount: number }
         Returns: undefined
       }
+      complete_phase_and_award_xp_atomic: {
+        Args: {
+          p_user_id: string
+          p_phase_id: number
+          p_module_id: number
+          p_is_quiz: boolean
+        }
+        Returns: {
+          xp_from_phase: number
+          xp_from_module: number
+        }[]
+      }
+      get_user_ranking_by_period: {
+        Args: { p_period: string }
+        Returns: {
+          id: string
+          username: string
+          full_name: string
+          avatar_url: string
+          xp: number
+          level: number
+          rank: number
+        }[]
+      }
       get_weekly_xp_history: {
         Args: { p_user_id: string }
         Returns: {

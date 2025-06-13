@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -42,32 +43,32 @@ const OnboardingPage = () => {
   const currentStepData = onboardingSteps[currentStep - 1];
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8 flex items-center justify-center">
+    <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8 flex items-center justify-center">
       <div className="max-w-lg mx-auto w-full">
         <div className="flex justify-center mb-8">
           {[1, 2, 3].map((step) => (
             <div
               key={step}
               className={`w-3 h-3 rounded-full mx-2 transition-all duration-300 ${
-                step <= currentStep ? "bg-trilha-orange" : "bg-slate-300"
+                step <= currentStep ? "bg-primary" : "bg-muted"
               }`}
             />
           ))}
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/50 p-6 mb-6 text-center">
+        <div className="bg-card rounded-2xl shadow-sm border p-6 mb-6 text-center">
           <div className="flex justify-center mb-6">{currentStepData.icon}</div>
-          <h1 className="text-2xl font-bold text-slate-900 mb-3">{currentStepData.title}</h1>
-          <p className="text-lg font-semibold text-trilha-orange mb-4">{currentStepData.subtitle}</p>
-          <p className="text-slate-600 leading-relaxed">{currentStepData.description}</p>
-          <div className="bg-slate-50 rounded-xl p-4 mt-6 border border-slate-200">
-            <p className="text-sm italic text-slate-700">{currentStepData.quote}</p>
+          <h1 className="text-2xl font-bold text-foreground mb-3">{currentStepData.title}</h1>
+          <p className="text-lg font-semibold text-primary mb-4">{currentStepData.subtitle}</p>
+          <p className="text-muted-foreground leading-relaxed">{currentStepData.description}</p>
+          <div className="bg-muted rounded-xl p-4 mt-6 border">
+            <p className="text-sm italic text-muted-foreground">{currentStepData.quote}</p>
           </div>
         </div>
 
         <Button
           onClick={handleNext}
-          className="w-full bg-trilha-orange hover:bg-trilha-orange/90 text-white font-semibold py-4 text-lg rounded-xl shadow-sm"
+          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-4 text-lg rounded-xl shadow-sm"
         >
           {currentStep < 3 ? (
             <>Continuar <ArrowRight className="ml-2 h-5 w-5" /></>
@@ -75,7 +76,7 @@ const OnboardingPage = () => {
             <>Vamos começar! <Sparkles className="ml-2 h-5 w-5" /></>
           )}
         </Button>
-        <p className="text-sm text-slate-500 mt-4 text-center font-medium">{currentStep} de 3</p>
+        <p className="text-sm text-muted-foreground mt-4 text-center font-medium">{currentStep} de 3</p>
       </div>
     </div>
   );

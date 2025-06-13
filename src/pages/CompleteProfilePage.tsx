@@ -72,7 +72,7 @@ const CompleteProfilePage = () => {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       const reader = new FileReader();
@@ -82,12 +82,12 @@ const CompleteProfilePage = () => {
       reader.readAsDataURL(file);
     }
   };
-  
+
   const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
     setCroppedAreaPixels(croppedAreaPixels);
   }, []);
 
-  const handleSaveCroppedImage = async () => {
+  const handleCropSave = async () => {
     if (!imageSrc || !croppedAreaPixels || !userId) return;
 
     setIsCropping(true);
@@ -141,103 +141,190 @@ const CompleteProfilePage = () => {
 
   if (isLoadingProfile) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader2 className="h-12 w-12 animate-spin text-trilha-orange" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <>
-      <Dialog open={!!imageSrc} onOpenChange={(isOpen) => !isOpen && setImageSrc(null)}>
-        {/* <<< MUDANÇA DE ESTILO >>> Adicionamos classes para o fundo branco, padding, sombra, etc. */}
-        <DialogContent className="bg-white p-6 rounded-2xl shadow-xl border-slate-200/50 sm:max-w-md">
+    <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
+      <div className="max-w-2xl mx-auto">
+        <header className="flex items-center gap-4 mb-8">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 rounded-full bg-card shadow-sm border border-border"
+            onClick={() => navigate("/onboarding")}
+          >
+            <ArrowLeft className="h-5 w-5 text-muted-foreground" />
+          </Button>
+          <h1 className="text-xl font-bold text-foreground">Complete seu perfil</h1>
+        </header>
+
+        <div className="bg-card rounded-2xl shadow-sm border p-6 mb-6">
+          <div className="flex flex-col items-center gap-4 mb-8">
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept="image/*"
+              onChange={handleImageSelect}
+            />
+            <div
+              className="relative w-24 h-24 rounded-full bg-muted border-4 border-card shadow-lg cursor-pointer ring-2 ring-primary/30 flex items-center justify-center overflow-hidden"
+              onClick={handleAvatarClick}
+            >
+              {formData.avatar_url ? (
+                <img
+                  src={formData.avatar_url}
+                  alt="Seu avatar"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <User className="w-10 h-10 text-muted-foreground" />
+              )}
+              <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                <Camera className="w-6 h-6 text-white" />
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="link"
+              className="text-sm text-primary font-semibold"
+              onClick={handleAvatarClick}
+            >
+              Adicionar foto de perfil
+            </Button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="full_name" className="flex items-center gap-2 text-sm font-semibold text-foreground mb-2">
+                  <User className="w-4 h-4" />
+                  Nome Completo *
+                </label>
+                <Input
+                  id="full_name"
+                  name="full_name"
+                  value={formData.full_name}
+                  onChange={handleInputChange}
+                  placeholder="Seu nome completo"
+                  className="h-12 rounded-xl bg-background border-border"
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="username" className="flex items-center gap-2 text-sm font-semibold text-foreground mb-2">
+                  <AtSign className="w-4 h-4" />
+                  Nome de Usuário *
+                </label>
+                <Input
+                  id="username"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  placeholder="@seu_username"
+                  className="h-12 rounded-xl bg-background border-border"
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="linkedin_url" className="flex items-center gap-2 text-sm font-semibold text-foreground mb-2">
+                  <Linkedin className="w-4 h-4" />
+                  LinkedIn (opcional)
+                </label>
+                <Input
+                  id="linkedin_url"
+                  name="linkedin_url"
+                  type="url"
+                  value={formData.linkedin_url}
+                  onChange={handleInputChange}
+                  placeholder="https://linkedin.com/in/seu-perfil"
+                  className="h-12 rounded-xl bg-background border-border"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="bio" className="flex items-center gap-2 text-sm font-semibold text-foreground mb-2">
+                  <FileText className="w-4 h-4" />
+                  Sobre mim (opcional)
+                </label>
+                <Textarea
+                  id="bio"
+                  name="bio"
+                  value={formData.bio}
+                  onChange={handleInputChange}
+                  placeholder="Conte um pouco sobre você..."
+                  className="min-h-[120px] rounded-xl resize-none bg-background border-border"
+                  rows={4}
+                />
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 h-12 text-base rounded-xl shadow-md"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Salvando perfil...
+                </>
+              ) : (
+                "Finalizar perfil"
+              )}
+            </Button>
+          </form>
+        </div>
+      </div>
+
+      <Dialog open={isCropping} onOpenChange={setIsCropping}>
+        <DialogContent className="sm:max-w-md bg-card">
           <DialogHeader>
-            {/* <<< MUDANÇA DE ESTILO >>> Estilizando o título */}
-            <DialogTitle className="text-xl font-bold text-slate-900 text-center">
-              Edite sua foto de perfil
-            </DialogTitle>
+            <DialogTitle className="text-foreground">Ajustar foto do perfil</DialogTitle>
           </DialogHeader>
-          <div className="relative h-64 w-64 mx-auto my-4 bg-slate-100 rounded-full overflow-hidden">
-            <Cropper
-              image={imageSrc || ''}
-              crop={crop}
-              zoom={zoom}
-              aspect={1}
-              cropShape="round"
-              showGrid={false}
-              onCropChange={setCrop}
-              onZoomChange={setZoom}
-              onCropComplete={onCropComplete}
-            />
-          </div>
-          <div className="space-y-2 pt-2">
-            <label htmlFor="zoom-slider" className="text-sm font-medium text-slate-700">Zoom</label>
-            <Slider
-              id="zoom-slider"
-              value={[zoom]}
-              min={1}
-              max={3}
-              step={0.1}
-              onValueChange={(value) => setZoom(value[0])}
-            />
-          </div>
-          {/* <<< MUDANÇA DE ESTILO >>> Estilizando os botões */}
-          <DialogFooter className="sm:justify-center gap-2 pt-4">
-            <Button variant="outline" className="h-11 border-slate-300" onClick={() => setImageSrc(null)} disabled={isCropping}>
+          {imageSrc && (
+            <div className="space-y-4">
+              <div className="relative h-64 w-full bg-muted rounded-lg overflow-hidden">
+                <Cropper
+                  image={imageSrc}
+                  crop={crop}
+                  zoom={zoom}
+                  aspect={1}
+                  onCropChange={setCrop}
+                  onZoomChange={setZoom}
+                  onCropComplete={onCropComplete}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Zoom:</label>
+                <Slider
+                  value={[zoom]}
+                  onValueChange={(values) => setZoom(values[0])}
+                  min={1}
+                  max={3}
+                  step={0.1}
+                  className="w-full"
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={() => setIsCropping(false)}>
               Cancelar
             </Button>
-            <Button 
-              onClick={handleSaveCroppedImage} 
-              disabled={isCropping}
-              className="h-11 bg-trilha-orange hover:bg-trilha-orange/90 text-white font-semibold"
-            >
-              {isCropping ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar Foto"}
+            <Button onClick={handleCropSave} className="bg-primary hover:bg-primary/90">
+              Salvar
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
-      <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
-        <div className="max-w-md mx-auto">
-            <div className="text-center mb-8">
-                <h1 className="text-2xl font-bold text-slate-900 mb-3">Olá {formData.full_name.split(' ')[0]}, complete o seu perfil! </h1>
-                <p className="text-slate-600"> Complete as suas informações para viver uma experiência completa!</p>
-            </div>
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200/50 p-6">
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="flex flex-col items-center mb-6">
-                        <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
-                        <div className="w-24 h-24 rounded-full border-2 border-trilha-orange overflow-hidden cursor-pointer bg-orange-100 flex items-center justify-center hover:border-orange-500/80 transition-all duration-300" onClick={handleAvatarClick}>
-                            {formData.avatar_url ? (
-                                <img src={formData.avatar_url} alt="Foto de perfil" className="w-full h-full object-cover" />
-                            ) : (
-                                <Camera className="h-8 w-8 text-trilha-orange" />
-                            )}
-                        </div>
-                        <p className="text-sm text-trilha-orange mt-3 font-medium">Adicionar sua foto de perfil</p>
-                    </div>
-                
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2"><AtSign className="inline h-4 w-4 mr-2" />Nome de usuário *</label>
-                        <Input name="username" value={formData.username} onChange={handleInputChange} className="border-slate-200 focus:border-trilha-orange text-gray-500 focus:ring-trilha-orange/20 rounded-xl h-12" placeholder="@seu_username" required />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2"><Linkedin className="inline h-4 w-4 mr-2" />LinkedIn (opcional)</label>
-                        <Input name="linkedin_url" value={formData.linkedin_url} onChange={handleInputChange} className="border-slate-200 focus:border-trilha-orange text-gray-500 focus:ring-trilha-orange/20 rounded-xl text-gray-500 h-12" placeholder="https://linkedin.com/in/seu-perfil" />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-700 mb-2"><FileText className="inline h-4 w-4 mr-2" />Sobre mim (opcional)</label>
-                        <Textarea name="bio" value={formData.bio} onChange={handleInputChange} className="border-slate-200 focus:border-trilha-orange text-italic focus:ring-trilha-orange/20 min-h-[100px] text-gray-500 rounded-xl resize-none" placeholder="Conte um pouco sobre você para as pessoas da comunidade" />
-                    </div>
-                    <Button type="submit" className="w-full bg-trilha-orange hover:bg-trilha-orange/90 text-white font-semibold py-4 text-lg rounded-xl shadow-sm transition-all duration-300 hover:shadow-md" disabled={isLoading}>
-                        {isLoading ? <Loader2 className="h-5 w-5 animate-spin"/> : "Finalizar Cadastro"}
-                    </Button>
-                </form>
-            </div>
-        </div>
-      </div>
-    </>
+    </div>
   );
 };
 

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,7 +55,6 @@ const Index = () => {
 
   const handleGetStarted = async () => {
     if (isAuthenticated) {
-      // Verificar se o usuário já completou o onboarding
       const { data } = await supabase.auth.getSession();
       if (data.session?.user) {
         const onboardingCompleted = await checkOnboardingStatus(data.session.user.id);
@@ -70,7 +70,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#FFDCCC] to-white p-6 text-center">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-primary/10 to-background p-6 text-center">
       <div className="mb-8">
         <div className="w-32 h-32 mb-3 flex items-center justify-center">
           <img 
@@ -79,15 +79,15 @@ const Index = () => {
             className="w-full h-auto"
           />
         </div>
-        <h1 className="text-3xl font-bold text-[#e36322] mb-2">Tryla</h1>
-        <p className="text-gray-500">Sua jornada de desenvolvimento pessoal</p>
+        <h1 className="text-3xl font-bold text-primary mb-2">Tryla</h1>
+        <p className="text-muted-foreground">Sua jornada de desenvolvimento pessoal</p>
       </div>
       
       <div className="h-32 flex items-center justify-center mb-8">
         {motivationalPhrases.map((phrase, index) => (
           <p 
             key={index} 
-            className={`absolute transition-all duration-700 ease-in-out text-xl text-center max-w-xs text-gray-700 font-medium
+            className={`absolute transition-all duration-700 ease-in-out text-xl text-center max-w-xs text-foreground font-medium
               ${currentPhraseIndex === index 
                 ? "opacity-100 transform-none" 
                 : "opacity-0 translate-y-8"}
@@ -105,8 +105,8 @@ const Index = () => {
               key={i} 
               className={`h-2 w-2 rounded-full transition-all duration-500 ${
                 currentPhraseIndex === i 
-                  ? 'bg-[#e36322] scale-110' 
-                  : 'bg-gray-300'
+                  ? 'bg-primary scale-110' 
+                  : 'bg-muted'
               }`}
             />
           ))}
@@ -114,7 +114,7 @@ const Index = () => {
 
         <Button 
           onClick={handleGetStarted}
-          className="bg-[#e36322] hover:bg-[#d15a1f] text-white"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground"
         >
           Começar
         </Button>
