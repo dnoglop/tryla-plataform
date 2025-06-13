@@ -1,5 +1,5 @@
 // ARQUIVO: PhaseDetailPage.tsx
-// VERSÃO FINAL COM MODAL DE XP COMBINADO
+// VERSÃO MELHORADA COM NOVAS FUNCIONALIDADES
 
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
@@ -13,6 +13,7 @@ import {
     VolumeX,
     CheckCircle,
     Clock,
+    Home,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import YoutubeEmbed from "@/components/YoutubeEmbed";
@@ -27,6 +28,8 @@ import {
     awardQuizXp,
     updateUserPhaseStatus,
     getUserPhaseStatus,
+    getModuleProgress,
+    getModules,
     Phase,
     Module,
     Question,
@@ -35,7 +38,7 @@ import {
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import { useRewardModal } from "@/components/XpRewardModal/RewardModalContext";
 
-// Componentes e Funções Auxiliares (sem alterações)
+// Componentes e Funções Auxiliares
 const PhaseDetailSkeleton = () => (
     <div className="min-h-screen bg-slate-50 animate-pulse">
         <header className="p-4 sm:p-6">
@@ -50,14 +53,63 @@ const PhaseDetailSkeleton = () => (
         </main>
     </div>
 );
+
 const formatTime = (s: number | null) =>
     s === null
         ? "00:00"
         : `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+
 const calculateXpForTime = (s: number, q: number) => {
     const sPerQ = s / (q || 1);
     return sPerQ <= 10 ? 25 : sPerQ <= 20 ? 15 : 10;
 };
+
+// Componente para mostrar o próximo módulo
+const NextModuleCard = ({
+    nextModule,
+    onContinue,
+    onBackToModules,
+}: {
+    nextModule: Module;
+    onContinue: () => void;
+    onBackToModules: () => void;
+}) => (
+    <div className="mt-6 p-6 bg-gradient-to-r from-orange-50 to-orange-100 rounded-2xl border border-orange-200">
+        <div className="flex items-start gap-4 mb-4">
+            <div className="flex-shrink-0 h-12 w-12 flex items-center justify-center rounded-xl bg-orange-200 text-2xl">
+                {nextModule.emoji || "📚"}
+            </div>
+            <div className="flex-1">
+                <h3 className="text-lg font-bold text-slate-800 mb-1">
+                    Próxima Missão
+                </h3>
+                <h4 className="text-xl font-semibold text-orange-600 mb-2">
+                    {nextModule.name}
+                </h4>
+                <p className="text-sm text-slate-600">
+                    {nextModule.description}
+                </p>
+            </div>
+        </div>
+        <div className="flex gap-3">
+            <Button
+                onClick={onContinue}
+                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-semibold"
+            >
+                Seguir para o Próximo Módulo
+                <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+            <Button
+                onClick={onBackToModules}
+                variant="outline"
+                className="border-orange-300 text-orange-600 hover:bg-orange-50"
+            >
+                <Home className="mr-2 h-4 w-4" />
+                Voltar para as Trilhas
+            </Button>
+        </div>
+    </div>
+);
 
 export default function PhaseDetailPage() {
     const { moduleId, phaseId } = useParams<{
@@ -73,6 +125,7 @@ export default function PhaseDetailPage() {
     const [quizCompleted, setQuizCompleted] = useState(false);
     const [quizStartTime, setQuizStartTime] = useState<number | null>(null);
     const [quizElapsedTime, setQuizElapsedTime] = useState<number | null>(null);
+    const [moduleCompleted, setModuleCompleted] = useState(false);
     const {
         isPlaying,
         isLoading: isLoadingAudio,
@@ -113,21 +166,45 @@ export default function PhaseDetailPage() {
     const { data, isLoading, error } = useQuery({
         queryKey: ["phaseDetailData", phaseId],
         queryFn: async () => {
-            if (!phaseId || !moduleId) throw new Error("IDs não encontrados.");
+            if (!phaseId || !moduleId || !userId)
+                throw new Error("IDs não encontrados.");
             const pId = Number(phaseId);
             const mId = Number(moduleId);
-            const [phase, module, allPhases, questions] = await Promise.all([
+            const [
+                phase,
+                module,
+                allPhases,
+                questions,
+                allModules,
+                moduleProgress,
+            ] = await Promise.all([
                 getPhaseById(pId),
                 getModuleById(mId),
                 getPhasesByModuleId(mId),
                 getQuestionsByPhaseId(pId),
+                getModules(),
+                getModuleProgress(userId, mId),
             ]);
-            return { phase, module, allPhases, questions };
+            return {
+                phase,
+                module,
+                allPhases,
+                questions,
+                allModules,
+                moduleProgress,
+            };
         },
-        enabled: !!phaseId && !!moduleId,
+        enabled: !!phaseId && !!moduleId && !!userId,
     });
 
-    const { phase, module, allPhases = [], questions = [] } = data || {};
+    const {
+        phase,
+        module,
+        allPhases = [],
+        questions = [],
+        allModules = [],
+        moduleProgress = 0,
+    } = data || {};
 
     useEffect(() => {
         if (
@@ -150,9 +227,20 @@ export default function PhaseDetailPage() {
     const currentPhaseIndex = allPhases.findIndex(
         (p) => p.id === Number(phaseId),
     );
+    const previousPhase =
+        currentPhaseIndex > 0 ? allPhases[currentPhaseIndex - 1] : null;
     const nextPhase =
         currentPhaseIndex !== -1 && currentPhaseIndex < allPhases.length - 1
             ? allPhases[currentPhaseIndex + 1]
+            : null;
+
+    // Encontrar o próximo módulo
+    const currentModuleIndex = allModules.findIndex(
+        (m) => m.id === Number(moduleId),
+    );
+    const nextModule =
+        currentModuleIndex !== -1 && currentModuleIndex < allModules.length - 1
+            ? allModules[currentModuleIndex + 1]
             : null;
 
     const handleReadContent = () => {
@@ -180,11 +268,13 @@ export default function PhaseDetailPage() {
         if (nextPhase) {
             navigate(`/fase/${moduleId}/${nextPhase.id}`);
         } else {
-            toast.success("Módulo finalizado!", {
-                description: "Parabéns por mais essa conquista!",
-                icon: <CheckCircle className="text-green-500" />,
-            });
-            navigate(`/modulo/${moduleId}`);
+            setModuleCompleted(true);
+        }
+    };
+
+    const navigateToPrevious = () => {
+        if (previousPhase) {
+            navigate(`/fase/${moduleId}/${previousPhase.id}`);
         }
     };
 
@@ -199,34 +289,24 @@ export default function PhaseDetailPage() {
                 false,
             );
 
-            // ======================================================================
-            // NOVA LÓGICA PARA EXIBIR UM ÚNICO MODAL COMBINADO
-            // ======================================================================
             if (xpFromPhase > 0 && xpFromModule > 0) {
-                // Caso 1: Ganhou XP da fase E do módulo. Mostra a soma.
                 const totalXp = xpFromPhase + xpFromModule;
                 await showRewardModal({
                     xpAmount: totalXp,
                     title: "Módulo Concluído!",
                 });
             } else if (xpFromPhase > 0) {
-                // Caso 2: Ganhou APENAS XP da fase.
                 await showRewardModal({
                     xpAmount: xpFromPhase,
                     title: "Fase Concluída!",
                 });
             } else if (xpFromModule > 0) {
-                // Caso 3: Ganhou APENAS XP do módulo (raro, mas possível).
                 await showRewardModal({
                     xpAmount: xpFromModule,
                     title: "Módulo Concluído!",
                 });
             }
-            // ======================================================================
-            // FIM DA NOVA LÓGICA
-            // ======================================================================
 
-            // Mantemos a pequena pausa para garantir a renderização antes de navegar
             await new Promise((resolve) => setTimeout(resolve, 100));
             navigateToNext();
         } catch (err) {
@@ -263,7 +343,6 @@ export default function PhaseDetailPage() {
                 });
             }
 
-            // A lógica de conclusão de módulo do quiz é separada, então não precisa mudar.
             const { xpFromModule } = await completePhaseAndAwardXp(
                 userId,
                 Number(phaseId),
@@ -286,6 +365,16 @@ export default function PhaseDetailPage() {
         }
     };
 
+    const handleNextModule = () => {
+        if (nextModule) {
+            navigate(`/modulo/${nextModule.id}`);
+        }
+    };
+
+    const handleBackToModules = () => {
+        navigate("/modulos");
+    };
+
     if (isLoading) return <PhaseDetailSkeleton />;
     if (!phase || !module)
         return (
@@ -299,33 +388,89 @@ export default function PhaseDetailPage() {
     return (
         <div className="min-h-screen bg-slate-50 pb-24">
             <header className="p-4 sm:p-6">
-                <div className="flex items-center gap-4 max-w-4xl mx-auto">
-                    <button
-                        onClick={() => navigate(`/modulo/${moduleId}`)}
-                        className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md transition-transform hover:scale-110 active:scale-95"
-                    >
-                        <ArrowLeft className="h-5 w-5 text-gray-600" />
-                    </button>
-                    <h1 className="text-xl font-bold text-slate-800 truncate">
-                        {module.name}
-                    </h1>
+                <div className="flex items-center justify-between max-w-4xl mx-auto">
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => navigate(`/modulo/${moduleId}`)}
+                            className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md transition-transform hover:scale-110 active:scale-95"
+                        >
+                            <ArrowLeft className="h-5 w-5 text-gray-600" />
+                        </button>
+                        <div>
+                            <h1 className="text-xl font-bold text-slate-800 truncate">
+                                {module.name}
+                            </h1>
+                        </div>
+                    </div>
                 </div>
             </header>
 
             <main className="container px-4 sm:px-6 lg:px-8 py-6 space-y-6 max-w-4xl mx-auto">
                 <div className="p-6 bg-white rounded-2xl shadow-sm border border-slate-200/50">
-                    <h2 className="text-2xl md:text-3xl font-bold text-slate-800">
-                        {phase.name}
-                    </h2>
-                    {phase.description && (
-                        <p className="text-slate-600 mt-2 text-base">
-                            {phase.description}
-                        </p>
-                    )}
+                    <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                            <h2 className="text-2xl md:text-3xl font-bold text-slate-800">
+                                {phase.name}
+                            </h2>
+                            {phase.description && (
+                                <p className="text-slate-600 mt-2 text-base">
+                                    {phase.description}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Gráfico circular de progresso */}
+                        <div className="flex-shrink-0">
+                            <div className="relative flex items-center justify-center">
+                                <svg
+                                    width={70}
+                                    height={70}
+                                    className="transform -rotate-90"
+                                >
+                                    {/* Background circle */}
+                                    <circle
+                                        cx={35}
+                                        cy={35}
+                                        r={28}
+                                        stroke="rgb(226 232 240)"
+                                        strokeWidth={7}
+                                        fill="none"
+                                    />
+                                    {/* Progress circle */}
+                                    <circle
+                                        cx={35}
+                                        cy={35}
+                                        r={28}
+                                        stroke="rgb(249 115 22)"
+                                        strokeWidth={7}
+                                        fill="none"
+                                        strokeDasharray={175.9}
+                                        strokeDashoffset={
+                                            175.9 -
+                                            (moduleProgress / 100) * 175.9
+                                        }
+                                        strokeLinecap="round"
+                                        className="transition-all duration-500 ease-in-out"
+                                    />
+                                </svg>
+                                {/* Percentage text */}
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <span className="text-sm font-bold text-slate-700">
+                                        {Math.round(moduleProgress)}%
+                                    </span>
+                                </div>
+                            </div>
+                            <p className="text-xs text-center text-slate-500 mt-2 font-medium">
+                                da meta concluída!
+                            </p>
+                        </div>
+                    </div>
                 </div>
+
                 {phase.type === "video" && phase.video_url && (
                     <YoutubeEmbed videoId={phase.video_url} />
                 )}
+
                 {(phase.type === "text" || phase.type === "challenge") &&
                     phase.content && (
                         <div className="p-6 bg-white rounded-2xl shadow-sm border border-slate-200/50">
@@ -361,6 +506,7 @@ export default function PhaseDetailPage() {
                             />
                         </div>
                     )}
+
                 {phase.type === "quiz" && (
                     <div className="p-6 bg-white rounded-2xl shadow-sm border border-slate-200/50">
                         {isLoading && <p>Carregando perguntas...</p>}
@@ -436,30 +582,75 @@ export default function PhaseDetailPage() {
                     </div>
                 )}
 
-                <div className="mt-8 flex items-center justify-end gap-4 border-t border-slate-200 pt-6">
+                <div className="mt-8 flex items-center justify-between gap-4 border-t border-slate-200 pt-6">
+                    {/* Botão Voltar */}
                     <Button
-                        onClick={handleCompletePhase}
-                        disabled={isSubmitting || phase.type === "quiz"}
-                        className={`w-full sm:w-auto text-white bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 ${phase.type === "quiz" ? "hidden" : ""}`}
+                        onClick={navigateToPrevious}
+                        disabled={!previousPhase}
+                        variant="outline"
+                        className={`${!previousPhase ? "opacity-50 cursor-not-allowed" : ""}`}
                     >
-                        {isSubmitting
-                            ? "Processando..."
-                            : nextPhase
-                              ? "Concluir e Próxima"
-                              : "Finalizar Módulo"}{" "}
-                        <ArrowRight className="ml-2 h-4 w-4" />
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Voltar
                     </Button>
-                    <Button
-                        onClick={navigateToNext}
-                        disabled={!quizCompleted}
-                        className={`w-full sm:w-auto text-white bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 ${phase.type !== "quiz" ? "hidden" : ""}`}
-                    >
-                        {nextPhase
-                            ? "Ir para Próxima Fase"
-                            : "Finalizar Módulo"}{" "}
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
+
+                    {/* Botões de Ação */}
+                    <div className="flex gap-3">
+                        <Button
+                            onClick={handleCompletePhase}
+                            disabled={isSubmitting || phase.type === "quiz"}
+                            className={`text-white bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 ${phase.type === "quiz" ? "hidden" : ""}`}
+                        >
+                            {isSubmitting
+                                ? "Processando..."
+                                : nextPhase
+                                  ? "Concluir e Próxima"
+                                  : "Finalizar Módulo"}{" "}
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                        <Button
+                            onClick={navigateToNext}
+                            disabled={!quizCompleted}
+                            className={`text-white bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 ${phase.type !== "quiz" ? "hidden" : ""}`}
+                        >
+                            {nextPhase
+                                ? "Ir para Próxima Fase"
+                                : "Finalizar Módulo"}{" "}
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                    </div>
                 </div>
+
+                {/* Card do Próximo Módulo */}
+                {moduleCompleted && nextModule && (
+                    <NextModuleCard
+                        nextModule={nextModule}
+                        onContinue={handleNextModule}
+                        onBackToModules={handleBackToModules}
+                    />
+                )}
+
+                {/* Mensagem quando não há próximo módulo */}
+                {moduleCompleted && !nextModule && (
+                    <div className="mt-6 p-6 bg-gradient-to-r from-green-50 to-green-100 rounded-2xl border border-green-200 text-center">
+                        <div className="mb-4">
+                            <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+                            <h3 className="text-2xl font-bold text-slate-800 mb-2">
+                                Parabéns! 🎉
+                            </h3>
+                            <p className="text-slate-600 mb-4">
+                                Você concluiu todas as trilhas disponíveis!
+                            </p>
+                        </div>
+                        <Button
+                            onClick={handleBackToModules}
+                            className="bg-green-500 hover:bg-green-600 text-white font-semibold"
+                        >
+                            <Home className="mr-2 h-4 w-4" />
+                            Voltar para as Trilhas
+                        </Button>
+                    </div>
+                )}
             </main>
         </div>
     );
