@@ -1,5 +1,3 @@
-// src/App.tsx
-
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -10,7 +8,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "@/components/Layout";
 import { Toaster } from "sonner";
 import { RewardModalProvider } from "@/components/XpRewardModal/RewardModalContext";
-import { ThemeProvider } from "./components/theme/ThemeProvider"; // Importar ThemeProvider
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 
 // Páginas
 import SplashScreen from "./pages/SplashScreen";
@@ -28,10 +26,10 @@ import TutorPage from "./pages/TutorPage";
 import LabPage from "./pages/LabPage";
 import { VocationalTestPage } from "./pages/VocationalTestPage";
 import SocialPage from "./pages/SocialPage";
-import { PomodoroPage } from "./pages/PomodoroPage";
+import PomodoroPage from "./pages/PomodoroPage"; // Corrigido para importação default
 import OnboardingPage from "./pages/OnboardingPage";
 import CompleteProfilePage from "./pages/CompleteProfilePage";
-import SettingsPage from "./pages/SettingsPage"; // Importar SettingsPage
+import SettingsPage from "./pages/SettingsPage";
 
 function App() {
   const queryClient = useQueryClient();
@@ -82,8 +80,7 @@ function App() {
               {/* Rotas de tela cheia (disponíveis após o onboarding) */}
               <Route path="/admin" element={<AdminPage />} />
               <Route path="/editar-perfil" element={<EditProfilePage />} />
-              <Route path="/configuracoes" element={<SettingsPage />} />{" "}
-              {/* ROTA ADICIONADA */}
+              <Route path="/configuracoes" element={<SettingsPage />} />
               <Route path="/modulo/:id" element={<ModuleDetailPage />} />
               <Route
                 path="/fase/:moduleId/:phaseId"

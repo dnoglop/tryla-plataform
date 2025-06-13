@@ -20,7 +20,7 @@ const LONG_BREAK_TIME = 15 * 60;
 const CYCLES_BEFORE_LONG_BREAK = 4;
 type TimerMode = "focus" | "shortBreak" | "longBreak";
 
-export function PomodoroPage() {
+export default function PomodoroPage() {
     const navigate = useNavigate();
     const [profile, setProfile] = useState<Profile | null>(null);
     const [isLoadingProfile, setIsLoadingProfile] = useState(true);
