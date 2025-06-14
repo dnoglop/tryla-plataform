@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { CheckCircle2, Lock, Play, Star, Trophy, BookText, Video, Award } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -26,136 +25,104 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
   const [hoveredPhase, setHoveredPhase] = useState<number | null>(null);
   const [pressedPhase, setPressedPhase] = useState<number | null>(null);
 
-  // Generate positions for phases in a curved path
+  // Generate better spaced positions for phases
   const generatePhasePositions = (): TrailPhase[] => {
     return phases.map((phase, index) => {
-      const centerX = 50;
-      const baseY = 160;
-      const verticalSpacing = 320; // Increased spacing to prevent overlap
+      const yStep = 120; // Reduced spacing between cards
+      const centerX = 50; // Center horizontal position
       
-      // Create a subtle S-curve effect
-      const curveAmplitude = 15;
-      const curveFreq = 0.8;
-      const xOffset = Math.sin(index * curveFreq) * curveAmplitude;
+      // Alternating positions for visual interest
+      const xVariation = index % 2 === 0 ? 45 : 55;
       
       return {
         ...phase,
-        position: { 
-          x: centerX + xOffset, 
-          y: baseY + (index * verticalSpacing) 
-        }
+        position: { x: xVariation, y: 50 + (index * yStep) }
       };
     });
   };
 
   const positionedPhases = generatePhasePositions();
-  const containerHeight = Math.max(1200, positionedPhases.length * 320 + 500);
+  const containerHeight = Math.max(600, positionedPhases.length * 120 + 200);
 
   const getPhaseIcon = (phase: TrailPhase) => {
-    if (phase.isLocked) return <Lock className="h-5 w-5 text-gray-400" />;
-    if (phase.status === "completed") return <CheckCircle2 className="h-5 w-5 text-white" />;
+    if (phase.isLocked) return <Lock className="h-6 w-6 text-gray-400" />;
+    if (phase.status === "completed") return <CheckCircle2 className="h-6 w-6 text-white" />;
     
     switch (phase.type) {
       case "video":
-        return <Video className="h-5 w-5 text-white" />;
+        return <Video className="h-6 w-6 text-white" />;
       case "quiz":
-        return <Star className="h-5 w-5 text-white" />;
+        return <Star className="h-6 w-6 text-white" />;
       case "challenge":
-        return <Trophy className="h-5 w-5 text-white" />;
+        return <Trophy className="h-6 w-6 text-white" />;
       case "text":
-        return <BookText className="h-5 w-5 text-white" />;
+        return <BookText className="h-6 w-6 text-white" />;
       default:
-        return <BookText className="h-5 w-5 text-white" />;
+        return <BookText className="h-6 w-6 text-white" />;
     }
   };
 
   const getPhaseColors = (phase: TrailPhase) => {
     if (phase.isLocked) {
       return {
-        cardBg: "bg-white/60",
+        bg: "bg-gray-100",
         border: "border-gray-200",
-        iconBg: "bg-gray-300",
-        buttonBg: "bg-gray-200 text-gray-500"
+        text: "text-gray-500",
+        iconBg: "bg-gray-300"
       };
     }
     
     if (phase.status === "completed") {
       return {
-        cardBg: "bg-white",
-        border: "border-orange-200",
-        iconBg: "bg-gradient-to-br from-orange-400 to-orange-500",
-        buttonBg: "bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700"
+        bg: "bg-white",
+        border: "border-green-200",
+        text: "text-gray-800",
+        iconBg: "bg-green-500"
       };
     }
     
     return {
-      cardBg: "bg-white",
-      border: "border-orange-300",
-      iconBg: "bg-gradient-to-br from-orange-500 to-orange-600",
-      buttonBg: "bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700"
+      bg: "bg-white",
+      border: "border-orange-200",
+      text: "text-gray-800",
+      iconBg: "bg-orange-500"
     };
   };
 
   const renderConnection = (from: TrailPhase, to: TrailPhase, index: number) => {
     const isActive = from.status === "completed";
-    const fromX = from.position.x;
-    const fromY = from.position.y + 120;
-    const toX = to.position.x;
-    const toY = to.position.y - 20;
-    
-    const midY = (fromY + toY) / 2;
-    const controlX1 = fromX;
-    const controlY1 = midY - 30;
-    const controlX2 = toX;  
-    const controlY2 = midY + 30;
-    
-    const pathD = `M ${fromX} ${fromY} C ${controlX1} ${controlY1} ${controlX2} ${controlY2} ${toX} ${toY}`;
+    const fromY = from.position.y + 50; // Adjusted for new card height
+    const toY = to.position.y;
+    const height = toY - fromY;
     
     return (
-      <svg
+      <div
         key={`connection-${index}`}
-        className="absolute inset-0 pointer-events-none"
-        style={{ width: '100%', height: '100%' }}
+        className="absolute left-1/2 transform -translate-x-1/2 z-0"
+        style={{
+          top: fromY,
+          height: height,
+          width: "3px"
+        }}
       >
-        <defs>
-          <linearGradient id={`gradient-${index}`} x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor={isActive ? "#fb923c" : "#d1d5db"} />
-            <stop offset="100%" stopColor={isActive ? "#ea580c" : "#9ca3af"} />
-          </linearGradient>
-          
+        <div className={cn(
+          "w-full h-full transition-all duration-700 rounded-full",
+          isActive ? "bg-gradient-to-b from-green-400 to-green-500" : "bg-gray-300"
+        )}>
           {isActive && (
-            <filter id={`glow-${index}`}>
-              <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-              <feMerge> 
-                <feMergeNode in="coloredBlur"/>
-                <feMergeNode in="SourceGraphic"/>
-              </feMerge>
-            </filter>
+            <>
+              <div className="w-full h-4 bg-green-300 animate-pulse opacity-60 rounded-full" />
+              <div 
+                className="w-full bg-green-200 opacity-40 animate-pulse rounded-full"
+                style={{
+                  height: "12px",
+                  animationDelay: "0.5s"
+                }}
+              />
+            </>
           )}
-        </defs>
-        
-        <path
-          d={pathD}
-          stroke={`url(#gradient-${index})`}
-          strokeWidth="3"
-          fill="none"
-          strokeLinecap="round"
-          filter={isActive ? `url(#glow-${index})` : undefined}
-          className={isActive ? "animate-pulse" : ""}
-          style={{
-            opacity: isActive ? 0.9 : 0.4,
-            transition: "all 0.5s ease-in-out"
-          }}
-        />
-        
-        {isActive && (
-          <circle r="4" fill="#fb923c" className="animate-pulse">
-            <animateMotion dur="3s" repeatCount="indefinite">
-              <mpath href={`#path-${index}`}/>
-            </animateMotion>
-          </circle>
-        )}
-      </svg>
+        </div>
+      </div>
     );
   };
 
@@ -173,36 +140,21 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
   };
 
   return (
-    <div className={cn("min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-100 relative overflow-hidden", className)}>
-      {/* Decorative background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-32 h-32 bg-orange-200/20 rounded-full blur-xl"></div>
-        <div className="absolute top-40 right-20 w-24 h-24 bg-orange-300/15 rounded-full blur-lg"></div>
-        <div className="absolute bottom-40 left-20 w-40 h-40 bg-orange-100/30 rounded-full blur-2xl"></div>
-      </div>
-
-      {/* Header */}
-      <div className="relative z-20 pt-8 pb-4 text-center">
-        <div className="inline-flex items-center gap-4 bg-white/90 backdrop-blur-md rounded-2xl px-8 py-4 shadow-lg border border-orange-200/50">
-          <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-500 rounded-xl shadow-md">
-            <Award className="h-5 w-5 text-white" />
+    <div className={cn("min-h-screen bg-gradient-to-br from-orange-50 via-orange-100 to-orange-200 pb-24", className)}>
+      {/* Header with progress */}
+      <div className="relative z-20 p-6 text-center">
+        <div className="inline-flex items-center gap-4 bg-white/95 backdrop-blur-sm rounded-2xl px-8 py-5 shadow-lg border border-orange-200">
+          <div className="flex items-center justify-center w-12 h-12 bg-orange-500 rounded-full shadow-md">
+            <Award className="h-7 w-7 text-white" />
           </div>
-          <div>
-            <div className="text-2xl font-bold text-orange-800 mb-1">
-              {Math.round(moduleProgress)}% Concluído
-            </div>
-            <div className="w-32 h-2 bg-orange-100 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-orange-400 to-orange-500 rounded-full transition-all duration-1000 ease-out"
-                style={{ width: `${moduleProgress}%` }}
-              />
-            </div>
-          </div>
+          <span className="text-2xl font-bold text-orange-800">
+            {Math.round(moduleProgress)}% Concluído
+          </span>
         </div>
       </div>
 
       {/* Trail container */}
-      <div className="relative px-8" style={{ height: containerHeight }}>
+      <div className="relative px-4 overflow-hidden" style={{ height: containerHeight }}>
         {/* Render connections */}
         {positionedPhases.slice(0, -1).map((phase, index) => {
           const nextPhase = positionedPhases[index + 1];
@@ -218,21 +170,29 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
           return (
             <div
               key={phase.id}
-              className="absolute z-10 transition-all duration-300"
+              className="absolute left-1/2 transform -translate-x-1/2 z-10"
               style={{
                 top: phase.position.y,
                 left: `${phase.position.x}%`,
-                transform: `translateX(-50%) ${isHovered && !phase.isLocked ? 'translateY(-4px)' : ''} ${isPressed ? 'scale(0.98)' : isHovered && !phase.isLocked ? 'scale(1.02)' : ''}`,
-                width: "280px"
+                transform: "translateX(-50%)",
+                width: "200px" // Much smaller width
               }}
             >
               <div
                 className={cn(
-                  "relative rounded-2xl transition-all duration-300 overflow-hidden backdrop-blur-sm border-2",
-                  colors.cardBg,
+                  "relative rounded-xl transition-all duration-300 overflow-hidden select-none",
+                  colors.bg,
                   colors.border,
-                  !phase.isLocked && "cursor-pointer hover:shadow-xl",
-                  phase.isLocked && "cursor-not-allowed opacity-70"
+                  "border-2",
+                  !phase.isLocked && "cursor-pointer",
+                  phase.isLocked && "opacity-70 cursor-not-allowed",
+                  // Shadow and 3D effects
+                  !phase.isLocked && !isPressed && "shadow-lg hover:shadow-xl",
+                  !phase.isLocked && isPressed && "shadow-md transform scale-95",
+                  !phase.isLocked && isHovered && !isPressed && "transform scale-105",
+                  // Soft shadow variations
+                  phase.status === "completed" && "shadow-green-200/50",
+                  phase.status !== "completed" && !phase.isLocked && "shadow-orange-200/50",
                 )}
                 onClick={() => !phase.isLocked && onPhaseClick(phase)}
                 onMouseEnter={() => setHoveredPhase(index)}
@@ -241,72 +201,68 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
                 onMouseUp={handleMouseUp}
                 style={{
                   boxShadow: isPressed 
-                    ? "0 4px 20px rgba(251, 146, 60, 0.15), inset 0 2px 4px rgba(0,0,0,0.06)"
-                    : isHovered && !phase.isLocked
-                    ? "0 12px 40px rgba(251, 146, 60, 0.2), 0 4px 16px rgba(0,0,0,0.08)"
-                    : "0 4px 20px rgba(251, 146, 60, 0.1), 0 2px 8px rgba(0,0,0,0.04)"
+                    ? "0 2px 8px rgba(0,0,0,0.1), inset 0 1px 2px rgba(0,0,0,0.05)"
+                    : isHovered
+                    ? "0 8px 20px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.05)"
+                    : "0 4px 12px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04)",
+                  transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
                 }}
               >
                 {/* Status indicator */}
-                <div className="absolute top-4 right-4 z-20">
+                <div className="absolute top-2 right-2 z-20">
                   {phase.status === "completed" && (
-                    <div className="w-6 h-6 bg-gradient-to-br from-orange-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg animate-pulse">
-                      <CheckCircle2 className="h-4 w-4 text-white" />
+                    <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center shadow-md">
+                      <CheckCircle2 className="h-3 w-3 text-white" />
                     </div>
                   )}
                   {phase.status === "inProgress" && (
-                    <div className="w-6 h-6 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center shadow-lg">
-                      <Play className="h-3 w-3 text-white ml-0.5" />
+                    <div className="w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center animate-pulse shadow-md">
+                      <Play className="h-2 w-2 text-white" />
                     </div>
                   )}
                 </div>
 
-                {/* Phase number badge */}
-                <div className="absolute -left-3 top-6 w-8 h-8 bg-gradient-to-br from-orange-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg z-20 border-3 border-white">
-                  {index + 1}
+                {/* Main icon */}
+                <div className="flex justify-center pt-3 pb-2">
+                  <div className={cn(
+                    "w-10 h-10 rounded-lg flex items-center justify-center shadow-md transition-all duration-300",
+                    colors.iconBg,
+                    isHovered && !phase.isLocked && "scale-110 shadow-lg",
+                    isPressed && "scale-95"
+                  )}>
+                    {getPhaseIcon(phase)}
+                  </div>
                 </div>
 
-                {/* Main content */}
-                <div className="p-6 pt-8">
-                  {/* Icon */}
-                  <div className="flex justify-center mb-4">
-                    <div className={cn(
-                      "w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-all duration-300",
-                      colors.iconBg,
-                      isHovered && !phase.isLocked && "scale-110 shadow-xl"
-                    )}>
-                      {getPhaseIcon(phase)}
-                    </div>
-                  </div>
-
-                  {/* Text content */}
-                  <div className="text-center mb-6">
-                    <h3 className="font-bold text-lg text-gray-800 mb-2 leading-tight">
-                      {phase.name}
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-                      {phase.description || "Conceitos básicos"}
-                    </p>
-                    
-                    {/* Meta info */}
-                    <div className="flex justify-center gap-4 text-xs text-gray-500 mb-4">
-                      <span className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full">
-                        <div className="w-1 h-1 bg-orange-400 rounded-full" />
-                        {phase.duration || 5}min
-                      </span>
-                      <span className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full capitalize">
-                        <div className="w-1 h-1 bg-orange-400 rounded-full" />
-                        {phase.type}
-                      </span>
-                    </div>
+                {/* Card content */}
+                <div className="px-3 pb-3 text-center">
+                  <h3 className="font-bold text-sm text-gray-800 mb-1">
+                    {phase.name}
+                  </h3>
+                  <p className="text-xs text-gray-600 mb-3 line-clamp-2 leading-relaxed">
+                    {phase.description || "Conceitos básicos e princípios fundamentais para seu aprendizado"}
+                  </p>
+                  
+                  {/* Additional info */}
+                  <div className="flex justify-center gap-3 text-xs text-gray-500 mb-3">
+                    <span className="flex items-center gap-1">
+                      <div className="w-1 h-1 bg-gray-400 rounded-full" />
+                      {phase.duration || 5} min
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <div className="w-1 h-1 bg-gray-400 rounded-full" />
+                      {phase.type}
+                    </span>
                   </div>
 
                   {/* Action button */}
-                  {!phase.isLocked ? (
+                  {!phase.isLocked && (
                     <button
                       className={cn(
-                        "w-full py-3 rounded-xl font-semibold text-sm transition-all duration-300 shadow-md hover:shadow-lg",
-                        colors.buttonBg,
+                        "w-full py-2 rounded-lg font-semibold text-xs transition-all duration-300 shadow-sm",
+                        phase.status === "completed" 
+                          ? "bg-green-500 hover:bg-green-600 text-white hover:shadow-md"
+                          : "bg-orange-500 hover:bg-orange-600 text-white hover:shadow-md",
                         isPressed && "transform scale-95"
                       )}
                     >
@@ -317,40 +273,28 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
                           : "Iniciar"
                       }
                     </button>
-                  ) : (
-                    <div className="w-full py-3 bg-gray-200 rounded-xl text-gray-500 font-semibold text-sm text-center">
+                  )}
+                  
+                  {phase.isLocked && (
+                    <div className="w-full py-2 bg-gray-200 rounded-lg text-gray-500 font-semibold text-xs">
                       Complete a fase anterior
                     </div>
                   )}
                 </div>
 
                 {/* Shine effect for active phases */}
-                {(phase.status === "inProgress" || (isHovered && !phase.isLocked)) && (
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse opacity-50" />
+                {(phase.status === "inProgress" || phase.status === "completed") && (
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse opacity-30" />
                 )}
+              </div>
+
+              {/* Phase number badge */}
+              <div className="absolute -left-3 top-4 w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-md z-20 border-2 border-white">
+                {index + 1}
               </div>
             </div>
           );
         })}
-
-        {/* Final completion badge */}
-        {positionedPhases.length > 0 && (
-          <div 
-            className="absolute z-10 flex justify-center"
-            style={{
-              top: positionedPhases[positionedPhases.length - 1]?.position.y + 280 || 1000,
-              left: '50%',
-              transform: 'translateX(-50%)'
-            }}
-          >
-            <div className="bg-gradient-to-br from-orange-400 to-orange-500 text-white px-8 py-4 rounded-2xl shadow-xl border-4 border-white">
-              <div className="flex items-center gap-3">
-                <Trophy className="h-6 w-6" />
-                <span className="font-bold text-lg">Módulo Completo!</span>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
