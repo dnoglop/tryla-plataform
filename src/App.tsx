@@ -1,28 +1,29 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { ThemeProvider } from "@/components/theme-provider"
-import { QueryProvider } from './QueryProvider';
+import { ThemeProvider } from "@/components/theme/ThemeProvider"
+import { QueryProvider } from './providers/QueryProvider';
 import { Toaster } from "@/components/ui/toaster"
-import { ProtectedRoute } from './ProtectedRoute';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
+import SignupPage from './pages/SignupPage';
 import ProfilePage from './pages/ProfilePage';
 import ModulesPage from './pages/ModulesPage';
 import ModuleDetailPage from './pages/ModuleDetailPage';
 import PhaseDetailPage from './pages/PhaseDetailPage';
-import { XpRewardModalProvider } from './components/XpRewardModal/RewardModalContext';
+import { RewardModalProvider } from './components/XpRewardModal/RewardModalContext';
 import ModuleTrailPage from './pages/ModuleTrailPage';
 
 function App() {
   return (
     <QueryProvider>
       <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-        <XpRewardModalProvider>
+        <RewardModalProvider>
           <Router>
             <div className="min-h-screen bg-background">
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/register" element={<SignupPage />} />
                 <Route path="/perfil" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
                 <Route path="/modulos" element={<ProtectedRoute><ModulesPage /></ProtectedRoute>} />
                 <Route path="/modulo/:id" element={<ProtectedRoute><ModuleDetailPage /></ProtectedRoute>} />
@@ -32,7 +33,7 @@ function App() {
               <Toaster />
             </div>
           </Router>
-        </XpRewardModalProvider>
+        </RewardModalProvider>
       </ThemeProvider>
     </QueryProvider>
   );
