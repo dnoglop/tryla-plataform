@@ -25,6 +25,8 @@ import {
     updateUserStreak,
 } from "@/services/profileService";
 import ForumThread from "@/components/ForumThread";
+import DailyChallengeCard from "@/components/DailyChallengeCard";
+import { useDailyChallenge } from "@/hooks/useDailyChallenge";
 
 // --- COMPONENTES VISUAIS AUXILIARES ---
 const DashboardSkeleton = () => (
@@ -115,7 +117,6 @@ const fetchDailyQuote = async () => {
 
 // --- COMPONENTE PRINCIPAL ---
 export default function DashboardPage() {
-    // ... (lógica do componente permanece a mesma)
     const queryClient = useQueryClient();
     const { hasShownWelcomeModal, setHasShownWelcomeModal } = useSessionStore();
     const [userId, setUserId] = useState<string | null>(null);
@@ -286,6 +287,8 @@ export default function DashboardPage() {
         },
     ];
 
+    const dailyChallenge = useDailyChallenge(userId || '');
+
     if (isLoadingPage || !profile) {
         return <DashboardSkeleton />;
     }
@@ -299,7 +302,6 @@ export default function DashboardPage() {
                 quote={dailyQuote || "Sua jornada de sucesso começa agora."}
                 isLoadingQuote={isLoadingQuote}
             />
-            {/* MUDANÇA: Cores de fundo e texto adaptadas para o tema */}
             <div className="bg-background min-h-screen">
                 <header className="p-4 sm:p-6 lg:p-8">
                     <div className="flex justify-between items-center">
@@ -399,6 +401,21 @@ export default function DashboardPage() {
                             </div>
                         </div>
                     </div>
+
+                    {/* Seção do Desafio Diário */}
+                    <div className="flex justify-between items-center">
+                        <h2 className="font-bold text-lg text-foreground">
+                            Desafio do Dia
+                        </h2>
+                    </div>
+                    <DailyChallengeCard
+                        challenge={dailyChallenge.currentChallenge}
+                        timeRemaining={dailyChallenge.timeRemaining}
+                        onComplete={dailyChallenge.completeChallenge}
+                        canComplete={dailyChallenge.canComplete}
+                        isLoading={dailyChallenge.isLoading}
+                    />
+
                     <h2 className="font-bold text-lg text-foreground">
                         Continue sua Jornada
                     </h2>

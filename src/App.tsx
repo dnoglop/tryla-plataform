@@ -63,7 +63,8 @@ function App() {
                   <ProtectedRoute>
                     <Layout>
                       <Routes>
-                        <Route path="/dashboard" element={<DashboardPage />} />
+                        <Route path="/inicio" element={<DashboardPage />} />
+                        <Route path="/dashboard" element={<Navigate to="/inicio" replace />} />
                         <Route path="/modulos" element={<ModulesPage />} />
                         <Route path="/modulo/:id" element={<ModuleDetailPage />} />
                         <Route path="/modulo/:moduleId/fase/:id" element={<PhaseDetailPage />} />

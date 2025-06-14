@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getProfile, Profile, updateUserStreak } from '@/services/profileService';
@@ -6,7 +7,7 @@ import { getUserRanking } from '@/services/rankingService';
 
 export const useDashboardData = () => {
   return useQuery({
-    queryKey: ['dashboardAndProfileData'], // Uma chave única para estes dados compartilhados
+    queryKey: ['inicioAndProfileData'], // Atualizada para refletir a nova rota
     queryFn: async () => {
       // 1. Obter usuário
       const { data: { user } } = await supabase.auth.getUser();
