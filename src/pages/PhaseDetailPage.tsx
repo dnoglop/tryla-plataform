@@ -36,6 +36,8 @@ export default function PhaseDetailPage() {
     const currentModuleId = parseInt(moduleId || "0");
     const [textContent, setTextContent] = useState<string | null>(null);
     const [speechRate, setSpeechRate] = useState(1.1);
+    const [lastReadPosition, setLastReadPosition] = useState(0);
+    const [isPaused, setIsPaused] = useState(false);
     const { showReward } = useReward();
     const { isPlaying, playText, stopAudio } = useTextToSpeech();
 
@@ -92,6 +94,11 @@ export default function PhaseDetailPage() {
         };
     }, [stopAudio]);
 
+    const getTextFromPosition = (text: string, position: number): string => {
+        const words = text.split(' ');
+        return words.slice(position).join(' ');
+    };
+
     const handleTextToSpeech = () => {
         console.log("Text-to-speech button clicked, isPlaying:", isPlaying);
         if (!textContent) {
@@ -102,10 +109,20 @@ export default function PhaseDetailPage() {
         if (isPlaying) {
             console.log("Stopping audio");
             stopAudio();
+            setIsPaused(true);
         } else {
-            console.log("Starting audio with rate:", speechRate);
+            console.log("Starting audio with rate:", speechRate, "from position:", lastReadPosition);
             const cleanText = textContent.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-            playText(cleanText, { lang: 'pt-BR', rate: speechRate });
+            
+            // Se foi pausado, continua de onde parou, senão começa do início
+            const textToRead = isPaused ? getTextFromPosition(cleanText, lastReadPosition) : cleanText;
+            
+            if (!isPaused) {
+                setLastReadPosition(0);
+            }
+            
+            playText(textToRead, { lang: 'pt-BR', rate: speechRate });
+            setIsPaused(false);
         }
     };
 
@@ -116,10 +133,18 @@ export default function PhaseDetailPage() {
             stopAudio();
             setTimeout(() => {
                 const cleanText = textContent.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-                playText(cleanText, { lang: 'pt-BR', rate: newRate });
+                const textToRead = getTextFromPosition(cleanText, lastReadPosition);
+                playText(textToRead, { lang: 'pt-BR', rate: newRate });
             }, 100);
         }
     };
+
+    // Monitora quando o áudio termina para resetar a posição
+    useEffect(() => {
+        if (!isPlaying && !isPaused) {
+            setLastReadPosition(0);
+        }
+    }, [isPlaying, isPaused]);
 
     const handleCompletePhase = async () => {
         if (!phase || !user) {
@@ -280,7 +305,7 @@ export default function PhaseDetailPage() {
                                         ) : (
                                             <Play className="h-4 w-4" />
                                         )}
-                                        {isPlaying ? "Pausar" : "Ouvir"}
+                                        {isPlaying ? "Pausar" : isPaused ? "Continuar" : "Ouvir"}
                                     </Button>
                                 </div>
                             )}
@@ -360,7 +385,6 @@ export default function PhaseDetailPage() {
                             variant="ghost"
                             className="text-sm"
                             onClick={() => {
-                                // Aqui você pode implementar navegação para fase anterior
                                 console.log("Navigate to previous phase");
                             }}
                         >
@@ -375,7 +399,6 @@ export default function PhaseDetailPage() {
                             variant="ghost"
                             className="text-sm"
                             onClick={() => {
-                                // Aqui você pode implementar navegação para próxima fase
                                 console.log("Navigate to next phase");
                             }}
                         >
