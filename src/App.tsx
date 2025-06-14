@@ -12,7 +12,6 @@ import ModulesPage from './pages/ModulesPage';
 import ModuleDetailPage from './pages/ModuleDetailPage';
 import PhaseDetailPage from './pages/PhaseDetailPage';
 import { RewardModalProvider } from './components/XpRewardModal/RewardModalContext';
-import ModuleTrailPage from './pages/ModuleTrailPage';
 
 function App() {
   return (
@@ -27,7 +26,6 @@ function App() {
                 <Route path="/perfil" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
                 <Route path="/modulos" element={<ProtectedRoute><ModulesPage /></ProtectedRoute>} />
                 <Route path="/modulo/:id" element={<ProtectedRoute><ModuleDetailPage /></ProtectedRoute>} />
-                <Route path="/modulo/:id/trilha" element={<ProtectedRoute><ModuleTrailPage /></ProtectedRoute>} />
                 <Route path="/modulo/:moduleId/fase/:id" element={<ProtectedRoute><PhaseDetailPage /></ProtectedRoute>} />
               </Routes>
               <Toaster />

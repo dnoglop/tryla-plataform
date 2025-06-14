@@ -24,85 +24,17 @@ import {
     CheckCircle2,
     RefreshCw,
     ArrowLeft,
-    Lock,
-    Video,
-    FileText,
-    HelpCircle,
-    Star,
-    Map,
 } from "lucide-react";
 import { getProfile, Profile } from "@/services/profileService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { TrailVisualization } from "@/components/trail/TrailVisualization";
 
-// --- COMPONENTES AUXILIARES ---
-const PhaseCard = ({
-    phase,
-    status,
-    isLocked,
-    onClick,
-}: {
-    phase: Phase;
+interface TrailPhase extends Phase {
     status: PhaseStatus;
     isLocked: boolean;
-    onClick: () => void;
-}) => {
-    const isCompleted = status === "completed";
-    const getPhaseTypeInPortuguese = (type: string | null): string => {
-        switch (type) {
-            case "video": return "Vídeo";
-            case "text": return "Leitura";
-            case "quiz": return "Quiz";
-            case "challenge": return "Desafio";
-            default: return "Conteúdo";
-        }
-    };
-
-    const getIcon = () => {
-        if (isLocked) return <Lock className="h-5 w-5 text-muted-foreground" />;
-        if (isCompleted)
-            return <CheckCircle2 className="h-5 w-5 text-green-600" />;
-
-        const iconClass = "h-5 w-5 text-primary";
-        switch (phase.type) {
-            case "video":
-                return <Video className={iconClass} />;
-            case "text":
-                return <FileText className={iconClass} />;
-            case "quiz":
-                return <HelpCircle className={iconClass} />;
-            case "challenge":
-                return <Star className={iconClass} />;
-            default:
-                return <PlayCircle className={iconClass} />;
-        }
-    };
-
-    return (
-        <button
-            onClick={onClick}
-            disabled={isLocked}
-            className="w-full flex items-center gap-4 bg-card p-4 rounded-xl shadow-sm hover:bg-muted/50 transition-colors disabled:bg-muted disabled:cursor-not-allowed group"
-        >
-            <div
-                className={`flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-full transition-colors ${isLocked ? "bg-muted-foreground/20" : isCompleted ? "bg-green-500/10" : "bg-primary/10"}`}
-            >
-                {getIcon()}
-            </div>
-            <div
-                className={`flex-1 text-left transition-opacity ${isLocked ? "opacity-50" : ""}`}
-            >
-                <p className="font-semibold text-card-foreground">
-                    {phase.name}
-                </p>
-                <p className="text-xs text-muted-foreground capitalize">
-                    {phase.duration || 5} min •{" "}
-                    {getPhaseTypeInPortuguese(phase.type)}
-                </p>
-            </div>
-        </button>
-    );
-};
+    position: { x: number; y: number };
+}
 
 const ModuleDetailSkeleton = () => (
     <div className="min-h-screen bg-background animate-pulse">
@@ -117,11 +49,7 @@ const ModuleDetailSkeleton = () => (
         </header>
         <main className="container px-4 py-2 space-y-6">
             <Skeleton className="h-44 w-full rounded-2xl bg-muted" />
-            <div className="space-y-3">
-                <Skeleton className="h-16 w-full rounded-xl bg-muted" />
-                <Skeleton className="h-16 w-full rounded-xl bg-muted" />
-                <Skeleton className="h-16 w-full rounded-xl bg-muted" />
-            </div>
+            <Skeleton className="h-[600px] w-full rounded-2xl bg-muted" />
         </main>
     </div>
 );
@@ -179,13 +107,20 @@ export default function ModuleDetailPage() {
                     completedModulesMap[m.id] = await isModuleCompleted(user.id, m.id);
                 }
 
+                // Converter phases para TrailPhase
+                const trailPhases: TrailPhase[] = phases.map((phase, index) => ({
+                    ...phase,
+                    status: statusMap[phase.id],
+                    isLocked: index > 0 && statusMap[phases[index - 1].id] !== "completed",
+                    position: { x: 0, y: 0 } // Será calculado no componente TrailVisualization
+                }));
+
                 return {
                     userProfile,
                     module,
                     allModules,
-                    phases,
+                    phases: trailPhases,
                     progress,
-                    statusMap,
                     completedModulesMap,
                 };
             } catch (err) {
@@ -205,13 +140,6 @@ export default function ModuleDetailPage() {
         }
     }, [error, navigate]);
 
-    const isPhaseLocked = (phaseIndex: number): boolean => {
-        if (phaseIndex === 0) return false;
-        const prevPhase = data?.phases[phaseIndex - 1];
-        if (!prevPhase) return true;
-        return data?.statusMap[prevPhase.id] !== "completed";
-    };
-
     const startModule = () => {
         if (!data?.phases || data.phases.length === 0) {
             console.log("No phases available for this module");
@@ -223,20 +151,9 @@ export default function ModuleDetailPage() {
         navigate(`/modulo/${moduleId}/fase/${firstPhase.id}`);
     };
 
-    const handlePhaseClick = (phase: Phase, phaseIndex: number) => {
-        console.log("Phase clicked:", phase.id, "Index:", phaseIndex, "Is locked:", isPhaseLocked(phaseIndex));
-        
-        if (isPhaseLocked(phaseIndex)) {
-            toast.error("Complete a fase anterior para desbloquear esta.");
-            return;
-        }
-        
-        console.log("Navigating to phase:", phase.id);
+    const handlePhaseClick = (phase: Phase) => {
+        console.log("Phase clicked:", phase.id);
         navigate(`/modulo/${moduleId}/fase/${phase.id}`);
-    };
-
-    const goToTrailView = () => {
-        navigate(`/modulo/${moduleId}/trilha`);
     };
 
     if (isLoading) return <ModuleDetailSkeleton />;
@@ -264,10 +181,10 @@ export default function ModuleDetailPage() {
         );
     }
 
-    const { userProfile, module, phases, progress, statusMap } = data;
+    const { userProfile, module, phases, progress } = data;
     const isModuleComplete =
         phases.length > 0 &&
-        phases.every((p) => statusMap[p.id] === "completed");
+        phases.every((p) => p.status === "completed");
 
     console.log("Rendering module detail page with phases:", phases.length);
 
@@ -297,6 +214,7 @@ export default function ModuleDetailPage() {
             </header>
 
             <main className="container px-4 py-2 space-y-6">
+                {/* Module Info Card */}
                 <div className="bg-card p-6 rounded-2xl shadow-sm border space-y-4">
                     <div className="flex items-start gap-4">
                         <div className="flex-shrink-0 h-16 w-16 flex items-center justify-center rounded-2xl bg-primary/10 text-3xl">
@@ -315,47 +233,31 @@ export default function ModuleDetailPage() {
                         value={progress}
                         className="h-3 bg-muted [&>*]:bg-primary"
                     />
-                    <div className="flex gap-2">
-                        <Button
-                            onClick={startModule}
-                            className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3"
-                        >
-                            {isModuleComplete ? (
-                                <RefreshCw className="mr-2 h-5 w-5" />
-                            ) : (
-                                <PlayCircle className="mr-2 h-5 w-5" />
-                            )}
-                            {isModuleComplete
-                                ? "Revisar Módulo"
-                                : progress > 0
-                                  ? "Continuar Módulo"
-                                  : "Iniciar Módulo"}
-                        </Button>
-                        <Button
-                            onClick={goToTrailView}
-                            variant="outline"
-                            className="px-4"
-                        >
-                            <Map className="h-5 w-5" />
-                        </Button>
-                    </div>
+                    <Button
+                        onClick={startModule}
+                        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3"
+                    >
+                        {isModuleComplete ? (
+                            <RefreshCw className="mr-2 h-5 w-5" />
+                        ) : (
+                            <PlayCircle className="mr-2 h-5 w-5" />
+                        )}
+                        {isModuleComplete
+                            ? "Revisar Módulo"
+                            : progress > 0
+                              ? "Continuar Módulo"
+                              : "Iniciar Módulo"}
+                    </Button>
                 </div>
 
+                {/* Trail Visualization */}
                 {phases.length > 0 ? (
-                    <div className="space-y-3">
-                        <h2 className="text-lg font-bold text-foreground">
-                            Fases da Trilha
-                        </h2>
-                        {phases.map((phase, index) => (
-                            <PhaseCard
-                                key={phase.id}
-                                phase={phase}
-                                status={statusMap[phase.id]}
-                                isLocked={isPhaseLocked(index)}
-                                onClick={() => handlePhaseClick(phase, index)}
-                            />
-                        ))}
-                    </div>
+                    <TrailVisualization
+                        phases={phases}
+                        onPhaseClick={handlePhaseClick}
+                        moduleProgress={progress}
+                        className="min-h-[600px]"
+                    />
                 ) : (
                     <div className="bg-card p-6 rounded-2xl shadow-sm border text-center">
                         <p className="text-muted-foreground">

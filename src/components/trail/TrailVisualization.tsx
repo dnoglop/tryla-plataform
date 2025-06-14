@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { CheckCircle2, Lock, Play, Star, Trophy } from 'lucide-react';
+import { CheckCircle2, Lock, Play, Star, Trophy, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Phase, PhaseStatus } from '@/services/moduleService';
 
@@ -23,161 +23,241 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
   moduleProgress,
   className
 }) => {
-  const [connections, setConnections] = useState<Array<{from: number, to: number}>>([]);
+  const [hoveredPhase, setHoveredPhase] = useState<number | null>(null);
 
-  // Gerar posições das fases em formato de trilha
+  // Gerar posições das fases em formato de trilha vertical sinuosa
   const generatePhasePositions = (): TrailPhase[] => {
     return phases.map((phase, index) => {
-      // Criar um layout em espiral/trilha
-      const angle = (index * 60) % 360; // 60 graus entre cada fase
-      const radius = 80 + (Math.floor(index / 6) * 40); // Aumentar raio a cada volta
+      const yStep = 120; // Espaçamento vertical entre fases
+      const amplitude = 80; // Amplitude da curva horizontal
       const centerX = 200;
-      const centerY = 300;
       
-      const x = centerX + Math.cos((angle * Math.PI) / 180) * radius;
-      const y = centerY + Math.sin((angle * Math.PI) / 180) * radius;
+      // Criar movimento sinuoso
+      const x = centerX + Math.sin(index * 0.8) * amplitude;
+      const y = 80 + (index * yStep);
 
       return {
         ...phase,
-        position: { x: Math.max(50, Math.min(350, x)), y: Math.max(50, Math.min(550, y)) }
+        position: { x, y }
       };
     });
   };
 
-  // Gerar conexões entre fases
-  useEffect(() => {
-    const newConnections = [];
-    for (let i = 0; i < phases.length - 1; i++) {
-      newConnections.push({ from: i, to: i + 1 });
-    }
-    setConnections(newConnections);
-  }, [phases.length]);
-
   const positionedPhases = generatePhasePositions();
+  const containerHeight = Math.max(600, positionedPhases.length * 120 + 160);
 
   const getPhaseIcon = (phase: TrailPhase) => {
-    if (phase.isLocked) return <Lock className="h-5 w-5 text-muted-foreground" />;
-    if (phase.status === "completed") return <CheckCircle2 className="h-5 w-5 text-green-500" />;
+    if (phase.isLocked) return <Lock className="h-6 w-6 text-muted-foreground" />;
+    if (phase.status === "completed") return <CheckCircle2 className="h-6 w-6 text-white" />;
     
     switch (phase.type) {
       case "video":
-        return <Play className="h-5 w-5 text-primary" />;
+        return <Play className="h-6 w-6 text-white" />;
       case "quiz":
-        return <Star className="h-5 w-5 text-primary" />;
+        return <Star className="h-6 w-6 text-white" />;
       case "challenge":
-        return <Trophy className="h-5 w-5 text-primary" />;
+        return <Trophy className="h-6 w-6 text-white" />;
       default:
-        return <Play className="h-5 w-5 text-primary" />;
+        return <Play className="h-6 w-6 text-white" />;
     }
   };
 
-  const getPhaseColor = (phase: TrailPhase) => {
-    if (phase.isLocked) return "bg-muted border-muted-foreground/30";
-    if (phase.status === "completed") return "bg-green-500/20 border-green-500 shadow-green-500/20";
-    if (phase.status === "inProgress") return "bg-primary/20 border-primary shadow-primary/20";
-    return "bg-background border-border hover:border-primary/50";
+  const getPhaseStyle = (phase: TrailPhase, index: number) => {
+    if (phase.isLocked) {
+      return {
+        background: "linear-gradient(135deg, #64748b 0%, #475569 100%)",
+        boxShadow: "0 4px 8px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06)",
+        border: "3px solid #e2e8f0"
+      };
+    }
+    
+    if (phase.status === "completed") {
+      return {
+        background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+        boxShadow: "0 8px 20px rgba(16, 185, 129, 0.4), 0 4px 8px rgba(16, 185, 129, 0.2)",
+        border: "3px solid #6ee7b7"
+      };
+    }
+    
+    if (phase.status === "inProgress") {
+      return {
+        background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+        boxShadow: "0 8px 20px rgba(59, 130, 246, 0.4), 0 4px 8px rgba(59, 130, 246, 0.2)",
+        border: "3px solid #93c5fd"
+      };
+    }
+    
+    return {
+      background: "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)",
+      boxShadow: "0 6px 16px rgba(139, 92, 246, 0.3), 0 3px 6px rgba(139, 92, 246, 0.15)",
+      border: "3px solid #c4b5fd"
+    };
   };
 
   const renderConnection = (from: TrailPhase, to: TrailPhase, index: number) => {
     const isActive = from.status === "completed";
-    const strokeWidth = isActive ? 3 : 2;
-    const strokeColor = isActive ? "#10b981" : "#e5e7eb";
-
+    const isNextActive = from.status === "completed" || from.status === "inProgress";
+    
+    // Criar path curvo entre os pontos
+    const midX = (from.position.x + to.position.x) / 2;
+    const midY = (from.position.y + to.position.y) / 2;
+    const controlX = midX + (from.position.x > to.position.x ? -30 : 30);
+    
+    const pathData = `M ${from.position.x} ${from.position.y + 35} Q ${controlX} ${midY} ${to.position.x} ${to.position.y - 35}`;
+    
     return (
-      <line
-        key={`connection-${index}`}
-        x1={from.position.x}
-        y1={from.position.y}
-        x2={to.position.x}
-        y2={to.position.y}
-        stroke={strokeColor}
-        strokeWidth={strokeWidth}
-        strokeDasharray={isActive ? "0" : "5,5"}
-        className="transition-all duration-500"
-      />
+      <g key={`connection-${index}`}>
+        {/* Linha de fundo */}
+        <path
+          d={pathData}
+          fill="none"
+          stroke="#e2e8f0"
+          strokeWidth="6"
+          strokeLinecap="round"
+        />
+        {/* Linha de progresso */}
+        <path
+          d={pathData}
+          fill="none"
+          stroke={isActive ? "#10b981" : "#cbd5e1"}
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeDasharray={isActive ? "0" : "8,4"}
+          className={`transition-all duration-500 ${isActive ? "" : "opacity-60"}`}
+        />
+        {/* Efeito de brilho para conexões ativas */}
+        {isNextActive && (
+          <path
+            d={pathData}
+            fill="none"
+            stroke="url(#glowGradient)"
+            strokeWidth="2"
+            strokeLinecap="round"
+            className="animate-pulse"
+          />
+        )}
+      </g>
     );
   };
 
   return (
-    <div className={cn("relative w-full h-[600px] bg-gradient-to-br from-background to-muted/20 rounded-2xl overflow-hidden", className)}>
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(120,119,198,0.3),transparent)]" />
+    <div className={cn("relative w-full bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 rounded-2xl overflow-hidden", className)}>
+      {/* Background pattern */}
+      <div className="absolute inset-0 opacity-30">
         <svg className="w-full h-full">
           <defs>
-            <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="currentColor" strokeWidth="0.5" opacity="0.1"/>
+            <pattern id="dotPattern" width="20" height="20" patternUnits="userSpaceOnUse">
+              <circle cx="10" cy="10" r="1" fill="currentColor" opacity="0.2"/>
             </pattern>
+            <linearGradient id="glowGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.6"/>
+              <stop offset="50%" stopColor="#8b5cf6" stopOpacity="0.8"/>
+              <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.6"/>
+            </linearGradient>
           </defs>
-          <rect width="100%" height="100%" fill="url(#grid)" />
+          <rect width="100%" height="100%" fill="url(#dotPattern)" />
         </svg>
       </div>
 
-      {/* SVG for connections */}
-      <svg className="absolute inset-0 w-full h-full pointer-events-none">
-        {connections.map((connection, index) => {
-          const fromPhase = positionedPhases[connection.from];
-          const toPhase = positionedPhases[connection.to];
-          return renderConnection(fromPhase, toPhase, index);
-        })}
-      </svg>
-
-      {/* Progress indicator */}
-      <div className="absolute top-4 left-4 bg-background/80 backdrop-blur-sm rounded-lg p-3 border">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-primary"></div>
-          <span className="text-sm font-medium">{Math.round(moduleProgress)}% Concluído</span>
+      {/* Progress header */}
+      <div className="relative z-10 p-6 text-center">
+        <div className="inline-flex items-center gap-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg">
+          <Zap className="h-4 w-4 text-yellow-500" />
+          <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            {Math.round(moduleProgress)}% Concluído
+          </span>
         </div>
       </div>
 
-      {/* Phase nodes */}
-      {positionedPhases.map((phase, index) => (
-        <button
-          key={phase.id}
-          onClick={() => !phase.isLocked && onPhaseClick(phase)}
-          disabled={phase.isLocked}
-          className={cn(
-            "absolute w-16 h-16 rounded-full border-2 transition-all duration-300",
-            "flex items-center justify-center transform-gpu",
-            "hover:scale-110 active:scale-95",
-            "shadow-lg hover:shadow-xl",
-            getPhaseColor(phase),
-            phase.isLocked && "cursor-not-allowed opacity-60"
-          )}
-          style={{
-            left: phase.position.x - 32,
-            top: phase.position.y - 32,
-          }}
-        >
-          {getPhaseIcon(phase)}
+      {/* SVG container for trail */}
+      <div className="relative" style={{ height: containerHeight }}>
+        <svg className="absolute inset-0 w-full h-full">
+          <defs>
+            <filter id="dropShadow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+              <feOffset dx="2" dy="4" result="offset"/>
+              <feFlood floodColor="#000000" floodOpacity="0.2"/>
+              <feComposite in2="offset" operator="in"/>
+              <feMerge>
+                <feMergeNode/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
           
-          {/* Phase number */}
-          <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-background border-2 border-current rounded-full flex items-center justify-center text-xs font-bold">
-            {index + 1}
+          {/* Render connections */}
+          {positionedPhases.slice(0, -1).map((phase, index) => {
+            const nextPhase = positionedPhases[index + 1];
+            return renderConnection(phase, nextPhase, index);
+          })}
+        </svg>
+
+        {/* Phase nodes */}
+        {positionedPhases.map((phase, index) => (
+          <div key={phase.id} className="absolute">
+            <button
+              onClick={() => !phase.isLocked && onPhaseClick(phase)}
+              disabled={phase.isLocked}
+              onMouseEnter={() => setHoveredPhase(index)}
+              onMouseLeave={() => setHoveredPhase(null)}
+              className={cn(
+                "relative w-16 h-16 rounded-full transition-all duration-300 transform-gpu",
+                "hover:scale-110 active:scale-95 disabled:cursor-not-allowed",
+                "flex items-center justify-center",
+                hoveredPhase === index && !phase.isLocked && "scale-110"
+              )}
+              style={{
+                left: phase.position.x - 32,
+                top: phase.position.y - 32,
+                ...getPhaseStyle(phase, index),
+                filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.15))"
+              }}
+            >
+              {getPhaseIcon(phase)}
+              
+              {/* Phase number badge */}
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-white dark:bg-slate-800 border-2 border-current rounded-full flex items-center justify-center text-xs font-bold text-slate-700 dark:text-slate-200 shadow-lg">
+                {index + 1}
+              </div>
+
+              {/* Pulse animation for current phase */}
+              {phase.status === "inProgress" && (
+                <div className="absolute inset-0 rounded-full bg-blue-400/30 animate-ping"></div>
+              )}
+
+              {/* Completion sparkle */}
+              {phase.status === "completed" && (
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
+                  <Star className="h-2 w-2 text-yellow-800 fill-current" />
+                </div>
+              )}
+            </button>
+
+            {/* Phase tooltip */}
+            {hoveredPhase === index && (
+              <div
+                className="absolute z-50 bg-white dark:bg-slate-800 rounded-lg p-3 shadow-xl border border-slate-200 dark:border-slate-700 min-w-[140px] transform -translate-x-1/2 animate-fade-in"
+                style={{
+                  left: phase.position.x,
+                  top: phase.position.y - 80,
+                }}
+              >
+                <p className="font-semibold text-sm text-slate-800 dark:text-slate-200 text-center">
+                  {phase.name}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-1 capitalize">
+                  {phase.duration || 5} min • {phase.type}
+                </p>
+                {phase.isLocked && (
+                  <p className="text-xs text-orange-600 dark:text-orange-400 text-center mt-1">
+                    Complete a fase anterior
+                  </p>
+                )}
+              </div>
+            )}
           </div>
-
-          {/* Pulse animation for current phase */}
-          {phase.status === "inProgress" && (
-            <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping"></div>
-          )}
-        </button>
-      ))}
-
-      {/* Phase details on hover */}
-      {positionedPhases.map((phase, index) => (
-        <div
-          key={`tooltip-${phase.id}`}
-          className="absolute pointer-events-none opacity-0 hover:opacity-100 transition-opacity duration-200 bg-background/90 backdrop-blur-sm rounded-lg p-2 text-xs border shadow-lg z-10"
-          style={{
-            left: phase.position.x - 40,
-            top: phase.position.y - 80,
-            width: '80px'
-          }}
-        >
-          <p className="font-medium text-center truncate">{phase.name}</p>
-          <p className="text-muted-foreground text-center capitalize">{phase.type}</p>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 };
