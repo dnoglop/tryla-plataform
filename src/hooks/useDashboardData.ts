@@ -7,7 +7,7 @@ import { getUserRanking } from '@/services/rankingService';
 
 export const useDashboardData = () => {
   return useQuery({
-    queryKey: ['inicioAndProfileData'], // Atualizada para refletir a nova rota
+    queryKey: ['dashboardData'],
     queryFn: async () => {
       // 1. Obter usuário
       const { data: { user } } = await supabase.auth.getUser();
