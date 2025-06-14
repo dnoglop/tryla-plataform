@@ -16,7 +16,7 @@ import PhaseDetailPage from './pages/PhaseDetailPage';
 import SocialPage from './pages/SocialPage';
 import LabPage from './pages/LabPage';
 import SettingsPage from './pages/SettingsPage';
-import VocationalTestPage from './pages/VocationalTestPage';
+import { VocationalTestPage } from './pages/VocationalTestPage';
 import TutorPage from './pages/TutorPage';
 import PomodoroPage from './pages/PomodoroPage';
 import { RewardModalProvider } from './components/XpRewardModal/RewardModalContext';
