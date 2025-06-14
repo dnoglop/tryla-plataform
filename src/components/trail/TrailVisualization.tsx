@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { CheckCircle2, Lock, Play, Star, Trophy, BookText, Video, Award } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -26,49 +25,48 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
   const [hoveredPhase, setHoveredPhase] = useState<number | null>(null);
   const [pressedPhase, setPressedPhase] = useState<number | null>(null);
 
-  // Generate better spaced positions for phases
+  // Generate optimized positions for better visual flow
   const generatePhasePositions = (): TrailPhase[] => {
     return phases.map((phase, index) => {
-      const yStep = 230; // Adjusted spacing to 280px
-      const centerX = 30; // Center horizontal position
+      const yStep = 230; // Reduced spacing for more compact layout
       
-      // Alternating positions for visual interest
-      const xVariation = index % 2 === 0 ? 45 : 55;
+      // Create a more dynamic zigzag pattern
+      const baseX = 50;
+      const xVariation = index % 3 === 0 ? -8 : index % 3 === 1 ? 8 : 0;
       
       return {
         ...phase,
-        position: { x: xVariation, y: 50 + (index * yStep) }
+        position: { x: baseX + xVariation, y: 20 + (index * yStep) }
       };
     });
   };
 
   const positionedPhases = generatePhasePositions();
-  // Adjusted container height calculation - reduce bottom padding significantly
-  const containerHeight = Math.max(400, (positionedPhases.length - 1) * 280 + 250);
+  const containerHeight = Math.max(400, (positionedPhases.length - 1) * 180 + 200);
 
   const getPhaseIcon = (phase: TrailPhase) => {
-    if (phase.isLocked) return <Lock className="h-6 w-6 text-muted-foreground" />;
-    if (phase.status === "completed") return <CheckCircle2 className="h-6 w-6 text-primary-foreground" />;
+    if (phase.isLocked) return <Lock className="h-5 w-5 text-muted-foreground" />;
+    if (phase.status === "completed") return <CheckCircle2 className="h-5 w-5 text-primary-foreground" />;
     
     switch (phase.type) {
       case "video":
-        return <Video className="h-6 w-6 text-primary-foreground" />;
+        return <Video className="h-5 w-5 text-primary-foreground" />;
       case "quiz":
-        return <Star className="h-6 w-6 text-primary-foreground" />;
+        return <Star className="h-5 w-5 text-primary-foreground" />;
       case "challenge":
-        return <Trophy className="h-6 w-6 text-primary-foreground" />;
+        return <Trophy className="h-5 w-5 text-primary-foreground" />;
       case "text":
-        return <BookText className="h-6 w-6 text-primary-foreground" />;
+        return <BookText className="h-5 w-5 text-primary-foreground" />;
       default:
-        return <BookText className="h-6 w-6 text-primary-foreground" />;
+        return <BookText className="h-5 w-5 text-primary-foreground" />;
     }
   };
 
   const getPhaseColors = (phase: TrailPhase) => {
     if (phase.isLocked) {
       return {
-        bg: "bg-card",
-        border: "border-border",
+        bg: "bg-muted/30",
+        border: "border-muted",
         text: "text-muted-foreground",
         iconBg: "bg-muted"
       };
@@ -77,7 +75,7 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
     if (phase.status === "completed") {
       return {
         bg: "bg-card",
-        border: "border-primary/20",
+        border: "border-primary/30",
         text: "text-card-foreground",
         iconBg: "bg-primary"
       };
@@ -85,70 +83,104 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
     
     return {
       bg: "bg-card",
-      border: "border-primary/20",
+      border: "border-primary/40",
       text: "text-card-foreground",
       iconBg: "bg-primary"
     };
   };
 
   const renderConnection = (from: TrailPhase, to: TrailPhase, index: number) => {
-    const isActive = from.status === "completed";
-    const fromY = from.position.y + 100; // Adjusted for new card height
+    const isCompleted = from.status === "completed";
+    const isNext = to.status === "inProgress" || to.status === "notStarted";
+    
+    const fromCenterX = from.position.x;
+    const fromY = from.position.y + 90;
+    const toCenterX = to.position.x;
     const toY = to.position.y;
-    const height = toY - fromY;
+    
+    const deltaX = (toCenterX - fromCenterX) * 0.01; // Convert percentage to relative units
+    const deltaY = toY - fromY;
+    
+    // Create smooth curved path
+    const pathData = `M 0,0 Q ${deltaX * 50},${deltaY * 0.3} ${deltaX * 100},${deltaY}`;
     
     return (
       <div
         key={`connection-${index}`}
-        className="absolute left-1/2 transform -translate-x-1/2 z-0"
+        className="absolute z-0"
         style={{
+          left: `${fromCenterX}%`,
           top: fromY,
-          height: height,
-          width: "3px"
+          transform: "translateX(-50%)",
+          width: Math.abs(deltaX * 100) || 4,
+          height: deltaY,
         }}
       >
-        <div className={cn(
-          "w-full h-full transition-all duration-700 rounded-full",
-          isActive ? "bg-primary" : "bg-muted"
-        )}>
-          {isActive && (
-            <div className="w-full h-full bg-primary/60 animate-pulse opacity-60 rounded-full" />
+        <svg 
+          width="100%" 
+          height="100%" 
+          className="absolute inset-0"
+          style={{ overflow: 'visible' }}
+        >
+          <path
+            d={pathData}
+            stroke={isCompleted ? "hsl(var(--primary))" : "hsl(var(--muted))"}
+            strokeWidth="3"
+            fill="none"
+            strokeLinecap="round"
+            className={cn(
+              "transition-all duration-700",
+              isCompleted && isNext && "animate-pulse"
+            )}
+            style={{
+              filter: isCompleted ? "drop-shadow(0 0 4px hsl(var(--primary) / 0.3))" : undefined
+            }}
+          />
+          {/* Animated progress dot */}
+          {isCompleted && isNext && (
+            <circle
+              r="3"
+              fill="hsl(var(--primary))"
+              className="animate-pulse"
+              style={{
+                transformOrigin: '0 0',
+                animation: 'dash 2s linear infinite'
+              }}
+            >
+              <animateMotion
+                dur="2s"
+                repeatCount="indefinite"
+                path={pathData}
+              />
+            </circle>
           )}
-        </div>
+        </svg>
       </div>
     );
   };
 
-  const handleMouseDown = (index: number) => {
-    setPressedPhase(index);
-  };
-
-  const handleMouseUp = () => {
-    setPressedPhase(null);
-  };
-
-  const handleMouseLeave = (index: number) => {
-    setHoveredPhase(null);
-    setPressedPhase(null);
-  };
-
   return (
-    <div className={cn("min-h-screen bg-background pb-8", className)}>
-      {/* Header with progress - Smaller size */}
-      <div className="relative z-20 p-4 text-center bg-background">
-        <div className="inline-flex items-center gap-2 bg-card rounded-lg px-4 py-2 shadow-md border border-border">
-          <div className="flex items-center justify-center w-6 h-6 bg-primary rounded-full">
-            <Award className="h-3 w-3 text-primary-foreground" />
+    <div className={cn("relative bg-gradient-to-b from-background to-muted/20", className)}>
+      {/* Simplified header - removed redundant progress */}
+      <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-sm border-b border-border/50 p-3">
+        <div className="text-center">
+          <div className="inline-flex items-center gap-2 bg-card/80 backdrop-blur-sm rounded-full px-3 py-1 shadow-sm border border-border/50">
+            <div className="flex items-center justify-center w-4 h-4 bg-primary rounded-full">
+              <Award className="h-2 w-2 text-primary-foreground" />
+            </div>
+            <span className="text-xs font-semibold text-primary">
+              {phases.filter(p => p.status === "completed").length} de {phases.length} concluídas
+            </span>
           </div>
-          <span className="text-sm font-bold text-primary">
-            {Math.round(moduleProgress)}% Concluído
-          </span>
         </div>
       </div>
 
-      {/* Trail container */}
-      <div className="relative px-2 overflow-hidden bg-background" style={{ height: containerHeight }}>
-        {/* Render connections */}
+      {/* Optimized trail container */}
+      <div 
+        className="relative px-4 py-6 overflow-hidden" 
+        style={{ height: containerHeight }}
+      >
+        {/* Render connections with smooth curves */}
         {positionedPhases.slice(0, -1).map((phase, index) => {
           const nextPhase = positionedPhases[index + 1];
           return renderConnection(phase, nextPhase, index);
@@ -159,125 +191,130 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
           const colors = getPhaseColors(phase);
           const isPressed = pressedPhase === index;
           const isHovered = hoveredPhase === index;
+          const isActive = phase.status === "inProgress";
           
           return (
             <div
               key={phase.id}
-              className="absolute left-1/2 transform -translate-x-1/2 z-10"
+              className="absolute z-10"
               style={{
                 top: phase.position.y,
                 left: `${phase.position.x}%`,
                 transform: "translateX(-50%)",
-                width: "260px" // Increased width from 200px to 260px
+                width: "240px" // Slightly smaller for better mobile experience
               }}
             >
+              {/* Phase number badge */}
+              <div className={cn(
+                "absolute -left-2 top-3 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-md z-20 border-2 transition-all duration-300",
+                phase.status === "completed" 
+                  ? "bg-primary text-primary-foreground border-primary-foreground" 
+                  : isActive
+                    ? "bg-primary text-primary-foreground border-primary-foreground animate-pulse"
+                    : "bg-card text-muted-foreground border-card"
+              )}>
+                {phase.status === "completed" ? (
+                  <CheckCircle2 className="h-3 w-3" />
+                ) : (
+                  index + 1
+                )}
+              </div>
+
               <div
                 className={cn(
-                  "relative rounded-xl transition-all duration-300 overflow-hidden select-none",
+                  "relative rounded-2xl transition-all duration-300 overflow-hidden select-none backdrop-blur-sm",
                   colors.bg,
                   colors.border,
                   "border-2",
                   !phase.isLocked && "cursor-pointer",
-                  phase.isLocked && "opacity-70 cursor-not-allowed",
-                  // Shadow and 3D effects
+                  phase.isLocked && "opacity-60 cursor-not-allowed",
+                  // Enhanced 3D effects
                   !phase.isLocked && !isPressed && "shadow-lg hover:shadow-xl",
-                  !phase.isLocked && isPressed && "shadow-md transform scale-95",
-                  !phase.isLocked && isHovered && !isPressed && "transform scale-105",
+                  !phase.isLocked && isPressed && "shadow-md transform scale-[0.98]",
+                  !phase.isLocked && isHovered && !isPressed && "transform scale-[1.02] shadow-xl",
+                  // Special styling for active phase
+                  isActive && "ring-2 ring-primary/20 shadow-primary/10",
                 )}
                 onClick={() => !phase.isLocked && onPhaseClick(phase)}
                 onMouseEnter={() => setHoveredPhase(index)}
-                onMouseLeave={() => handleMouseLeave(index)}
-                onMouseDown={() => !phase.isLocked && handleMouseDown(index)}
-                onMouseUp={handleMouseUp}
-                style={{
-                  boxShadow: isPressed 
-                    ? "0 2px 8px hsl(var(--primary) / 0.1), inset 0 1px 2px rgba(0,0,0,0.05)"
-                    : isHovered
-                    ? "0 8px 20px hsl(var(--primary) / 0.15), 0 2px 6px rgba(0,0,0,0.05)"
-                    : "0 4px 12px hsl(var(--primary) / 0.1), 0 1px 4px rgba(0,0,0,0.04)",
-                  transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
+                onMouseLeave={() => {
+                  setHoveredPhase(null);
+                  setPressedPhase(null);
                 }}
+                onMouseDown={() => !phase.isLocked && setPressedPhase(index)}
+                onMouseUp={() => setPressedPhase(null)}
               >
                 {/* Status indicator */}
                 <div className="absolute top-2 right-2 z-20">
                   {phase.status === "completed" && (
-                    <div className="w-4 h-4 bg-primary rounded-full flex items-center justify-center shadow-md">
-                      <CheckCircle2 className="h-3 w-3 text-primary-foreground" />
+                    <div className="w-3 h-3 bg-primary rounded-full flex items-center justify-center shadow-sm">
+                      <CheckCircle2 className="h-2 w-2 text-primary-foreground" />
                     </div>
                   )}
-                  {phase.status === "inProgress" && (
-                    <div className="w-4 h-4 bg-primary rounded-full flex items-center justify-center animate-pulse shadow-md">
-                      <Play className="h-2 w-2 text-primary-foreground" />
-                    </div>
+                  {isActive && (
+                    <div className="w-3 h-3 bg-primary rounded-full animate-pulse shadow-sm" />
                   )}
                 </div>
 
-                {/* Main icon */}
-                <div className="flex justify-center pt-3 pb-2">
-                  <div className={cn(
-                    "w-10 h-10 rounded-lg flex items-center justify-center shadow-md transition-all duration-300",
-                    colors.iconBg,
-                    isHovered && !phase.isLocked && "scale-110 shadow-lg",
-                    isPressed && "scale-95"
-                  )}>
-                    {getPhaseIcon(phase)}
+                {/* Main content */}
+                <div className="p-4">
+                  {/* Icon */}
+                  <div className="flex justify-center mb-3">
+                    <div className={cn(
+                      "w-12 h-12 rounded-xl flex items-center justify-center shadow-sm transition-all duration-300",
+                      colors.iconBg,
+                      isHovered && !phase.isLocked && "scale-110 shadow-md",
+                      isPressed && "scale-95"
+                    )}>
+                      {getPhaseIcon(phase)}
+                    </div>
                   </div>
-                </div>
 
-                {/* Simplified card content - only title, minutes, format and button */}
-                <div className="px-3 pb-3 text-center">
-                  <h3 className="font-bold text-sm text-card-foreground mb-2">
+                  {/* Title */}
+                  <h3 className="font-bold text-sm text-center text-card-foreground mb-2 line-clamp-2">
                     {phase.name}
                   </h3>
                   
-                  {/* Meta info - minutes and format only */}
+                  {/* Compact meta info */}
                   <div className="flex justify-center gap-3 text-xs text-muted-foreground mb-3">
-                    <span className="flex items-center gap-1">
-                      <div className="w-1 h-1 bg-muted-foreground rounded-full" />
-                      {phase.duration || 5} min
+                    <span className="bg-muted/50 px-2 py-1 rounded-full">
+                      {phase.duration || 5}m
                     </span>
-                    <span className="flex items-center gap-1">
-                      <div className="w-1 h-1 bg-muted-foreground rounded-full" />
+                    <span className="bg-muted/50 px-2 py-1 rounded-full capitalize">
                       {phase.type}
                     </span>
                   </div>
 
                   {/* Action button */}
-                  {!phase.isLocked && (
+                  {!phase.isLocked ? (
                     <button
                       className={cn(
-                        "w-full py-2 rounded-lg font-semibold text-xs transition-all duration-300 shadow-sm",
+                        "w-full py-2.5 rounded-xl font-semibold text-xs transition-all duration-300",
                         phase.status === "completed" 
-                          ? "bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-md"
-                          : "bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-md",
-                        isPressed && "transform scale-95"
+                          ? "bg-primary/90 hover:bg-primary text-primary-foreground shadow-sm hover:shadow-md"
+                          : "bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm hover:shadow-md",
+                        isPressed && "transform scale-95",
+                        isActive && "animate-pulse shadow-primary/20"
                       )}
                     >
                       {phase.status === "completed" 
-                        ? "Revisar" 
-                        : phase.status === "inProgress"
-                          ? "Continuar"
+                        ? "✓ Revisar" 
+                        : isActive
+                          ? "▶ Continuar"
                           : "Iniciar"
                       }
                     </button>
-                  )}
-                  
-                  {phase.isLocked && (
-                    <div className="w-full py-2 bg-muted rounded-lg text-muted-foreground font-semibold text-xs">
-                      Complete a fase anterior
+                  ) : (
+                    <div className="w-full py-2.5 bg-muted/50 rounded-xl text-muted-foreground font-medium text-xs text-center">
+                      🔒 Bloqueado
                     </div>
                   )}
                 </div>
 
-                {/* Shine effect for active phases */}
-                {(phase.status === "inProgress" || phase.status === "completed") && (
-                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-primary-foreground/20 to-transparent animate-pulse opacity-30" />
+                {/* Subtle glow effect for active phases */}
+                {isActive && (
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 animate-pulse" />
                 )}
-              </div>
-
-              {/* Phase number badge */}
-              <div className="absolute -left-3 top-4 w-6 h-6 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold text-xs shadow-md z-20 border-2 border-card">
-                {index + 1}
               </div>
             </div>
           );
