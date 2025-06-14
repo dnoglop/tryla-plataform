@@ -16,7 +16,7 @@ const BottomNavigation: React.FC = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 z-50 shadow-lg">
+    <nav className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-md border-t border-border z-50 shadow-lg">
       <div className="flex items-center justify-around py-2 px-4">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
@@ -43,8 +43,8 @@ const BottomNavigation: React.FC = () => {
                   className={cn(
                     "transition-all duration-300 ease-out",
                     isActive 
-                      ? "h-5 w-5 text-white" 
-                      : "h-6 w-6 text-gray-500"
+                      ? "h-5 w-5 text-primary-foreground" 
+                      : "h-6 w-6 text-muted-foreground"
                   )} 
                   strokeWidth={2}
                 />
