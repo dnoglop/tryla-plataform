@@ -29,8 +29,8 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
   // Generate better spaced positions for phases
   const generatePhasePositions = (): TrailPhase[] => {
     return phases.map((phase, index) => {
-      const yStep = 280; // Adjusted spacing to 280px
-      const centerX = 50; // Center horizontal position
+      const yStep = 230; // Adjusted spacing to 280px
+      const centerX = 30; // Center horizontal position
       
       // Alternating positions for visual interest
       const xVariation = index % 2 === 0 ? 45 : 55;
@@ -147,7 +147,7 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
       </div>
 
       {/* Trail container */}
-      <div className="relative px-4 overflow-hidden bg-background" style={{ height: containerHeight }}>
+      <div className="relative px-2 overflow-hidden bg-background" style={{ height: containerHeight }}>
         {/* Render connections */}
         {positionedPhases.slice(0, -1).map((phase, index) => {
           const nextPhase = positionedPhases[index + 1];
