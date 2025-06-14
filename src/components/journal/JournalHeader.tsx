@@ -12,17 +12,17 @@ const JournalHeader: React.FC<JournalHeaderProps> = ({ onNewEntry }) => {
   const navigate = useNavigate();
 
   return (
-    <header className="bg-white p-4 border-b flex items-center justify-between sticky top-0 z-10">
+    <header className="bg-card p-4 border-b border-border flex items-center justify-between sticky top-0 z-10">
       <div className="flex items-center">
         <Button variant="ghost" size="icon" onClick={() => navigate('/perfil')}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="font-bold text-lg ml-2">Diário de Aprendizado</h1>
+        <h1 className="font-bold text-lg ml-2 text-foreground">Diário de Aprendizado</h1>
       </div>
       <Button 
         onClick={onNewEntry}
         size="sm"
-        className="bg-[#e36322] hover:bg-[#d15a1f] text-white"
+        className="bg-primary hover:bg-primary/90 text-primary-foreground"
       >
         <Plus className="h-4 w-4 mr-1" /> Nova
       </Button>

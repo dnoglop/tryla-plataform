@@ -50,7 +50,7 @@ const JournalTabs: React.FC<JournalTabsProps> = ({
         {entries.length === 0 ? (
           <EmptyJournal onNewEntry={onNewEntry} />
         ) : filteredEntries.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-muted-foreground">
             Nenhuma anotação encontrada
           </div>
         ) : (
@@ -71,7 +71,7 @@ const JournalTabs: React.FC<JournalTabsProps> = ({
       
       <TabsContent value="favorites" className="mt-4">
         {filteredEntries.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-muted-foreground">
             Nenhuma anotação favorita
           </div>
         ) : (

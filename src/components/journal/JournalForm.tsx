@@ -67,9 +67,9 @@ const JournalForm: React.FC<JournalFormProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-4">
+    <div className="bg-card rounded-lg shadow border border-border p-4">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="font-bold text-lg">
+        <h3 className="font-bold text-lg text-foreground">
           {entry ? 'Editar anotação' : 'Nova anotação'}
         </h3>
         <Button variant="ghost" size="icon" onClick={onCancel}>
@@ -82,20 +82,20 @@ const JournalForm: React.FC<JournalFormProps> = ({
           <div className="relative">
             <button
               type="button"
-              className="text-2xl p-2 h-10 w-10 flex items-center justify-center border rounded-md"
+              className="text-2xl p-2 h-10 w-10 flex items-center justify-center border border-border rounded-md bg-background hover:bg-accent"
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
             >
               {emoji}
             </button>
             
             {showEmojiPicker && (
-              <div className="absolute top-12 left-0 bg-white border rounded-lg shadow-lg p-2 z-50">
+              <div className="absolute top-12 left-0 bg-card border border-border rounded-lg shadow-lg p-2 z-50">
                 <div className="grid grid-cols-5 gap-1">
                   {EMOJIS.map(e => (
                     <button
                       key={e}
                       type="button"
-                      className="text-xl p-1 hover:bg-gray-100 rounded"
+                      className="text-xl p-1 hover:bg-accent rounded"
                       onClick={() => {
                         setEmoji(e);
                         setShowEmojiPicker(false);
@@ -119,7 +119,7 @@ const JournalForm: React.FC<JournalFormProps> = ({
         </div>
         
         <div>
-          <label htmlFor="module" className="block text-sm mb-1 text-gray-600">
+          <label htmlFor="module" className="block text-sm mb-1 text-muted-foreground">
             Relacionar com módulo (opcional)
           </label>
           <Select value={moduleId?.toString() || ''} onValueChange={(value) => setModuleId(value ? parseInt(value) : null)}>
@@ -150,7 +150,7 @@ const JournalForm: React.FC<JournalFormProps> = ({
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancelar
           </Button>
-          <Button type="submit" className="bg-[#e36322] hover:bg-[#d15a1f] text-white">
+          <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">
             {entry ? 'Salvar alterações' : 'Criar anotação'}
           </Button>
         </div>
