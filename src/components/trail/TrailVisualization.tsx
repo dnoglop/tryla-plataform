@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { CheckCircle2, Lock, Play, Star, Trophy, BookText, Video, Award } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -28,7 +29,7 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
   // Generate better spaced positions for phases
   const generatePhasePositions = (): TrailPhase[] => {
     return phases.map((phase, index) => {
-      const yStep = 120; // Reduced spacing between cards
+      const yStep = 200; // Increased spacing significantly
       const centerX = 50; // Center horizontal position
       
       // Alternating positions for visual interest
@@ -42,7 +43,7 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
   };
 
   const positionedPhases = generatePhasePositions();
-  const containerHeight = Math.max(600, positionedPhases.length * 120 + 200);
+  const containerHeight = Math.max(600, positionedPhases.length * 200 + 300);
 
   const getPhaseIcon = (phase: TrailPhase) => {
     if (phase.isLocked) return <Lock className="h-6 w-6 text-gray-400" />;
@@ -65,7 +66,7 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
   const getPhaseColors = (phase: TrailPhase) => {
     if (phase.isLocked) {
       return {
-        bg: "bg-gray-100",
+        bg: "bg-white",
         border: "border-gray-200",
         text: "text-gray-500",
         iconBg: "bg-gray-300"
@@ -75,9 +76,9 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
     if (phase.status === "completed") {
       return {
         bg: "bg-white",
-        border: "border-green-200",
+        border: "border-orange-200",
         text: "text-gray-800",
-        iconBg: "bg-green-500"
+        iconBg: "bg-orange-500"
       };
     }
     
@@ -91,7 +92,7 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
 
   const renderConnection = (from: TrailPhase, to: TrailPhase, index: number) => {
     const isActive = from.status === "completed";
-    const fromY = from.position.y + 50; // Adjusted for new card height
+    const fromY = from.position.y + 60; // Adjusted for new card height
     const toY = to.position.y;
     const height = toY - fromY;
     
@@ -107,19 +108,10 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
       >
         <div className={cn(
           "w-full h-full transition-all duration-700 rounded-full",
-          isActive ? "bg-gradient-to-b from-green-400 to-green-500" : "bg-gray-300"
+          isActive ? "bg-orange-500" : "bg-gray-300"
         )}>
           {isActive && (
-            <>
-              <div className="w-full h-4 bg-green-300 animate-pulse opacity-60 rounded-full" />
-              <div 
-                className="w-full bg-green-200 opacity-40 animate-pulse rounded-full"
-                style={{
-                  height: "12px",
-                  animationDelay: "0.5s"
-                }}
-              />
-            </>
+            <div className="w-full h-full bg-orange-400 animate-pulse opacity-60 rounded-full" />
           )}
         </div>
       </div>
@@ -140,14 +132,14 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
   };
 
   return (
-    <div className={cn("min-h-screen bg-gradient-to-br from-orange-50 via-orange-100 to-orange-200 pb-24", className)}>
-      {/* Header with progress */}
-      <div className="relative z-20 p-6 text-center">
-        <div className="inline-flex items-center gap-4 bg-white/95 backdrop-blur-sm rounded-2xl px-8 py-5 shadow-lg border border-orange-200">
-          <div className="flex items-center justify-center w-12 h-12 bg-orange-500 rounded-full shadow-md">
-            <Award className="h-7 w-7 text-white" />
+    <div className={cn("min-h-screen bg-orange-50 pb-24", className)}>
+      {/* Header with progress - Reduced size */}
+      <div className="relative z-20 p-4 text-center">
+        <div className="inline-flex items-center gap-3 bg-white rounded-xl px-6 py-3 shadow-md border border-orange-200">
+          <div className="flex items-center justify-center w-8 h-8 bg-orange-500 rounded-full">
+            <Award className="h-4 w-4 text-white" />
           </div>
-          <span className="text-2xl font-bold text-orange-800">
+          <span className="text-lg font-bold text-orange-800">
             {Math.round(moduleProgress)}% Concluído
           </span>
         </div>
@@ -175,7 +167,7 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
                 top: phase.position.y,
                 left: `${phase.position.x}%`,
                 transform: "translateX(-50%)",
-                width: "200px" // Much smaller width
+                width: "200px"
               }}
             >
               <div
@@ -190,9 +182,6 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
                   !phase.isLocked && !isPressed && "shadow-lg hover:shadow-xl",
                   !phase.isLocked && isPressed && "shadow-md transform scale-95",
                   !phase.isLocked && isHovered && !isPressed && "transform scale-105",
-                  // Soft shadow variations
-                  phase.status === "completed" && "shadow-green-200/50",
-                  phase.status !== "completed" && !phase.isLocked && "shadow-orange-200/50",
                 )}
                 onClick={() => !phase.isLocked && onPhaseClick(phase)}
                 onMouseEnter={() => setHoveredPhase(index)}
@@ -201,17 +190,17 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
                 onMouseUp={handleMouseUp}
                 style={{
                   boxShadow: isPressed 
-                    ? "0 2px 8px rgba(0,0,0,0.1), inset 0 1px 2px rgba(0,0,0,0.05)"
+                    ? "0 2px 8px rgba(251, 146, 60, 0.1), inset 0 1px 2px rgba(0,0,0,0.05)"
                     : isHovered
-                    ? "0 8px 20px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.05)"
-                    : "0 4px 12px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04)",
+                    ? "0 8px 20px rgba(251, 146, 60, 0.15), 0 2px 6px rgba(0,0,0,0.05)"
+                    : "0 4px 12px rgba(251, 146, 60, 0.1), 0 1px 4px rgba(0,0,0,0.04)",
                   transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
                 }}
               >
                 {/* Status indicator */}
                 <div className="absolute top-2 right-2 z-20">
                   {phase.status === "completed" && (
-                    <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center shadow-md">
+                    <div className="w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center shadow-md">
                       <CheckCircle2 className="h-3 w-3 text-white" />
                     </div>
                   )}
@@ -261,7 +250,7 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
                       className={cn(
                         "w-full py-2 rounded-lg font-semibold text-xs transition-all duration-300 shadow-sm",
                         phase.status === "completed" 
-                          ? "bg-green-500 hover:bg-green-600 text-white hover:shadow-md"
+                          ? "bg-orange-500 hover:bg-orange-600 text-white hover:shadow-md"
                           : "bg-orange-500 hover:bg-orange-600 text-white hover:shadow-md",
                         isPressed && "transform scale-95"
                       )}
