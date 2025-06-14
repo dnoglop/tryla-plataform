@@ -75,7 +75,7 @@ const tools: Tool[] = [
     },
   },
   {
-    path: "/lab/pomodoro",
+    path: "/pomodoro",
     icon: Timer,
     title: "Modo Foco",
     description: "Concentre-se como um ninja e derrote a procrastinação.",
