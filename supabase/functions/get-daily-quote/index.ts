@@ -1,22 +1,23 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai";
 
-const GEMINI_API_KEY = Deno.env.get("AIzaSyC2k_wHa44xckc0LmywuO43_MprtaC_ehM");
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
 if (!GEMINI_API_KEY) {
   console.error("GEMINI_API_KEY não foi definida nas variáveis de ambiente.");
 }
 
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY!);
 
-// Cabeçalhos CORS que vamos reutilizar
+// Cabeçalhos CORS corretos
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*", // Permite qualquer origem (ideal para desenvolvimento)
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
 };
 
 serve(async (req) => {
-  // <<< A CORREÇÃO PRINCIPAL ESTÁ AQUI >>>
-  // Lida especificamente com a requisição de verificação (preflight) do CORS
+  // Lida com requisições OPTIONS (preflight)
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -40,7 +41,7 @@ serve(async (req) => {
       JSON.stringify({ quote: text }),
       { 
         headers: { 
-          ...corsHeaders, // Reutiliza os cabeçalhos CORS
+          ...corsHeaders,
           "Content-Type": "application/json" 
         } 
       }
@@ -52,7 +53,7 @@ serve(async (req) => {
       { 
         status: 500, 
         headers: { 
-          ...corsHeaders, // Reutiliza os cabeçalhos CORS
+          ...corsHeaders,
           "Content-Type": "application/json" 
         } 
       }

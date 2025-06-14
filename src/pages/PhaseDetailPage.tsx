@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import BottomNavigation from "@/components/BottomNavigation";
@@ -16,17 +15,12 @@ import {
     Pause,
     ArrowLeft,
     CheckCircle2,
+    Volume2,
+    VolumeX,
 } from "lucide-react";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import { useReward } from "@/hooks/use-reward";
 import { toast } from "sonner";
-
-interface RewardData {
-    xp: number;
-    title: string;
-    message: string;
-    type: "phase_completion" | "daily_task" | "module_completion";
-}
 
 export default function PhaseDetailPage() {
     const { id, moduleId } = useParams<{ id: string; moduleId: string }>();
@@ -236,174 +230,151 @@ export default function PhaseDetailPage() {
 
     return (
         <div className="min-h-screen bg-background pb-24">
-            <header className="p-4 sm:p-6 border-b">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-xl font-bold text-foreground">
-                            {phase.name}
-                        </h1>
-                        <p className="text-muted-foreground">
-                            {phase.description || "Sem descrição."}
-                        </p>
+            {/* Header com design limpo */}
+            <header className="bg-card border-b shadow-sm">
+                <div className="container mx-auto px-4 py-4">
+                    <div className="flex items-center gap-4">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleBackToModule}
+                            className="flex items-center gap-2"
+                        >
+                            <ArrowLeft className="h-4 w-4" />
+                            Voltar
+                        </Button>
+                        <div className="flex-1">
+                            <h1 className="text-xl font-bold text-foreground truncate">
+                                {phase.name}
+                            </h1>
+                            {phase.description && (
+                                <p className="text-sm text-muted-foreground truncate">
+                                    {phase.description}
+                                </p>
+                            )}
+                        </div>
                     </div>
                 </div>
             </header>
             
-            <main className="container px-4 py-6 space-y-6">
-                <div className="bg-card p-6 rounded-2xl shadow-sm border space-y-4">
-                    <h2 className="text-2xl font-bold text-card-foreground">
-                        {phase.name}
-                    </h2>
-                    <p className="text-muted-foreground">
-                        {phase.description || "Sem descrição."}
-                    </p>
-                </div>
-
-                {phase.type === "text" && (
-                    <div className="bg-card p-6 rounded-2xl shadow-sm border space-y-4">
-                        <div className="flex items-center justify-between flex-wrap gap-4">
-                            <h3 className="text-xl font-bold text-card-foreground">
-                                Conteúdo da Fase
-                            </h3>
-                            {textContent && (
-                                <div className="flex items-center gap-2 flex-wrap">
-                                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                        <span>Velocidade:</span>
-                                        <button
-                                            onClick={() => handleSpeedChange(0.8)}
-                                            className={`px-2 py-1 rounded text-xs ${speechRate === 0.8 ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'}`}
-                                        >
-                                            0.8x
-                                        </button>
-                                        <button
-                                            onClick={() => handleSpeedChange(1.0)}
-                                            className={`px-2 py-1 rounded text-xs ${speechRate === 1.0 ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'}`}
-                                        >
-                                            1.0x
-                                        </button>
-                                        <button
-                                            onClick={() => handleSpeedChange(1.2)}
-                                            className={`px-2 py-1 rounded text-xs ${speechRate === 1.2 ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'}`}
-                                        >
-                                            1.2x
-                                        </button>
-                                        <button
-                                            onClick={() => handleSpeedChange(1.5)}
-                                            className={`px-2 py-1 rounded text-xs ${speechRate === 1.5 ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'}`}
-                                        >
-                                            1.5x
-                                        </button>
-                                    </div>
-                                    <Button
-                                        onClick={handleTextToSpeech}
-                                        variant="outline"
-                                        size="sm"
-                                        className="flex items-center gap-2"
-                                    >
-                                        {isPlaying ? (
-                                            <Pause className="h-4 w-4" />
-                                        ) : (
-                                            <Play className="h-4 w-4" />
-                                        )}
-                                        {isPlaying ? "Pausar" : isPaused ? "Continuar" : "Ouvir"}
-                                    </Button>
+            <main className="container mx-auto px-4 py-6 max-w-4xl space-y-6">
+                {/* Card principal do conteúdo */}
+                <div className="bg-card rounded-xl shadow-sm border overflow-hidden">
+                    <div className="p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-2xl font-bold text-card-foreground">
+                                {phase.name}
+                            </h2>
+                            {status === "completed" && (
+                                <div className="flex items-center gap-2 text-green-600 bg-green-50 dark:bg-green-900/20 px-3 py-1 rounded-full">
+                                    <CheckCircle2 className="h-4 w-4" />
+                                    <span className="text-sm font-medium">Concluída</span>
                                 </div>
                             )}
                         </div>
                         
-                        {textContent ? (
-                            <div 
-                                className="prose prose-lg max-w-none text-card-foreground"
-                                dangerouslySetInnerHTML={{ __html: textContent }}
-                            />
-                        ) : (
-                            <p className="text-muted-foreground">
-                                Conteúdo não disponível.
+                        {phase.description && (
+                            <p className="text-muted-foreground mb-6">
+                                {phase.description}
                             </p>
                         )}
                     </div>
-                )}
 
-                {phase.type === "video" && (
-                    <div className="bg-card p-6 rounded-2xl shadow-sm border space-y-4">
-                        <h3 className="text-xl font-bold text-card-foreground">
-                            Vídeo
-                        </h3>
-                        <p className="text-muted-foreground">
-                            Assista ao vídeo para completar a fase.
-                        </p>
-                    </div>
-                )}
+                    {/* Conteúdo da fase */}
+                    {phase.type === "text" && textContent && (
+                        <div className="border-t">
+                            {/* Controles de áudio */}
+                            <div className="px-6 py-4 bg-muted/30 border-b">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="font-semibold text-foreground">Conteúdo da Fase</h3>
+                                    <div className="flex items-center gap-3">
+                                        {/* Controles de velocidade */}
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-sm text-muted-foreground">Velocidade:</span>
+                                            {[0.8, 1.0, 1.2, 1.5].map((rate) => (
+                                                <button
+                                                    key={rate}
+                                                    onClick={() => handleSpeedChange(rate)}
+                                                    className={`px-2 py-1 text-xs rounded transition-colors ${
+                                                        speechRate === rate
+                                                            ? 'bg-primary text-primary-foreground'
+                                                            : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                                                    }`}
+                                                >
+                                                    {rate}x
+                                                </button>
+                                            ))}
+                                        </div>
+                                        
+                                        {/* Botão de reprodução */}
+                                        <Button
+                                            onClick={handleTextToSpeech}
+                                            size="sm"
+                                            variant="outline"
+                                            className="flex items-center gap-2"
+                                        >
+                                            {isPlaying ? (
+                                                <Pause className="h-4 w-4" />
+                                            ) : (
+                                                <Play className="h-4 w-4" />
+                                            )}
+                                            {isPlaying ? "Pausar" : isPaused ? "Continuar" : "Ouvir"}
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Texto da fase */}
+                            <div className="p-6">
+                                <div 
+                                    className="prose prose-lg max-w-none dark:prose-invert"
+                                    dangerouslySetInnerHTML={{ __html: textContent }}
+                                />
+                            </div>
+                        </div>
+                    )}
 
-                {phase.type === "quiz" && (
-                    <div className="bg-card p-6 rounded-2xl shadow-sm border space-y-4">
-                        <h3 className="text-xl font-bold text-card-foreground">
-                            Quiz
-                        </h3>
-                        <p className="text-muted-foreground">
-                            Responda ao quiz para testar seus conhecimentos.
-                        </p>
-                    </div>
-                )}
+                    {/* Outros tipos de conteúdo */}
+                    {phase.type === "video" && (
+                        <div className="border-t p-6">
+                            <h3 className="text-xl font-bold text-card-foreground mb-4">
+                                Vídeo
+                            </h3>
+                            <p className="text-muted-foreground">
+                                Assista ao vídeo para completar a fase.
+                            </p>
+                        </div>
+                    )}
 
-                {/* Seção de Navegação e Ações */}
-                <div className="bg-card p-6 rounded-2xl shadow-sm border">
+                    {phase.type === "quiz" && (
+                        <div className="border-t p-6">
+                            <h3 className="text-xl font-bold text-card-foreground mb-4">
+                                Quiz
+                            </h3>
+                            <p className="text-muted-foreground">
+                                Responda ao quiz para testar seus conhecimentos.
+                            </p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Botões de ação */}
+                <div className="bg-card rounded-xl shadow-sm border p-6">
                     <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                        <Button
-                            onClick={handleBackToModule}
-                            variant="outline"
-                            className="flex items-center gap-2 w-full sm:w-auto"
-                        >
-                            <ArrowLeft className="h-4 w-4" />
-                            Voltar ao Módulo
-                        </Button>
+                        <div className="text-sm text-muted-foreground">
+                            {status === "completed" ? "Fase já concluída" : "Conclua esta fase para avançar"}
+                        </div>
                         
                         {status !== "completed" && (
                             <Button
                                 onClick={handleCompletePhase}
-                                className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold w-full sm:w-auto"
+                                className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
                                 size="lg"
                             >
                                 <CheckCircle2 className="mr-2 h-5 w-5" />
                                 Concluir Fase
                             </Button>
                         )}
-
-                        {status === "completed" && (
-                            <div className="flex items-center gap-2 text-green-600 w-full sm:w-auto justify-center">
-                                <CheckCircle2 className="h-5 w-5" />
-                                <span className="font-semibold">Fase Concluída!</span>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Seção de Navegação Entre Fases */}
-                <div className="bg-card p-4 rounded-2xl shadow-sm border">
-                    <div className="flex justify-between items-center">
-                        <Button
-                            variant="ghost"
-                            className="text-sm"
-                            onClick={() => {
-                                console.log("Navigate to previous phase");
-                            }}
-                        >
-                            ← Fase Anterior
-                        </Button>
-                        
-                        <span className="text-sm text-muted-foreground">
-                            Fase {phase.order_index || 1}
-                        </span>
-                        
-                        <Button
-                            variant="ghost"
-                            className="text-sm"
-                            onClick={() => {
-                                console.log("Navigate to next phase");
-                            }}
-                        >
-                            Próxima Fase →
-                        </Button>
                     </div>
                 </div>
             </main>
