@@ -21,7 +21,7 @@ import EditProfilePage from "@/pages/EditProfilePage";
 import { VocationalTestPage } from "@/pages/VocationalTestPage";
 import JournalPage from "@/pages/JournalPage";
 import TutorPage from "@/pages/TutorPage";
-import { PomodoroPage } from "@/pages/PomodoroPage";
+import PomodoroPage from "@/pages/PomodoroPage";
 import SocialPage from "@/pages/SocialPage";
 import LabPage from "@/pages/LabPage";
 import AdminPage from "@/pages/AdminPage";
