@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { CheckCircle2, Lock, Play, Star, Trophy, BookText, Video, Award } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -28,7 +29,7 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
   // Generate better spaced positions for phases
   const generatePhasePositions = (): TrailPhase[] => {
     return phases.map((phase, index) => {
-      const yStep = 280; // Adjusted spacing to 280px
+      const yStep = 230; // Adjusted spacing to 230px
       const centerX = 50; // Center horizontal position
       
       // Alternating positions for visual interest
@@ -42,57 +43,57 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
   };
 
   const positionedPhases = generatePhasePositions();
-  // Adjusted container height calculation - reduce bottom padding significantly
-  const containerHeight = Math.max(400, (positionedPhases.length - 1) * 280 + 250);
+  // Adjusted container height calculation with proper padding
+  const containerHeight = Math.max(400, (positionedPhases.length - 1) * 230 + 200);
 
   const getPhaseIcon = (phase: TrailPhase) => {
-    if (phase.isLocked) return <Lock className="h-6 w-6 text-gray-400" />;
-    if (phase.status === "completed") return <CheckCircle2 className="h-6 w-6 text-white" />;
+    if (phase.isLocked) return <Lock className="h-5 w-5 text-muted-foreground" />;
+    if (phase.status === "completed") return <CheckCircle2 className="h-5 w-5 text-white" />;
     
     switch (phase.type) {
       case "video":
-        return <Video className="h-6 w-6 text-white" />;
+        return <Video className="h-5 w-5 text-white" />;
       case "quiz":
-        return <Star className="h-6 w-6 text-white" />;
+        return <Star className="h-5 w-5 text-white" />;
       case "challenge":
-        return <Trophy className="h-6 w-6 text-white" />;
+        return <Trophy className="h-5 w-5 text-white" />;
       case "text":
-        return <BookText className="h-6 w-6 text-white" />;
+        return <BookText className="h-5 w-5 text-white" />;
       default:
-        return <BookText className="h-6 w-6 text-white" />;
+        return <BookText className="h-5 w-5 text-white" />;
     }
   };
 
   const getPhaseColors = (phase: TrailPhase) => {
     if (phase.isLocked) {
       return {
-        bg: "bg-white",
-        border: "border-gray-200",
-        text: "text-gray-500",
-        iconBg: "bg-gray-300"
+        bg: "bg-card",
+        border: "border-border",
+        text: "text-muted-foreground",
+        iconBg: "bg-muted"
       };
     }
     
     if (phase.status === "completed") {
       return {
-        bg: "bg-white",
-        border: "border-orange-200",
-        text: "text-gray-800",
-        iconBg: "bg-orange-500"
+        bg: "bg-card",
+        border: "border-primary/20",
+        text: "text-foreground",
+        iconBg: "bg-primary"
       };
     }
     
     return {
-      bg: "bg-white",
-      border: "border-orange-200",
-      text: "text-gray-800",
-      iconBg: "bg-orange-500"
+      bg: "bg-card",
+      border: "border-primary/20",
+      text: "text-foreground",
+      iconBg: "bg-primary"
     };
   };
 
   const renderConnection = (from: TrailPhase, to: TrailPhase, index: number) => {
     const isActive = from.status === "completed";
-    const fromY = from.position.y + 100; // Adjusted for new card height
+    const fromY = from.position.y + 80; // Adjusted for new card height
     const toY = to.position.y;
     const height = toY - fromY;
     
@@ -108,10 +109,10 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
       >
         <div className={cn(
           "w-full h-full transition-all duration-700 rounded-full",
-          isActive ? "bg-orange-500" : "bg-gray-300"
+          isActive ? "bg-primary" : "bg-border"
         )}>
           {isActive && (
-            <div className="w-full h-full bg-orange-400 animate-pulse opacity-60 rounded-full" />
+            <div className="w-full h-full bg-primary/60 animate-pulse opacity-60 rounded-full" />
           )}
         </div>
       </div>
@@ -132,14 +133,14 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
   };
 
   return (
-    <div className={cn("min-h-screen bg-orange-50 pb-8", className)}>
-      {/* Header with progress - Smaller size */}
+    <div className={cn("min-h-screen bg-background pb-6", className)}>
+      {/* Header with progress - Standardized design */}
       <div className="relative z-20 p-4 text-center">
-        <div className="inline-flex items-center gap-2 bg-white rounded-lg px-4 py-2 shadow-md border border-orange-200">
-          <div className="flex items-center justify-center w-6 h-6 bg-orange-500 rounded-full">
-            <Award className="h-3 w-3 text-white" />
+        <div className="inline-flex items-center gap-2 bg-card rounded-lg px-4 py-2 shadow-sm border">
+          <div className="flex items-center justify-center w-6 h-6 bg-primary rounded-full">
+            <Award className="h-3 w-3 text-primary-foreground" />
           </div>
-          <span className="text-sm font-bold text-orange-800">
+          <span className="text-sm font-semibold text-foreground">
             {Math.round(moduleProgress)}% Concluído
           </span>
         </div>
@@ -167,7 +168,7 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
                 top: phase.position.y,
                 left: `${phase.position.x}%`,
                 transform: "translateX(-50%)",
-                width: "260px" // Increased width from 200px to 260px
+                width: "280px" // Increased width
               }}
             >
               <div
@@ -175,81 +176,72 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
                   "relative rounded-xl transition-all duration-300 overflow-hidden select-none",
                   colors.bg,
                   colors.border,
-                  "border-2",
-                  !phase.isLocked && "cursor-pointer",
+                  "border shadow-sm",
+                  !phase.isLocked && "cursor-pointer hover:shadow-md",
                   phase.isLocked && "opacity-70 cursor-not-allowed",
-                  // Shadow and 3D effects
-                  !phase.isLocked && !isPressed && "shadow-lg hover:shadow-xl",
-                  !phase.isLocked && isPressed && "shadow-md transform scale-95",
-                  !phase.isLocked && isHovered && !isPressed && "transform scale-105",
+                  // Standardized hover and press effects
+                  !phase.isLocked && !isPressed && "hover:scale-[1.02]",
+                  !phase.isLocked && isPressed && "scale-95",
+                  !phase.isLocked && isHovered && !isPressed && "hover:border-primary/40",
                 )}
                 onClick={() => !phase.isLocked && onPhaseClick(phase)}
                 onMouseEnter={() => setHoveredPhase(index)}
                 onMouseLeave={() => handleMouseLeave(index)}
                 onMouseDown={() => !phase.isLocked && handleMouseDown(index)}
                 onMouseUp={handleMouseUp}
-                style={{
-                  boxShadow: isPressed 
-                    ? "0 2px 8px rgba(251, 146, 60, 0.1), inset 0 1px 2px rgba(0,0,0,0.05)"
-                    : isHovered
-                    ? "0 8px 20px rgba(251, 146, 60, 0.15), 0 2px 6px rgba(0,0,0,0.05)"
-                    : "0 4px 12px rgba(251, 146, 60, 0.1), 0 1px 4px rgba(0,0,0,0.04)",
-                  transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
-                }}
               >
                 {/* Status indicator */}
-                <div className="absolute top-2 right-2 z-20">
+                <div className="absolute top-3 right-3 z-20">
                   {phase.status === "completed" && (
-                    <div className="w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center shadow-md">
-                      <CheckCircle2 className="h-3 w-3 text-white" />
+                    <div className="w-4 h-4 bg-primary rounded-full flex items-center justify-center shadow-sm">
+                      <CheckCircle2 className="h-3 w-3 text-primary-foreground" />
                     </div>
                   )}
                   {phase.status === "inProgress" && (
-                    <div className="w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center animate-pulse shadow-md">
-                      <Play className="h-2 w-2 text-white" />
+                    <div className="w-4 h-4 bg-primary rounded-full flex items-center justify-center animate-pulse shadow-sm">
+                      <Play className="h-2 w-2 text-primary-foreground" />
                     </div>
                   )}
                 </div>
 
                 {/* Main icon */}
-                <div className="flex justify-center pt-3 pb-2">
+                <div className="flex justify-center pt-4 pb-3">
                   <div className={cn(
-                    "w-10 h-10 rounded-lg flex items-center justify-center shadow-md transition-all duration-300",
+                    "w-12 h-12 rounded-xl flex items-center justify-center shadow-sm transition-all duration-300",
                     colors.iconBg,
-                    isHovered && !phase.isLocked && "scale-110 shadow-lg",
+                    isHovered && !phase.isLocked && "scale-105",
                     isPressed && "scale-95"
                   )}>
                     {getPhaseIcon(phase)}
                   </div>
                 </div>
 
-                {/* Simplified card content - only title, minutes, format and button */}
-                <div className="px-3 pb-3 text-center">
-                  <h3 className="font-bold text-sm text-gray-800 mb-2">
+                {/* Card content - only title, minutes, format and button */}
+                <div className="px-4 pb-4 text-center">
+                  <h3 className="font-semibold text-sm text-foreground mb-3 line-clamp-2">
                     {phase.name}
                   </h3>
                   
-                  {/* Meta info - minutes and format only */}
-                  <div className="flex justify-center gap-3 text-xs text-gray-500 mb-3">
+                  {/* Meta info - minutes and format */}
+                  <div className="flex justify-center gap-4 text-xs text-muted-foreground mb-4">
                     <span className="flex items-center gap-1">
-                      <div className="w-1 h-1 bg-gray-400 rounded-full" />
+                      <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full" />
                       {phase.duration || 5} min
                     </span>
                     <span className="flex items-center gap-1">
-                      <div className="w-1 h-1 bg-gray-400 rounded-full" />
+                      <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full" />
                       {phase.type}
                     </span>
                   </div>
 
-                  {/* Action button */}
+                  {/* Action button - standardized design */}
                   {!phase.isLocked && (
                     <button
                       className={cn(
-                        "w-full py-2 rounded-lg font-semibold text-xs transition-all duration-300 shadow-sm",
-                        phase.status === "completed" 
-                          ? "bg-orange-500 hover:bg-orange-600 text-white hover:shadow-md"
-                          : "bg-orange-500 hover:bg-orange-600 text-white hover:shadow-md",
-                        isPressed && "transform scale-95"
+                        "w-full py-2.5 rounded-lg font-semibold text-sm transition-all duration-200",
+                        "bg-primary hover:bg-primary/90 text-primary-foreground",
+                        "shadow-sm hover:shadow-md active:scale-95",
+                        isPressed && "scale-95"
                       )}
                     >
                       {phase.status === "completed" 
@@ -262,20 +254,20 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
                   )}
                   
                   {phase.isLocked && (
-                    <div className="w-full py-2 bg-gray-200 rounded-lg text-gray-500 font-semibold text-xs">
+                    <div className="w-full py-2.5 bg-muted rounded-lg text-muted-foreground font-semibold text-sm">
                       Complete a fase anterior
                     </div>
                   )}
                 </div>
 
-                {/* Shine effect for active phases */}
+                {/* Subtle shine effect for active phases */}
                 {(phase.status === "inProgress" || phase.status === "completed") && (
-                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse opacity-30" />
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-primary/5 to-transparent opacity-60" />
                 )}
               </div>
 
-              {/* Phase number badge */}
-              <div className="absolute -left-3 top-4 w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-md z-20 border-2 border-white">
+              {/* Phase number badge - standardized design */}
+              <div className="absolute -left-3 top-5 w-7 h-7 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold text-xs shadow-sm z-20 border-2 border-background">
                 {index + 1}
               </div>
             </div>
