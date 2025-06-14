@@ -77,7 +77,7 @@ const Index = () => {
               <div className="flex items-center justify-center mb-2">
                 <Trophy className="h-6 w-6 text-orange-500" />
               </div>
-              <p className="text-2xl font-bold text-orange-600">{dashboardData?.profile?.total_xp || 0}</p>
+              <p className="text-2xl font-bold text-orange-600">{dashboardData?.profile?.xp || 0}</p>
               <p className="text-xs text-muted-foreground">XP Total</p>
             </CardContent>
           </Card>
@@ -97,7 +97,7 @@ const Index = () => {
               <div className="flex items-center justify-center mb-2">
                 <Flame className="h-6 w-6 text-orange-500" />
               </div>
-              <p className="text-2xl font-bold text-orange-600">{dashboardData?.profile?.current_streak || 0}</p>
+              <p className="text-2xl font-bold text-orange-600">{dashboardData?.profile?.streak_days || 0}</p>
               <p className="text-xs text-muted-foreground">Sequência</p>
             </CardContent>
           </Card>
