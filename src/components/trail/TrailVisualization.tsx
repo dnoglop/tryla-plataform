@@ -29,7 +29,7 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
   // Generate better spaced positions for phases
   const generatePhasePositions = (): TrailPhase[] => {
     return phases.map((phase, index) => {
-      const yStep = 250; // Increased spacing between cards
+      const yStep = 180; // Reduced spacing between cards
       const centerX = 50; // Center horizontal position
       
       // Alternating positions for visual interest
@@ -43,23 +43,23 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
   };
 
   const positionedPhases = generatePhasePositions();
-  const containerHeight = Math.max(800, positionedPhases.length * 250 + 200);
+  const containerHeight = Math.max(800, positionedPhases.length * 180 + 200);
 
   const getPhaseIcon = (phase: TrailPhase) => {
-    if (phase.isLocked) return <Lock className="h-10 w-10 text-gray-400" />;
-    if (phase.status === "completed") return <CheckCircle2 className="h-10 w-10 text-white" />;
+    if (phase.isLocked) return <Lock className="h-6 w-6 text-gray-400" />;
+    if (phase.status === "completed") return <CheckCircle2 className="h-6 w-6 text-white" />;
     
     switch (phase.type) {
       case "video":
-        return <Video className="h-10 w-10 text-white" />;
+        return <Video className="h-6 w-6 text-white" />;
       case "quiz":
-        return <Star className="h-10 w-10 text-white" />;
+        return <Star className="h-6 w-6 text-white" />;
       case "challenge":
-        return <Trophy className="h-10 w-10 text-white" />;
+        return <Trophy className="h-6 w-6 text-white" />;
       case "text":
-        return <BookText className="h-10 w-10 text-white" />;
+        return <BookText className="h-6 w-6 text-white" />;
       default:
-        return <BookText className="h-10 w-10 text-white" />;
+        return <BookText className="h-6 w-6 text-white" />;
     }
   };
 
@@ -92,7 +92,7 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
 
   const renderConnection = (from: TrailPhase, to: TrailPhase, index: number) => {
     const isActive = from.status === "completed";
-    const fromY = from.position.y + 120; // Adjusted for new card height
+    const fromY = from.position.y + 80; // Adjusted for new card height
     const toY = to.position.y;
     const height = toY - fromY;
     
@@ -176,20 +176,20 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
                 top: phase.position.y,
                 left: `${phase.position.x}%`,
                 transform: "translateX(-50%)",
-                width: "380px"
+                width: "280px" // Reduced from 380px
               }}
             >
               <div
                 className={cn(
-                  "relative rounded-3xl transition-all duration-300 overflow-hidden select-none",
+                  "relative rounded-2xl transition-all duration-300 overflow-hidden select-none",
                   colors.bg,
                   colors.border,
                   "border-2",
                   !phase.isLocked && "cursor-pointer",
                   phase.isLocked && "opacity-70 cursor-not-allowed",
                   // Shadow and 3D effects
-                  !phase.isLocked && !isPressed && "shadow-xl hover:shadow-2xl",
-                  !phase.isLocked && isPressed && "shadow-lg transform scale-95",
+                  !phase.isLocked && !isPressed && "shadow-lg hover:shadow-xl",
+                  !phase.isLocked && isPressed && "shadow-md transform scale-95",
                   !phase.isLocked && isHovered && !isPressed && "transform scale-105",
                   // Soft shadow variations
                   phase.status === "completed" && "shadow-green-200/50",
@@ -202,33 +202,33 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
                 onMouseUp={handleMouseUp}
                 style={{
                   boxShadow: isPressed 
-                    ? "0 8px 25px rgba(0,0,0,0.15), inset 0 2px 4px rgba(0,0,0,0.1)"
+                    ? "0 4px 15px rgba(0,0,0,0.1), inset 0 1px 2px rgba(0,0,0,0.05)"
                     : isHovered
-                    ? "0 20px 40px rgba(0,0,0,0.12), 0 8px 16px rgba(0,0,0,0.08)"
-                    : "0 12px 30px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05)",
+                    ? "0 12px 25px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.05)"
+                    : "0 6px 20px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04)",
                   transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
                 }}
               >
                 {/* Status indicator */}
-                <div className="absolute top-5 right-5 z-20">
+                <div className="absolute top-3 right-3 z-20">
                   {phase.status === "completed" && (
-                    <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
-                      <CheckCircle2 className="h-6 w-6 text-white" />
+                    <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center shadow-md">
+                      <CheckCircle2 className="h-4 w-4 text-white" />
                     </div>
                   )}
                   {phase.status === "inProgress" && (
-                    <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center animate-pulse shadow-lg">
-                      <Play className="h-5 w-5 text-white" />
+                    <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center animate-pulse shadow-md">
+                      <Play className="h-3 w-3 text-white" />
                     </div>
                   )}
                 </div>
 
                 {/* Main icon */}
-                <div className="flex justify-center pt-8 pb-6">
+                <div className="flex justify-center pt-4 pb-3">
                   <div className={cn(
-                    "w-24 h-24 rounded-3xl flex items-center justify-center shadow-lg transition-all duration-300",
+                    "w-14 h-14 rounded-xl flex items-center justify-center shadow-md transition-all duration-300",
                     colors.iconBg,
-                    isHovered && !phase.isLocked && "scale-110 shadow-xl",
+                    isHovered && !phase.isLocked && "scale-110 shadow-lg",
                     isPressed && "scale-95"
                   )}>
                     {getPhaseIcon(phase)}
@@ -236,22 +236,22 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
                 </div>
 
                 {/* Card content */}
-                <div className="px-8 pb-8 text-center">
-                  <h3 className="font-bold text-xl text-gray-800 mb-3">
+                <div className="px-4 pb-4 text-center">
+                  <h3 className="font-bold text-lg text-gray-800 mb-2">
                     {phase.name}
                   </h3>
-                  <p className="text-sm text-gray-600 mb-6 line-clamp-3 leading-relaxed">
+                  <p className="text-xs text-gray-600 mb-4 line-clamp-2 leading-relaxed">
                     {phase.description || "Conceitos básicos e princípios fundamentais para seu aprendizado"}
                   </p>
                   
                   {/* Additional info */}
-                  <div className="flex justify-center gap-6 text-sm text-gray-500 mb-6">
-                    <span className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full" />
+                  <div className="flex justify-center gap-4 text-xs text-gray-500 mb-4">
+                    <span className="flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
                       {phase.duration || 5} min
                     </span>
-                    <span className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full" />
+                    <span className="flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
                       {phase.type}
                     </span>
                   </div>
@@ -260,15 +260,15 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
                   {!phase.isLocked && (
                     <button
                       className={cn(
-                        "w-full py-4 rounded-2xl font-semibold text-lg transition-all duration-300 shadow-md",
+                        "w-full py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 shadow-sm",
                         phase.status === "completed" 
-                          ? "bg-green-500 hover:bg-green-600 text-white hover:shadow-lg"
-                          : "bg-orange-500 hover:bg-orange-600 text-white hover:shadow-lg",
+                          ? "bg-green-500 hover:bg-green-600 text-white hover:shadow-md"
+                          : "bg-orange-500 hover:bg-orange-600 text-white hover:shadow-md",
                         isPressed && "transform scale-95"
                       )}
                     >
                       {phase.status === "completed" 
-                        ? "Revisar Conteúdo" 
+                        ? "Revisar" 
                         : phase.status === "inProgress"
                           ? "Continuar"
                           : "Iniciar"
@@ -277,7 +277,7 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
                   )}
                   
                   {phase.isLocked && (
-                    <div className="w-full py-4 bg-gray-200 rounded-2xl text-gray-500 font-semibold text-lg">
+                    <div className="w-full py-2.5 bg-gray-200 rounded-xl text-gray-500 font-semibold text-sm">
                       Complete a fase anterior
                     </div>
                   )}
@@ -285,12 +285,12 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
 
                 {/* Shine effect for active phases */}
                 {(phase.status === "inProgress" || phase.status === "completed") && (
-                  <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse opacity-30" />
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse opacity-30" />
                 )}
               </div>
 
               {/* Phase number badge */}
-              <div className="absolute -left-6 top-10 w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg z-20 border-4 border-white">
+              <div className="absolute -left-4 top-6 w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md z-20 border-2 border-white">
                 {index + 1}
               </div>
             </div>
