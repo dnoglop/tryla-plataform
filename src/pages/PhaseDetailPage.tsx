@@ -15,6 +15,9 @@ import {
     CheckCircle,
     Clock,
     Home,
+    Pause,
+    Play,
+    RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import YoutubeEmbed from "@/components/YoutubeEmbed";
@@ -41,16 +44,16 @@ import { useRewardModal } from "@/components/XpRewardModal/RewardModalContext";
 
 // Componentes e Funções Auxiliares
 const PhaseDetailSkeleton = () => (
-    <div className="min-h-screen bg-slate-50 animate-pulse">
+    <div className="min-h-screen bg-background animate-pulse">
         <header className="p-4 sm:p-6">
             <div className="flex items-center gap-4">
-                <Skeleton className="h-10 w-10 rounded-full bg-slate-200" />
-                <Skeleton className="h-7 w-48 bg-slate-200" />
+                <Skeleton className="h-10 w-10 rounded-full bg-muted" />
+                <Skeleton className="h-7 w-48 bg-muted" />
             </div>
         </header>
         <main className="container px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-            <Skeleton className="h-28 w-full rounded-2xl bg-slate-200" />
-            <Skeleton className="aspect-video w-full rounded-2xl bg-slate-200" />
+            <Skeleton className="h-28 w-full rounded-2xl bg-muted" />
+            <Skeleton className="aspect-video w-full rounded-2xl bg-muted" />
         </main>
     </div>
 );
@@ -75,19 +78,19 @@ const NextModuleCard = ({
     onContinue: () => void;
     onBackToModules: () => void;
 }) => (
-    <div className="mt-6 p-6 bg-gradient-to-r from-orange-50 to-orange-100 rounded-2xl border border-orange-200">
+    <div className="mt-6 p-6 bg-gradient-to-r from-accent to-accent/80 rounded-2xl border border-border">
         <div className="flex items-start gap-4 mb-4">
-            <div className="flex-shrink-0 h-12 w-12 flex items-center justify-center rounded-xl bg-orange-200 text-2xl">
+            <div className="flex-shrink-0 h-12 w-12 flex items-center justify-center rounded-xl bg-primary/20 text-2xl">
                 {nextModule.emoji || "📚"}
             </div>
             <div className="flex-1">
-                <h3 className="text-lg font-bold text-slate-800 mb-1">
+                <h3 className="text-lg font-bold text-foreground mb-1">
                     Próxima Missão
                 </h3>
-                <h4 className="text-xl font-semibold text-orange-600 mb-2">
+                <h4 className="text-xl font-semibold text-primary mb-2">
                     {nextModule.name}
                 </h4>
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-muted-foreground">
                     {nextModule.description}
                 </p>
             </div>
@@ -95,7 +98,7 @@ const NextModuleCard = ({
         <div className="flex gap-3">
             <Button
                 onClick={onContinue}
-                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-semibold"
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
             >
                 Seguir para o Próximo Módulo
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -103,7 +106,7 @@ const NextModuleCard = ({
             <Button
                 onClick={onBackToModules}
                 variant="outline"
-                className="border-orange-300 text-orange-600 hover:bg-orange-50"
+                className="border-border text-foreground hover:bg-accent"
             >
                 <Home className="mr-2 h-4 w-4" />
                 Voltar para as Trilhas
@@ -319,6 +322,13 @@ export default function PhaseDetailPage() {
         toast.info(`Velocidade alterada para ${newSpeed}x`);
     };
 
+    const handleResetAudio = () => {
+        stopAudio();
+        setLastReadPosition(0);
+        setIsPaused(false);
+        toast.info("Posição do áudio resetada");
+    };
+
     const navigateToNext = () => {
         queryClient.invalidateQueries({
             queryKey: ["moduleDetailData", Number(moduleId)],
@@ -436,12 +446,26 @@ export default function PhaseDetailPage() {
     if (isLoading) return <PhaseDetailSkeleton />;
     if (!phase || !module)
         return (
-            <div className="p-4 text-center">
-                <p className="text-red-600 mb-4">Fase ou Módulo não encontrado.</p>
-                <p className="text-sm text-gray-600">Phase ID: {phaseId}, Module ID: {moduleId}</p>
-                <Button onClick={() => navigate("/modulos")} className="mt-4">
-                    Voltar aos Módulos
-                </Button>
+            <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+                <div className="text-center p-8 bg-card rounded-2xl border border-border shadow-lg max-w-md mx-4">
+                    <div className="mb-4">
+                        <CheckCircle className="h-16 w-16 text-destructive mx-auto mb-4" />
+                        <h2 className="text-xl font-bold text-foreground mb-2">
+                            Conteúdo não encontrado
+                        </h2>
+                        <p className="text-muted-foreground mb-4">
+                            A fase ou módulo solicitado não foi encontrado.
+                        </p>
+                        <div className="text-xs text-muted-foreground space-y-1">
+                            <p>Phase ID: {phaseId}</p>
+                            <p>Module ID: {moduleId}</p>
+                        </div>
+                    </div>
+                    <Button onClick={() => navigate("/modulos")} className="w-full">
+                        <Home className="mr-2 h-4 w-4" />
+                        Voltar aos Módulos
+                    </Button>
+                </div>
             </div>
         );
 
@@ -456,34 +480,41 @@ export default function PhaseDetailPage() {
     });
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-24">
-            <header className="p-4 sm:p-6">
-                <div className="flex items-center justify-between max-w-4xl mx-auto">
-                    <div className="flex items-center gap-4">
-                        <button
-                            onClick={() => navigate(`/modulo/${moduleId}`)}
-                            className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md transition-transform hover:scale-110 active:scale-95"
-                        >
-                            <ArrowLeft className="h-5 w-5 text-gray-600" />
-                        </button>
-                        <div>
-                            <h1 className="text-xl font-bold text-slate-800 truncate">
-                                {module.name}
-                            </h1>
+        <div className="min-h-screen bg-background pb-24">
+            {/* Header melhorado */}
+            <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border">
+                <div className="p-4 sm:p-6">
+                    <div className="flex items-center justify-between max-w-4xl mx-auto">
+                        <div className="flex items-center gap-4">
+                            <button
+                                onClick={() => navigate(`/modulo/${moduleId}`)}
+                                className="flex h-10 w-10 items-center justify-center rounded-full bg-card shadow-md transition-transform hover:scale-110 active:scale-95 border border-border"
+                            >
+                                <ArrowLeft className="h-5 w-5 text-foreground" />
+                            </button>
+                            <div>
+                                <h1 className="text-xl font-bold text-foreground truncate">
+                                    {module.name}
+                                </h1>
+                                <p className="text-sm text-muted-foreground">
+                                    Fase {currentPhaseIndex + 1} de {allPhases.length}
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </header>
 
             <main className="container px-4 sm:px-6 lg:px-8 py-6 space-y-6 max-w-4xl mx-auto">
-                <div className="p-6 bg-white rounded-2xl shadow-sm border border-slate-200/50">
-                    <div className="flex items-start justify-between gap-4">
+                {/* Card principal da fase */}
+                <div className="card-trilha p-6">
+                    <div className="flex items-start justify-between gap-4 mb-6">
                         <div className="flex-1">
-                            <h2 className="text-2xl md:text-3xl font-bold text-slate-800">
+                            <h2 className="text-2xl md:text-3xl font-bold text-foreground">
                                 {phase.name}
                             </h2>
                             {phase.description && (
-                                <p className="text-slate-600 mt-2 text-base">
+                                <p className="text-muted-foreground mt-2 text-base">
                                     {phase.description}
                                 </p>
                             )}
@@ -502,7 +533,7 @@ export default function PhaseDetailPage() {
                                         cx={35}
                                         cy={35}
                                         r={28}
-                                        stroke="rgb(226 232 240)"
+                                        stroke="hsl(var(--muted))"
                                         strokeWidth={7}
                                         fill="none"
                                     />
@@ -511,7 +542,7 @@ export default function PhaseDetailPage() {
                                         cx={35}
                                         cy={35}
                                         r={28}
-                                        stroke="rgb(249 115 22)"
+                                        stroke="hsl(var(--primary))"
                                         strokeWidth={7}
                                         fill="none"
                                         strokeDasharray={175.9}
@@ -525,12 +556,12 @@ export default function PhaseDetailPage() {
                                 </svg>
                                 {/* Percentage text */}
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                    <span className="text-sm font-bold text-slate-700">
+                                    <span className="text-sm font-bold text-foreground">
                                         {Math.round(moduleProgress)}%
                                     </span>
                                 </div>
                             </div>
-                            <p className="text-xs text-center text-slate-500 mt-2 font-medium">
+                            <p className="text-xs text-center text-muted-foreground mt-2 font-medium">
                                 da meta concluída!
                             </p>
                         </div>
@@ -543,17 +574,23 @@ export default function PhaseDetailPage() {
 
                 {(phase.type === "text" || phase.type === "challenge") &&
                     phase.content && (
-                        <div className="p-6 bg-white rounded-2xl shadow-sm border border-slate-200/50">
-                            <div className="flex justify-end items-center gap-4 mb-4">
+                        <div className="card-trilha p-6">
+                            {/* Controles de áudio melhorados */}
+                            <div className="flex justify-end items-center gap-3 mb-6 p-3 bg-accent rounded-lg">
+                                <div className="text-xs text-muted-foreground">
+                                    Áudio:
+                                </div>
                                 <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={handleReadContent}
                                     disabled={isLoadingAudio}
-                                    className="text-white bg-orange-500 hover:bg-orange-600"
+                                    className="bg-primary text-primary-foreground hover:bg-primary/90"
                                 >
                                     {isPlaying ? (
-                                        <VolumeX className="mr-2 h-4 w-4" />
+                                        <Pause className="mr-2 h-4 w-4" />
+                                    ) : isPaused ? (
+                                        <Play className="mr-2 h-4 w-4" />
                                     ) : (
                                         <Volume2 className="mr-2 h-4 w-4" />
                                     )}
@@ -563,13 +600,21 @@ export default function PhaseDetailPage() {
                                     variant="outline"
                                     size="sm"
                                     onClick={handleSpeedChange}
-                                    disabled={isPlaying || isLoadingAudio}
+                                    className="min-w-[60px]"
                                 >
                                     {speechRate.toFixed(2)}x
                                 </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleResetAudio}
+                                    disabled={!isPaused && !isPlaying}
+                                >
+                                    <RotateCcw className="h-4 w-4" />
+                                </Button>
                             </div>
                             <div
-                                className="prose max-w-none prose-slate"
+                                className="prose max-w-none prose-slate dark:prose-invert"
                                 dangerouslySetInnerHTML={{
                                     __html: phase.content,
                                 }}
@@ -578,20 +623,20 @@ export default function PhaseDetailPage() {
                     )}
 
                 {phase.type === "quiz" && (
-                    <div className="p-6 bg-white rounded-2xl shadow-sm border border-slate-200/50">
-                        {isLoading && <p>Carregando perguntas...</p>}
+                    <div className="card-trilha p-6">
+                        {isLoading && <p className="text-muted-foreground">Carregando perguntas...</p>}
                         {questions.length > 0 &&
                             !quizCompleted &&
                             currentQuestion && (
                                 <div>
-                                    <div className="flex justify-between text-sm text-gray-600 mb-2">
+                                    <div className="flex justify-between text-sm text-muted-foreground mb-4">
                                         <span>
                                             Pergunta {currentQuestionIndex + 1}{" "}
                                             de {questions.length}
                                         </span>
                                         {quizStartTime && (
-                                            <span className="text-orange-500">
-                                                ⏱️{" "}
+                                            <span className="text-primary flex items-center gap-1">
+                                                <Clock className="h-4 w-4" />
                                                 {formatTime(
                                                     Math.round(
                                                         (Date.now() -
@@ -602,9 +647,9 @@ export default function PhaseDetailPage() {
                                             </span>
                                         )}
                                     </div>
-                                    <div className="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+                                    <div className="progress-bar mb-6">
                                         <div
-                                            className="bg-orange-500 h-2.5 rounded-full"
+                                            className="progress-value"
                                             style={{
                                                 width: `${((currentQuestionIndex + 1) / questions.length) * 100}%`,
                                             }}
@@ -633,18 +678,18 @@ export default function PhaseDetailPage() {
                                 </div>
                             )}
                         {quizCompleted && (
-                            <div className="p-6 text-center bg-slate-50 rounded-lg">
-                                <h4 className="text-2xl font-bold text-slate-800 mb-3">
+                            <div className="p-6 text-center bg-accent rounded-lg">
+                                <h4 className="text-2xl font-bold text-foreground mb-3">
                                     Quiz Finalizado!
                                 </h4>
-                                <div className="flex items-center justify-center gap-2 text-lg text-slate-700">
-                                    <Clock className="h-6 w-6 text-orange-500" />
+                                <div className="flex items-center justify-center gap-2 text-lg text-foreground">
+                                    <Clock className="h-6 w-6 text-primary" />
                                     <span>Tempo final:</span>
-                                    <span className="font-bold text-orange-500 text-xl">
+                                    <span className="font-bold text-primary text-xl">
                                         {formatTime(quizElapsedTime)}
                                     </span>
                                 </div>
-                                <p className="text-sm text-slate-500 mt-2">
+                                <p className="text-sm text-muted-foreground mt-2">
                                     Você já pode avançar para a próxima fase.
                                 </p>
                             </div>
@@ -652,7 +697,8 @@ export default function PhaseDetailPage() {
                     </div>
                 )}
 
-                <div className="mt-8 flex items-center justify-between gap-4 border-t border-slate-200 pt-6">
+                {/* Navegação melhorada */}
+                <div className="mt-8 flex items-center justify-between gap-4 border-t border-border pt-6">
                     {/* Botão Voltar */}
                     <Button
                         onClick={navigateToPrevious}
@@ -661,15 +707,15 @@ export default function PhaseDetailPage() {
                         className={`${!previousPhase ? "opacity-50 cursor-not-allowed" : ""}`}
                     >
                         <ArrowLeft className="mr-2 h-4 w-4" />
-                        Voltar
+                        Anterior
                     </Button>
 
-                    {/* Botões de Ação */}
+                    {/* Botões de Ação centralizados */}
                     <div className="flex gap-3">
                         <Button
                             onClick={handleCompletePhase}
                             disabled={isSubmitting || phase.type === "quiz"}
-                            className={`text-white bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 ${phase.type === "quiz" ? "hidden" : ""}`}
+                            className={`btn-trilha ${phase.type === "quiz" ? "hidden" : ""}`}
                         >
                             {isSubmitting
                                 ? "Processando..."
@@ -681,10 +727,10 @@ export default function PhaseDetailPage() {
                         <Button
                             onClick={navigateToNext}
                             disabled={!quizCompleted}
-                            className={`text-white bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 ${phase.type !== "quiz" ? "hidden" : ""}`}
+                            className={`btn-trilha ${phase.type !== "quiz" ? "hidden" : ""}`}
                         >
                             {nextPhase
-                                ? "Ir para Próxima Fase"
+                                ? "Próxima Fase"
                                 : "Finalizar Módulo"}{" "}
                             <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
@@ -702,13 +748,13 @@ export default function PhaseDetailPage() {
 
                 {/* Mensagem quando não há próximo módulo */}
                 {moduleCompleted && !nextModule && (
-                    <div className="mt-6 p-6 bg-gradient-to-r from-green-50 to-green-100 rounded-2xl border border-green-200 text-center">
+                    <div className="mt-6 p-6 bg-gradient-to-r from-green-500/10 to-green-600/10 rounded-2xl border border-green-500/20 text-center">
                         <div className="mb-4">
                             <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-                            <h3 className="text-2xl font-bold text-slate-800 mb-2">
+                            <h3 className="text-2xl font-bold text-foreground mb-2">
                                 Parabéns! 🎉
                             </h3>
-                            <p className="text-slate-600 mb-4">
+                            <p className="text-muted-foreground mb-4">
                                 Você concluiu todas as trilhas disponíveis!
                             </p>
                         </div>
