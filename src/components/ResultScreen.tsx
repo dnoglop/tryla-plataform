@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import Showdown from "showdown";
 import { Button } from "@/components/ui/button";
@@ -34,47 +35,47 @@ export function ResultScreen({
 
     return (
         <div className="text-center animate-fadeIn space-y-8">
-            {/* Card principal com gradiente laranja */}
-            <div className="relative overflow-hidden bg-gradient-to-br from-orange-50 to-orange-100 rounded-3xl shadow-xl border border-orange-200">
+            {/* Card principal com gradiente adaptado ao tema */}
+            <div className="relative overflow-hidden bg-gradient-to-br from-primary/10 to-primary/20 dark:from-primary/20 dark:to-primary/30 rounded-3xl shadow-xl border border-border">
                 {/* Decoração de fundo */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-orange-200/30 to-transparent rounded-full -translate-y-16 translate-x-16"></div>
-                <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-orange-300/20 to-transparent rounded-full translate-y-12 -translate-x-12"></div>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-primary/20 to-transparent rounded-full -translate-y-16 translate-x-16"></div>
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-primary/30 to-transparent rounded-full translate-y-12 -translate-x-12"></div>
 
                 {/* Conteúdo */}
                 <div className="relative p-6 sm:p-8">
                     <div className="flex items-center justify-center mb-6">
-                        <div className="p-3 bg-orange-500 rounded-full shadow-lg">
-                            <Lightbulb className="h-6 w-6 text-white" />
+                        <div className="p-3 bg-primary rounded-full shadow-lg">
+                            <Lightbulb className="h-6 w-6 text-primary-foreground" />
                         </div>
                     </div>
 
-                    <h2 className="text-2xl md:text-3xl font-bold text-orange-900 mb-4">
+                    <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
                         Seu Perfil Vocacional
                     </h2>
 
                     <div
-                        className="bg-white/70 backdrop-blur-sm p-6 rounded-2xl shadow-inner prose max-w-none text-left border border-orange-200/50"
+                        className="bg-card/80 backdrop-blur-sm p-6 rounded-2xl shadow-inner prose prose-slate dark:prose-invert max-w-none text-left border border-border/50"
                         dangerouslySetInnerHTML={{ __html: htmlContent }}
                     />
                 </div>
             </div>
 
-            {/* Card de recomendação */}
-            <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl shadow-lg p-6 text-white">
+            {/* Card de recomendação adaptado ao tema */}
+            <div className="bg-gradient-to-r from-primary to-primary/80 rounded-2xl shadow-lg p-6 text-primary-foreground">
                 <div className="flex items-start gap-4">
-                    <div className="p-2 bg-white/20 rounded-lg shrink-0">
-                        <Users className="h-6 w-6 text-white" />
+                    <div className="p-2 bg-primary-foreground/20 rounded-lg shrink-0">
+                        <Users className="h-6 w-6 text-primary-foreground" />
                     </div>
                     <div className="text-left">
                         <h3 className="font-bold text-lg mb-2">
                             Próximo Passo: Aprofunde seus Insights
                         </h3>
-                        <p className="text-orange-100 leading-relaxed">
+                        <p className="text-primary-foreground/80 leading-relaxed">
                             Estas informações são um ponto de partida para sua
                             jornada de autoconhecimento. Para explorar e
                             desenvolver ainda mais seu potencial, recomendamos
                             participar dos
-                            <strong className="text-white">
+                            <strong className="text-primary-foreground">
                                 {" "}
                                 programas de mentoria do Joule
                             </strong>
@@ -89,7 +90,7 @@ export function ResultScreen({
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button
                     onClick={onRestart}
-                    className="bg-orange-500 hover:bg-orange-600 text-white text-lg px-8 py-6 shadow-lg rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-xl"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-8 py-6 shadow-lg rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-xl"
                 >
                     <RefreshCw className="mr-2 h-5 w-5" />
                     Refazer Teste
@@ -98,7 +99,7 @@ export function ResultScreen({
                 <Button
                     onClick={handleBackToLab}
                     variant="outline"
-                    className="border-2 border-orange-500 text-orange-600 hover:bg-orange-50 text-lg px-8 py-6 shadow-lg rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-xl"
+                    className="border-2 border-primary text-primary hover:bg-primary/10 text-lg px-8 py-6 shadow-lg rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-xl"
                 >
                     <ArrowLeft className="mr-2 h-5 w-5" />
                     Voltar ao Lab
