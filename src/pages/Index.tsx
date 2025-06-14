@@ -1,162 +1,350 @@
 
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
-import { checkOnboardingStatus } from "@/services/onboardingService";
-import { Button } from "@/components/ui/button";
+import * as Dialog from '@radix-ui/react-dialog';
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { useSessionStore } from '@/stores/sessionStore';
 import Layout from "@/components/Layout";
-import { useDashboardData } from "@/hooks/useDashboardData";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trophy, Target, Flame, TrendingUp } from "lucide-react";
+import { useDailyChallenge } from "@/hooks/useDailyChallenge";
+import DailyChallengeCard from "@/components/DailyChallengeCard";
 
-const motivationalPhrases = [
-  "Seja a mudança que você quer ver no mundo.",
-  "Grandes realizações são feitas um passo de cada vez.",
-  "O crescimento pessoal é uma jornada constante.",
-  "Quem se conhece melhor, se expressa melhor.",
-  "A empatia é a ponte que nos conecta."
-];
+// Ícones e Componentes
+import { ArrowRight, Sparkles, X, Gift, CheckCircle } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { WeeklyProgressChart } from "@/components/WeeklyProgressChart";
+import { getModules, Module, getUserNextPhase, isModuleCompleted } from "@/services/moduleService";
+import { getProfile, Profile, updateUserStreak } from "@/services/profileService";
+import ForumThread from "@/components/ForumThread";
 
+// --- COMPONENTES VISUAIS AUXILIARES ---
+const DashboardSkeleton = () => ( 
+    <div className="bg-slate-50 min-h-screen p-4 sm:p-6 lg:p-8 space-y-6 animate-pulse"> 
+        <header className="flex justify-between items-center"> 
+            <div className="space-y-2"> 
+                <Skeleton className="h-5 w-32 bg-slate-200" /> 
+                <Skeleton className="h-8 w-48 bg-slate-200" /> 
+            </div>
+            <Skeleton className="h-14 w-14 rounded-full bg-slate-200" /> 
+        </header> 
+        <main className="pt-4 space-y-6"> 
+            <Skeleton className="h-24 rounded-2xl bg-slate-200" /> 
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6"> 
+                <Skeleton className="lg:col-span-2 h-48 rounded-2xl bg-slate-200" /> 
+                <Skeleton className="h-48 rounded-2xl bg-slate-200" /> 
+            </div>
+            <Skeleton className="h-40 rounded-2xl bg-slate-200" /> 
+        </main> 
+    </div>
+);
+
+const WelcomeModal = ({ open, onOpenChange, username, quote, isLoadingQuote }: { open: boolean, onOpenChange: (open: boolean) => void, username: string, quote: string, isLoadingQuote: boolean }) => ( 
+    <Dialog.Root open={open} onOpenChange={onOpenChange}> 
+        <Dialog.Portal> 
+            <Dialog.Overlay className="fixed inset-0 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out" /> 
+            <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-sm bg-white p-8 rounded-2xl shadow-xl data-[state=open]:animate-in data-[state=closed]:animate-out"> 
+                <div className="text-center"> 
+                    <Sparkles className="mx-auto h-10 w-10 text-orange-500 mb-4" /> 
+                    <Dialog.Title className="text-2xl font-bold text-slate-900">Olá, {username}!</Dialog.Title> 
+                    <Dialog.Description className="text-slate-500 mt-2 text-base min-h-[48px] flex items-center justify-center"> 
+                        {isLoadingQuote ? ( 
+                            <span className="italic">Buscando inspiração...</span> 
+                        ) : ( 
+                            `"${quote}"` 
+                        )} 
+                    </Dialog.Description> 
+                </div>
+                <Dialog.Close asChild> 
+                    <button className="mt-8 w-full px-4 py-3 rounded-xl bg-orange-500 text-white font-semibold text-base shadow-lg shadow-orange-500/30 transition-all hover:bg-orange-600 hover:-translate-y-0.5 active:translate-y-0 active:scale-95">Começar o dia!</button> 
+                </Dialog.Close> 
+                <Dialog.Close asChild> 
+                    <button aria-label="Fechar" className="absolute top-3 right-3 rounded-full p-1.5 transition-colors hover:bg-slate-100">
+                        <X className="h-5 w-5 text-slate-400" />
+                    </button> 
+                </Dialog.Close> 
+            </Dialog.Content> 
+        </Dialog.Portal> 
+    </Dialog.Root>
+);
+
+const fetchDailyQuote = async () => { 
+    try { 
+        const { data, error } = await supabase.functions.invoke('get-daily-quote'); 
+        if (error) throw error; 
+        return data.quote || "Cada passo que você dá hoje constrói o seu amanhã."; 
+    } catch (error) { 
+        console.error("Erro ao buscar citação diária:", error); 
+        return "A jornada mais importante é a que você faz para dentro de si mesmo."; 
+    }
+};
+
+// --- COMPONENTE PRINCIPAL ---
 const Index = () => {
-  const navigate = useNavigate();
-  const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
-  const { data: dashboardData, isLoading } = useDashboardData();
+    const queryClient = useQueryClient();
+    const { hasShownWelcomeModal, setHasShownWelcomeModal } = useSessionStore();
+    
+    const [userId, setUserId] = useState<string | null>(null);
+    const [nextPhase, setNextPhase] = useState<any>(null);
+    const [nextModule, setNextModule] = useState<Module | null>(null);
+    const [completedModulesCount, setCompletedModulesCount] = useState(0);
+    const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+    const [dailyXpClaimed, setDailyXpClaimed] = useState(false);
+    const [isClaiming, setIsClaiming] = useState(false);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentPhraseIndex((prevIndex) => 
-        prevIndex >= motivationalPhrases.length - 1 ? 0 : prevIndex + 1
-      );
-    }, 4000);
+    useEffect(() => {
+        const fetchUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                setUserId(user.id);
+            }
+        };
+        fetchUser();
+    }, []);
 
-    return () => clearInterval(interval);
-  }, []);
+    const { data: profile, isLoading: isLoadingPage } = useQuery({
+        queryKey: ['profile', userId],
+        queryFn: async () => {
+            if (!userId) return null;
+            return getProfile(userId);
+        },
+        enabled: !!userId,
+    });
 
-  const handleNextPhrase = () => {
-    setCurrentPhraseIndex((prevIndex) => 
-      prevIndex >= motivationalPhrases.length - 1 ? 0 : prevIndex + 1
-    );
-  };
+    useEffect(() => {
+        if (!userId) return;
 
-  const handleContinueJourney = () => {
-    navigate("/modulos");
-  };
+        const handleDailyTasks = async () => {
+            const wasStreakUpdated = await updateUserStreak(userId);
+            if (wasStreakUpdated) {
+                console.log("Streak foi atualizado. Invalidando cache do perfil...");
+                queryClient.invalidateQueries({ queryKey: ['profile', userId] });
+            }
 
-  if (isLoading) {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const { count } = await supabase
+                .from('xp_history')
+                .select('id', { count: 'exact' })
+                .eq('user_id', userId)
+                .eq('source', 'DAILY_BONUS')
+                .gte('created_at', `${todayStr}T00:00:00.000Z`);
+            
+            if (count && count > 0) {
+                setDailyXpClaimed(true);
+            }
+
+            const lastModalShowDate = localStorage.getItem('lastWelcomeModalShow');
+            if (!hasShownWelcomeModal && lastModalShowDate !== todayStr) {
+                setShowWelcomeModal(true);
+                localStorage.setItem('lastWelcomeModalShow', todayStr);
+                setHasShownWelcomeModal(true);
+            }
+        };
+
+        handleDailyTasks();
+    }, [userId, queryClient, hasShownWelcomeModal, setHasShownWelcomeModal]);
+
+    const { data: modules = [] } = useQuery({
+        queryKey: ['modules'],
+        queryFn: getModules,
+    });
+
+    useEffect(() => {
+        if (!userId || !modules || modules.length === 0) return;
+        
+        const fetchProgress = async () => {
+            let completedCount = 0;
+            let nextPhaseFound = false;
+            for (const module of modules) {
+                const isCompleted = await isModuleCompleted(userId, module.id);
+                if (isCompleted) {
+                    completedCount++;
+                } else if (!nextPhaseFound) {
+                    const nextPhaseData = await getUserNextPhase(userId, module.id);
+                    if (nextPhaseData) {
+                        setNextPhase(nextPhaseData);
+                        setNextModule(module);
+                        nextPhaseFound = true;
+                    }
+                }
+            }
+            setCompletedModulesCount(completedCount);
+        };
+        fetchProgress();
+    }, [userId, modules]);
+
+    const { data: dailyQuote, isLoading: isLoadingQuote } = useQuery({
+        queryKey: ['dailyQuote', new Date().toISOString().split('T')[0]], 
+        queryFn: fetchDailyQuote,
+        enabled: showWelcomeModal,
+    });
+
+    const handleClaimDailyXp = async () => {
+        if (!userId || isClaiming || dailyXpClaimed) return;
+        setIsClaiming(true);
+        
+        try {
+            const xpAmount = 50;
+            const { error } = await supabase.from('xp_history').insert({ 
+                user_id: userId, 
+                xp_amount: xpAmount,
+                source: 'DAILY_BONUS'
+            });
+
+            if (error) throw error;
+            
+            setDailyXpClaimed(true);
+            queryClient.invalidateQueries({ queryKey: ['profile', userId] });
+
+            toast.custom((t) => (
+                <div className="flex items-center gap-3 bg-white border border-slate-200 shadow-lg rounded-xl p-4 w-full max-w-sm">
+                    <div className="bg-orange-100 p-2 rounded-full"><Gift className="h-6 w-6 text-orange-500" /></div>
+                    <div className="flex-grow">
+                        <p className="font-bold text-slate-800">Bônus Diário!</p>
+                        <p className="text-sm text-slate-600">Você ganhou +{xpAmount} XP por sua dedicação!</p>
+                    </div>
+                    <button onClick={() => toast.dismiss(t)} className="opacity-50 hover:opacity-100"><X size={18} /></button>
+                </div>
+            ), { duration: 3000 });
+
+        } catch (error: any) {
+            console.error("Erro ao reclamar XP diário:", error.message);
+            toast.error("Ops! Não foi possível reclamar seu bônus.");
+        } finally {
+            setIsClaiming(false);
+        }
+    };
+    
+    const communityPosts = [
+        { id: 1, title: "Dicas para a primeira entrevista", author: "Mariana", preview: "Compartilho algumas dicas valiosas que me ajudaram...", authorAvatar: "https://i.pravatar.cc/150?img=5", replies: 5, likes: 12, timeAgo: "2h", tags: [] },
+        { id: 2, title: "O que acharam do módulo de Growth Mindset?", author: "Lucas", preview: "Gostaria de saber a opinião de vocês sobre este módulo...", authorAvatar: "https://i.pravatar.cc/150?img=3", replies: 8, likes: 21, timeAgo: "4h", tags: [] },
+    ];
+
+    const dailyChallenge = useDailyChallenge(userId || '');
+    
+    if (isLoadingPage || !profile) {
+        return (
+            <Layout>
+                <DashboardSkeleton />
+            </Layout>
+        );
+    }
+
     return (
-      <Layout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-        </div>
-      </Layout>
-    );
-  }
-
-  return (
-    <Layout>
-      <div className="min-h-screen flex flex-col bg-gradient-to-b from-orange-50 to-background p-6">
-        {/* Header Section */}
-        <div className="text-center mb-8 pt-8">
-          <div className="w-24 h-24 mb-4 flex items-center justify-center mx-auto">
-            <img 
-              src="https://i.imgur.com/TmfqRTD.gif" 
-              alt="Logo Tryla" 
-              className="w-full h-auto"
+        <Layout>
+            <WelcomeModal 
+                open={showWelcomeModal} 
+                onOpenChange={setShowWelcomeModal} 
+                username={profile?.full_name?.split(' ')[0] || "Jovem"} 
+                quote={dailyQuote || "Sua jornada de sucesso começa agora."} 
+                isLoadingQuote={isLoadingQuote}
             />
-          </div>
-          <h1 className="text-2xl font-bold text-primary mb-2">
-            Olá, {dashboardData?.profile?.full_name || 'Aprendiz'}! 👋
-          </h1>
-          <p className="text-muted-foreground">Bem-vindo de volta à sua jornada</p>
-        </div>
+            <div className="bg-slate-50 min-h-screen">
+                <header className="p-4 sm:p-6 lg:p-8">
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <p className="text-slate-500">Bem-vindo(a) de volta,</p>
+                            <h1 className="text-2xl md:text-3xl font-bold text-slate-900">{profile?.full_name?.split(' ')[0]}!</h1>
+                        </div>
+                        <Link to="/perfil">
+                            <img src={profile.avatar_url || `https://ui-avatars.com/api/?name=${profile.full_name?.replace(/\s/g, '+')}&background=random`} alt="Perfil" className="h-14 w-14 rounded-full border-2 border-white shadow-md transition-transform hover:scale-110" />
+                        </Link>
+                    </div>
+                </header>
+                
+                <main className="p-4 sm:p-6 pt-0 space-y-6">
+                    <div className={`rounded-2xl p-5 shadow-sm border transition-all duration-300 ${dailyXpClaimed ? 'bg-emerald-50 border-emerald-200' : 'bg-orange-50 border-orange-200'}`}>
+                        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                            <div className="flex items-center gap-4">
+                                <div className={`p-3 rounded-full ${dailyXpClaimed ? 'bg-emerald-100' : 'bg-orange-100'}`}>
+                                    {dailyXpClaimed ? <CheckCircle className="h-6 w-6 text-emerald-500" /> : <Gift className="h-6 w-6 text-orange-500" />}
+                                </div>
+                                <div>
+                                    <h2 className="font-bold text-slate-800">Bônus Diário</h2>
+                                    <p className="text-sm text-slate-600">
+                                        {dailyXpClaimed ? "Você já pegou sua recompensa hoje. Volte amanhã!" : "Reclame 50 XP por sua dedicação!"}
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={handleClaimDailyXp}
+                                disabled={dailyXpClaimed || isClaiming}
+                                className={cn( "w-full sm:w-auto px-6 py-2.5 rounded-xl font-semibold text-white shadow-md transition-all duration-200", dailyXpClaimed ? "bg-slate-300 cursor-not-allowed" : "bg-orange-500 hover:bg-orange-600 hover:-translate-y-1 active:translate-y-0")}
+                            >
+                                {dailyXpClaimed ? "Coletado" : isClaiming ? "Coletando..." : "Coletar 50 XP"}
+                            </button>
+                        </div>
+                    </div>
+                    <h2 className="font-bold text-lg text-slate-800">Sua Atividade Recente</h2>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="lg:col-span-2">
+                            {userId && <WeeklyProgressChart streak={profile.streak_days || 0} userId={userId} />}
+                        </div>
+                        <div className="p-6 bg-white rounded-2xl shadow-sm border border-slate-200/50 flex flex-col justify-around text-center">
+                            <div>
+                                <p className="text-4xl font-bold text-orange-500">{profile.xp || 0}</p>
+                                <p className="text-sm text-slate-500 font-medium">XP Total</p>
+                            </div>
+                            <div>
+                                <p className="text-4xl font-bold text-orange-500">{completedModulesCount}</p>
+                                <p className="text-sm text-slate-500 font-medium">Módulos Concluídos</p>
+                            </div>
+                        </div>
+                    </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          <Card className="border-orange-200">
-            <CardContent className="p-4 text-center">
-              <div className="flex items-center justify-center mb-2">
-                <Trophy className="h-6 w-6 text-orange-500" />
-              </div>
-              <p className="text-2xl font-bold text-orange-600">{dashboardData?.profile?.xp || 0}</p>
-              <p className="text-xs text-muted-foreground">XP Total</p>
-            </CardContent>
-          </Card>
+                    {/* Seção do Desafio Diário */}
+                    <div className="flex justify-between items-center">
+                        <h2 className="font-bold text-lg text-slate-800">
+                            Desafio do Dia
+                        </h2>
+                    </div>
+                    <DailyChallengeCard
+                        challenge={dailyChallenge.currentChallenge}
+                        timeRemaining={dailyChallenge.timeRemaining}
+                        onComplete={dailyChallenge.completeChallenge}
+                        canComplete={dailyChallenge.canComplete}
+                        isLoading={dailyChallenge.isLoading}
+                    />
 
-          <Card className="border-orange-200">
-            <CardContent className="p-4 text-center">
-              <div className="flex items-center justify-center mb-2">
-                <Target className="h-6 w-6 text-orange-500" />
-              </div>
-              <p className="text-2xl font-bold text-orange-600">{dashboardData?.completedModulesCount || 0}</p>
-              <p className="text-xs text-muted-foreground">Módulos</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-orange-200">
-            <CardContent className="p-4 text-center">
-              <div className="flex items-center justify-center mb-2">
-                <Flame className="h-6 w-6 text-orange-500" />
-              </div>
-              <p className="text-2xl font-bold text-orange-600">{dashboardData?.profile?.streak_days || 0}</p>
-              <p className="text-xs text-muted-foreground">Sequência</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-orange-200">
-            <CardContent className="p-4 text-center">
-              <div className="flex items-center justify-center mb-2">
-                <TrendingUp className="h-6 w-6 text-orange-500" />
-              </div>
-              <p className="text-2xl font-bold text-orange-600">#{dashboardData?.userRank || '-'}</p>
-              <p className="text-xs text-muted-foreground">Ranking</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Motivational Quote Section */}
-        <div className="bg-white rounded-xl p-6 mb-8 shadow-sm border border-orange-100">
-          <div className="h-20 flex items-center justify-center mb-4">
-            {motivationalPhrases.map((phrase, index) => (
-              <p 
-                key={index} 
-                className={`absolute transition-all duration-700 ease-in-out text-lg text-center max-w-xs text-foreground font-medium
-                  ${currentPhraseIndex === index 
-                    ? "opacity-100 transform-none" 
-                    : "opacity-0 translate-y-8"}
-                `}
-              >
-                "{phrase}"
-              </p>
-            ))}
-          </div>
-          
-          <div className="flex justify-center space-x-2 mb-6">
-            {motivationalPhrases.map((_, i) => (
-              <div 
-                key={i} 
-                className={`h-2 w-2 rounded-full transition-all duration-500 ${
-                  currentPhraseIndex === i 
-                    ? 'bg-orange-500 scale-110' 
-                    : 'bg-orange-200'
-                }`}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Action Button */}
-        <div className="flex-1 flex items-end pb-8">
-          <Button 
-            onClick={handleContinueJourney}
-            className="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-xl text-lg font-semibold shadow-lg"
-            size="lg"
-          >
-            Continuar minha jornada
-          </Button>
-        </div>
-      </div>
-    </Layout>
-  );
+                    <h2 className="font-bold text-lg text-slate-800">Continue sua Jornada</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {nextModule && nextPhase ? (
+                            <Link to={`/modulo/${nextModule.id}`} className="group relative p-6 bg-orange-50 rounded-2xl shadow-sm border border-orange-200/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1.5 flex flex-col justify-between">
+                                <div>
+                                    <div className="flex justify-between items-start">
+                                        <h3 className="text-xl font-bold text-orange-900">Continuar Trilha</h3>
+                                        <div className="p-3 bg-orange-500 rounded-lg"><ArrowRight className="h-5 w-5 text-white" /></div>
+                                    </div>
+                                    <p className="font-semibold text-orange-800 mt-2">{nextModule.name}</p>
+                                    <p className="text-sm text-orange-700/80">{nextPhase.name}</p>
+                                </div>
+                            </Link>
+                        ) : (
+                            <div className="p-6 bg-green-50 rounded-2xl text-center flex flex-col justify-center items-center">
+                                <Sparkles className="h-10 w-10 text-green-600 mb-2" />
+                                <h3 className="font-bold text-green-800">Parabéns!</h3>
+                                <p className="text-sm text-green-700">Você concluiu todas as trilhas!</p>
+                            </div>
+                        )}
+                        <Link to="/modulos" className="group p-6 bg-white rounded-2xl shadow-sm border border-slate-200/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1.5 flex flex-col justify-center items-center text-center">
+                            <div className="p-3 bg-slate-100 rounded-lg mb-3"><ArrowRight className="h-5 w-5 text-slate-600 transition-transform group-hover:translate-x-1" /></div>
+                            <h3 className="font-bold text-slate-800">Ver todos os Módulos</h3>
+                            <p className="text-sm text-slate-500">Explore novas trilhas de aprendizado.</p>
+                        </Link>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <h2 className="font-bold text-lg text-slate-800">Últimas na Comunidade</h2>
+                        <Link to="/social" className="text-sm font-medium text-orange-600 flex items-center gap-1">Ver tudo <ArrowRight size={14} /></Link>
+                    </div>
+                    <div className="space-y-3">
+                        {communityPosts.map(post => (<ForumThread key={post.id} {...post} />))}
+                    </div>
+                </main>
+                <div className="h-24"></div>
+            </div>
+        </Layout>
+    );
 };
 
 export default Index;
