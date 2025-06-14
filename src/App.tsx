@@ -32,7 +32,7 @@ import NotFound from "@/pages/NotFound";
 function App() {
   return (
     <QueryProvider>
-      <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+      <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
         <RewardModalProvider>
           <Router>
             <Routes>
