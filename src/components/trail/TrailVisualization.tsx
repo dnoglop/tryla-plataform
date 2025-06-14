@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { CheckCircle2, Lock, Play, Star, Trophy, BookText, Video, Award } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -29,7 +28,7 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
   // Generate better spaced positions for phases
   const generatePhasePositions = (): TrailPhase[] => {
     return phases.map((phase, index) => {
-      const yStep = 350; // Increased spacing to 350px
+      const yStep = 280; // Adjusted spacing to 280px
       const centerX = 50; // Center horizontal position
       
       // Alternating positions for visual interest
@@ -43,8 +42,8 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
   };
 
   const positionedPhases = generatePhasePositions();
-  // Adjusted container height calculation - remove extra spacing for last card
-  const containerHeight = Math.max(600, (positionedPhases.length - 1) * 350 + 400);
+  // Adjusted container height calculation - reduce bottom padding significantly
+  const containerHeight = Math.max(400, (positionedPhases.length - 1) * 280 + 250);
 
   const getPhaseIcon = (phase: TrailPhase) => {
     if (phase.isLocked) return <Lock className="h-6 w-6 text-gray-400" />;
@@ -133,7 +132,7 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
   };
 
   return (
-    <div className={cn("min-h-screen bg-orange-50 pb-16", className)}>
+    <div className={cn("min-h-screen bg-orange-50 pb-8", className)}>
       {/* Header with progress - Smaller size */}
       <div className="relative z-20 p-4 text-center">
         <div className="inline-flex items-center gap-2 bg-white rounded-lg px-4 py-2 shadow-md border border-orange-200">
