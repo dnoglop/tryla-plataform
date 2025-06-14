@@ -15,6 +15,10 @@ import ModuleDetailPage from './pages/ModuleDetailPage';
 import PhaseDetailPage from './pages/PhaseDetailPage';
 import SocialPage from './pages/SocialPage';
 import LabPage from './pages/LabPage';
+import SettingsPage from './pages/SettingsPage';
+import VocationalTestPage from './pages/VocationalTestPage';
+import TutorPage from './pages/TutorPage';
+import PomodoroPage from './pages/PomodoroPage';
 import { RewardModalProvider } from './components/XpRewardModal/RewardModalContext';
 
 function App() {
@@ -35,6 +39,10 @@ function App() {
                 <Route path="/modulos" element={<ProtectedRoute><ModulesPage /></ProtectedRoute>} />
                 <Route path="/modulo/:id" element={<ProtectedRoute><ModuleDetailPage /></ProtectedRoute>} />
                 <Route path="/modulo/:moduleId/fase/:id" element={<ProtectedRoute><PhaseDetailPage /></ProtectedRoute>} />
+                <Route path="/configuracoes" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+                <Route path="/teste-vocacional" element={<ProtectedRoute><VocationalTestPage /></ProtectedRoute>} />
+                <Route path="/tutor" element={<ProtectedRoute><TutorPage /></ProtectedRoute>} />
+                <Route path="/pomodoro" element={<ProtectedRoute><PomodoroPage /></ProtectedRoute>} />
                 {/* Redirect any unknown routes to home */}
                 <Route path="*" element={<Navigate to="/inicio" replace />} />
               </Routes>
