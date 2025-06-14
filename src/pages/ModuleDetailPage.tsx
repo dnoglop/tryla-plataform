@@ -108,7 +108,7 @@ export default function ModuleDetailPage() {
     // MELHORIA 1: Cards alinhados verticalmente no centro.
     const generatePhasePositions = (phases: TrailPhase[]): TrailPhase[] => {
         return phases.map((phase, index) => {
-            const yStep = 290; // Espaçamento vertical entre os cards
+            const yStep = 295; // Espaçamento vertical entre os cards
             const baseX = 50;  // Posição horizontal central (50%)
     
             return {
