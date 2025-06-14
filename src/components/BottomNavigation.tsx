@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Home, BookOpen, Users, Wrench } from "lucide-react";
+import { Home, BookOpen, Users, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -11,7 +11,7 @@ const BottomNavigation: React.FC = () => {
     { icon: Home, label: "Início", path: "/inicio" },
     { icon: BookOpen, label: "Módulos", path: "/modulos" },
     { icon: Users, label: "Social", path: "/social" },
-    { icon: Wrench, label: "Lab", path: "/lab" },
+    { icon: User, label: "Perfil", path: "/perfil" },
   ];
 
   return (

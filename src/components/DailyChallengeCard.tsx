@@ -86,7 +86,9 @@ const DailyChallengeCard: React.FC<DailyChallengeCardProps> = ({
         
         <div className="flex items-center gap-2 text-muted-foreground">
           <Clock className="h-4 w-4" />
-          <span className="text-sm font-mono">{timeRemaining}</span>
+          <span className="text-sm font-mono">
+            {isCompleted ? `Próximo em: ${timeRemaining}` : timeRemaining}
+          </span>
         </div>
       </div>
 
