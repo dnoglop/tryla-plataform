@@ -21,21 +21,21 @@ import ForumThread from "@/components/ForumThread";
 
 // --- COMPONENTES VISUAIS AUXILIARES ---
 const DashboardSkeleton = () => ( 
-    <div className="bg-slate-50 min-h-screen p-4 sm:p-6 lg:p-8 space-y-6 animate-pulse"> 
+    <div className="bg-background min-h-screen p-4 sm:p-6 lg:p-8 space-y-6 animate-pulse"> 
         <header className="flex justify-between items-center"> 
             <div className="space-y-2"> 
-                <Skeleton className="h-5 w-32 bg-slate-200" /> 
-                <Skeleton className="h-8 w-48 bg-slate-200" /> 
+                <Skeleton className="h-5 w-32 bg-muted" /> 
+                <Skeleton className="h-8 w-48 bg-muted" /> 
             </div>
-            <Skeleton className="h-14 w-14 rounded-full bg-slate-200" /> 
+            <Skeleton className="h-14 w-14 rounded-full bg-muted" /> 
         </header> 
         <main className="pt-4 space-y-6"> 
-            <Skeleton className="h-24 rounded-2xl bg-slate-200" /> 
+            <Skeleton className="h-24 rounded-2xl bg-muted" /> 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6"> 
-                <Skeleton className="lg:col-span-2 h-48 rounded-2xl bg-slate-200" /> 
-                <Skeleton className="h-48 rounded-2xl bg-slate-200" /> 
+                <Skeleton className="lg:col-span-2 h-48 rounded-2xl bg-muted" /> 
+                <Skeleton className="h-48 rounded-2xl bg-muted" /> 
             </div>
-            <Skeleton className="h-40 rounded-2xl bg-slate-200" /> 
+            <Skeleton className="h-40 rounded-2xl bg-muted" /> 
         </main> 
     </div>
 );
@@ -44,11 +44,11 @@ const WelcomeModal = ({ open, onOpenChange, username, quote, isLoadingQuote }: {
     <Dialog.Root open={open} onOpenChange={onOpenChange}> 
         <Dialog.Portal> 
             <Dialog.Overlay className="fixed inset-0 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out" /> 
-            <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-sm bg-white p-8 rounded-2xl shadow-xl data-[state=open]:animate-in data-[state=closed]:animate-out"> 
+            <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-sm bg-card p-8 rounded-2xl shadow-xl data-[state=open]:animate-in data-[state=closed]:animate-out border"> 
                 <div className="text-center"> 
-                    <Sparkles className="mx-auto h-10 w-10 text-orange-500 mb-4" /> 
-                    <Dialog.Title className="text-2xl font-bold text-slate-900">Olá, {username}!</Dialog.Title> 
-                    <Dialog.Description className="text-slate-500 mt-2 text-base min-h-[48px] flex items-center justify-center"> 
+                    <Sparkles className="mx-auto h-10 w-10 text-primary mb-4" /> 
+                    <Dialog.Title className="text-2xl font-bold text-card-foreground">Olá, {username}!</Dialog.Title> 
+                    <Dialog.Description className="text-muted-foreground mt-2 text-base min-h-[48px] flex items-center justify-center"> 
                         {isLoadingQuote ? ( 
                             <span className="italic">Buscando inspiração...</span> 
                         ) : ( 
@@ -57,11 +57,11 @@ const WelcomeModal = ({ open, onOpenChange, username, quote, isLoadingQuote }: {
                     </Dialog.Description> 
                 </div>
                 <Dialog.Close asChild> 
-                    <button className="mt-8 w-full px-4 py-3 rounded-xl bg-orange-500 text-white font-semibold text-base shadow-lg shadow-orange-500/30 transition-all hover:bg-orange-600 hover:-translate-y-0.5 active:translate-y-0 active:scale-95">Começar o dia!</button> 
+                    <button className="mt-8 w-full px-4 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-base shadow-lg shadow-primary/30 transition-all hover:bg-primary/90 hover:-translate-y-0.5 active:translate-y-0 active:scale-95">Começar o dia!</button> 
                 </Dialog.Close> 
                 <Dialog.Close asChild> 
-                    <button aria-label="Fechar" className="absolute top-3 right-3 rounded-full p-1.5 transition-colors hover:bg-slate-100">
-                        <X className="h-5 w-5 text-slate-400" />
+                    <button aria-label="Fechar" className="absolute top-3 right-3 rounded-full p-1.5 transition-colors hover:bg-accent">
+                        <X className="h-5 w-5 text-muted-foreground" />
                     </button> 
                 </Dialog.Close> 
             </Dialog.Content> 
@@ -198,11 +198,11 @@ const Index = () => {
             queryClient.invalidateQueries({ queryKey: ['profile', userId] });
 
             toast.custom((t) => (
-                <div className="flex items-center gap-3 bg-white border border-slate-200 shadow-lg rounded-xl p-4 w-full max-w-sm">
-                    <div className="bg-orange-100 p-2 rounded-full"><Gift className="h-6 w-6 text-orange-500" /></div>
+                <div className="flex items-center gap-3 bg-card border border-border shadow-lg rounded-xl p-4 w-full max-w-sm">
+                    <div className="bg-primary/10 p-2 rounded-full"><Gift className="h-6 w-6 text-primary" /></div>
                     <div className="flex-grow">
-                        <p className="font-bold text-slate-800">Bônus Diário!</p>
-                        <p className="text-sm text-slate-600">Você ganhou +{xpAmount} XP por sua dedicação!</p>
+                        <p className="font-bold text-card-foreground">Bônus Diário!</p>
+                        <p className="text-sm text-muted-foreground">Você ganhou +{xpAmount} XP por sua dedicação!</p>
                     </div>
                     <button onClick={() => toast.dismiss(t)} className="opacity-50 hover:opacity-100"><X size={18} /></button>
                 </div>
@@ -240,29 +240,29 @@ const Index = () => {
                 quote={dailyQuote || "Sua jornada de sucesso começa agora."} 
                 isLoadingQuote={isLoadingQuote}
             />
-            <div className="bg-slate-50 min-h-screen">
+            <div className="bg-background min-h-screen">
                 <header className="p-4 sm:p-6 lg:p-8">
                     <div className="flex justify-between items-center">
                         <div>
-                            <p className="text-slate-500">Bem-vindo(a) de volta,</p>
-                            <h1 className="text-2xl md:text-3xl font-bold text-slate-900">{profile?.full_name?.split(' ')[0]}!</h1>
+                            <p className="text-muted-foreground">Bem-vindo(a) de volta,</p>
+                            <h1 className="text-2xl md:text-3xl font-bold text-foreground">{profile?.full_name?.split(' ')[0]}!</h1>
                         </div>
                         <Link to="/perfil">
-                            <img src={profile.avatar_url || `https://ui-avatars.com/api/?name=${profile.full_name?.replace(/\s/g, '+')}&background=random`} alt="Perfil" className="h-14 w-14 rounded-full border-2 border-white shadow-md transition-transform hover:scale-110" />
+                            <img src={profile.avatar_url || `https://ui-avatars.com/api/?name=${profile.full_name?.replace(/\s/g, '+')}&background=random`} alt="Perfil" className="h-14 w-14 rounded-full border-2 border-background shadow-md transition-transform hover:scale-110" />
                         </Link>
                     </div>
                 </header>
                 
                 <main className="p-4 sm:p-6 pt-0 space-y-6">
-                    <div className={`rounded-2xl p-5 shadow-sm border transition-all duration-300 ${dailyXpClaimed ? 'bg-emerald-50 border-emerald-200' : 'bg-orange-50 border-orange-200'}`}>
+                    <div className={`rounded-2xl p-5 shadow-sm border transition-all duration-300 ${dailyXpClaimed ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-primary/10 border-primary/20'}`}>
                         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
                             <div className="flex items-center gap-4">
-                                <div className={`p-3 rounded-full ${dailyXpClaimed ? 'bg-emerald-100' : 'bg-orange-100'}`}>
-                                    {dailyXpClaimed ? <CheckCircle className="h-6 w-6 text-emerald-500" /> : <Gift className="h-6 w-6 text-orange-500" />}
+                                <div className={`p-3 rounded-full ${dailyXpClaimed ? 'bg-emerald-500/20' : 'bg-primary/20'}`}>
+                                    {dailyXpClaimed ? <CheckCircle className="h-6 w-6 text-emerald-500" /> : <Gift className="h-6 w-6 text-primary" />}
                                 </div>
                                 <div>
-                                    <h2 className="font-bold text-slate-800">Bônus Diário</h2>
-                                    <p className="text-sm text-slate-600">
+                                    <h2 className="font-bold text-card-foreground">Bônus Diário</h2>
+                                    <p className="text-sm text-muted-foreground">
                                         {dailyXpClaimed ? "Você já pegou sua recompensa hoje. Volte amanhã!" : "Reclame 50 XP por sua dedicação!"}
                                     </p>
                                 </div>
@@ -270,32 +270,32 @@ const Index = () => {
                             <button
                                 onClick={handleClaimDailyXp}
                                 disabled={dailyXpClaimed || isClaiming}
-                                className={cn( "w-full sm:w-auto px-6 py-2.5 rounded-xl font-semibold text-white shadow-md transition-all duration-200", dailyXpClaimed ? "bg-slate-300 cursor-not-allowed" : "bg-orange-500 hover:bg-orange-600 hover:-translate-y-1 active:translate-y-0")}
+                                className={cn( "w-full sm:w-auto px-6 py-2.5 rounded-xl font-semibold text-primary-foreground shadow-md transition-all duration-200", dailyXpClaimed ? "bg-muted cursor-not-allowed" : "bg-primary hover:bg-primary/90 hover:-translate-y-1 active:translate-y-0")}
                             >
                                 {dailyXpClaimed ? "Coletado" : isClaiming ? "Coletando..." : "Coletar 50 XP"}
                             </button>
                         </div>
                     </div>
-                    <h2 className="font-bold text-lg text-slate-800">Sua Atividade Recente</h2>
+                    <h2 className="font-bold text-lg text-foreground">Sua Atividade Recente</h2>
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div className="lg:col-span-2">
                             {userId && <WeeklyProgressChart streak={profile.streak_days || 0} userId={userId} />}
                         </div>
-                        <div className="p-6 bg-white rounded-2xl shadow-sm border border-slate-200/50 flex flex-col justify-around text-center">
+                        <div className="p-6 bg-card rounded-2xl shadow-sm border flex flex-col justify-around text-center">
                             <div>
-                                <p className="text-4xl font-bold text-orange-500">{profile.xp || 0}</p>
-                                <p className="text-sm text-slate-500 font-medium">XP Total</p>
+                                <p className="text-4xl font-bold text-primary">{profile.xp || 0}</p>
+                                <p className="text-sm text-muted-foreground font-medium">XP Total</p>
                             </div>
                             <div>
-                                <p className="text-4xl font-bold text-orange-500">{completedModulesCount}</p>
-                                <p className="text-sm text-slate-500 font-medium">Módulos Concluídos</p>
+                                <p className="text-4xl font-bold text-primary">{completedModulesCount}</p>
+                                <p className="text-sm text-muted-foreground font-medium">Módulos Concluídos</p>
                             </div>
                         </div>
                     </div>
 
                     {/* Seção do Desafio Diário */}
                     <div className="flex justify-between items-center">
-                        <h2 className="font-bold text-lg text-slate-800">
+                        <h2 className="font-bold text-lg text-foreground">
                             Desafio do Dia
                         </h2>
                     </div>
@@ -307,35 +307,35 @@ const Index = () => {
                         isLoading={dailyChallenge.isLoading}
                     />
 
-                    <h2 className="font-bold text-lg text-slate-800">Continue sua Jornada</h2>
+                    <h2 className="font-bold text-lg text-foreground">Continue sua Jornada</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {nextModule && nextPhase ? (
-                            <Link to={`/modulo/${nextModule.id}`} className="group relative p-6 bg-orange-50 rounded-2xl shadow-sm border border-orange-200/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1.5 flex flex-col justify-between">
+                            <Link to={`/modulo/${nextModule.id}`} className="group relative p-6 bg-primary/10 rounded-2xl shadow-sm border border-primary/20 transition-all duration-300 hover:shadow-lg hover:-translate-y-1.5 flex flex-col justify-between">
                                 <div>
                                     <div className="flex justify-between items-start">
-                                        <h3 className="text-xl font-bold text-orange-900">Continuar Trilha</h3>
-                                        <div className="p-3 bg-orange-500 rounded-lg"><ArrowRight className="h-5 w-5 text-white" /></div>
+                                        <h3 className="text-xl font-bold text-foreground">Continuar Trilha</h3>
+                                        <div className="p-3 bg-primary rounded-lg"><ArrowRight className="h-5 w-5 text-primary-foreground" /></div>
                                     </div>
-                                    <p className="font-semibold text-orange-800 mt-2">{nextModule.name}</p>
-                                    <p className="text-sm text-orange-700/80">{nextPhase.name}</p>
+                                    <p className="font-semibold text-primary mt-2">{nextModule.name}</p>
+                                    <p className="text-sm text-muted-foreground">{nextPhase.name}</p>
                                 </div>
                             </Link>
                         ) : (
-                            <div className="p-6 bg-green-50 rounded-2xl text-center flex flex-col justify-center items-center">
-                                <Sparkles className="h-10 w-10 text-green-600 mb-2" />
-                                <h3 className="font-bold text-green-800">Parabéns!</h3>
-                                <p className="text-sm text-green-700">Você concluiu todas as trilhas!</p>
+                            <div className="p-6 bg-emerald-500/10 border-emerald-500/20 border rounded-2xl text-center flex flex-col justify-center items-center">
+                                <Sparkles className="h-10 w-10 text-emerald-600 mb-2" />
+                                <h3 className="font-bold text-emerald-700 dark:text-emerald-400">Parabéns!</h3>
+                                <p className="text-sm text-emerald-600 dark:text-emerald-300">Você concluiu todas as trilhas!</p>
                             </div>
                         )}
-                        <Link to="/modulos" className="group p-6 bg-white rounded-2xl shadow-sm border border-slate-200/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1.5 flex flex-col justify-center items-center text-center">
-                            <div className="p-3 bg-slate-100 rounded-lg mb-3"><ArrowRight className="h-5 w-5 text-slate-600 transition-transform group-hover:translate-x-1" /></div>
-                            <h3 className="font-bold text-slate-800">Ver todos os Módulos</h3>
-                            <p className="text-sm text-slate-500">Explore novas trilhas de aprendizado.</p>
+                        <Link to="/modulos" className="group p-6 bg-card rounded-2xl shadow-sm border transition-all duration-300 hover:shadow-lg hover:-translate-y-1.5 flex flex-col justify-center items-center text-center">
+                            <div className="p-3 bg-accent rounded-lg mb-3"><ArrowRight className="h-5 w-5 text-accent-foreground transition-transform group-hover:translate-x-1" /></div>
+                            <h3 className="font-bold text-card-foreground">Ver todos os Módulos</h3>
+                            <p className="text-sm text-muted-foreground">Explore novas trilhas de aprendizado.</p>
                         </Link>
                     </div>
                     <div className="flex justify-between items-center">
-                        <h2 className="font-bold text-lg text-slate-800">Últimas na Comunidade</h2>
-                        <Link to="/social" className="text-sm font-medium text-orange-600 flex items-center gap-1">Ver tudo <ArrowRight size={14} /></Link>
+                        <h2 className="font-bold text-lg text-foreground">Últimas na Comunidade</h2>
+                        <Link to="/social" className="text-sm font-medium text-primary flex items-center gap-1">Ver tudo <ArrowRight size={14} /></Link>
                     </div>
                     <div className="space-y-3">
                         {communityPosts.map(post => (<ForumThread key={post.id} {...post} />))}

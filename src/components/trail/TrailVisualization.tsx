@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { CheckCircle2, Lock, Play, Star, Trophy, BookText, Video, Award } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -46,47 +47,47 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
   const containerHeight = Math.max(400, (positionedPhases.length - 1) * 280 + 250);
 
   const getPhaseIcon = (phase: TrailPhase) => {
-    if (phase.isLocked) return <Lock className="h-6 w-6 text-gray-400" />;
-    if (phase.status === "completed") return <CheckCircle2 className="h-6 w-6 text-white" />;
+    if (phase.isLocked) return <Lock className="h-6 w-6 text-muted-foreground" />;
+    if (phase.status === "completed") return <CheckCircle2 className="h-6 w-6 text-primary-foreground" />;
     
     switch (phase.type) {
       case "video":
-        return <Video className="h-6 w-6 text-white" />;
+        return <Video className="h-6 w-6 text-primary-foreground" />;
       case "quiz":
-        return <Star className="h-6 w-6 text-white" />;
+        return <Star className="h-6 w-6 text-primary-foreground" />;
       case "challenge":
-        return <Trophy className="h-6 w-6 text-white" />;
+        return <Trophy className="h-6 w-6 text-primary-foreground" />;
       case "text":
-        return <BookText className="h-6 w-6 text-white" />;
+        return <BookText className="h-6 w-6 text-primary-foreground" />;
       default:
-        return <BookText className="h-6 w-6 text-white" />;
+        return <BookText className="h-6 w-6 text-primary-foreground" />;
     }
   };
 
   const getPhaseColors = (phase: TrailPhase) => {
     if (phase.isLocked) {
       return {
-        bg: "bg-white",
-        border: "border-gray-200",
-        text: "text-gray-500",
-        iconBg: "bg-gray-300"
+        bg: "bg-card",
+        border: "border-border",
+        text: "text-muted-foreground",
+        iconBg: "bg-muted"
       };
     }
     
     if (phase.status === "completed") {
       return {
-        bg: "bg-white",
-        border: "border-orange-200",
-        text: "text-gray-800",
-        iconBg: "bg-orange-500"
+        bg: "bg-card",
+        border: "border-primary/20",
+        text: "text-card-foreground",
+        iconBg: "bg-primary"
       };
     }
     
     return {
-      bg: "bg-white",
-      border: "border-orange-200",
-      text: "text-gray-800",
-      iconBg: "bg-orange-500"
+      bg: "bg-card",
+      border: "border-primary/20",
+      text: "text-card-foreground",
+      iconBg: "bg-primary"
     };
   };
 
@@ -108,10 +109,10 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
       >
         <div className={cn(
           "w-full h-full transition-all duration-700 rounded-full",
-          isActive ? "bg-orange-500" : "bg-gray-300"
+          isActive ? "bg-primary" : "bg-muted"
         )}>
           {isActive && (
-            <div className="w-full h-full bg-orange-400 animate-pulse opacity-60 rounded-full" />
+            <div className="w-full h-full bg-primary/60 animate-pulse opacity-60 rounded-full" />
           )}
         </div>
       </div>
@@ -132,14 +133,14 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
   };
 
   return (
-    <div className={cn("min-h-screen bg-orange-50 pb-8", className)}>
+    <div className={cn("min-h-screen bg-accent pb-8", className)}>
       {/* Header with progress - Smaller size */}
       <div className="relative z-20 p-4 text-center">
-        <div className="inline-flex items-center gap-2 bg-white rounded-lg px-4 py-2 shadow-md border border-orange-200">
-          <div className="flex items-center justify-center w-6 h-6 bg-orange-500 rounded-full">
-            <Award className="h-3 w-3 text-white" />
+        <div className="inline-flex items-center gap-2 bg-card rounded-lg px-4 py-2 shadow-md border">
+          <div className="flex items-center justify-center w-6 h-6 bg-primary rounded-full">
+            <Award className="h-3 w-3 text-primary-foreground" />
           </div>
-          <span className="text-sm font-bold text-orange-800">
+          <span className="text-sm font-bold text-primary">
             {Math.round(moduleProgress)}% Concluído
           </span>
         </div>
@@ -190,23 +191,23 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
                 onMouseUp={handleMouseUp}
                 style={{
                   boxShadow: isPressed 
-                    ? "0 2px 8px rgba(251, 146, 60, 0.1), inset 0 1px 2px rgba(0,0,0,0.05)"
+                    ? "0 2px 8px hsl(var(--primary) / 0.1), inset 0 1px 2px rgba(0,0,0,0.05)"
                     : isHovered
-                    ? "0 8px 20px rgba(251, 146, 60, 0.15), 0 2px 6px rgba(0,0,0,0.05)"
-                    : "0 4px 12px rgba(251, 146, 60, 0.1), 0 1px 4px rgba(0,0,0,0.04)",
+                    ? "0 8px 20px hsl(var(--primary) / 0.15), 0 2px 6px rgba(0,0,0,0.05)"
+                    : "0 4px 12px hsl(var(--primary) / 0.1), 0 1px 4px rgba(0,0,0,0.04)",
                   transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
                 }}
               >
                 {/* Status indicator */}
                 <div className="absolute top-2 right-2 z-20">
                   {phase.status === "completed" && (
-                    <div className="w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center shadow-md">
-                      <CheckCircle2 className="h-3 w-3 text-white" />
+                    <div className="w-4 h-4 bg-primary rounded-full flex items-center justify-center shadow-md">
+                      <CheckCircle2 className="h-3 w-3 text-primary-foreground" />
                     </div>
                   )}
                   {phase.status === "inProgress" && (
-                    <div className="w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center animate-pulse shadow-md">
-                      <Play className="h-2 w-2 text-white" />
+                    <div className="w-4 h-4 bg-primary rounded-full flex items-center justify-center animate-pulse shadow-md">
+                      <Play className="h-2 w-2 text-primary-foreground" />
                     </div>
                   )}
                 </div>
@@ -225,18 +226,18 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
 
                 {/* Simplified card content - only title, minutes, format and button */}
                 <div className="px-3 pb-3 text-center">
-                  <h3 className="font-bold text-sm text-gray-800 mb-2">
+                  <h3 className="font-bold text-sm text-card-foreground mb-2">
                     {phase.name}
                   </h3>
                   
                   {/* Meta info - minutes and format only */}
-                  <div className="flex justify-center gap-3 text-xs text-gray-500 mb-3">
+                  <div className="flex justify-center gap-3 text-xs text-muted-foreground mb-3">
                     <span className="flex items-center gap-1">
-                      <div className="w-1 h-1 bg-gray-400 rounded-full" />
+                      <div className="w-1 h-1 bg-muted-foreground rounded-full" />
                       {phase.duration || 5} min
                     </span>
                     <span className="flex items-center gap-1">
-                      <div className="w-1 h-1 bg-gray-400 rounded-full" />
+                      <div className="w-1 h-1 bg-muted-foreground rounded-full" />
                       {phase.type}
                     </span>
                   </div>
@@ -247,8 +248,8 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
                       className={cn(
                         "w-full py-2 rounded-lg font-semibold text-xs transition-all duration-300 shadow-sm",
                         phase.status === "completed" 
-                          ? "bg-orange-500 hover:bg-orange-600 text-white hover:shadow-md"
-                          : "bg-orange-500 hover:bg-orange-600 text-white hover:shadow-md",
+                          ? "bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-md"
+                          : "bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-md",
                         isPressed && "transform scale-95"
                       )}
                     >
@@ -262,7 +263,7 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
                   )}
                   
                   {phase.isLocked && (
-                    <div className="w-full py-2 bg-gray-200 rounded-lg text-gray-500 font-semibold text-xs">
+                    <div className="w-full py-2 bg-muted rounded-lg text-muted-foreground font-semibold text-xs">
                       Complete a fase anterior
                     </div>
                   )}
@@ -270,12 +271,12 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
 
                 {/* Shine effect for active phases */}
                 {(phase.status === "inProgress" || phase.status === "completed") && (
-                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse opacity-30" />
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-primary-foreground/20 to-transparent animate-pulse opacity-30" />
                 )}
               </div>
 
               {/* Phase number badge */}
-              <div className="absolute -left-3 top-4 w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-md z-20 border-2 border-white">
+              <div className="absolute -left-3 top-4 w-6 h-6 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold text-xs shadow-md z-20 border-2 border-card">
                 {index + 1}
               </div>
             </div>
