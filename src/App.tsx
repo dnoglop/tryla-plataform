@@ -38,7 +38,6 @@ function App() {
               <Routes>
                 <Route path="/" element={<SplashScreen />} />
                 <Route path="/inicio" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-                <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<SignupPage />} />
                 <Route path="/onboarding" element={<OnboardingPage />} />
