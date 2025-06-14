@@ -29,7 +29,7 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
   // Generate better spaced positions for phases
   const generatePhasePositions = (): TrailPhase[] => {
     return phases.map((phase, index) => {
-      const yStep = 200; // Increased spacing significantly
+      const yStep = 350; // Increased spacing to 350px
       const centerX = 50; // Center horizontal position
       
       // Alternating positions for visual interest
@@ -43,7 +43,8 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
   };
 
   const positionedPhases = generatePhasePositions();
-  const containerHeight = Math.max(600, positionedPhases.length * 200 + 300);
+  // Adjusted container height calculation - remove extra spacing for last card
+  const containerHeight = Math.max(600, (positionedPhases.length - 1) * 350 + 400);
 
   const getPhaseIcon = (phase: TrailPhase) => {
     if (phase.isLocked) return <Lock className="h-6 w-6 text-gray-400" />;
@@ -92,7 +93,7 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
 
   const renderConnection = (from: TrailPhase, to: TrailPhase, index: number) => {
     const isActive = from.status === "completed";
-    const fromY = from.position.y + 60; // Adjusted for new card height
+    const fromY = from.position.y + 100; // Adjusted for new card height
     const toY = to.position.y;
     const height = toY - fromY;
     
@@ -132,14 +133,14 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
   };
 
   return (
-    <div className={cn("min-h-screen bg-orange-50 pb-24", className)}>
-      {/* Header with progress - Reduced size */}
+    <div className={cn("min-h-screen bg-orange-50 pb-16", className)}>
+      {/* Header with progress - Smaller size */}
       <div className="relative z-20 p-4 text-center">
-        <div className="inline-flex items-center gap-3 bg-white rounded-xl px-6 py-3 shadow-md border border-orange-200">
-          <div className="flex items-center justify-center w-8 h-8 bg-orange-500 rounded-full">
-            <Award className="h-4 w-4 text-white" />
+        <div className="inline-flex items-center gap-2 bg-white rounded-lg px-4 py-2 shadow-md border border-orange-200">
+          <div className="flex items-center justify-center w-6 h-6 bg-orange-500 rounded-full">
+            <Award className="h-3 w-3 text-white" />
           </div>
-          <span className="text-lg font-bold text-orange-800">
+          <span className="text-sm font-bold text-orange-800">
             {Math.round(moduleProgress)}% Concluído
           </span>
         </div>
@@ -167,7 +168,7 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
                 top: phase.position.y,
                 left: `${phase.position.x}%`,
                 transform: "translateX(-50%)",
-                width: "200px"
+                width: "260px" // Increased width from 200px to 260px
               }}
             >
               <div
@@ -223,16 +224,13 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
                   </div>
                 </div>
 
-                {/* Card content */}
+                {/* Simplified card content - only title, minutes, format and button */}
                 <div className="px-3 pb-3 text-center">
-                  <h3 className="font-bold text-sm text-gray-800 mb-1">
+                  <h3 className="font-bold text-sm text-gray-800 mb-2">
                     {phase.name}
                   </h3>
-                  <p className="text-xs text-gray-600 mb-3 line-clamp-2 leading-relaxed">
-                    {phase.description || "Conceitos básicos e princípios fundamentais para seu aprendizado"}
-                  </p>
                   
-                  {/* Additional info */}
+                  {/* Meta info - minutes and format only */}
                   <div className="flex justify-center gap-3 text-xs text-gray-500 mb-3">
                     <span className="flex items-center gap-1">
                       <div className="w-1 h-1 bg-gray-400 rounded-full" />
