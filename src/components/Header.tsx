@@ -2,8 +2,6 @@
 import React from "react";
 import { ChevronLeft, MoreHorizontal } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { ProgressIndicator } from "@/components/navigation/ProgressIndicator";
-import { useNavigationContext } from "@/hooks/useNavigationContext";
 import { cn } from "@/lib/utils";
 
 export interface HeaderProps {
@@ -13,11 +11,6 @@ export interface HeaderProps {
   backButtonTarget?: string;
   rightContent?: React.ReactNode;
   subtitle?: string;
-  progress?: {
-    current: number;
-    total: number;
-    variant?: 'dots' | 'line' | 'minimal';
-  };
   className?: string;
 }
 
@@ -28,11 +21,9 @@ const Header: React.FC<HeaderProps> = ({
   backButtonTarget,
   rightContent,
   subtitle,
-  progress,
   className,
 }) => {
   const navigate = useNavigate();
-  const { smartGoBack } = useNavigationContext();
 
   const handleBackNavigation = () => {
     if (onBackClick) {
@@ -40,7 +31,7 @@ const Header: React.FC<HeaderProps> = ({
     } else if (backButtonTarget) {
       navigate(backButtonTarget);
     } else {
-      smartGoBack();
+      navigate(-1);
     }
   };
 
@@ -72,16 +63,6 @@ const Header: React.FC<HeaderProps> = ({
               <p className="text-sm text-white/80 truncate mt-0.5">
                 {subtitle}
               </p>
-            )}
-            {progress && (
-              <div className="mt-2">
-                <ProgressIndicator
-                  currentStep={progress.current}
-                  totalSteps={progress.total}
-                  variant={progress.variant}
-                  className="justify-center"
-                />
-              </div>
             )}
           </div>
 

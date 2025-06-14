@@ -27,7 +27,6 @@ import { AudioControls } from "@/components/phase-detail/AudioControls";
 import { QuizContent } from "@/components/phase-detail/QuizContent";
 import { NextModuleCard } from "@/components/phase-detail/NextModuleCard";
 import { PhaseNavigation } from "@/components/phase-detail/PhaseNavigation";
-import { PhaseGestureNavigation } from "@/components/navigation/PhaseGestureNavigation";
 import { usePhaseAudio } from "@/hooks/usePhaseAudio";
 
 const calculateXpForTime = (s: number, q: number) => {
@@ -343,15 +342,6 @@ export default function PhaseDetailPage() {
                 moduleId={moduleId!}
                 currentPhaseIndex={currentPhaseIndex}
                 totalPhases={allPhases.length}
-            />
-
-            {/* Navegação por gestos */}
-            <PhaseGestureNavigation
-                hasNextPhase={!!nextPhase}
-                hasPreviousPhase={!!previousPhase}
-                onShowMiniMap={() => {
-                    // Implementar lógica do mini-mapa se necessário
-                }}
             />
 
             <main className="container px-4 sm:px-6 lg:px-8 py-6 space-y-6 max-w-4xl mx-auto">

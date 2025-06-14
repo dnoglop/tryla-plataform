@@ -29,6 +29,7 @@ import {
     FileText,
     HelpCircle,
     Star,
+    Map,
 } from "lucide-react";
 import { getProfile, Profile } from "@/services/profileService";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -234,6 +235,10 @@ export default function ModuleDetailPage() {
         navigate(`/modulo/${moduleId}/fase/${phase.id}`);
     };
 
+    const goToTrailView = () => {
+        navigate(`/modulo/${moduleId}/trilha`);
+    };
+
     if (isLoading) return <ModuleDetailSkeleton />;
     
     if (error) {
@@ -310,21 +315,30 @@ export default function ModuleDetailPage() {
                         value={progress}
                         className="h-3 bg-muted [&>*]:bg-primary"
                     />
-                    <Button
-                        onClick={startModule}
-                        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3"
-                    >
-                        {isModuleComplete ? (
-                            <RefreshCw className="mr-2 h-5 w-5" />
-                        ) : (
-                            <PlayCircle className="mr-2 h-5 w-5" />
-                        )}
-                        {isModuleComplete
-                            ? "Revisar Módulo"
-                            : progress > 0
-                              ? "Continuar Módulo"
-                              : "Iniciar Módulo"}
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button
+                            onClick={startModule}
+                            className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3"
+                        >
+                            {isModuleComplete ? (
+                                <RefreshCw className="mr-2 h-5 w-5" />
+                            ) : (
+                                <PlayCircle className="mr-2 h-5 w-5" />
+                            )}
+                            {isModuleComplete
+                                ? "Revisar Módulo"
+                                : progress > 0
+                                  ? "Continuar Módulo"
+                                  : "Iniciar Módulo"}
+                        </Button>
+                        <Button
+                            onClick={goToTrailView}
+                            variant="outline"
+                            className="px-4"
+                        >
+                            <Map className="h-5 w-5" />
+                        </Button>
+                    </div>
                 </div>
 
                 {phases.length > 0 ? (
