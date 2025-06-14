@@ -113,9 +113,9 @@ const NextModuleCard = ({
 );
 
 export default function PhaseDetailPage() {
-    const { moduleId, phaseId } = useParams<{
+    const { moduleId, id: phaseId } = useParams<{
         moduleId: string;
-        phaseId: string;
+        id: string;
     }>();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
@@ -172,6 +172,9 @@ export default function PhaseDetailPage() {
         queryFn: async () => {
             if (!phaseId || !moduleId || !userId)
                 throw new Error("IDs não encontrados.");
+            
+            console.log("Loading phase data:", { phaseId, moduleId, userId });
+            
             const pId = Number(phaseId);
             const mId = Number(moduleId);
             const [
