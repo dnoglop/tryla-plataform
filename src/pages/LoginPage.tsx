@@ -17,7 +17,7 @@ const LoginPage = () => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        navigate("/dashboard", { replace: true });
+        navigate("/inicio", { replace: true });
       }
     };
     checkSession();
@@ -39,7 +39,7 @@ const LoginPage = () => {
       
       if (data.session) {
         toast.success("Login realizado com sucesso!");
-        navigate("/dashboard");
+        navigate("/inicio");
       }
 
     } catch (error: any) {
