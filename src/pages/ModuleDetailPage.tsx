@@ -189,13 +189,14 @@ export default function ModuleDetailPage() {
     console.log("Rendering module detail page with phases:", phases.length);
 
     return (
-        <div className="pb-24 min-h-screen bg-background">
-            <header className="p-4 sm:p-6">
-                <div className="flex justify-between items-center">
+        <div className="min-h-screen bg-background">
+            {/* Header */}
+            <header className="p-4 sm:p-6 bg-background border-b border-border">
+                <div className="flex justify-between items-center max-w-4xl mx-auto">
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => navigate("/modulos")}
-                            className="flex h-10 w-10 items-center justify-center rounded-full bg-card shadow-md transition-transform hover:scale-110 active:scale-95"
+                            className="flex h-10 w-10 items-center justify-center rounded-full bg-card shadow-md transition-transform hover:scale-110 active:scale-95 border border-border"
                         >
                             <ArrowLeft className="h-5 w-5 text-muted-foreground" />
                         </button>
@@ -207,17 +208,17 @@ export default function ModuleDetailPage() {
                         <img
                             src={userProfile?.avatar_url || ""}
                             alt="Perfil"
-                            className="h-12 w-12 rounded-full border-2 border-background shadow-md"
+                            className="h-12 w-12 rounded-full border-2 border-border shadow-md"
                         />
                     </Link>
                 </div>
             </header>
 
-            <main className="container px-4 py-2 space-y-6">
+            <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
                 {/* Module Info Card */}
-                <div className="bg-card p-6 rounded-2xl shadow-sm border space-y-4">
-                    <div className="flex items-start gap-4">
-                        <div className="flex-shrink-0 h-16 w-16 flex items-center justify-center rounded-2xl bg-primary/10 text-3xl">
+                <div className="bg-card p-6 rounded-2xl shadow-sm border border-border">
+                    <div className="flex items-start gap-4 mb-4">
+                        <div className="flex-shrink-0 h-16 w-16 flex items-center justify-center rounded-2xl bg-primary/10 text-3xl border border-border">
                             {module.emoji || "📚"}
                         </div>
                         <div className="flex-1">
@@ -229,43 +230,57 @@ export default function ModuleDetailPage() {
                             </p>
                         </div>
                     </div>
-                    <Progress
-                        value={progress}
-                        className="h-3 bg-muted [&>*]:bg-primary"
-                    />
-                    <Button
-                        onClick={startModule}
-                        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3"
-                    >
-                        {isModuleComplete ? (
-                            <RefreshCw className="mr-2 h-5 w-5" />
-                        ) : (
-                            <PlayCircle className="mr-2 h-5 w-5" />
-                        )}
-                        {isModuleComplete
-                            ? "Revisar Módulo"
-                            : progress > 0
-                              ? "Continuar Módulo"
-                              : "Iniciar Módulo"}
-                    </Button>
+                    
+                    <div className="space-y-4">
+                        <div>
+                            <div className="flex justify-between items-center mb-2">
+                                <span className="text-sm text-muted-foreground">Progresso do Módulo</span>
+                                <span className="text-sm font-medium text-card-foreground">{progress}%</span>
+                            </div>
+                            <Progress
+                                value={progress}
+                                className="h-3 bg-muted [&>*]:bg-primary"
+                            />
+                        </div>
+                        
+                        <Button
+                            onClick={startModule}
+                            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3"
+                        >
+                            {isModuleComplete ? (
+                                <RefreshCw className="mr-2 h-5 w-5" />
+                            ) : (
+                                <PlayCircle className="mr-2 h-5 w-5" />
+                            )}
+                            {isModuleComplete
+                                ? "Revisar Módulo"
+                                : progress > 0
+                                  ? "Continuar Módulo"
+                                  : "Iniciar Módulo"}
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Trail Visualization */}
                 {phases.length > 0 ? (
-                    <TrailVisualization
-                        phases={phases}
-                        onPhaseClick={handlePhaseClick}
-                        moduleProgress={progress}
-                        className="min-h-[600px]"
-                    />
+                    <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
+                        <TrailVisualization
+                            phases={phases}
+                            onPhaseClick={handlePhaseClick}
+                            moduleProgress={progress}
+                            className="min-h-[600px]"
+                        />
+                    </div>
                 ) : (
-                    <div className="bg-card p-6 rounded-2xl shadow-sm border text-center">
+                    <div className="bg-card p-6 rounded-2xl shadow-sm border border-border text-center">
                         <p className="text-muted-foreground">
                             Este módulo ainda não possui fases disponíveis.
                         </p>
                     </div>
                 )}
             </main>
+            
+            <div className="pb-24" />
             <BottomNavigation />
         </div>
     );

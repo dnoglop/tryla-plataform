@@ -133,10 +133,10 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
   };
 
   return (
-    <div className={cn("min-h-screen bg-accent pb-8", className)}>
+    <div className={cn("min-h-screen bg-background pb-8", className)}>
       {/* Header with progress - Smaller size */}
-      <div className="relative z-20 p-4 text-center">
-        <div className="inline-flex items-center gap-2 bg-card rounded-lg px-4 py-2 shadow-md border">
+      <div className="relative z-20 p-4 text-center bg-background">
+        <div className="inline-flex items-center gap-2 bg-card rounded-lg px-4 py-2 shadow-md border border-border">
           <div className="flex items-center justify-center w-6 h-6 bg-primary rounded-full">
             <Award className="h-3 w-3 text-primary-foreground" />
           </div>
@@ -147,7 +147,7 @@ export const TrailVisualization: React.FC<TrailVisualizationProps> = ({
       </div>
 
       {/* Trail container */}
-      <div className="relative px-4 overflow-hidden" style={{ height: containerHeight }}>
+      <div className="relative px-4 overflow-hidden bg-background" style={{ height: containerHeight }}>
         {/* Render connections */}
         {positionedPhases.slice(0, -1).map((phase, index) => {
           const nextPhase = positionedPhases[index + 1];
