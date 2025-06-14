@@ -6,10 +6,11 @@ import { useRewardModal } from '@/components/XpRewardModal/RewardModalContext';
 
 interface DailyChallenge {
   id: string;
-  challenge: string;
-  createdAt: string;
-  expiresAt: string;
+  challenge_text: string;
+  created_date: string;
+  expires_at: string;
   completed: boolean;
+  related_phase: string;
 }
 
 export const useDailyChallenge = (userId: string) => {
@@ -21,22 +22,46 @@ export const useDailyChallenge = (userId: string) => {
   const { data: currentChallenge, isLoading } = useQuery({
     queryKey: ['dailyChallenge', userId],
     queryFn: async () => {
-      const today = new Date().toISOString().split('T')[0];
-      
-      // Verificar se já existe um desafio para hoje
-      const { data: existingChallenge } = await supabase
-        .from('daily_challenges')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('created_date', today)
-        .maybeSingle();
+      try {
+        // Primeiro tentar buscar fases completadas
+        const { data: completedPhases } = await supabase
+          .from('user_phases')
+          .select(`
+            phase_id,
+            phases!inner(
+              id,
+              name,
+              description,
+              module_id,
+              modules!inner(name)
+            )
+          `)
+          .eq('user_id', userId)
+          .eq('status', 'completed');
 
-      if (existingChallenge) {
-        return existingChallenge;
+        if (!completedPhases || completedPhases.length === 0) {
+          return null;
+        }
+
+        // Gerar novo desafio via edge function
+        const { data: challengeData, error } = await supabase.functions.invoke('generate-daily-challenge', {
+          body: { 
+            userId,
+            completedPhases: completedPhases.map(cp => ({
+              name: cp.phases.name,
+              description: cp.phases.description,
+              moduleName: cp.phases.modules.name
+            }))
+          }
+        });
+
+        if (error) throw error;
+        return challengeData;
+
+      } catch (error) {
+        console.error('Erro ao buscar/gerar desafio:', error);
+        return null;
       }
-
-      // Se não existe, criar um novo
-      return await generateNewChallenge(userId);
     },
     enabled: !!userId,
     staleTime: 5 * 60 * 1000, // 5 minutos
@@ -59,72 +84,19 @@ export const useDailyChallenge = (userId: string) => {
     return () => clearInterval(interval);
   }, [currentChallenge]);
 
-  const generateNewChallenge = async (userId: string) => {
-    try {
-      // Buscar fases completadas pelo usuário
-      const { data: completedPhases } = await supabase
-        .from('user_phases')
-        .select(`
-          phase_id,
-          phases!inner(
-            id,
-            name,
-            description,
-            module_id,
-            modules!inner(name)
-          )
-        `)
-        .eq('user_id', userId)
-        .eq('status', 'completed');
-
-      if (!completedPhases || completedPhases.length === 0) {
-        return null;
-      }
-
-      // Chamar edge function para gerar desafio
-      const { data: challengeData, error } = await supabase.functions.invoke('generate-daily-challenge', {
-        body: { 
-          userId,
-          completedPhases: completedPhases.map(cp => ({
-            name: cp.phases.name,
-            description: cp.phases.description,
-            moduleName: cp.phases.modules.name
-          }))
-        }
-      });
-
-      if (error) throw error;
-
-      return challengeData;
-    } catch (error) {
-      console.error('Erro ao gerar desafio:', error);
-      return null;
-    }
-  };
-
   const completeChallenge = async () => {
     if (!currentChallenge || currentChallenge.completed) return;
 
     try {
-      // Marcar desafio como concluído
-      const { error: updateError } = await supabase
-        .from('daily_challenges')
-        .update({ completed: true })
-        .eq('id', currentChallenge.id);
+      // Chamar edge function para completar desafio
+      const { error: completeError } = await supabase.functions.invoke('complete-daily-challenge', {
+        body: { 
+          challengeId: currentChallenge.id,
+          userId 
+        }
+      });
 
-      if (updateError) throw updateError;
-
-      // Adicionar XP
-      const { error: xpError } = await supabase
-        .from('xp_history')
-        .insert({
-          user_id: userId,
-          xp_amount: 15,
-          source: 'DAILY_CHALLENGE',
-          source_id: currentChallenge.id
-        });
-
-      if (xpError) throw xpError;
+      if (completeError) throw completeError;
 
       // Mostrar modal de recompensa
       await showRewardModal({

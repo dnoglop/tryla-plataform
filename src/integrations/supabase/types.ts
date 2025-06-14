@@ -78,6 +78,39 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_challenges: {
+        Row: {
+          challenge_text: string
+          completed: boolean
+          created_at: string
+          created_date: string
+          expires_at: string
+          id: string
+          related_phase: string | null
+          user_id: string
+        }
+        Insert: {
+          challenge_text: string
+          completed?: boolean
+          created_at?: string
+          created_date: string
+          expires_at: string
+          id?: string
+          related_phase?: string | null
+          user_id: string
+        }
+        Update: {
+          challenge_text?: string
+          completed?: boolean
+          created_at?: string
+          created_date?: string
+          expires_at?: string
+          id?: string
+          related_phase?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       learning_journals: {
         Row: {
           content: string
