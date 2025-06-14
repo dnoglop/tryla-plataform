@@ -4,6 +4,7 @@ import { QueryProvider } from "@/providers/QueryProvider";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import Layout from "@/components/Layout";
 import { RewardModalProvider } from "@/components/XpRewardModal/RewardModalContext";
 
 // Pages
@@ -54,119 +55,34 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              
+              {/* Rotas que usam o Layout com BottomNavigation */}
               <Route
-                path="/dashboard"
+                path="/*"
                 element={
                   <ProtectedRoute>
-                    <DashboardPage />
+                    <Layout>
+                      <Routes>
+                        <Route path="/dashboard" element={<DashboardPage />} />
+                        <Route path="/modulos" element={<ModulesPage />} />
+                        <Route path="/modulo/:id" element={<ModuleDetailPage />} />
+                        <Route path="/modulo/:moduleId/fase/:id" element={<PhaseDetailPage />} />
+                        <Route path="/perfil" element={<ProfilePage />} />
+                        <Route path="/editar-perfil" element={<EditProfilePage />} />
+                        <Route path="/teste-vocacional" element={<VocationalTestPage />} />
+                        <Route path="/diario" element={<JournalPage />} />
+                        <Route path="/tutor" element={<TutorPage />} />
+                        <Route path="/pomodoro" element={<PomodoroPage />} />
+                        <Route path="/social" element={<SocialPage />} />
+                        <Route path="/lab" element={<LabPage />} />
+                        <Route path="/admin" element={<AdminPage />} />
+                        <Route path="/configuracoes" element={<SettingsPage />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </Layout>
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="/modulos"
-                element={
-                  <ProtectedRoute>
-                    <ModulesPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/modulo/:id"
-                element={
-                  <ProtectedRoute>
-                    <ModuleDetailPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/modulo/:moduleId/fase/:id"
-                element={
-                  <ProtectedRoute>
-                    <PhaseDetailPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/perfil"
-                element={
-                  <ProtectedRoute>
-                    <ProfilePage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/editar-perfil"
-                element={
-                  <ProtectedRoute>
-                    <EditProfilePage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/teste-vocacional"
-                element={
-                  <ProtectedRoute>
-                    <VocationalTestPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/diario"
-                element={
-                  <ProtectedRoute>
-                    <JournalPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/tutor"
-                element={
-                  <ProtectedRoute>
-                    <TutorPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/pomodoro"
-                element={
-                  <ProtectedRoute>
-                    <PomodoroPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/social"
-                element={
-                  <ProtectedRoute>
-                    <SocialPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/lab"
-                element={
-                  <ProtectedRoute>
-                    <LabPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute>
-                    <AdminPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/configuracoes"
-                element={
-                  <ProtectedRoute>
-                    <SettingsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="*" element={<NotFound />} />
             </Routes>
             <Toaster />
           </Router>
