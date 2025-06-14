@@ -1,4 +1,5 @@
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+
+import { Navigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { checkOnboardingStatus } from "@/services/onboardingService";
 import SplashScreen from "@/pages/SplashScreen";
@@ -21,7 +22,11 @@ const fetchUserAuthStatus = async () => {
   return { session, onboardingCompleted };
 };
 
-const ProtectedRoute = () => {
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+}
+
+const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const location = useLocation();
 
   const {
@@ -44,13 +49,13 @@ const ProtectedRoute = () => {
   }
 
   if (!authStatus.onboardingCompleted) {
-    const allowedOnboardingPaths = ["/onboarding", "/complete-profile"];
+    const allowedOnboardingPaths = ["/onboarding", "/completar-perfil"];
     if (!allowedOnboardingPaths.includes(location.pathname)) {
       return <Navigate to="/onboarding" replace />;
     }
   }
 
-  return <Outlet />;
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;
