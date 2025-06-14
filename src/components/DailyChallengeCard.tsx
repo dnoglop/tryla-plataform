@@ -50,12 +50,17 @@ const DailyChallengeCard: React.FC<DailyChallengeCardProps> = ({
         <p className="text-muted-foreground text-sm">
           Complete algumas fases para receber seu primeiro desafio!
         </p>
+        <div className="flex items-center justify-center gap-2 text-muted-foreground mt-4">
+          <Clock className="h-4 w-4" />
+          <span className="text-sm font-mono">
+            Próximo em: {timeRemaining}
+          </span>
+        </div>
       </div>
     );
   }
 
   const isCompleted = challenge.completed;
-  const hasTimeLeft = timeRemaining !== '00:00';
 
   return (
     <div className={cn(
@@ -87,7 +92,7 @@ const DailyChallengeCard: React.FC<DailyChallengeCardProps> = ({
         <div className="flex items-center gap-2 text-muted-foreground">
           <Clock className="h-4 w-4" />
           <span className="text-sm font-mono">
-            {isCompleted ? `Próximo em: ${timeRemaining}` : timeRemaining}
+            Próximo em: {timeRemaining}
           </span>
         </div>
       </div>
@@ -100,7 +105,7 @@ const DailyChallengeCard: React.FC<DailyChallengeCardProps> = ({
 
       <Button
         onClick={onComplete}
-        disabled={!canComplete || isCompleted || !hasTimeLeft}
+        disabled={!canComplete || isCompleted}
         className={cn(
           "w-full transition-all duration-200",
           isCompleted
@@ -113,8 +118,6 @@ const DailyChallengeCard: React.FC<DailyChallengeCardProps> = ({
             <CheckCircle className="h-4 w-4 mr-2" />
             Concluído (+15 XP)
           </>
-        ) : !hasTimeLeft ? (
-          "Aguarde o próximo desafio"
         ) : (
           "Marcar como Concluído (+15 XP)"
         )}

@@ -23,7 +23,21 @@ export const useDailyChallenge = (userId: string) => {
     queryKey: ['dailyChallenge', userId],
     queryFn: async () => {
       try {
-        // Primeiro tentar buscar fases completadas
+        // Primeiro verificar se existe um desafio válido hoje
+        const today = new Date().toISOString().split('T')[0];
+        
+        const { data: existingChallenge } = await supabase
+          .from('daily_challenges')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('created_date', today)
+          .single();
+
+        if (existingChallenge) {
+          return existingChallenge;
+        }
+
+        // Se não existe, tentar buscar fases completadas
         const { data: completedPhases } = await supabase
           .from('user_phases')
           .select(`
@@ -67,14 +81,15 @@ export const useDailyChallenge = (userId: string) => {
     staleTime: 5 * 60 * 1000, // 5 minutos
   });
 
-  // Calcular tempo restante
+  // Calcular tempo restante para o próximo desafio
   useEffect(() => {
-    if (!currentChallenge) return;
-
     const calculateTimeRemaining = () => {
-      const now = new Date().getTime();
-      const expires = new Date(currentChallenge.expires_at).getTime();
-      const remaining = Math.max(0, expires - now);
+      const now = new Date();
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      
+      const remaining = Math.max(0, tomorrow.getTime() - now.getTime());
       setTimeRemaining(remaining);
     };
 
@@ -82,7 +97,7 @@ export const useDailyChallenge = (userId: string) => {
     const interval = setInterval(calculateTimeRemaining, 1000);
 
     return () => clearInterval(interval);
-  }, [currentChallenge]);
+  }, []);
 
   const completeChallenge = async () => {
     if (!currentChallenge || currentChallenge.completed) return;
