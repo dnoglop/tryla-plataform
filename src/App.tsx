@@ -31,7 +31,7 @@ import { RewardModalProvider } from './components/XpRewardModal/RewardModalConte
 function App() {
   return (
     <QueryProvider>
-      <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+      <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
         <RewardModalProvider>
           <Router>
             <div className="min-h-screen bg-background">
@@ -40,6 +40,7 @@ function App() {
                 <Route path="/inicio" element={<ProtectedRoute><Index /></ProtectedRoute>} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<SignupPage />} />
+                <Route path="/cadastro" element={<SignupPage />} />
                 <Route path="/onboarding" element={<OnboardingPage />} />
                 <Route path="/completar-perfil" element={<CompleteProfilePage />} />
                 <Route path="/social" element={<ProtectedRoute><SocialPage /></ProtectedRoute>} />
@@ -55,6 +56,7 @@ function App() {
                 <Route path="/tutor" element={<ProtectedRoute><TutorPage /></ProtectedRoute>} />
                 <Route path="/pomodoro" element={<ProtectedRoute><PomodoroPage /></ProtectedRoute>} />
                 <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
+                <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
                 <Route path="/404" element={<NotFound />} />
                 {/* Redirect any unknown routes to home */}
                 <Route path="*" element={<Navigate to="/inicio" replace />} />
