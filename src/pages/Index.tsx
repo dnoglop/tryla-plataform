@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -6,10 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import * as Dialog from '@radix-ui/react-dialog';
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useSessionStore } from '@/stores/sessionStore';
 import Layout from "@/components/Layout";
 import { useDailyChallenge } from "@/hooks/useDailyChallenge";
 import DailyChallengeCard from "@/components/DailyChallengeCard";
+import { useDailyQuote } from "@/hooks/useDailyQuote";
 
 // Ícones e Componentes
 import { ArrowRight, Sparkles, X, Gift, CheckCircle } from "lucide-react";
@@ -20,27 +19,58 @@ import { getProfile, Profile, updateUserStreak } from "@/services/profileService
 import ForumThread from "@/components/ForumThread";
 
 // --- COMPONENTES VISUAIS AUXILIARES ---
+
 const DashboardSkeleton = () => ( 
-    <div className="bg-background min-h-screen p-4 sm:p-6 lg:p-8 space-y-6 animate-pulse"> 
-        <header className="flex justify-between items-center"> 
-            <div className="space-y-2"> 
-                <Skeleton className="h-5 w-32 bg-muted" /> 
-                <Skeleton className="h-8 w-48 bg-muted" /> 
-            </div>
-            <Skeleton className="h-14 w-14 rounded-full bg-muted" /> 
-        </header> 
-        <main className="pt-4 space-y-6"> 
-            <Skeleton className="h-24 rounded-2xl bg-muted" /> 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6"> 
-                <Skeleton className="lg:col-span-2 h-48 rounded-2xl bg-muted" /> 
-                <Skeleton className="h-48 rounded-2xl bg-muted" /> 
-            </div>
-            <Skeleton className="h-40 rounded-2xl bg-muted" /> 
-        </main> 
+    <div className="bg-background min-h-screen">
+        <div className="animate-pulse">
+            <header className="p-4 sm:p-6 lg:p-8">
+                <div className="flex justify-between items-center"> 
+                    <div className="space-y-2"> 
+                        <Skeleton className="h-5 w-32 bg-muted" /> 
+                        <Skeleton className="h-8 w-48 bg-muted" /> 
+                    </div>
+                    <Skeleton className="h-14 w-14 rounded-full bg-muted" /> 
+                </div>
+            </header>
+            
+            <main className="p-4 sm:p-6 pt-0 space-y-6">
+                <Skeleton className="h-24 rounded-2xl bg-muted" />
+
+                <div className="flex items-center">
+                    <Skeleton className="h-6 w-40 bg-muted" />
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6"> 
+                    <Skeleton className="lg:col-span-2 h-60 rounded-2xl bg-muted" /> 
+                    <Skeleton className="h-60 rounded-2xl bg-muted" /> 
+                </div>
+
+                <div className="flex items-center">
+                    <Skeleton className="h-6 w-32 bg-muted" />
+                </div>
+                <Skeleton className="h-40 rounded-2xl bg-muted" />
+
+                <div className="flex items-center">
+                    <Skeleton className="h-6 w-48 bg-muted" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Skeleton className="h-32 rounded-2xl bg-muted" />
+                    <Skeleton className="h-32 rounded-2xl bg-muted" />
+                </div>
+
+                <div className="flex justify-between items-center">
+                    <Skeleton className="h-6 w-52 bg-muted" />
+                    <Skeleton className="h-5 w-20 bg-muted" />
+                </div>
+                <div className="space-y-3">
+                    <Skeleton className="h-24 rounded-xl bg-muted" />
+                    <Skeleton className="h-24 rounded-xl bg-muted" />
+                </div>
+            </main>
+        </div>
     </div>
 );
 
-const WelcomeModal = ({ open, onOpenChange, username, quote, isLoadingQuote }: { open: boolean, onOpenChange: (open: boolean) => void, username: string, quote: string, isLoadingQuote: boolean }) => ( 
+const WelcomeModal = ({ open, onOpenChange, username, quote, isLoadingQuote }: { open: boolean, onOpenChange: (open: boolean) => void, username: string, quote: string | undefined, isLoadingQuote: boolean }) => ( 
     <Dialog.Root open={open} onOpenChange={onOpenChange}> 
         <Dialog.Portal> 
             <Dialog.Overlay className="fixed inset-0 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out" /> 
@@ -50,9 +80,9 @@ const WelcomeModal = ({ open, onOpenChange, username, quote, isLoadingQuote }: {
                     <Dialog.Title className="text-2xl font-bold text-card-foreground">Olá, {username}!</Dialog.Title> 
                     <Dialog.Description className="text-muted-foreground mt-2 text-base min-h-[48px] flex items-center justify-center"> 
                         {isLoadingQuote ? ( 
-                            <span className="italic">Buscando inspiração...</span> 
+                            <span className="italic">Carregando a inspiração de hoje...</span> 
                         ) : ( 
-                            `"${quote}"` 
+                            `"${quote || 'Sua jornada de sucesso começa agora.'}"` 
                         )} 
                     </Dialog.Description> 
                 </div>
@@ -69,21 +99,9 @@ const WelcomeModal = ({ open, onOpenChange, username, quote, isLoadingQuote }: {
     </Dialog.Root>
 );
 
-const fetchDailyQuote = async () => { 
-    try { 
-        const { data, error } = await supabase.functions.invoke('get-daily-quote'); 
-        if (error) throw error; 
-        return data.quote || "Cada passo que você dá hoje constrói o seu amanhã."; 
-    } catch (error) { 
-        console.error("Erro ao buscar citação diária:", error); 
-        return "A jornada mais importante é a que você faz para dentro de si mesmo."; 
-    }
-};
-
 // --- COMPONENTE PRINCIPAL ---
 const Index = () => {
     const queryClient = useQueryClient();
-    const { hasShownWelcomeModal, setHasShownWelcomeModal } = useSessionStore();
     
     const [userId, setUserId] = useState<string | null>(null);
     const [nextPhase, setNextPhase] = useState<any>(null);
@@ -118,7 +136,6 @@ const Index = () => {
         const handleDailyTasks = async () => {
             const wasStreakUpdated = await updateUserStreak(userId);
             if (wasStreakUpdated) {
-                console.log("Streak foi atualizado. Invalidando cache do perfil...");
                 queryClient.invalidateQueries({ queryKey: ['profile', userId] });
             }
 
@@ -133,17 +150,20 @@ const Index = () => {
             if (count && count > 0) {
                 setDailyXpClaimed(true);
             }
-
-            const lastModalShowDate = localStorage.getItem('lastWelcomeModalShow');
-            if (!hasShownWelcomeModal && lastModalShowDate !== todayStr) {
-                setShowWelcomeModal(true);
-                localStorage.setItem('lastWelcomeModalShow', todayStr);
-                setHasShownWelcomeModal(true);
-            }
         };
 
         handleDailyTasks();
-    }, [userId, queryClient, hasShownWelcomeModal, setHasShownWelcomeModal]);
+
+        const todayStr = new Date().toISOString().split('T')[0];
+        const storageKey = `lastWelcomeModalShow_${userId}`;
+        const lastModalShowDate = localStorage.getItem(storageKey);
+
+        if (lastModalShowDate !== todayStr) {
+            setShowWelcomeModal(true);
+            localStorage.setItem(storageKey, todayStr);
+        }
+
+    }, [userId, queryClient]);
 
     const { data: modules = [] } = useQuery({
         queryKey: ['modules'],
@@ -174,11 +194,7 @@ const Index = () => {
         fetchProgress();
     }, [userId, modules]);
 
-    const { data: dailyQuote, isLoading: isLoadingQuote } = useQuery({
-        queryKey: ['dailyQuote', new Date().toISOString().split('T')[0]], 
-        queryFn: fetchDailyQuote,
-        enabled: showWelcomeModal,
-    });
+    const { data: dailyQuote, isLoading: isLoadingQuote } = useDailyQuote();
 
     const handleClaimDailyXp = async () => {
         if (!userId || isClaiming || dailyXpClaimed) return;
@@ -209,8 +225,8 @@ const Index = () => {
             ), { duration: 3000 });
 
         } catch (error: any) {
-            console.error("Erro ao reclamar XP diário:", error.message);
-            toast.error("Ops! Não foi possível reclamar seu bônus.");
+            console.error("Erro ao pegar o XP diário:", error.message);
+            toast.error("Ops! Não foi possível pegar seu bônus diário.");
         } finally {
             setIsClaiming(false);
         }
@@ -237,7 +253,7 @@ const Index = () => {
                 open={showWelcomeModal} 
                 onOpenChange={setShowWelcomeModal} 
                 username={profile?.full_name?.split(' ')[0] || "Jovem"} 
-                quote={dailyQuote || "Sua jornada de sucesso começa agora."} 
+                quote={dailyQuote} 
                 isLoadingQuote={isLoadingQuote}
             />
             <div className="bg-background min-h-screen">
@@ -263,7 +279,7 @@ const Index = () => {
                                 <div>
                                     <h2 className="font-bold text-card-foreground">Bônus Diário</h2>
                                     <p className="text-sm text-muted-foreground">
-                                        {dailyXpClaimed ? "Você já pegou sua recompensa hoje. Volte amanhã!" : "Reclame 50 XP por sua dedicação!"}
+                                        {dailyXpClaimed ? "Você já pegou sua recompensa hoje. Volte amanhã!" : "Pegue os seus 50 XP por voltar hoje!"}
                                     </p>
                                 </div>
                             </div>
@@ -293,7 +309,6 @@ const Index = () => {
                         </div>
                     </div>
 
-                    {/* Seção do Desafio Diário */}
                     <div className="flex justify-between items-center">
                         <h2 className="font-bold text-lg text-foreground">
                             Desafio do Dia

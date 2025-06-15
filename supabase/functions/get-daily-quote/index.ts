@@ -8,7 +8,7 @@ serve(async (_req) => {
       throw new Error("A configuração do servidor de IA está incompleta.");
     }
 
-    const prompt = "Gere uma única frase curta (máximo 150 caracteres), inspiradora e direta para um jovem estudante na sua jornada de evolução pessoal e profissional. Tom de mentor amigável. Não use aspas.";
+    const prompt = "Gere uma única frase curta (máximo 150 caracteres), inspiradora e direta para um(a) jovem estudante na sua jornada de evolução pessoal e profissional. Tom de mentor amigável, diverdito e alto astral. Não use aspas.";
 
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`;
     const geminiResponse = await fetch(apiUrl, {

@@ -22,7 +22,9 @@ serve(async (req) => {
       throw new Error('A configuração do servidor de IA está incompleta.');
     }
 
-    const prompt = `Crie um desafio prático e rápido (até 5 minutos) para um jovem, baseado no conteúdo da fase de aprendizado: "${randomPhase.name}". A descrição da fase é: "${randomPhase.description}". O desafio deve ser motivador e diretamente aplicável. Responda APENAS com o texto do desafio.`;
+    const prompt = `Crie um desafio prático e rápido (até 5 minutos) para um(a) jovem estudante, baseado no conteúdo da fase de aprendizado: "${randomPhase.name}".
+    A descrição da fase é: "${randomPhase.description}". O desafio deve ser motivador e diretamente aplicável.
+    Responda com o título divertido para o desafio, seguido do texto do desafio, dividido em bullets de forma clara e direta.`;
     
     // Chamada segura para a API do Gemini
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`;
