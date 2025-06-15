@@ -1,7 +1,7 @@
-
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { useJournal } from '@/hooks/useJournal';
+import { getJournalEntry } from '@/services/journalService'; // <-- IMPORTANTE
 import JournalHeader from '@/components/journal/JournalHeader';
 import JournalSearchBar from '@/components/journal/JournalSearchBar';
 import ModuleFilterBadge from '@/components/journal/ModuleFilterBadge';
@@ -39,6 +39,25 @@ const JournalPage: React.FC = () => {
     clearModuleFilter,
     getModuleNameById
   } = useJournal(moduleIdParam);
+
+  // --- MUDANÇA PRINCIPAL AQUI ---
+  // Nova função para lidar com a edição
+  const handleEditClick = async (entryToEdit: { id?: string }) => {
+    if (!entryToEdit.id) return;
+    
+    // Mostra um loading ou skeleton se desejar
+    
+    // Busca a entrada completa, incluindo o 'content'
+    const fullEntry = await getJournalEntry(entryToEdit.id);
+    
+    if (fullEntry) {
+      // Passa a entrada completa para o estado de edição
+      setEditingEntry(fullEntry);
+    } else {
+      // Lida com o caso de não encontrar a entrada
+      alert("Não foi possível carregar a anotação para edição.");
+    }
+  };
 
   if (isLoading) {
     return (
@@ -102,7 +121,8 @@ const JournalPage: React.FC = () => {
               entries={entries}
               filteredEntries={filteredEntries}
               onNewEntry={() => setIsCreating(true)}
-              onEdit={setEditingEntry}
+              // --- USA A NOVA FUNÇÃO DE EDIÇÃO ---
+              onEdit={handleEditClick}
               onDelete={(id) => setDeleteId(id)}
               onToggleFavorite={handleToggleFavorite}
               getModuleNameById={getModuleNameById}
