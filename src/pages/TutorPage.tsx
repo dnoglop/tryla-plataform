@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from '@tanstack/react-query';
@@ -63,6 +62,16 @@ const MessageBubble = ({ message }: { message: Message }) => {
   );
 };
 
+// Função HELPER para extrair o texto da resposta do Gemini
+function extractTextFromGeminiResponse(response: any): string {
+  try {
+    return response.candidates[0].content.parts[0].text;
+  } catch (error) {
+    console.error("Erro ao extrair texto da resposta do Gemini:", error);
+    return "Não foi possível processar a resposta da IA. Tente novamente.";
+  }
+}
+
 export default function TutorPage() {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -82,10 +91,13 @@ export default function TutorPage() {
   const userName = profile?.full_name?.split(' ')[0] || "Aluno";
 
   useEffect(() => {
-    setMessages([
-      { id: "welcome", role: "tutor", content: `Olá, ${userName}! Sou a IAê, sua tutora de desenvolvimento. Como posso te ajudar a brilhar hoje?`},
-    ]);
-  }, [userName]);
+    // Evita resetar a conversa quando o perfil carrega depois
+    if (messages.length === 0) {
+        setMessages([
+            { id: "welcome", role: "tutor", content: `Olá, ${userName}! Sou a IAê, sua tutora de desenvolvimento. Como posso te ajudar a brilhar hoje?`},
+        ]);
+    }
+  }, [userName, messages.length]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -104,16 +116,30 @@ export default function TutorPage() {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('tutor-tryla', {
-        body: { prompt: currentInput, userName },
+      // PONTO CRÍTICO DA CORREÇÃO:
+      // Unificamos a chamada para a Edge Function 'call-gemini'.
+      // Construímos um prompt específico para a persona do Tutor.
+      const tutorPrompt = `
+        Você é a "IAê", uma tutora de desenvolvimento pessoal amigável, motivacional e especialista em psicologia positiva e carreira.
+        O usuário se chama ${userName}.
+        Responda à seguinte pergunta do usuário de forma concisa e útil, sempre mantendo sua persona.
+        
+        Pergunta do usuário: "${currentInput}"
+      `;
+
+      const { data, error } = await supabase.functions.invoke('call-gemini', {
+        body: { prompt: tutorPrompt },
       });
 
       if (error || data?.error) {
         throw new Error(error?.message || data?.error || "Erro de conexão com a IA.");
       }
 
+      // Extrai a resposta de texto do objeto de dados
+      const tutorResponseText = extractTextFromGeminiResponse(data);
+
       setMessages(prev =>
-        prev.map(msg => (msg.id === loadingMsg.id ? { ...msg, isLoading: false, content: data.resposta } : msg))
+        prev.map(msg => (msg.id === loadingMsg.id ? { ...msg, isLoading: false, content: tutorResponseText } : msg))
       );
     } catch (err: any) {
       const errorMessage = `Desculpe, ${userName}. Estou com problemas para me conectar. Tente novamente em alguns instantes.`;
@@ -129,18 +155,7 @@ export default function TutorPage() {
   if (isLoadingProfile) {
     return (
         <div className="flex h-screen flex-col bg-background animate-pulse">
-            <header className="p-4 sm:p-6">
-                <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                        <Skeleton className="h-10 w-10 rounded-full" />
-                        <div className="space-y-1">
-                            <Skeleton className="h-6 w-24" />
-                            <Skeleton className="h-4 w-32" />
-                        </div>
-                    </div>
-                    <Skeleton className="h-12 w-12 rounded-full" />
-                </div>
-            </header>
+            <header className="p-4 sm:p-6"><div className="flex justify-between items-center"><div className="flex items-center gap-4"><Skeleton className="h-10 w-10 rounded-full" /><div className="space-y-1"><Skeleton className="h-6 w-24" /><Skeleton className="h-4 w-32" /></div></div><Skeleton className="h-12 w-12 rounded-full" /></div></header>
             <main className="flex-1 p-4"><div className="h-full w-full"></div></main>
             <footer className="p-4 border-t"><Skeleton className="h-12 w-full rounded-full" /></footer>
         </div>
@@ -149,57 +164,15 @@ export default function TutorPage() {
 
   return (
     <div className="flex h-screen flex-col bg-background">
-      <header className="p-4 sm:p-6">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <button
-                onClick={() => navigate('/lab')}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-card shadow-md transition-transform hover:scale-110 active:scale-95"
-                aria-label="Voltar para o Laboratório"
-            >
-                <ArrowLeft className="h-5 w-5 text-muted-foreground" />
-            </button>
-            <div>
-                <h1 className="text-xl md:text-2xl font-bold text-foreground">Tutor IAê</h1>
-                <p className="text-sm text-muted-foreground">Sua assistente de jornada</p>
-            </div>
-          </div>
-          <div className="relative">
-            <img 
-                src="https://i.imgur.com/y3pNoHz.png"
-                alt="Foto do Tutor IAê" 
-                className="h-12 w-12 rounded-full object-cover border-2 border-card shadow-md"
-            />
-            <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-card bg-green-500" />
-          </div>
-        </div>
-      </header>
-      
+      <header className="p-4 sm:p-6"><div className="flex justify-between items-center"><div className="flex items-center gap-4"><button onClick={() => navigate('/lab')} className="flex h-10 w-10 items-center justify-center rounded-full bg-card shadow-md transition-transform hover:scale-110 active:scale-95" aria-label="Voltar para o Laboratório"><ArrowLeft className="h-5 w-5 text-muted-foreground" /></button><div><h1 className="text-xl md:text-2xl font-bold text-foreground">Tutor IAê</h1><p className="text-sm text-muted-foreground">Sua assistente de jornada</p></div></div><div className="relative"><img src="https://i.imgur.com/y3pNoHz.png" alt="Foto do Tutor IAê" className="h-12 w-12 rounded-full object-cover border-2 border-card shadow-md" /><div className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-card bg-green-500" /></div></div></header>
       <main className="flex-1 overflow-y-auto p-4 space-y-6">
-        {messages.map((message) => (
-          <MessageBubble key={message.id} message={message} />
-        ))}
+        {messages.map((message) => (<MessageBubble key={message.id} message={message} />))}
         <div ref={messagesEndRef} />
       </main>
-
       <footer className="sticky bottom-0 w-full border-t border-border bg-background p-4">
           <form onSubmit={handleSendMessage} className="flex items-center gap-3">
-            <input
-              type="text"
-              placeholder="Pergunte algo para a IAê..."
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              disabled={isLoading}
-              className="w-full rounded-full border-2 border-border bg-card px-5 py-3 text-base text-foreground placeholder-muted-foreground transition-all duration-300 focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10"
-            />
-            <button
-              type="submit"
-              disabled={!inputMessage.trim() || isLoading}
-              className="group flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-all duration-300 hover:bg-primary/90 hover:scale-105 active:scale-95 disabled:scale-100 disabled:bg-muted disabled:shadow-none"
-              aria-label="Enviar mensagem"
-            >
-              <Send className="h-6 w-6 transition-transform duration-300 group-hover:rotate-[-15deg]" />
-            </button>
+            <input type="text" placeholder="Pergunte algo para a IAê..." value={inputMessage} onChange={(e) => setInputMessage(e.target.value)} disabled={isLoading} className="w-full rounded-full border-2 border-border bg-card px-5 py-3 text-base text-foreground placeholder-muted-foreground transition-all duration-300 focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10" />
+            <button type="submit" disabled={!inputMessage.trim() || isLoading} className="group flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-all duration-300 hover:bg-primary/90 hover:scale-105 active:scale-95 disabled:scale-100 disabled:bg-muted disabled:shadow-none" aria-label="Enviar mensagem"><Send className="h-6 w-6 transition-transform duration-300 group-hover:rotate-[-15deg]" /></button>
           </form>
       </footer>
     </div>

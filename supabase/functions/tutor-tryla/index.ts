@@ -1,40 +1,55 @@
-// Variável que guarda o estado da conversa no seu app
-let conversationHistory = []; 
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { corsHeaders } from '../_shared/cors.ts';
 
-async function sendMessage(prompt, module, userName) {
-  const response = await fetch('URL_DA_SUA_FUNCAO_DENO', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      // outros headers, como autorização, se houver
-    },
-    body: JSON.stringify({
-      prompt: prompt,
-      module: module,
-      userName: userName,
-      history: conversationHistory // Enviando o histórico atual!
-    })
-  });
-
-  if (!response.ok) {
-    console.error("Erro ao contatar o backend.");
-    return;
-  }
-
-  const data = await response.json();
-
-  // Exibe a resposta na tela
-  console.log("Tutor Tryla:", data.resposta);
-  // adicione a lógica para mostrar a resposta na UI
-
-  // ATUALIZA O HISTÓRICO LOCAL com o que o backend retornou
-  conversationHistory = data.history; 
+interface TutorRequest {
+  prompt: string;
+  userName?: string;
+  // Opcional: você pode expandir para usar o histórico aqui
+  // history: { role: 'user' | 'model', parts: { text: string }[] }[];
 }
 
-// Para usar:
-// Primeira mensagem
-// sendMessage("Olá, quem é você?", "autoconhecimento", "Carlos");
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response("ok", { headers: corsHeaders });
+  }
 
-// Depois da primeira resposta, a variável `conversationHistory` terá sido atualizada.
-// A próxima chamada já terá contexto:
-// sendMessage("Legal! Pode me dar um exemplo prático disso?", "autoconhecimento", "Carlos");
+  try {
+    const { prompt, userName = "aluno(a)" }: TutorRequest = await req.json();
+    if (!prompt) throw new Error("O 'prompt' do usuário é obrigatório.");
+
+    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
+    if (!geminiApiKey) {
+      throw new Error('A configuração do servidor de IA está incompleta.');
+    }
+    
+    // Montamos um prompt com a "persona" do tutor
+    const fullPrompt = `Você é a "IAê", uma tutora de desenvolvimento pessoal amigável, motivacional e especialista em psicologia positiva e carreira. O usuário se chama ${userName}. Responda à seguinte pergunta de forma concisa e útil, sempre mantendo sua persona. Pergunta: "${prompt}"`;
+
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`;
+    const geminiResponse = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: fullPrompt }] }] }),
+    });
+
+    const geminiData = await geminiResponse.json();
+    if (!geminiResponse.ok) {
+      throw new Error(geminiData.error.message || 'Falha na comunicação com a IA.');
+    }
+
+    const tutorResponseText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!tutorResponseText) {
+      throw new Error('A IA não conseguiu gerar uma resposta.');
+    }
+
+    return new Response(JSON.stringify({ resposta: tutorResponseText }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+});

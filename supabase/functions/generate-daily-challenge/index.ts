@@ -1,86 +1,61 @@
-
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders } from '../_shared/cors.ts';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
     const { userId, completedPhases } = await req.json();
-
-    if (!completedPhases || completedPhases.length === 0) {
-      return new Response(JSON.stringify({ error: 'Nenhuma fase completada encontrada' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    if (!userId || !completedPhases || completedPhases.length === 0) {
+      throw new Error('userId e uma lista de completedPhases são obrigatórios.');
     }
 
-    // Selecionar uma fase aleatória
+    // Seleciona uma fase aleatória da lista fornecida
     const randomPhase = completedPhases[Math.floor(Math.random() * completedPhases.length)];
 
+    // PONTO CRÍTICO: Lendo a chave secreta do ambiente da função
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
     if (!geminiApiKey) {
-      throw new Error('GEMINI_API_KEY não configurada');
+      throw new Error('A configuração do servidor de IA está incompleta.');
     }
 
-    const prompt = `
-      Você é Tryla, uma mentora de carreira para jovens brasileiros. 
-      
-      Crie um desafio prático e rápido (até 5 minutos) baseado na fase "${randomPhase.name}" do módulo "${randomPhase.moduleName}".
-      
-      Descrição da fase: ${randomPhase.description}
-      
-      O desafio deve ser:
-      - Prático e aplicável no dia a dia
-      - Possível de completar em até 5 minutos
-      - Motivador e educativo
-      - Relacionado ao conteúdo da fase
-      
-      Responda APENAS com o texto do desafio, sem introduções ou explicações adicionais.
-      Máximo de 150 palavras.
-    `;
-
-    const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`, {
+    const prompt = `Crie um desafio prático e rápido (até 5 minutos) para um jovem, baseado no conteúdo da fase de aprendizado: "${randomPhase.name}". A descrição da fase é: "${randomPhase.description}". O desafio deve ser motivador e diretamente aplicável. Responda APENAS com o texto do desafio.`;
+    
+    // Chamada segura para a API do Gemini
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`;
+    const geminiResponse = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }]
-      }),
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
     });
 
+    const geminiData = await geminiResponse.json();
     if (!geminiResponse.ok) {
-      throw new Error(`Erro na API Gemini: ${geminiResponse.status}`);
+      throw new Error(geminiData.error.message || 'Falha na comunicação com a IA.');
+    }
+    
+    const challengeText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!challengeText) {
+      throw new Error('A IA não conseguiu gerar um desafio.');
     }
 
-    const geminiData = await geminiResponse.json();
-    const challenge = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || 'Desafio não pôde ser gerado';
-
-    // Salvar no banco
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
+    // Salva o desafio no banco de dados
+    const supabaseAdmin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     const today = new Date().toISOString().split('T')[0];
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0);
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 1);
+    expiresAt.setHours(0, 0, 0, 0);
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('daily_challenges')
       .insert({
         user_id: userId,
-        challenge_text: challenge,
+        challenge_text: challengeText,
         created_date: today,
-        expires_at: tomorrow.toISOString(),
+        expires_at: expiresAt.toISOString(),
         completed: false,
         related_phase: randomPhase.name
       })
@@ -92,9 +67,7 @@ serve(async (req) => {
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-
   } catch (error) {
-    console.error('Erro ao gerar desafio:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
