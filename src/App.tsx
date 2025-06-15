@@ -21,7 +21,6 @@ import TutorPage from './pages/TutorPage';
 import PomodoroPage from './pages/PomodoroPage';
 import AdminPage from './pages/AdminPage';
 import CompleteProfilePage from './pages/CompleteProfilePage';
-import DashboardPage from './pages/DashboardPage';
 import EditProfilePage from './pages/EditProfilePage';
 import JournalPage from './pages/JournalPage';
 import NotFound from './pages/NotFound';
@@ -36,13 +35,17 @@ function App() {
           <Router>
             <div className="min-h-screen bg-background">
               <Routes>
+                {/* rotas publicas do app */}
                 <Route path="/" element={<SplashScreen />} />
-                <Route path="/inicio" element={<ProtectedRoute><Index /></ProtectedRoute>} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<SignupPage />} />
                 <Route path="/cadastro" element={<SignupPage />} />
                 <Route path="/onboarding" element={<OnboardingPage />} />
                 <Route path="/completar-perfil" element={<CompleteProfilePage />} />
+
+                {/* rotas fechadas dentro do app */}
+                <Route path="/inicio" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+                <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
                 <Route path="/social" element={<ProtectedRoute><SocialPage /></ProtectedRoute>} />
                 <Route path="/lab" element={<ProtectedRoute><LabPage /></ProtectedRoute>} />
                 <Route path="/perfil" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
@@ -55,9 +58,8 @@ function App() {
                 <Route path="/teste-vocacional" element={<ProtectedRoute><VocationalTestPage /></ProtectedRoute>} />
                 <Route path="/tutor" element={<ProtectedRoute><TutorPage /></ProtectedRoute>} />
                 <Route path="/pomodoro" element={<ProtectedRoute><PomodoroPage /></ProtectedRoute>} />
-                <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
-                <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
                 <Route path="/404" element={<NotFound />} />
+
                 {/* Redirect any unknown routes to home */}
                 <Route path="*" element={<Navigate to="/inicio" replace />} />
               </Routes>

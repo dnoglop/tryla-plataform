@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -9,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import RichTextEditor from "@/components/RichTextEditor";
+// import RichTextEditor from "@/components/RichTextEditor";
 
 interface ModuleFormProps {
   module?: {
@@ -58,7 +57,7 @@ const ModuleForm = ({ module, onSuccess }: ModuleFormProps) => {
   const createModuleMutation = useMutation({
     mutationFn: createModule,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['modules'] });
+      queryClient.invalidateQueries({ queryKey: ['adminModules'] });
       toast.success("Módulo criado com sucesso!");
       if (onSuccess) onSuccess();
     },
@@ -71,7 +70,7 @@ const ModuleForm = ({ module, onSuccess }: ModuleFormProps) => {
   const updateModuleMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: any }) => updateModule(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['modules'] });
+      queryClient.invalidateQueries({ queryKey: ['adminModules'] });
       toast.success("Módulo atualizado com sucesso!");
       if (onSuccess) onSuccess();
     },
@@ -107,9 +106,9 @@ const ModuleForm = ({ module, onSuccess }: ModuleFormProps) => {
           id="name"
           placeholder="Digite o nome do módulo"
           {...register("name", { required: "Nome é obrigatório" })}
-          className={errors.name ? "border-red-500" : ""}
+          className={errors.name ? "border-destructive" : ""}
         />
-        {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message as string}</p>}
+        {errors.name && <p className="text-destructive text-sm mt-1">{errors.name.message as string}</p>}
       </div>
 
       <div>
@@ -129,7 +128,7 @@ const ModuleForm = ({ module, onSuccess }: ModuleFormProps) => {
             placeholder="📚"
             {...register("emoji")}
           />
-          <p className="text-gray-500 text-xs mt-1">Um emoji representativo</p>
+          <p className="text-muted-foreground text-xs mt-1">Um emoji representativo</p>
         </div>
 
         <div>
@@ -162,24 +161,31 @@ const ModuleForm = ({ module, onSuccess }: ModuleFormProps) => {
               min: { value: 0, message: "Ordem mínima de 0" },
             })}
           />
-          {errors.order_index && <p className="text-red-500 text-sm mt-1">{errors.order_index.message as string}</p>}
+          {errors.order_index && <p className="text-destructive text-sm mt-1">{errors.order_index.message as string}</p>}
         </div>
       </div>
 
       <div>
         <Label htmlFor="content">Conteúdo Introdutório</Label>
         <div className="mt-2 border rounded-md">
-          <RichTextEditor
+          {/* <RichTextEditor
             value={content}
             onChange={setContent}
+          /> */}
+           <Textarea
+            id="content-textarea"
+            placeholder="Este conteúdo será exibido na aba Introdução do módulo"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            className="min-h-[150px]"
           />
         </div>
-        <p className="text-gray-500 text-xs mt-1">Este conteúdo será exibido na aba Introdução do módulo</p>
+        <p className="text-muted-foreground text-xs mt-1">Este conteúdo será exibido na aba Introdução do módulo</p>
       </div>
 
-      <div className="flex justify-end space-x-2 pt-4">
+      <div className="flex justify-end space-x-2 pt-4 border-t mt-6">
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Salvando..." : isEditing ? "Atualizar" : "Criar Módulo"}
+          {isSubmitting ? "Salvando..." : isEditing ? "Atualizar Módulo" : "Criar Módulo"}
         </Button>
       </div>
     </form>
