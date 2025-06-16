@@ -31,10 +31,10 @@ export const PhaseHeader = ({
                         </button>
                         <div>
                             <h1 className="text-lg font-bold text-white truncate">
-                                {module.name}
+                                Lições do módulo
                             </h1>
                             <p className="text-sm text-white/80">
-                                Fase {currentPhaseIndex + 1} de {totalPhases}
+                                Lição {currentPhaseIndex + 1} de {totalPhases}
                             </p>
                         </div>
                     </div>

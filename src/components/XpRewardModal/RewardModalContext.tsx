@@ -1,5 +1,4 @@
-// ARQUIVO: src/components/XpRewardModal/RewardModalContext.tsx
-// VERSÃO FINAL COM LÓGICA DE PROMISE
+// ARQUIVO: src/components/XpRewardModal/RewardModalContext.tsx - VERSÃO COMPLETA E CORRIGIDA
 
 import React, { createContext, useState, useContext, useCallback, ReactNode, useEffect } from 'react';
 import { XpRewardModal } from './XpRewardModal';
@@ -9,15 +8,12 @@ interface RewardModalData {
   title: string;
 }
 
-// A função showRewardModal agora retorna uma Promise<void>
 interface RewardModalContextType {
   showRewardModal: (data: RewardModalData) => Promise<void>;
-  isModalOpen: boolean;
 }
 
 const RewardModalContext = createContext<RewardModalContextType | undefined>(undefined);
 
-// A fila agora armazena os dados e a função 'resolve' da Promise
 type RewardQueueItem = {
   data: RewardModalData;
   resolve: () => void;
@@ -26,41 +22,43 @@ type RewardQueueItem = {
 export const RewardModalProvider = ({ children }: { children: ReactNode }) => {
   const [rewardQueue, setRewardQueue] = useState<RewardQueueItem[]>([]);
   const [currentReward, setCurrentReward] = useState<RewardQueueItem | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Adiciona um novo modal à fila e retorna uma Promise que será resolvida quando o modal fechar
-  const showRewardModal = useCallback((data: RewardModalData) => {
+  // Função pública para adicionar uma recompensa à fila
+  const showRewardModal = useCallback((data: RewardModalData): Promise<void> => {
     return new Promise<void>((resolve) => {
-      setRewardQueue(prevQueue => [...prevQueue, { data, resolve }]);
+      const newItem: RewardQueueItem = { data, resolve };
+      setRewardQueue(prevQueue => [...prevQueue, newItem]);
     });
   }, []);
 
-  // Fecha o modal e resolve a Promise, permitindo que o código que chamou continue
-  const hideRewardModal = useCallback(() => {
-    if (currentReward) {
-      currentReward.resolve();
-    }
-    setIsModalOpen(false);
-    setCurrentReward(null); // Limpa o modal atual
-  }, [currentReward]);
-  
-  // Processa a fila
+  // Efeito para processar o próximo item da fila
   useEffect(() => {
-    if (rewardQueue.length > 0 && !isModalOpen) {
+    // Se não há uma recompensa sendo exibida e a fila tem itens, pega o próximo.
+    if (!currentReward && rewardQueue.length > 0) {
       const nextReward = rewardQueue[0];
-      setRewardQueue(prevQueue => prevQueue.slice(1));
-      setCurrentReward(nextReward);
-      setIsModalOpen(true);
+      setRewardQueue(prevQueue => prevQueue.slice(1)); // Remove o item da fila
+      setCurrentReward(nextReward); // Define como o item atual a ser exibido
     }
-  }, [rewardQueue, isModalOpen]);
+  }, [rewardQueue, currentReward]);
+
+  // Função para ser chamada quando o modal é fechado
+  const handleClose = useCallback(() => {
+    if (currentReward) {
+      // 1. Resolve a Promise. Isso desbloqueia o `await` no PhaseDetailPage.
+      currentReward.resolve();
+      // 2. Limpa a recompensa atual, permitindo que o useEffect processe a próxima.
+      setCurrentReward(null);
+    }
+  }, [currentReward]);
 
   return (
-    <RewardModalContext.Provider value={{ showRewardModal, isModalOpen }}>
+    <RewardModalContext.Provider value={{ showRewardModal }}>
       {children}
       {currentReward && (
         <XpRewardModal
-          isOpen={isModalOpen}
-          onClose={hideRewardModal}
+          // O modal é considerado aberto sempre que houver uma 'currentReward'
+          isOpen={!!currentReward} 
+          onClose={handleClose}
           xpAmount={currentReward.data.xpAmount}
           title={currentReward.data.title}
         />

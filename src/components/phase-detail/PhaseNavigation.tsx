@@ -1,65 +1,64 @@
+// ARQUIVO: components/phase-detail/PhaseNavigation.tsx - VERSÃO CORRIGIDA
 
-import { ArrowLeft, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Phase } from "@/services/moduleService";
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
+import type { Phase } from '@/services/moduleService';
 
 interface PhaseNavigationProps {
-    previousPhase: Phase | null;
-    nextPhase: Phase | null;
-    phase: Phase;
-    isSubmitting: boolean;
-    quizCompleted: boolean;
-    onNavigateToPrevious: () => void;
-    onCompletePhase: () => void;
-    onNavigateToNext: () => void;
+  previousPhase: Phase | null;
+  nextPhase: Phase | null;
+  phase: Phase;
+  isSubmitting: boolean;
+  quizCompleted: boolean; // MUDANÇA: usar quizCompleted em vez de isPhaseCompleted
+  onNavigateToPrevious: () => void;
+  onCompletePhase: () => void;
+  onNavigateToNext: () => void;
 }
 
-export const PhaseNavigation = ({
-    previousPhase,
-    nextPhase,
-    phase,
-    isSubmitting,
-    quizCompleted,
-    onNavigateToPrevious,
-    onCompletePhase,
-    onNavigateToNext,
-}: PhaseNavigationProps) => {
-    return (
-        <div className="mt-8 flex items-center justify-between gap-4 border-t border-border pt-6">
-            {/* Botão Voltar */}
-            <Button
-                onClick={onNavigateToPrevious}
-                disabled={!previousPhase}
-                variant="outline"
-                className={`${!previousPhase ? "opacity-50 cursor-not-allowed" : ""}`}
-            >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Anterior
-            </Button>
+export const PhaseNavigation: React.FC<PhaseNavigationProps> = ({
+  previousPhase,
+  nextPhase,
+  phase,
+  isSubmitting,
+  quizCompleted, // MUDANÇA: receber quizCompleted
+  onNavigateToPrevious,
+  onCompletePhase,
+  onNavigateToNext,
+}) => {
+  // CORREÇÃO: Determinar se o botão deve estar habilitado
+  const canCompletePhase = () => {
+    if (phase.type === 'quiz') {
+      // Para quiz, só pode completar se o quiz foi finalizado
+      return quizCompleted;
+    }
+    // Para outros tipos de fase, sempre pode completar
+    return true;
+  };
 
-            {/* Botões de Ação centralizados */}
-            <div className="flex gap-3">
-                <Button
-                    onClick={onCompletePhase}
-                    disabled={isSubmitting || phase.type === "quiz"}
-                    className={`btn-trilha ${phase.type === "quiz" ? "hidden" : ""}`}
-                >
-                    {isSubmitting
-                        ? "Processando..."
-                        : nextPhase
-                          ? "Concluir e Próxima"
-                          : "Finalizar Módulo"}{" "}
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-                <Button
-                    onClick={onNavigateToNext}
-                    disabled={!quizCompleted}
-                    className={`btn-trilha ${phase.type !== "quiz" ? "hidden" : ""}`}
-                >
-                    {nextPhase ? "Próxima Fase" : "Finalizar Módulo"}{" "}
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-            </div>
-        </div>
-    );
+  return (
+    <div className="mt-8 flex justify-between items-center">
+      {/* Botão de Voltar */}
+      <Button
+        variant="outline"
+        onClick={onNavigateToPrevious}
+        disabled={!previousPhase || isSubmitting}
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Anterior
+      </Button>
+
+      {/* Botão de Finalizar Fase */}
+      <Button
+        onClick={onCompletePhase}
+        disabled={isSubmitting || !canCompletePhase()} // CORREÇÃO: usar a função canCompletePhase
+        size="lg"
+      >
+        {isSubmitting ? 'Finalizando...' : 
+         nextPhase ? 'Finalizar Fase' : 'Finalizar Módulo'
+        }
+        <Check className="ml-2 h-4 w-4" />
+      </Button>
+    </div>
+  );
 };

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { CheckCircle, Home, Quote as QuoteIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import YoutubeEmbed from "@/components/YoutubeEmbed";
+import 'react-quill/dist/quill.snow.css';
 
 // Serviços
 import {
@@ -14,10 +15,15 @@ import {
     getPhasesByModuleId,
     getQuestionsByPhaseId,
     completePhaseAndAwardXp,
+    awardQuizXp,
     updateUserPhaseStatus,
     getUserPhaseStatus,
     getModuleProgress,
     getModules,
+    Phase,
+    Module,
+    // CORREÇÃO: Importando debugXpState
+    debugXpState
 } from "@/services/moduleService";
 import { createJournalEntry } from "@/services/journalService";
 
@@ -160,36 +166,90 @@ export default function PhaseDetailPage() {
         });
     };
 
+    // TRECHO CORRIGIDO DA FUNÇÃO handleCompletePhase no PhaseDetailPage
+
     const handleCompletePhase = async () => {
         if (isSubmitting || !userId || !phaseId || !moduleId) return;
+        
+        console.log('🎯 Iniciando handleCompletePhase');
         setIsSubmitting(true);
+        
         try {
             if (journalNotes.trim() && !isJournalSaved) {
+                console.log('📝 Salvando journal antes de completar fase');
                 await handleSaveJournal();
             }
-            const { xpFromPhase, xpFromModule } = await completePhaseAndAwardXp(userId, Number(phaseId), Number(moduleId), false);
-            if (xpFromPhase > 0 || xpFromModule > 0) {
-                 await showRewardModal({ 
-                    xpAmount: xpFromPhase + xpFromModule, 
-                    title: xpFromModule > 0 ? "Módulo Concluído!" : "Fase Concluída!" 
-                });
+            
+            console.log('🔍 Estado antes de completar:', { userId, phaseId: Number(phaseId), moduleId: Number(moduleId), isQuiz: phase?.type === 'quiz' });
+            
+            const isQuiz = phase?.type === 'quiz';
+            
+            let result;
+            try {
+                result = await completePhaseAndAwardXp(userId, Number(phaseId), Number(moduleId), isQuiz);
+                console.log('✅ Resultado completePhaseAndAwardXp:', result);
+            } catch (error) {
+                console.warn('⚠️ Método principal falhou, tentando alternativo:', error);
+                result = await completePhaseAndAwardXpAlternative(userId, Number(phaseId), Number(moduleId), isQuiz);
+                console.log('✅ Resultado método alternativo:', result);
             }
-            navigateToNext();
+            
+            const { xpFromPhase, xpFromModule } = result;
+            const totalXp = xpFromPhase + xpFromModule;
+            
+            console.log('📊 XP calculado:', { xpFromPhase, xpFromModule, totalXp });
+            
+            if (totalXp === 0) {
+                console.log('🔍 XP é 0, fazendo debug...');
+                const debugInfo = await debugXpState(userId, Number(phaseId), Number(moduleId));
+                console.log('🔍 Debug info:', debugInfo);
+            }
+            
+            if (totalXp > 0) {
+                console.log('🎁 Mostrando modal de recompensa com XP:', totalXp);
+                const modalTitle = xpFromModule > 0 ? "Módulo Concluído!" : isQuiz ? "Quiz Concluído!" : "Fase Concluída!";
+                await showRewardModal({ xpAmount: totalXp, title: modalTitle });
+                console.log('🎭 Modal de recompensa fechado, continuando...');
+            } else {
+                console.log('ℹ️ Nenhum XP para mostrar (XP = 0)');
+                toast.success(isQuiz ? "Quiz concluído!" : "Fase concluída!");
+            }
+            
+            queryClient.invalidateQueries({ queryKey: ["phaseDetailData"] });
+            queryClient.invalidateQueries({ queryKey: ["moduleDetailData"] });
+            queryClient.invalidateQueries({ queryKey: ["userProfile"] });
+            
+            setTimeout(() => {
+                console.log('🧭 Navegando para próxima fase');
+                navigateToNext();
+            }, 300);
+            
         } catch (err) {
+            console.error('❌ Erro ao completar fase:', err);
             toast.error("Erro ao registrar seu progresso.");
+            try {
+                const debugInfo = await debugXpState(userId!, Number(phaseId), Number(moduleId));
+                console.log('🔍 Debug info após erro:', debugInfo);
+            } catch (debugError) {
+                console.error('❌ Erro no debug:', debugError);
+            }
         } finally {
             setIsSubmitting(false);
         }
     };
+
     
     const handleCorrectAnswer = async () => {
-        // Implemente sua lógica de resposta correta aqui
         if (currentQuestionIndex < questions.length - 1) {
+            // Ainda há mais perguntas
             setCurrentQuestionIndex(prev => prev + 1);
         } else {
+            // Quiz completado - última pergunta respondida corretamente
             setQuizCompleted(true);
             setQuizElapsedTime(Date.now() - (quizStartTime || Date.now()));
-            // Lógica para completar fase e dar XP de quiz aqui
+            
+            // CORREÇÃO: Apenas marcar como completado, não completar automaticamente
+            // O usuário deve clicar no botão "Completar Fase" após ver o resultado
         }
     };
 

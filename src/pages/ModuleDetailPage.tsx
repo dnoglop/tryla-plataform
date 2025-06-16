@@ -194,7 +194,7 @@ export default function ModuleDetailPage() {
                         </button>
                         <div className="flex items-center gap-3">
                             <div className="flex-shrink-0 h-8 w-8 flex items-center justify-center rounded-lg bg-primary/10 text-lg">{module.emoji || "📚"}</div>
-                            <h1 className="text-xl font-bold text-foreground truncate">{module.name}</h1>
+                            <h1 className="text-xl font-bold text-foreground truncate">Trilha do Módulo</h1>
                         </div>
                     </div>
                     <Link to="/perfil">
