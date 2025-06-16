@@ -11,7 +11,6 @@ export type ModuleType =
   | "comunicacao"
   | "futuro";
 export type PhaseType = "text" | "video" | "quiz" | "challenge";
-export type IconType = "video" | "text" | "challenge" | "quiz" | "game";
 
 export interface Module {
   id: number;
@@ -31,7 +30,6 @@ export interface Phase {
   name: string;
   description: string | null;
   type: PhaseType;
-  icon_type: IconType;
   content: string | null;
   video_url: string | null;
   video_notes: string | null;
@@ -149,7 +147,7 @@ export const getPhasesByModuleId = async (
     const { data, error } = await supabase
       .from("phases")
       .select(
-        "id, created_at, module_id, name, description, type, icon_type, duration, order_index, content, video_url, video_notes",
+        "id, created_at, module_id, name, description, type, duration, order_index, content, video_url, video_notes",
       )
       .eq("module_id", moduleId)
       .order("order_index", { ascending: true });
@@ -157,7 +155,6 @@ export const getPhasesByModuleId = async (
     return (data || []).map(phase => ({
       ...phase,
       type: phase.type as PhaseType,
-      icon_type: phase.icon_type as IconType,
       content: phase.content || null,
       video_url: phase.video_url || null,
       video_notes: phase.video_notes || null
@@ -179,7 +176,6 @@ export const getPhaseById = async (id: number): Promise<Phase | null> => {
     return data ? {
       ...data,
       type: data.type as PhaseType,
-      icon_type: data.icon_type as IconType
     } : null;
   } catch (error) {
     console.error("Error fetching phase by id:", error);

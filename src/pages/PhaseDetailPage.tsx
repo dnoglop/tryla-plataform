@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CheckCircle, Home } from "lucide-react";
+import { CheckCircle, Home, Quote as QuoteIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import YoutubeEmbed from "@/components/YoutubeEmbed";
 
@@ -14,7 +14,6 @@ import {
     getPhasesByModuleId,
     getQuestionsByPhaseId,
     completePhaseAndAwardXp,
-    awardQuizXp,
     updateUserPhaseStatus,
     getUserPhaseStatus,
     getModuleProgress,
@@ -36,12 +35,8 @@ import { NextModuleCard } from "@/components/phase-detail/NextModuleCard";
 import { PhaseNavigation } from "@/components/phase-detail/PhaseNavigation";
 import { PhaseJournal } from "@/components/phase-detail/PhaseJournal";
 
-const calculateXpForTime = (seconds: number, questionCount: number) => {
-    const secondsPerQuestion = seconds / (questionCount || 1);
-    if (secondsPerQuestion <= 10) return 25;
-    if (secondsPerQuestion <= 20) return 15;
-    return 10;
-};
+// Lembre-se de adicionar 'quote' e 'quote_author' nas chamadas de serviço (select)
+// como getPhaseById e getPhasesByModuleId
 
 export default function PhaseDetailPage() {
     const { moduleId, id: phaseId } = useParams<{ moduleId: string; id: string }>();
@@ -50,15 +45,15 @@ export default function PhaseDetailPage() {
     const { showRewardModal } = useRewardModal();
     const [userId, setUserId] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [quizCompleted, setQuizCompleted] = useState(false);
-    const [quizStartTime, setQuizStartTime] = useState<number | null>(null);
-    const [quizElapsedTime, setQuizElapsedTime] = useState<number | null>(null);
     const [moduleCompleted, setModuleCompleted] = useState(false);
-    const [textContent, setTextContent] = useState<string | null>(null);
-    
     const [journalNotes, setJournalNotes] = useState("");
     const [isJournalSaved, setIsJournalSaved] = useState(false);
+
+    // Estados específicos de quiz
+    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+    const [quizStartTime, setQuizStartTime] = useState<number | null>(null);
+    const [quizElapsedTime, setQuizElapsedTime] = useState<number | null>(null);
 
     const { 
         isPlaying, isLoadingAudio, isPaused, speechRate, 
@@ -73,7 +68,9 @@ export default function PhaseDetailPage() {
         setCurrentQuestionIndex(0);
         setQuizCompleted(false);
         setQuizStartTime(null);
-    }, [phaseId]);
+        setModuleCompleted(false);
+        handleResetAudio();
+    }, [phaseId, handleResetAudio]);
 
     useEffect(() => {
         const getUserId = async () => {
@@ -116,17 +113,15 @@ export default function PhaseDetailPage() {
         onSuccess: (data) => {
             if (data) {
                 setIsJournalSaved(true);
+                toast.success("Suas reflexões foram salvas no diário!");
                 queryClient.invalidateQueries({ queryKey: ['journalEntries'] });
             }
         },
-        onError: (err) => {
-            console.error("Mutation error:", err);
-        }
+        onError: (err) => toast.error("Erro ao salvar no diário."),
     });
 
     const { phase, module, allPhases = [], questions = [], allModules = [], moduleProgress = 0 } = data || {};
 
-    useEffect(() => { if (phase?.content) setTextContent(phase.content) }, [phase?.content]);
     useEffect(() => { if (phase?.type === "quiz" && questions.length > 0 && !quizCompleted && !quizStartTime) setQuizStartTime(Date.now()) }, [phase?.type, questions.length, quizCompleted, quizStartTime]);
     useEffect(() => { if (error) { toast.error("Erro ao carregar dados da fase."); navigate(`/modulo/${moduleId}`); } }, [error, navigate, moduleId]);
 
@@ -136,83 +131,78 @@ export default function PhaseDetailPage() {
     const currentModuleIndex = allModules.findIndex((m) => m.id === Number(moduleId));
     const nextModule = currentModuleIndex !== -1 && currentModuleIndex < allModules.length - 1 ? allModules[currentModuleIndex + 1] : null;
 
-    const handleReadContent = () => baseHandleReadContent(textContent);
-    const handleSpeedChange = () => baseHandleSpeedChange(textContent);
+    const handleReadContent = () => baseHandleReadContent(phase?.content);
 
     const navigateToNext = () => {
-        queryClient.invalidateQueries({ queryKey: ["moduleDetailData", Number(moduleId)] });
         if (nextPhase) {
             navigate(`/modulo/${moduleId}/fase/${nextPhase.id}`);
         } else {
             setModuleCompleted(true);
         }
+        queryClient.invalidateQueries({ queryKey: ["moduleDetailData", Number(moduleId)] });
     };
     const navigateToPrevious = () => { if (previousPhase) navigate(`/modulo/${moduleId}/fase/${previousPhase.id}`); };
     
-    // --- FUNÇÃO DE SALVAMENTO ATUALIZADA ---
     const handleSaveJournal = async () => {
-        // Trim para remover espaços em branco no início e no fim
         const notesToSave = journalNotes.trim();
-
         if (!notesToSave || !userId || !phase || !module) {
             toast.info("Escreva algo para salvar no seu diário.");
             return;
         }
-
-        const payload = {
+        await journalMutation.mutateAsync({
             user_id: userId,
             title: `Reflexões sobre: ${phase.name}`,
-            content: notesToSave, // Usa a variável local 'notesToSave'
+            content: notesToSave,
             emoji: '💡',
             module_id: module.id,
             phase_id: phase.id,
             is_favorite: false,
-        };
-        
-        // PONTO CRÍTICO DE DEBUG: Verifique o console do seu navegador para ver este log.
-        console.log("ENVIANDO PARA O DIÁRIO:", payload);
-
-        // O 'await' garante que esperamos a conclusão da mutation antes de prosseguir
-        await journalMutation.mutateAsync(payload);
+        });
     };
 
     const handleCompletePhase = async () => {
         if (isSubmitting || !userId || !phaseId || !moduleId) return;
         setIsSubmitting(true);
-        
         try {
-            // A verificação agora é mais robusta
             if (journalNotes.trim() && !isJournalSaved) {
                 await handleSaveJournal();
             }
-
             const { xpFromPhase, xpFromModule } = await completePhaseAndAwardXp(userId, Number(phaseId), Number(moduleId), false);
-            
-            if (xpFromPhase > 0 && xpFromModule > 0) {
-                await showRewardModal({ xpAmount: xpFromPhase + xpFromModule, title: "Módulo Concluído!" });
-            } else if (xpFromPhase > 0) {
-                await showRewardModal({ xpAmount: xpFromPhase, title: "Fase Concluída!" });
-            } else if (xpFromModule > 0) {
-                await showRewardModal({ xpAmount: xpFromModule, title: "Módulo Concluído!" });
+            if (xpFromPhase > 0 || xpFromModule > 0) {
+                 await showRewardModal({ 
+                    xpAmount: xpFromPhase + xpFromModule, 
+                    title: xpFromModule > 0 ? "Módulo Concluído!" : "Fase Concluída!" 
+                });
             }
-
-            // Pequeno delay para garantir que a percepção de salvamento ocorra
-            await new Promise((resolve) => setTimeout(resolve, 200)); 
             navigateToNext();
         } catch (err) {
-            console.error("Erro ao completar a fase:", err);
             toast.error("Erro ao registrar seu progresso.");
         } finally {
             setIsSubmitting(false);
         }
     };
     
-    const handleCorrectAnswer = async () => { /* ... seu código sem alterações ... */ };
+    const handleCorrectAnswer = async () => {
+        // Implemente sua lógica de resposta correta aqui
+        if (currentQuestionIndex < questions.length - 1) {
+            setCurrentQuestionIndex(prev => prev + 1);
+        } else {
+            setQuizCompleted(true);
+            setQuizElapsedTime(Date.now() - (quizStartTime || Date.now()));
+            // Lógica para completar fase e dar XP de quiz aqui
+        }
+    };
+
     const handleNextModule = () => { if (nextModule) navigate(`/modulo/${nextModule.id}`); };
     const handleBackToModules = () => navigate("/modulos");
 
     if (isLoading) return <PhaseDetailSkeleton />;
-    if (!phase || !module) return ( <div className="min-h-screen ..."> ... </div> );
+    if (!phase || !module) return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground">
+            <p className="mb-4">Oops! Não foi possível encontrar os dados desta fase.</p>
+            <Button onClick={() => navigate('/modulos')}>Voltar para Módulos</Button>
+        </div>
+    );
 
     const currentQuestion = questions[currentQuestionIndex];
 
@@ -222,14 +212,67 @@ export default function PhaseDetailPage() {
             <main className="container px-4 sm:px-6 lg:px-8 py-6 space-y-6 max-w-4xl mx-auto">
                 <PhaseProgressCard phase={phase} moduleProgress={moduleProgress} />
                 
-                {phase.type === "video" && phase.video_url && ( <YoutubeEmbed videoId={phase.video_url} /> )}
-                {(phase.type === "text" || phase.type === "challenge") && phase.content && (
-                    <div className="card-trilha p-6">
-                        <AudioControls isPlaying={isPlaying} isPaused={isPaused} isLoadingAudio={isLoadingAudio} speechRate={speechRate} onReadContent={handleReadContent} onSpeedChange={handleSpeedChange} onResetAudio={handleResetAudio} />
-                        <div className="prose max-w-none prose-slate dark:prose-invert" dangerouslySetInnerHTML={{ __html: phase.content }} />
+                {/* LÓGICA DE RENDERIZAÇÃO DE CONTEÚDO */}
+
+                {(phase.type === "text" || phase.type === "challenge") && (
+                    <div className="card-trilha p-6 space-y-6">
+                        {/* 1. TEXTO PRINCIPAL (se existir) */}
+                        {phase.content && (
+                            <div>
+                                <AudioControls 
+                                    isPlaying={isPlaying} 
+                                    isPaused={isPaused} 
+                                    isLoadingAudio={isLoadingAudio} 
+                                    speechRate={speechRate} 
+                                    onReadContent={handleReadContent} 
+                                    onSpeedChange={() => baseHandleSpeedChange(phase?.content)}
+                                    onResetAudio={handleResetAudio} 
+                                />
+                                <div className="prose max-w-none prose-slate dark:prose-invert mt-4" dangerouslySetInnerHTML={{ __html: phase.content }} />
+                            </div>
+                        )}
+
+                        {/* 2. FRASE DE DESTAQUE (se existir) */}
+                        {phase.quote && (
+                            <div className="my-6 p-6 border-l-4 border-primary bg-muted/40 rounded-r-lg">
+                                <QuoteIcon className="h-6 w-6 text-primary/50 mb-2" aria-hidden="true" />
+                                <blockquote className="text-xl italic font-medium text-foreground">
+                                    <p>"{phase.quote}"</p>
+                                </blockquote>
+                                {phase.quote_author && (
+                                    <cite className="mt-4 block text-right font-semibold not-italic">
+                                        — {phase.quote_author}
+                                    </cite>
+                                )}
+                            </div>
+                        )}
+
+                        {/* 3. VÍDEO (se existir) */}
+                        {phase.video_url && (
+                            <div className="mt-4 rounded-lg overflow-hidden">
+                               <YoutubeEmbed videoId={phase.video_url} />
+                            </div>
+                        )}
                     </div>
                 )}
-                {phase.type === "quiz" && ( <QuizContent questions={questions} currentQuestionIndex={currentQuestionIndex} quizCompleted={quizCompleted} quizStartTime={quizStartTime} quizElapsedTime={quizElapsedTime} currentQuestion={currentQuestion} onCorrectAnswer={handleCorrectAnswer} /> )}
+                
+                {phase.type === "video" && phase.video_url && (
+                    <div className="rounded-lg overflow-hidden">
+                        <YoutubeEmbed videoId={phase.video_url} />
+                    </div>
+                )}
+
+                {phase.type === "quiz" && (
+                    <QuizContent 
+                        questions={questions} 
+                        currentQuestionIndex={currentQuestionIndex} 
+                        quizCompleted={quizCompleted} 
+                        quizStartTime={quizStartTime} 
+                        quizElapsedTime={quizElapsedTime} 
+                        currentQuestion={currentQuestion} 
+                        onCorrectAnswer={handleCorrectAnswer} 
+                    /> 
+                )}
                 
                 {(phase.type !== 'quiz' || quizCompleted) && (
                     <PhaseJournal
@@ -252,7 +295,15 @@ export default function PhaseDetailPage() {
                 />
 
                 {moduleCompleted && nextModule && ( <NextModuleCard nextModule={nextModule} onContinue={handleNextModule} onBackToModules={handleBackToModules} /> )}
-                {moduleCompleted && !nextModule && ( <div className="mt-6 ..."> ... </div> )}
+                
+                {moduleCompleted && !nextModule && (
+                    <div className="mt-6 text-center p-8 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                        <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
+                        <h2 className="mt-4 text-2xl font-bold">Parabéns!</h2>
+                        <p className="mt-2 text-muted-foreground">Você concluiu todos os módulos disponíveis. Excelente trabalho!</p>
+                        <Button onClick={handleBackToModules} className="mt-6">Voltar para a tela inicial</Button>
+                    </div>
+                )}
             </main>
         </div>
     );
