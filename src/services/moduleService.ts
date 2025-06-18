@@ -356,8 +356,8 @@ export const completePhaseAndAwardXp = async (
 
     // Verificar os nomes das colunas retornadas
     // Possíveis nomes: v_xp_from_phase, xp_from_phase, etc.
-    const xpFromPhase = result.v_xp_from_phase || result.xp_from_phase || 0;
-    const xpFromModule = result.v_xp_from_module || result.xp_from_module || 0;
+    const xpFromPhase = result.xp_ganho_fase || 0;
+    const xpFromModule = result.xp_ganho_modulo || 0;
 
     console.log('✅ XP calculado:', { xpFromPhase, xpFromModule });
 

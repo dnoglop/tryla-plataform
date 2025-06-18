@@ -166,73 +166,85 @@ export default function PhaseDetailPage() {
         });
     };
 
+    const getUserTotalXp = async (userId: string): Promise<number> => {
+        try {
+            const { data, error } = await supabase
+                .from('profiles') // Confirme se este é o nome correto da sua tabela
+                .select('xp')     // Confirme se este é o nome correto da sua coluna de XP
+                .eq('id', userId)
+                .single();
+                
+            if (error) throw error;
+            return data?.xp || 0;
+        } catch (error) {
+            console.error('Erro ao buscar XP do usuário:', error);
+            return 0;
+        }
+    };
     // TRECHO CORRIGIDO DA FUNÇÃO handleCompletePhase no PhaseDetailPage
 
     const handleCompletePhase = async () => {
         if (isSubmitting || !userId || !phaseId || !moduleId) return;
         
-        console.log('🎯 Iniciando handleCompletePhase');
         setIsSubmitting(true);
         
         try {
             if (journalNotes.trim() && !isJournalSaved) {
-                console.log('📝 Salvando journal antes de completar fase');
                 await handleSaveJournal();
             }
             
-            console.log('🔍 Estado antes de completar:', { userId, phaseId: Number(phaseId), moduleId: Number(moduleId), isQuiz: phase?.type === 'quiz' });
-            
             const isQuiz = phase?.type === 'quiz';
             
-            let result;
-            try {
-                result = await completePhaseAndAwardXp(userId, Number(phaseId), Number(moduleId), isQuiz);
-                console.log('✅ Resultado completePhaseAndAwardXp:', result);
-            } catch (error) {
-                console.warn('⚠️ Método principal falhou, tentando alternativo:', error);
-                result = await completePhaseAndAwardXpAlternative(userId, Number(phaseId), Number(moduleId), isQuiz);
-                console.log('✅ Resultado método alternativo:', result);
-            }
+            // 1. Capturar o estado ANTES
+            const userXpBefore = await getUserTotalXp(userId);
             
-            const { xpFromPhase, xpFromModule } = result;
-            const totalXp = xpFromPhase + xpFromModule;
+            // 2. Chamar a RPC
+            const result = await completePhaseAndAwardXp(userId, Number(phaseId), Number(moduleId), isQuiz);
+            console.log('✅ Resultado da RPC:', result);
+    
+            // 3. Tentar ler o resultado da RPC (com os nomes corretos)
+            let xpFromPhase = result.xp_ganho_fase || 0;
+            let xpFromModule = result.xp_ganho_modulo || 0;
+            let totalXp = xpFromPhase + xpFromModule;
             
-            console.log('📊 XP calculado:', { xpFromPhase, xpFromModule, totalXp });
-            
+            // 4. Se a RPC falhou em retornar o XP, usar o fallback
             if (totalXp === 0) {
-                console.log('🔍 XP é 0, fazendo debug...');
-                const debugInfo = await debugXpState(userId, Number(phaseId), Number(moduleId));
-                console.log('🔍 Debug info:', debugInfo);
+                console.log('🔍 RPC retornou 0. Usando fallback de verificação de XP...');
+                const userXpAfter = await getUserTotalXp(userId);
+                const xpDifference = userXpAfter - userXpBefore;
+                
+                if (xpDifference > 0) {
+                    console.log('🔧 Diferença de XP detectada:', xpDifference);
+                    totalXp = xpDifference;
+                    // Simples heurística: se a diferença for > 5, provavelmente inclui o bônus de módulo
+                    if (xpDifference > 5) {
+                        xpFromModule = xpDifference - 5;
+                        xpFromPhase = 5;
+                    } else {
+                        xpFromPhase = xpDifference;
+                        xpFromModule = 0;
+                    }
+                }
             }
             
+            console.log('📊 XP final para exibição:', { xpFromPhase, xpFromModule, totalXp });
+            
+            // 5. Mostrar o modal se XP foi ganho
             if (totalXp > 0) {
-                console.log('🎁 Mostrando modal de recompensa com XP:', totalXp);
-                const modalTitle = xpFromModule > 0 ? "Módulo Concluído!" : isQuiz ? "Quiz Concluído!" : "Fase Concluída!";
+                const modalTitle = xpFromModule > 0 ? "Módulo Concluído!" : "Fase Concluída!";
                 await showRewardModal({ xpAmount: totalXp, title: modalTitle });
-                console.log('🎭 Modal de recompensa fechado, continuando...');
             } else {
-                console.log('ℹ️ Nenhum XP para mostrar (XP = 0)');
-                toast.success(isQuiz ? "Quiz concluído!" : "Fase concluída!");
+                toast.success("Progresso salvo!");
             }
             
-            queryClient.invalidateQueries({ queryKey: ["phaseDetailData"] });
-            queryClient.invalidateQueries({ queryKey: ["moduleDetailData"] });
-            queryClient.invalidateQueries({ queryKey: ["userProfile"] });
+            // 6. Invalidar queries e navegar
+            queryClient.invalidateQueries({ queryKey: ['phaseDetailData', 'moduleDetailData', 'userProfile'] });
             
-            setTimeout(() => {
-                console.log('🧭 Navegando para próxima fase');
-                navigateToNext();
-            }, 300);
+            navigateToNext();
             
         } catch (err) {
-            console.error('❌ Erro ao completar fase:', err);
+            console.error('❌ Erro crítico ao completar fase:', err);
             toast.error("Erro ao registrar seu progresso.");
-            try {
-                const debugInfo = await debugXpState(userId!, Number(phaseId), Number(moduleId));
-                console.log('🔍 Debug info após erro:', debugInfo);
-            } catch (debugError) {
-                console.error('❌ Erro no debug:', debugError);
-            }
         } finally {
             setIsSubmitting(false);
         }
