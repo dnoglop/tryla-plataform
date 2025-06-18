@@ -99,25 +99,49 @@ const CompleteProfilePage = () => {
   }, []);
 
   const handleCropSave = async () => {
-    if (!imageSrc || !croppedAreaPixels || !userId) return;
+    // 1. Verificações iniciais
+    if (!imageSrc || !croppedAreaPixels || !userId) {
+      console.error("Faltam dados para o corte: imageSrc, pixelCrop, ou userId");
+      return;
+    }
+    
+    // 2. Ativa o estado de carregamento
     setIsCropping(true);
+    const toastId = toast.loading("Preparando a imagem..."); // Inicia um toast de loading
+  
     try {
+      // 3. Tenta cortar a imagem
       const croppedImageBlob = await getCroppedImg(imageSrc, croppedAreaPixels);
-      if (!croppedImageBlob) throw new Error('Não foi possível cortar a imagem.');
-
-      toast.promise(uploadAvatar(userId, croppedImageBlob), {
-        loading: "Enviando nova foto...",
-        success: (imageUrl) => {
-          setFormData(prev => ({ ...prev, avatar_url: `${imageUrl}?t=${new Date().getTime()}` }));
-          return "Foto de perfil atualizada!";
-        },
-        error: "Erro ao salvar nova foto.",
-      });
-    } catch (error) {
-      console.error("Erro ao cortar e enviar avatar:", error);
-    } finally {
-      setIsCropping(false);
+      if (!croppedImageBlob) {
+        throw new Error("A imagem cortada resultou em nulo.");
+      }
+      
+      toast.loading("Enviando nova foto...", { id: toastId }); // Atualiza a mensagem do toast
+  
+      // 4. Tenta fazer o upload da imagem cortada
+      const imageUrl = await uploadAvatar(userId, croppedImageBlob);
+      if (!imageUrl) {
+          throw new Error("O upload não retornou uma URL.");
+      }
+  
+      // 5. SUCESSO! Atualiza tudo
+      toast.success("Foto de perfil atualizada!", { id: toastId });
+      
+      // Atualiza o estado do formulário com a nova URL
+      setFormData(prev => ({ ...prev, avatar_url: `${imageUrl}?t=${new Date().getTime()}` }));
+      
+      // Limpa a imagem e fecha o modal
       setImageSrc(null);
+  
+    } catch (error: any) {
+      // 6. ERRO! Mostra o erro e para o carregamento
+      console.error("Erro detalhado no processo de salvar a foto:", error);
+      toast.error(`Erro: ${error.message || 'Não foi possível salvar a foto.'}`, { id: toastId });
+  
+    } finally {
+      // 7. SEMPRE executa no final (seja sucesso ou erro)
+      // Garante que o estado de carregamento seja sempre desativado.
+      setIsCropping(false);
     }
   };
 
@@ -134,8 +158,16 @@ const CompleteProfilePage = () => {
     mutationFn: generatePersonalizedTrack,
     onSuccess: async (trackData) => {
       if (!userId) return;
+      
+      // 1. Salva os dados no banco
       await saveUserTrack(userId, trackData, formData);
-      await queryClient.invalidateQueries({ queryKey: ['userAuthStatus'] });
+      
+      // 2. Invalida a query E ESPERA a revalidação terminar
+      // queryClient.refetchQueries é como invalidateQueries, mas retorna uma Promise
+      // que só resolve quando a nova busca de dados termina.
+      await queryClient.refetchQueries({ queryKey: ['userAuthStatus'] });
+    
+      // 3. Somente DEPOIS que os dados foram atualizados, abrimos o modal da IA
       setAiJustification(trackData.justification_text);
       setIsAiModalOpen(true);
     },

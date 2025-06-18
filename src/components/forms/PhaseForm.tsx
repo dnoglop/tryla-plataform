@@ -149,9 +149,8 @@ export default function PhaseForm({ phase, moduleId, onSuccess, onCancel }: Phas
             <Select onValueChange={field.onChange} value={field.value}>
               <SelectTrigger><SelectValue placeholder="Selecione um tipo..." /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="text">Conteúdo de Texto</SelectItem>
-                <SelectItem value="challenge">Desafio</SelectItem>
-                <SelectItem value="video">Apenas Vídeo</SelectItem>
+                <SelectItem value="texto">Conteúdo de Texto</SelectItem>
+                <SelectItem value="desafio">Desafio</SelectItem>
                 <SelectItem value="quiz">Quiz</SelectItem>
               </SelectContent>
             </Select>

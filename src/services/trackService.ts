@@ -180,10 +180,13 @@ export async function saveUserTrack(userId: string, trackData: AITrackResponse, 
     // ===================================================================
     const { error: onboardingError } = await supabase
         .from('user_onboarding')
-        .insert({
+        .upsert({
             user_id: userId,
             completed_at: new Date().toISOString() // Marca a data/hora da conclusão
-        });
+        },
+      
+        { onConflict: 'user_id' } // Diz ao Supabase qual coluna usar para verificar o conflito
+    );
 
     if (onboardingError) {
         // Isso não deve quebrar o fluxo, mas é um aviso importante.

@@ -9,17 +9,17 @@ import Layout from "@/components/Layout";
 import { useDailyChallenge } from "@/hooks/useDailyChallenge";
 import DailyChallengeCard from "@/components/DailyChallengeCard";
 import { useDailyQuote } from "@/hooks/useDailyQuote";
+import { FeatureTourModal } from '@/components/FeatureTourModal';
 
 // Ícones e Componentes
 import { ArrowRight, Sparkles, X, Gift, CheckCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WeeklyProgressChart } from "@/components/WeeklyProgressChart";
-// MODIFICADO: Removido 'getModules' que não será mais usado aqui. Adicionado 'getModuleById'.
 import { getModuleById, Module, getUserNextPhase, isModuleCompleted } from "@/services/moduleService";
 import { getProfile, updateUserStreak } from "@/services/profileService";
 import ForumThread from "@/components/ForumThread";
 
-// --- COMPONENTES VISUAIS AUXILIARES (Nenhuma alteração aqui) ---
+// --- SUB-COMPONENTES VISUAIS (Skeletons, Modals) ---
 
 const DashboardSkeleton = () => ( 
     <div className="bg-background min-h-screen">
@@ -33,7 +33,6 @@ const DashboardSkeleton = () => (
                     <Skeleton className="h-14 w-14 rounded-full bg-muted" /> 
                 </div>
             </header>
-            
             <main className="p-4 sm:p-6 pt-0 space-y-6">
                 <Skeleton className="h-24 rounded-2xl bg-muted" />
                 <div className="flex items-center"><Skeleton className="h-6 w-40 bg-muted" /></div>
@@ -72,16 +71,24 @@ const WelcomeModal = ({ open, onOpenChange, username, quote, isLoadingQuote }: {
     </Dialog.Root>
 );
 
-
 // --- COMPONENTE PRINCIPAL ---
 const Index = () => {
     const queryClient = useQueryClient();
     
     // States Locais
     const [userId, setUserId] = useState<string | null>(null);
+    const [showFeatureTour, setShowFeatureTour] = useState(false);
     const [showWelcomeModal, setShowWelcomeModal] = useState(false);
     const [dailyXpClaimed, setDailyXpClaimed] = useState(false);
     const [isClaiming, setIsClaiming] = useState(false);
+
+    // Dados para o Tour (com URLs de placeholder, substitua pelas suas)
+    const tourSteps = [
+        { image: 'https://i.imgur.com/3mRsSsM.jpeg', title: 'Desafios Diários', description: 'Todos os dias, uma nova atividade rápida aparece aqui para você praticar o que aprendeu e ganhar XP extra!' },
+        { image: 'https://i.imgur.com/MkH4yNc.jpeg', title: 'Acompanhe seu Progresso', description: 'No gráfico, você pode ver seu avanço diario e semanal, junto com o seu XP total.' },
+        { image: 'https://i.imgur.com/68jv9r2.jpeg', title: 'Oráculo Vocacional', description: 'Ainda em dúvida sobre sua carreira? Use nosso Oráculo para explorar profissões que combinam com seu perfil.' },
+        { image: 'https://i.imgur.com/BQ3LIl5.jpeg', title: 'Personalize o Layout', description: 'Prefere um tema mais escuro? Vá até as configurações para ativar o Dark Mode e deixar o app com a sua cara.' },
+    ];
 
     // Efeito para pegar o ID do usuário ao montar o componente
     useEffect(() => {
@@ -94,117 +101,102 @@ const Index = () => {
         fetchUser();
     }, []);
 
-    // Query para buscar o perfil do usuário
-    const { data: profile, isLoading: isLoadingProfile } = useQuery({
-        queryKey: ['profile', userId],
+    // Query unificada que busca todos os dados necessários para o dashboard
+    const { data: pageData, isLoading: isLoadingPage } = useQuery({
+        queryKey: ['dashboardData', userId],
         queryFn: async () => {
             if (!userId) return null;
-            return getProfile(userId);
+
+            const [profileResult, onboardingResult] = await Promise.all([
+                supabase.from('profiles').select('*, has_seen_product_tour').eq('id', userId).single(),
+                supabase.from('user_onboarding').select('user_id').eq('user_id', userId).maybeSingle()
+            ]);
+
+            if (profileResult.error) throw profileResult.error;
+
+            const profile = profileResult.data;
+            const onboardingCompleted = !!onboardingResult.data;
+            const profileWithOnboarding = { ...profile, onboarding_completed: onboardingCompleted };
+
+            let trackData = { nextModule: null, nextPhase: null, completedCount: 0 };
+            if (onboardingCompleted) {
+                const { data: userTrack } = await supabase.from('user_tracks').select('module_ids').eq('user_id', userId).order('created_at', { ascending: false }).limit(1).maybeSingle();
+                if (userTrack?.module_ids?.length > 0) {
+                    let completedCount = 0, nextModuleData = null, nextPhaseData = null, nextPhaseFound = false;
+                    for (const moduleId of userTrack.module_ids) {
+                        const isCompleted = await isModuleCompleted(userId, moduleId);
+                        if (isCompleted) { completedCount++; } 
+                        else if (!nextPhaseFound) {
+                            const [moduleDetails, phaseDetails] = await Promise.all([getModuleById(moduleId), getUserNextPhase(userId, moduleId)]);
+                            if (moduleDetails && phaseDetails) {
+                                nextModuleData = moduleDetails;
+                                nextPhaseData = phaseDetails;
+                                nextPhaseFound = true;
+                            }
+                        }
+                    }
+                    trackData = { nextModule: nextModuleData, nextPhase: nextPhaseData, completedCount: completedCount };
+                }
+            }
+            return { profile: profileWithOnboarding, trackData };
         },
         enabled: !!userId,
     });
     
-    // =======================================================================
-    // ÁREA DA ALTERAÇÃO PRINCIPAL: LÓGICA DE BUSCA DA TRILHA E PROGRESSO
-    // =======================================================================
-    const { data: trackData, isLoading: isLoadingTrack } = useQuery({
-        queryKey: ['userTrackAndProgress', userId],
-        queryFn: async () => {
-            if (!userId) return null;
+    const profile = pageData?.profile;
+    const trackData = pageData?.trackData;
 
-            // 1. Busca a trilha mais recente do usuário na tabela 'user_tracks'
-            const { data: userTrack, error: trackError } = await supabase
-                .from('user_tracks')
-                .select('module_ids')
-                .eq('user_id', userId)
-                .order('created_at', { ascending: false })
-                .limit(1)
-                .maybeSingle();
+    // Efeito para disparar o tour
+    useEffect(() => {
+        if (profile && profile.onboarding_completed && !profile.has_seen_product_tour) {
+            setTimeout(() => {
+                setShowFeatureTour(true);
+            }, 500);
+        }
+    }, [profile]);
 
-            if (trackError) throw trackError;
-
-            // Se não houver trilha ou a trilha estiver vazia, retorna nulo.
-            if (!userTrack || !userTrack.module_ids || userTrack.module_ids.length === 0) {
-                return { nextModule: null, nextPhase: null, completedCount: 0 };
-            }
-
-            // 2. Itera sobre os IDs dos módulos DA TRILHA para encontrar o progresso
-            let completedCount = 0;
-            let nextModuleData: Module | null = null;
-            let nextPhaseData: any = null;
-            let nextPhaseFound = false;
-
-            for (const moduleId of userTrack.module_ids) {
-                const isCompleted = await isModuleCompleted(userId, moduleId);
-                
-                if (isCompleted) {
-                    completedCount++;
-                } else if (!nextPhaseFound) {
-                    // Este é o primeiro módulo não concluído da trilha.
-                    // Vamos buscar os detalhes dele e sua próxima fase.
-                    const [moduleDetails, phaseDetails] = await Promise.all([
-                        getModuleById(moduleId),
-                        getUserNextPhase(userId, moduleId)
-                    ]);
-                    
-                    if (moduleDetails && phaseDetails) {
-                        nextModuleData = moduleDetails;
-                        nextPhaseData = phaseDetails;
-                        nextPhaseFound = true; // Para o loop na próxima iteração
-                    }
-                }
-            }
-
-            // 3. Retorna os dados processados
-            return {
-                nextModule: nextModuleData,
-                nextPhase: nextPhaseData,
-                completedCount: completedCount,
-            };
-        },
-        enabled: !!userId, // A query só roda se tivermos um userId
-    });
-    
-    // Lógica diária (streak e bônus)
+    // Efeito para tarefas diárias (bônus e modal de boas-vindas)
     useEffect(() => {
         if (!userId) return;
-
         const handleDailyTasks = async () => {
             const wasStreakUpdated = await updateUserStreak(userId);
             if (wasStreakUpdated) {
-                queryClient.invalidateQueries({ queryKey: ['profile', userId] });
+                queryClient.invalidateQueries({ queryKey: ['dashboardData', userId] });
             }
-
             const todayStr = new Date().toISOString().split('T')[0];
-            const { count } = await supabase
-                .from('xp_history')
-                .select('id', { count: 'exact' })
-                .eq('user_id', userId)
-                .eq('source', 'DAILY_BONUS')
-                .gte('created_at', `${todayStr}T00:00:00.000Z`);
-            
+            const { count } = await supabase.from('xp_history').select('id', { count: 'exact' }).eq('user_id', userId).eq('source', 'DAILY_BONUS').gte('created_at', `${todayStr}T00:00:00.000Z`);
             if (count && count > 0) {
                 setDailyXpClaimed(true);
             }
         };
         handleDailyTasks();
-
         const todayStr = new Date().toISOString().split('T')[0];
         const storageKey = `lastWelcomeModalShow_${userId}`;
         const lastModalShowDate = localStorage.getItem(storageKey);
-
         if (lastModalShowDate !== todayStr) {
             setShowWelcomeModal(true);
             localStorage.setItem(storageKey, todayStr);
         }
-
     }, [userId, queryClient]);
-
-    // Hooks de cotação e desafio diário (sem alterações)
+    
+    // Hooks de cotação e desafio diário
     const { data: dailyQuote, isLoading: isLoadingQuote } = useDailyQuote();
     const dailyChallenge = useDailyChallenge(userId || '');
 
-    // Função de coletar XP diário (sem alterações)
+    // Função para fechar o tour
+    const handleTourClose = async () => {
+        setShowFeatureTour(false);
+        if (userId) {
+            try {
+                await supabase.from('profiles').update({ has_seen_product_tour: true }).eq('id', userId);
+                queryClient.invalidateQueries({ queryKey: ['dashboardData', userId] });
+            } catch (error) {
+                console.error("Falha ao marcar o tour como visto:", error);
+            }
+        }
+    };
+
+    // Função para coletar bônus diário de XP
     const handleClaimDailyXp = async () => {
         if (!userId || isClaiming || dailyXpClaimed) return;
         setIsClaiming(true);
@@ -213,7 +205,7 @@ const Index = () => {
             const { error } = await supabase.from('xp_history').insert({ user_id: userId, xp_amount: xpAmount, source: 'DAILY_BONUS' });
             if (error) throw error;
             setDailyXpClaimed(true);
-            queryClient.invalidateQueries({ queryKey: ['profile', userId] });
+            queryClient.invalidateQueries({ queryKey: ['dashboardData', userId] });
             toast.custom((t) => (
                 <div className="flex items-center gap-3 bg-card border border-border shadow-lg rounded-xl p-4 w-full max-w-sm">
                     <div className="bg-primary/10 p-2 rounded-full"><Gift className="h-6 w-6 text-primary" /></div>
@@ -232,14 +224,14 @@ const Index = () => {
         }
     };
     
-    // Dados mocados da comunidade (sem alterações)
+    // Dados mocados para a comunidade
     const communityPosts = [
         { id: 1, title: "Dicas para a primeira entrevista", author: "Mariana", preview: "Compartilho algumas dicas valiosas que me ajudaram...", authorAvatar: "https://i.pravatar.cc/150?img=5", replies: 5, likes: 12, timeAgo: "2h", tags: [] },
         { id: 2, title: "O que acharam do módulo de Growth Mindset?", author: "Lucas", preview: "Gostaria de saber a opinião de vocês sobre este módulo...", authorAvatar: "https://i.pravatar.cc/150?img=3", replies: 8, likes: 21, timeAgo: "4h", tags: [] },
     ];
     
-    // Renderização do Skeleton enquanto os dados carregam
-    if (isLoadingProfile || isLoadingTrack || !profile) {
+    // Renderização do estado de carregamento
+    if (isLoadingPage || !profile) {
         return (
             <Layout>
                 <DashboardSkeleton />
@@ -247,9 +239,14 @@ const Index = () => {
         );
     }
 
-    // JSX de retorno do componente
+    // Renderização principal do componente
     return (
         <Layout>
+            <FeatureTourModal
+                isOpen={showFeatureTour}
+                onClose={handleTourClose}
+                steps={tourSteps}
+            />
             <WelcomeModal 
                 open={showWelcomeModal} 
                 onOpenChange={setShowWelcomeModal} 
@@ -335,6 +332,11 @@ const Index = () => {
                                 <p className="text-sm text-emerald-600 dark:text-emerald-300">Você concluiu sua trilha personalizada!</p>
                             </div>
                         )}
+                        <Link to="/modulos" className="group p-6 bg-card rounded-2xl shadow-sm border transition-all duration-300 hover:shadow-lg hover:-translate-y-1.5 flex flex-col justify-center items-center text-center">
+                            <div className="p-3 bg-accent rounded-lg mb-3"><ArrowRight className="h-5 w-5 text-accent-foreground transition-transform group-hover:translate-x-1" /></div>
+                            <h3 className="font-bold text-card-foreground">Ver minha Trilha Completa</h3>
+                            <p className="text-sm text-muted-foreground">Veja todos os módulos recomendados.</p>
+                        </Link>
                     </div>
                     <div className="flex justify-between items-center">
                         <h2 className="font-bold text-lg text-foreground">Últimas na Comunidade</h2>

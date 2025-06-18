@@ -132,15 +132,10 @@ export default function ModernAdminDashboard() {
             <div className="max-w-screen-xl mx-auto">
                 <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold">Painel de Admin</h1>
-                        <p className="text-muted-foreground">Bem-vindo(a) de volta! Vamos gerenciar a plataforma.</p>
+                        <h1 className="text-3xl font-bold">Painel de Controle</h1>
+                        <p className="text-muted-foreground">Os principais indicadores e todos os módulos da plataforma estão aqui.</p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button variant="outline" size="icon" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-                            <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                            <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                            <span className="sr-only">Mudar tema</span>
-                        </Button>
                         <Button variant="outline" onClick={() => navigate("/inicio")}>
                             <Eye className="h-4 w-4 mr-2" /> Voltar ao App
                         </Button>
