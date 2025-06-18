@@ -9,9 +9,9 @@ export type ModuleType =
   | "comunicação"
   | "produtividade"
   | "carreira"
-  | "Habilidades"
+  | "habilidades"
   | "futuro";
-export type PhaseType = "text" | "video" | "quiz" | "challenge";
+export type PhaseType = "texto" | "video" | "quiz" | "desafio";
 
 export interface Module {
   id: number;

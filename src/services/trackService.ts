@@ -58,7 +58,11 @@ export async function generatePersonalizedTrack(userData: UserOnboardingData): P
     description: module.description,
     tags: module.tags,
     objective: module.objective,
-    problem_statements: module.problem_statements
+    problem_statements: module.problem_statements,
+    entry_trigger: module.entry_trigger,
+    success_outcomes: module.success_outcomes,
+    pre_requisites: module.pre_requisites,
+    is_published: module.is_published,
   }));
 
   // 3. Calcular a idade do usuário para dar mais contexto à IA.
@@ -83,13 +87,17 @@ export async function generatePersonalizedTrack(userData: UserOnboardingData): P
     ${JSON.stringify(modulesForAI, null, 2)}
 
     **Instruções Precisas:**
-    1.  Analise profundamente **TODOS** os dados de ${firstName}. Conecte seus desafios, metas e hobbies com os objetivos e problemas que cada módulo se propõe a resolver.
-    2.  Selecione EXATAMENTE 4 ou 5 módulos da lista que melhor se encaixam no perfil e nas necessidades atuais do usuário. A ordem de seleção é importante, comece pelo mais fundamental.
-    3.  Crie um texto de justificativa. O tom deve ser encorajador, pessoal e direto. **Use formatação Markdown para melhorar a legibilidade:**
-        - Comece com uma saudação pessoal para a ${firstName} e uma introdução de um parágrafo.
-        - Apresente cada módulo recomendado como um item de lista (usando '- ' ou '* ').
-        - Pule uma linha quando começar um novo parágrafo.
-        - Em cada item da lista, coloque o nome do módulo em **negrito** e explique brevemente (1 frase) por que ele foi escolhido, conectando com os dados do usuário.
+    1.  Analise profundamente os dados de ${firstName}.
+        - Identifique quais módulos são mais apropriados para ${firstName} com base em sua idade, gênero, metas e interesses.
+        - Ajuste a ordem dos módulos para que ${firstName} aprenda de maneira progressiva e gradual.
+        - Analise os objetivos dos módulos que mais atendem aos desafios e metas de ${firstName}.
+        - Analise os pré-requisitos de cada módulo.
+    2.  Selecione EXATAMENTE 4 ou 5 módulos da lista que melhor se encaixam no perfil. A ordem é importante.
+    3.  Crie um texto de justificativa em Markdown. O tom deve ser encorajador e pessoal. Siga **ESTRITAMENTE** esta estrutura de formatação:
+        - Comece com uma saudação pessoal (Ex: "Olá, ${firstName}!") seguida por um parágrafo de introdução.
+        - Para cada módulo recomendado, use a seguinte formatação:
+            - **Um título de nível 3 (usando '### ') seguido pelo nome do módulo.** Exemplo: "### AUTOCONFIANÇA: COMO CONSTRUIR SEM ARROGÂNCIA"
+            - Na linha seguinte, um parágrafo normal explicando a importância do módulo para ${firstName}.
         - Finalize com um parágrafo de encerramento motivacional.
     4.  **FORMATE SUA RESPOSTA FINAL ESTRITAMENTE COMO UM OBJETO JSON VÁLIDO, sem nenhum texto, markdown ou formatação adicional antes ou depois do JSON.** O JSON deve ter a seguinte estrutura:
         {

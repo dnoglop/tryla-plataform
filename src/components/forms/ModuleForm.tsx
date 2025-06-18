@@ -137,9 +137,10 @@ const ModuleForm = ({ module, onSuccess }: ModuleFormProps) => {
             <SelectTrigger id="type"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="autoconhecimento">Autoconhecimento</SelectItem>
-              <SelectItem value="empatia">Empatia</SelectItem>
-              <SelectItem value="growth">Crescimento</SelectItem>
               <SelectItem value="comunicacao">Comunicação</SelectItem>
+              <SelectItem value="carreira">Carreira</SelectItem>
+              <SelectItem value="produtividade">Produtividade</SelectItem>
+              <SelectItem value="habilidades">Habilidades</SelectItem>
               <SelectItem value="futuro">Futuro</SelectItem>
             </SelectContent>
           </Select>

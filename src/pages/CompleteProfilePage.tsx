@@ -354,7 +354,8 @@ const CompleteProfilePage = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="py-4 px-2 max-h-[60vh] overflow-y-auto pr-4">
-            <div className="prose prose-sm dark:prose-invert max-w-none">
+            <div className="prose prose-sm dark:prose-invert max-w-none 
+               prose-h3:text-foreground prose-h3:uppercase prose-h3:mb-2 prose-h3:mt-6 first-of-type:prose-h3:mt-2">
               <ReactMarkdown>
                 {aiJustification}
               </ReactMarkdown>
