@@ -19,9 +19,17 @@ export interface Module {
   name: string;
   description: string | null;
   type: ModuleType;
-  emoji: string;
+  emoji: string | null;
   order_index: number | null;
   content: string | null;
+  level: string | null;
+  entry_trigger: string | null;
+  objective: string | null;
+  tags: string[] | null;
+  pre_requisites: number[] | null;
+  problem_statements: string[] | null;
+  success_outcomes: string[] | null;
+  is_published: boolean;
 }
 
 export interface Phase {
@@ -60,16 +68,21 @@ export const getModules = async (): Promise<Module[]> => {
   try {
     const { data, error } = await supabase
       .from("modules")
-      .select("id, created_at, name, description, type, emoji, order_index, content")
+      .select('*') // Busca todas as colunas
       .order("order_index", { ascending: true });
-    if (error) throw error;
-    return (data || []).map(module => ({
-      ...module,
-      type: module.type as ModuleType,
-      content: module.content || null
-    }));
+      
+    if (error) {
+        console.error("Error fetching modules:", error);
+        throw error;
+    }
+
+    // Não precisamos mais do .map(). 
+    // O 'data' retornado já contém TODOS os campos e está no formato correto.
+    // Apenas retornamos o array de dados diretamente.
+    return (data as Module[]) || []; 
+
   } catch (error) {
-    console.error("Error fetching modules:", error);
+    console.error("Error in getModules function:", error);
     throw error;
   }
 };

@@ -2,14 +2,16 @@ import React, { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { createModule, updateModule, Module, ModuleType } from "@/services/moduleService"; // Garanta que a interface Module aqui inclua os novos campos
+// Sua interface Module precisa incluir todos os campos da tabela para o TypeScript funcionar bem.
+import { createModule, updateModule, Module, ModuleType } from "@/services/moduleService"; 
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
-// Definição dos valores do formulário para tipagem forte
+// Definição dos valores do formulário
 type FormValues = {
   name: string;
   description: string;
@@ -18,14 +20,14 @@ type FormValues = {
   level: string;
   objective: string;
   entry_trigger: string;
-  tags: string; // Usaremos string para o input, e converteremos para array no envio
-  pre_requisites: string; // Mesmo para pré-requisitos
+  tags: string;
+  pre_requisites: string;
   problem_statements: string;
   success_outcomes: string;
 };
 
 interface ModuleFormProps {
-  module?: Module; // A interface Module deve ser atualizada no moduleService.ts
+  module?: Module;
   onSuccess?: () => void;
 }
 
@@ -39,22 +41,14 @@ const ModuleForm = ({ module, onSuccess }: ModuleFormProps) => {
 
   const { register, handleSubmit, formState: { errors, isSubmitting }, reset, control } = useForm<FormValues>({
     defaultValues: {
-      name: '',
-      description: '',
-      emoji: '📚',
-      order_index: 0,
-      level: 'Básico',
-      objective: '',
-      entry_trigger: '',
-      tags: '',
-      pre_requisites: '',
-      problem_statements: '',
-      success_outcomes: ''
+      name: '', description: '', emoji: '📚', order_index: 0, level: 'Básico',
+      objective: '', entry_trigger: '', tags: '', pre_requisites: '',
+      problem_statements: '', success_outcomes: ''
     }
   });
 
   useEffect(() => {
-    if (module) {
+    if (isEditing && module) {
       reset({
         name: module.name || "",
         description: module.description || "",
@@ -63,22 +57,26 @@ const ModuleForm = ({ module, onSuccess }: ModuleFormProps) => {
         level: module.level || 'Básico',
         objective: module.objective || '',
         entry_trigger: module.entry_trigger || '',
-        // Converte arrays para string para popular o formulário
         tags: (module.tags || []).join(', '),
         pre_requisites: (module.pre_requisites || []).join(', '),
-        problem_statements: (module.problem_statements || []).join(', \n'),
-        success_outcomes: (module.success_outcomes || []).join(', \n'),
+        problem_statements: (module.problem_statements || []).join('\n'),
+        success_outcomes: (module.success_outcomes || []).join('\n'),
       });
       setModuleType((module.type as ModuleType) || "autoconhecimento");
+    } else {
+      // Garante que o formulário seja limpo ao mudar de edição para criação
+      reset();
     }
-  }, [module, reset]);
+  }, [module, isEditing, reset]);
 
   const mutation = useMutation({
-    mutationFn: ({ isEditing, data, id }: { isEditing: boolean, data: Partial<Module>, id?: number }) => {
+    mutationFn: ({ isEditing, data, id }: { isEditing: boolean, data: Omit<Module, 'id' | 'created_at' | 'updated_at'>, id?: number }) => {
       if (isEditing && id) {
+        // Para update, passamos apenas os campos que podem ser alterados
         return updateModule(id, data);
       }
-      return createModule(data as any);
+      // Para create, a função de serviço já espera o objeto correto
+      return createModule(data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['adminModules'] });
@@ -88,21 +86,31 @@ const ModuleForm = ({ module, onSuccess }: ModuleFormProps) => {
     onError: (error) => toast.error(`Erro: ${error.message}`),
   });
 
-  const onSubmit = async (data: FormValues) => {
-    // Processa os dados do formulário para o formato do banco de dados
-    const moduleData: Partial<Module> = {
-      ...data,
+  // ==========================================================
+  // FUNÇÃO onSubmit CORRIGIDA
+  // ==========================================================
+  const onSubmit = (data: FormValues) => {
+    // Mapeamento explícito para garantir a estrutura e tipos corretos para o Supabase
+    const moduleDataForSupabase: Omit<Module, 'id' | 'created_at' | 'updated_at'> = {
+      name: data.name,
+      description: data.description || null,
       type: moduleType,
-      // Converte strings separadas por vírgula em arrays de texto limpos
+      emoji: data.emoji || null,
+      order_index: data.order_index || 0,
+      content: module?.content || null, // Preserva o conteúdo existente se estiver editando
+      level: data.level || null,
+      entry_trigger: data.entry_trigger || null,
+      objective: data.objective || null,
       tags: data.tags.split(',').map(tag => tag.trim()).filter(Boolean),
-      // Converte IDs em array de números
       pre_requisites: data.pre_requisites.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id)),
-      // Converte textos separados por nova linha/vírgula em arrays
       problem_statements: data.problem_statements.split(/,|\n/).map(s => s.trim()).filter(Boolean),
       success_outcomes: data.success_outcomes.split(/,|\n/).map(s => s.trim()).filter(Boolean),
+      is_published: module?.is_published ?? true, // Preserva o status de publicação ou define como true
     };
 
-    mutation.mutate({ isEditing, data: moduleData, id: module?.id });
+    console.log("Dados a serem enviados:", moduleDataForSupabase); // Ótimo para debug
+
+    mutation.mutate({ isEditing, data: moduleDataForSupabase, id: module?.id });
   };
 
   return (
@@ -187,7 +195,7 @@ const ModuleForm = ({ module, onSuccess }: ModuleFormProps) => {
 
       <div className="flex justify-end space-x-2 pt-6 border-t mt-6">
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Salvando..." : isEditing ? "Atualizar Módulo" : "Criar Módulo"}
+          {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/>Salvando...</> : isEditing ? "Atualizar Módulo" : "Criar Módulo"}
         </Button>
       </div>
     </form>
