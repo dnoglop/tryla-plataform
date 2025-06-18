@@ -14,11 +14,12 @@ import { useDailyQuote } from "@/hooks/useDailyQuote";
 import { ArrowRight, Sparkles, X, Gift, CheckCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WeeklyProgressChart } from "@/components/WeeklyProgressChart";
-import { getModules, Module, getUserNextPhase, isModuleCompleted } from "@/services/moduleService";
-import { getProfile, Profile, updateUserStreak } from "@/services/profileService";
+// MODIFICADO: Removido 'getModules' que não será mais usado aqui. Adicionado 'getModuleById'.
+import { getModuleById, Module, getUserNextPhase, isModuleCompleted } from "@/services/moduleService";
+import { getProfile, updateUserStreak } from "@/services/profileService";
 import ForumThread from "@/components/ForumThread";
 
-// --- COMPONENTES VISUAIS AUXILIARES ---
+// --- COMPONENTES VISUAIS AUXILIARES (Nenhuma alteração aqui) ---
 
 const DashboardSkeleton = () => ( 
     <div className="bg-background min-h-screen">
@@ -35,36 +36,14 @@ const DashboardSkeleton = () => (
             
             <main className="p-4 sm:p-6 pt-0 space-y-6">
                 <Skeleton className="h-24 rounded-2xl bg-muted" />
-
-                <div className="flex items-center">
-                    <Skeleton className="h-6 w-40 bg-muted" />
-                </div>
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6"> 
-                    <Skeleton className="lg:col-span-2 h-60 rounded-2xl bg-muted" /> 
-                    <Skeleton className="h-60 rounded-2xl bg-muted" /> 
-                </div>
-
-                <div className="flex items-center">
-                    <Skeleton className="h-6 w-32 bg-muted" />
-                </div>
+                <div className="flex items-center"><Skeleton className="h-6 w-40 bg-muted" /></div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6"><Skeleton className="lg:col-span-2 h-60 rounded-2xl bg-muted" /><Skeleton className="h-60 rounded-2xl bg-muted" /></div>
+                <div className="flex items-center"><Skeleton className="h-6 w-32 bg-muted" /></div>
                 <Skeleton className="h-40 rounded-2xl bg-muted" />
-
-                <div className="flex items-center">
-                    <Skeleton className="h-6 w-48 bg-muted" />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Skeleton className="h-32 rounded-2xl bg-muted" />
-                    <Skeleton className="h-32 rounded-2xl bg-muted" />
-                </div>
-
-                <div className="flex justify-between items-center">
-                    <Skeleton className="h-6 w-52 bg-muted" />
-                    <Skeleton className="h-5 w-20 bg-muted" />
-                </div>
-                <div className="space-y-3">
-                    <Skeleton className="h-24 rounded-xl bg-muted" />
-                    <Skeleton className="h-24 rounded-xl bg-muted" />
-                </div>
+                <div className="flex items-center"><Skeleton className="h-6 w-48 bg-muted" /></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6"><Skeleton className="h-32 rounded-2xl bg-muted" /><Skeleton className="h-32 rounded-2xl bg-muted" /></div>
+                <div className="flex justify-between items-center"><Skeleton className="h-6 w-52 bg-muted" /><Skeleton className="h-5 w-20 bg-muted" /></div>
+                <div className="space-y-3"><Skeleton className="h-24 rounded-xl bg-muted" /><Skeleton className="h-24 rounded-xl bg-muted" /></div>
             </main>
         </div>
     </div>
@@ -79,38 +58,32 @@ const WelcomeModal = ({ open, onOpenChange, username, quote, isLoadingQuote }: {
                     <Sparkles className="mx-auto h-10 w-10 text-primary mb-4" /> 
                     <Dialog.Title className="text-2xl font-bold text-card-foreground">Olá, {username}!</Dialog.Title> 
                     <Dialog.Description className="text-muted-foreground mt-2 text-base min-h-[48px] flex items-center justify-center"> 
-                        {isLoadingQuote ? ( 
-                            <span className="italic">Carregando a inspiração de hoje...</span> 
-                        ) : ( 
-                            `"${quote || 'Sua jornada de sucesso começa agora.'}"` 
-                        )} 
+                        {isLoadingQuote ? ( <span className="italic">Carregando a inspiração de hoje...</span> ) : ( `"${quote || 'Sua jornada de sucesso começa agora.'}"` )} 
                     </Dialog.Description> 
                 </div>
                 <Dialog.Close asChild> 
                     <button className="mt-8 w-full px-4 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-base shadow-lg shadow-primary/30 transition-all hover:bg-primary/90 hover:-translate-y-0.5 active:translate-y-0 active:scale-95">Começar o dia!</button> 
                 </Dialog.Close> 
                 <Dialog.Close asChild> 
-                    <button aria-label="Fechar" className="absolute top-3 right-3 rounded-full p-1.5 transition-colors hover:bg-accent">
-                        <X className="h-5 w-5 text-muted-foreground" />
-                    </button> 
+                    <button aria-label="Fechar" className="absolute top-3 right-3 rounded-full p-1.5 transition-colors hover:bg-accent"><X className="h-5 w-5 text-muted-foreground" /></button> 
                 </Dialog.Close> 
             </Dialog.Content> 
         </Dialog.Portal> 
     </Dialog.Root>
 );
 
+
 // --- COMPONENTE PRINCIPAL ---
 const Index = () => {
     const queryClient = useQueryClient();
     
+    // States Locais
     const [userId, setUserId] = useState<string | null>(null);
-    const [nextPhase, setNextPhase] = useState<any>(null);
-    const [nextModule, setNextModule] = useState<Module | null>(null);
-    const [completedModulesCount, setCompletedModulesCount] = useState(0);
     const [showWelcomeModal, setShowWelcomeModal] = useState(false);
     const [dailyXpClaimed, setDailyXpClaimed] = useState(false);
     const [isClaiming, setIsClaiming] = useState(false);
 
+    // Efeito para pegar o ID do usuário ao montar o componente
     useEffect(() => {
         const fetchUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
@@ -121,7 +94,8 @@ const Index = () => {
         fetchUser();
     }, []);
 
-    const { data: profile, isLoading: isLoadingPage } = useQuery({
+    // Query para buscar o perfil do usuário
+    const { data: profile, isLoading: isLoadingProfile } = useQuery({
         queryKey: ['profile', userId],
         queryFn: async () => {
             if (!userId) return null;
@@ -129,7 +103,69 @@ const Index = () => {
         },
         enabled: !!userId,
     });
+    
+    // =======================================================================
+    // ÁREA DA ALTERAÇÃO PRINCIPAL: LÓGICA DE BUSCA DA TRILHA E PROGRESSO
+    // =======================================================================
+    const { data: trackData, isLoading: isLoadingTrack } = useQuery({
+        queryKey: ['userTrackAndProgress', userId],
+        queryFn: async () => {
+            if (!userId) return null;
 
+            // 1. Busca a trilha mais recente do usuário na tabela 'user_tracks'
+            const { data: userTrack, error: trackError } = await supabase
+                .from('user_tracks')
+                .select('module_ids')
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            if (trackError) throw trackError;
+
+            // Se não houver trilha ou a trilha estiver vazia, retorna nulo.
+            if (!userTrack || !userTrack.module_ids || userTrack.module_ids.length === 0) {
+                return { nextModule: null, nextPhase: null, completedCount: 0 };
+            }
+
+            // 2. Itera sobre os IDs dos módulos DA TRILHA para encontrar o progresso
+            let completedCount = 0;
+            let nextModuleData: Module | null = null;
+            let nextPhaseData: any = null;
+            let nextPhaseFound = false;
+
+            for (const moduleId of userTrack.module_ids) {
+                const isCompleted = await isModuleCompleted(userId, moduleId);
+                
+                if (isCompleted) {
+                    completedCount++;
+                } else if (!nextPhaseFound) {
+                    // Este é o primeiro módulo não concluído da trilha.
+                    // Vamos buscar os detalhes dele e sua próxima fase.
+                    const [moduleDetails, phaseDetails] = await Promise.all([
+                        getModuleById(moduleId),
+                        getUserNextPhase(userId, moduleId)
+                    ]);
+                    
+                    if (moduleDetails && phaseDetails) {
+                        nextModuleData = moduleDetails;
+                        nextPhaseData = phaseDetails;
+                        nextPhaseFound = true; // Para o loop na próxima iteração
+                    }
+                }
+            }
+
+            // 3. Retorna os dados processados
+            return {
+                nextModule: nextModuleData,
+                nextPhase: nextPhaseData,
+                completedCount: completedCount,
+            };
+        },
+        enabled: !!userId, // A query só roda se tivermos um userId
+    });
+    
+    // Lógica diária (streak e bônus)
     useEffect(() => {
         if (!userId) return;
 
@@ -151,7 +187,6 @@ const Index = () => {
                 setDailyXpClaimed(true);
             }
         };
-
         handleDailyTasks();
 
         const todayStr = new Date().toISOString().split('T')[0];
@@ -165,54 +200,20 @@ const Index = () => {
 
     }, [userId, queryClient]);
 
-    const { data: modules = [] } = useQuery({
-        queryKey: ['modules'],
-        queryFn: getModules,
-    });
-
-    useEffect(() => {
-        if (!userId || !modules || modules.length === 0) return;
-        
-        const fetchProgress = async () => {
-            let completedCount = 0;
-            let nextPhaseFound = false;
-            for (const module of modules) {
-                const isCompleted = await isModuleCompleted(userId, module.id);
-                if (isCompleted) {
-                    completedCount++;
-                } else if (!nextPhaseFound) {
-                    const nextPhaseData = await getUserNextPhase(userId, module.id);
-                    if (nextPhaseData) {
-                        setNextPhase(nextPhaseData);
-                        setNextModule(module);
-                        nextPhaseFound = true;
-                    }
-                }
-            }
-            setCompletedModulesCount(completedCount);
-        };
-        fetchProgress();
-    }, [userId, modules]);
-
+    // Hooks de cotação e desafio diário (sem alterações)
     const { data: dailyQuote, isLoading: isLoadingQuote } = useDailyQuote();
+    const dailyChallenge = useDailyChallenge(userId || '');
 
+    // Função de coletar XP diário (sem alterações)
     const handleClaimDailyXp = async () => {
         if (!userId || isClaiming || dailyXpClaimed) return;
         setIsClaiming(true);
-        
         try {
             const xpAmount = 50;
-            const { error } = await supabase.from('xp_history').insert({ 
-                user_id: userId, 
-                xp_amount: xpAmount,
-                source: 'DAILY_BONUS'
-            });
-
+            const { error } = await supabase.from('xp_history').insert({ user_id: userId, xp_amount: xpAmount, source: 'DAILY_BONUS' });
             if (error) throw error;
-            
             setDailyXpClaimed(true);
             queryClient.invalidateQueries({ queryKey: ['profile', userId] });
-
             toast.custom((t) => (
                 <div className="flex items-center gap-3 bg-card border border-border shadow-lg rounded-xl p-4 w-full max-w-sm">
                     <div className="bg-primary/10 p-2 rounded-full"><Gift className="h-6 w-6 text-primary" /></div>
@@ -223,7 +224,6 @@ const Index = () => {
                     <button onClick={() => toast.dismiss(t)} className="opacity-50 hover:opacity-100"><X size={18} /></button>
                 </div>
             ), { duration: 3000 });
-
         } catch (error: any) {
             console.error("Erro ao pegar o XP diário:", error.message);
             toast.error("Ops! Não foi possível pegar seu bônus diário.");
@@ -232,14 +232,14 @@ const Index = () => {
         }
     };
     
+    // Dados mocados da comunidade (sem alterações)
     const communityPosts = [
         { id: 1, title: "Dicas para a primeira entrevista", author: "Mariana", preview: "Compartilho algumas dicas valiosas que me ajudaram...", authorAvatar: "https://i.pravatar.cc/150?img=5", replies: 5, likes: 12, timeAgo: "2h", tags: [] },
         { id: 2, title: "O que acharam do módulo de Growth Mindset?", author: "Lucas", preview: "Gostaria de saber a opinião de vocês sobre este módulo...", authorAvatar: "https://i.pravatar.cc/150?img=3", replies: 8, likes: 21, timeAgo: "4h", tags: [] },
     ];
-
-    const dailyChallenge = useDailyChallenge(userId || '');
     
-    if (isLoadingPage || !profile) {
+    // Renderização do Skeleton enquanto os dados carregam
+    if (isLoadingProfile || isLoadingTrack || !profile) {
         return (
             <Layout>
                 <DashboardSkeleton />
@@ -247,6 +247,7 @@ const Index = () => {
         );
     }
 
+    // JSX de retorno do componente
     return (
         <Layout>
             <WelcomeModal 
@@ -303,50 +304,37 @@ const Index = () => {
                                 <p className="text-sm text-muted-foreground font-medium">XP Total</p>
                             </div>
                             <div>
-                                <p className="text-4xl font-bold text-primary">{completedModulesCount}</p>
+                                <p className="text-4xl font-bold text-primary">{trackData?.completedCount || 0}</p>
                                 <p className="text-sm text-muted-foreground font-medium">Módulos Concluídos</p>
                             </div>
                         </div>
                     </div>
 
                     <div className="flex justify-between items-center">
-                        <h2 className="font-bold text-lg text-foreground">
-                            Desafio do Dia
-                        </h2>
+                        <h2 className="font-bold text-lg text-foreground">Desafio do Dia</h2>
                     </div>
-                    <DailyChallengeCard
-                        challenge={dailyChallenge.currentChallenge}
-                        timeRemaining={dailyChallenge.timeRemaining}
-                        onComplete={dailyChallenge.completeChallenge}
-                        canComplete={dailyChallenge.canComplete}
-                        isLoading={dailyChallenge.isLoading}
-                    />
+                    <DailyChallengeCard challenge={dailyChallenge.currentChallenge} timeRemaining={dailyChallenge.timeRemaining} onComplete={dailyChallenge.completeChallenge} canComplete={dailyChallenge.canComplete} isLoading={dailyChallenge.isLoading}/>
 
                     <h2 className="font-bold text-lg text-foreground">Continue sua Jornada</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {nextModule && nextPhase ? (
-                            <Link to={`/modulo/${nextModule.id}`} className="group relative p-6 bg-primary/10 rounded-2xl shadow-sm border border-primary/20 transition-all duration-300 hover:shadow-lg hover:-translate-y-1.5 flex flex-col justify-between">
+                        {trackData?.nextModule && trackData?.nextPhase ? (
+                            <Link to={`/modulo/${trackData.nextModule.id}`} className="group relative p-6 bg-primary/10 rounded-2xl shadow-sm border border-primary/20 transition-all duration-300 hover:shadow-lg hover:-translate-y-1.5 flex flex-col justify-between">
                                 <div>
                                     <div className="flex justify-between items-start">
                                         <h3 className="text-xl font-bold text-foreground">Continuar Trilha</h3>
                                         <div className="p-3 bg-primary rounded-lg"><ArrowRight className="h-5 w-5 text-primary-foreground" /></div>
                                     </div>
-                                    <p className="font-semibold text-primary mt-2">{nextModule.name}</p>
-                                    <p className="text-sm text-muted-foreground">{nextPhase.name}</p>
+                                    <p className="font-semibold text-primary mt-2">{trackData.nextModule.name}</p>
+                                    <p className="text-sm text-muted-foreground">{trackData.nextPhase.name}</p>
                                 </div>
                             </Link>
                         ) : (
                             <div className="p-6 bg-emerald-500/10 border-emerald-500/20 border rounded-2xl text-center flex flex-col justify-center items-center">
                                 <Sparkles className="h-10 w-10 text-emerald-600 mb-2" />
                                 <h3 className="font-bold text-emerald-700 dark:text-emerald-400">Parabéns!</h3>
-                                <p className="text-sm text-emerald-600 dark:text-emerald-300">Você concluiu todas as trilhas!</p>
+                                <p className="text-sm text-emerald-600 dark:text-emerald-300">Você concluiu sua trilha personalizada!</p>
                             </div>
                         )}
-                        <Link to="/modulos" className="group p-6 bg-card rounded-2xl shadow-sm border transition-all duration-300 hover:shadow-lg hover:-translate-y-1.5 flex flex-col justify-center items-center text-center">
-                            <div className="p-3 bg-accent rounded-lg mb-3"><ArrowRight className="h-5 w-5 text-accent-foreground transition-transform group-hover:translate-x-1" /></div>
-                            <h3 className="font-bold text-card-foreground">Ver todos os Módulos</h3>
-                            <p className="text-sm text-muted-foreground">Explore novas trilhas de aprendizado.</p>
-                        </Link>
                     </div>
                     <div className="flex justify-between items-center">
                         <h2 className="font-bold text-lg text-foreground">Últimas na Comunidade</h2>

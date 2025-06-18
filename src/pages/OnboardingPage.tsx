@@ -12,7 +12,7 @@ const OnboardingPage = () => {
     if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
     } else {
-      navigate("/complete-profile");
+      navigate("/completar-perfil");
     }
   };
 
