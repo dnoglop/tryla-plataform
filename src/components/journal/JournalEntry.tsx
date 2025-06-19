@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Heart, MoreVertical, Pencil, Trash, BookOpen } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -32,20 +31,20 @@ const JournalEntry: React.FC<JournalEntryProps> = ({
     : '';
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
-      <div className="flex justify-between items-start mb-2">
-        <div className="flex items-center gap-2">
-          <div className="text-2xl">{entry.emoji || '📝'}</div>
-          <h3 className="font-bold text-lg">{entry.title}</h3>
+    <div className="bg-card rounded-lg shadow-sm border border-border p-4 mb-4 flex flex-col gap-3">
+      <div className="flex justify-between items-start">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">{entry.emoji || '📝'}</span>
+          <h3 className="font-bold text-lg text-foreground">{entry.title}</h3>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center">
           <Button
             variant="ghost"
             size="icon"
-            className={entry.is_favorite ? "text-red-500" : "text-gray-400"}
+            className={entry.is_favorite ? "text-red-500 hover:text-red-600" : "text-muted-foreground hover:text-foreground"}
             onClick={() => onToggleFavorite(entry.id!, !entry.is_favorite)}
           >
-            <Heart className={`w-5 h-5 ${entry.is_favorite ? "fill-red-500" : ""}`} />
+            <Heart className={`w-5 h-5 ${entry.is_favorite ? "fill-current" : ""}`} />
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -59,7 +58,7 @@ const JournalEntry: React.FC<JournalEntryProps> = ({
                 Editar
               </DropdownMenuItem>
               <DropdownMenuItem 
-                className="text-red-500"
+                className="text-destructive focus:text-destructive"
                 onClick={() => onDelete(entry.id!)}
               >
                 <Trash className="w-4 h-4 mr-2" />
@@ -70,15 +69,22 @@ const JournalEntry: React.FC<JournalEntryProps> = ({
         </div>
       </div>
       
-      {moduleName && (
-        <div className="flex items-center gap-1 text-xs text-blue-600 mb-2 bg-blue-50 py-1 px-2 rounded-full inline-block">
-          <BookOpen className="w-3 h-3" />
-          <span>{moduleName}</span>
-        </div>
-      )}
+      {/* --- EXIBIÇÃO DO CONTEÚDO ADICIONADA AQUI --- */}
+      <div className="prose prose-sm dark:prose-invert max-w-none text-foreground/90 whitespace-pre-line">
+        {entry.content}
+      </div>
       
-      <p className="text-gray-700 whitespace-pre-line">{entry.content}</p>
-      <div className="text-xs text-gray-500 mt-3">{formattedDate}</div>
+      <div className="flex justify-between items-center mt-2">
+        {moduleName ? (
+            <div className="flex items-center gap-1.5 text-xs text-primary bg-primary/10 py-1 px-2.5 rounded-full">
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>{moduleName}</span>
+            </div>
+        ) : (
+            <div></div> // Mantém o alinhamento
+        )}
+        <div className="text-xs text-muted-foreground">{formattedDate}</div>
+      </div>
     </div>
   );
 };

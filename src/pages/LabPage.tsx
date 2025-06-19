@@ -1,9 +1,11 @@
+
 // src/pages/LabPage.tsx
 
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { getProfile, Profile } from "@/services/profileService";
+import { Button } from "@/components/ui/button";
 import {
   BrainCircuit,
   BookOpen,
@@ -73,7 +75,7 @@ const tools: Tool[] = [
     },
   },
   {
-    path: "/lab/pomodoro",
+    path: "/pomodoro",
     icon: Timer,
     title: "Modo Foco",
     description: "Concentre-se como um ninja e derrote a procrastinação.",

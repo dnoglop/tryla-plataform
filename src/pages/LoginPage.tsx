@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,7 +17,7 @@ const LoginPage = () => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        navigate("/dashboard", { replace: true });
+        navigate("/inicio", { replace: true });
       }
     };
     checkSession();
@@ -38,7 +39,7 @@ const LoginPage = () => {
       
       if (data.session) {
         toast.success("Login realizado com sucesso!");
-        navigate("/dashboard");
+        navigate("/inicio");
       }
 
     } catch (error: any) {
@@ -58,7 +59,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-amber-50 to-white">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-primary/5 to-background">
       <div className="flex-1 flex flex-col items-center justify-center p-6">
         <div className="w-52 h-22 flex items-center justify-center mb-2">
           <img
@@ -67,16 +68,16 @@ const LoginPage = () => {
             className="w-full h-auto"
           />
         </div>
-        <p className="text-gray-500 mb-4">Continue a sua jornada!</p>
+        <p className="text-muted-foreground mb-4">Continue a sua jornada!</p>
 
-        <div className="w-full max-w-sm bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-          <h2 className="text-xl font-bold text-center mb-6 text-slate-800">
+        <div className="w-full max-w-sm bg-card rounded-xl shadow-sm p-6 border">
+          <h2 className="text-xl font-bold text-center mb-6 text-foreground">
             Que bom te ver de novo!
           </h2>
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium text-slate-700">
+              <label htmlFor="email" className="text-sm font-medium text-foreground">
                 E-mail
               </label>
               <Input
@@ -84,14 +85,14 @@ const LoginPage = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border text-gray-700 border-gray-300 p-3 h-11 focus:border-[#E36322] focus:outline-none focus:ring-1 focus:ring-[#E36322]"
+                className="w-full rounded-lg border border-border p-3 h-11 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 placeholder="seu.email@exemplo.com"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium text-slate-700">
+              <label htmlFor="password" className="text-sm font-medium text-foreground">
                 Senha
               </label>
               <Input
@@ -99,7 +100,7 @@ const LoginPage = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg border text-gray-700 border-gray-300 p-3 h-11 focus:border-[#E36322] focus:outline-none focus:ring-1 focus:ring-[#E36322]"
+                className="w-full rounded-lg border border-border p-3 h-11 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 placeholder="••••••••"
                 required
               />
@@ -107,7 +108,7 @@ const LoginPage = () => {
 
             <Button
               type="submit"
-              className="w-full bg-[#E36322] hover:bg-[#E36322]/90 text-white font-semibold py-3 h-11 text-base"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 h-11 text-base"
               disabled={loading}
             >
               {loading ? (
@@ -121,7 +122,7 @@ const LoginPage = () => {
           <div className="mt-6 text-center">
             <Link
               to="/cadastro"
-              className="text-sm text-[#E36322] hover:underline font-medium"
+              className="text-sm text-primary hover:underline font-medium"
             >
               Não tem uma conta? Cadastre-se!
             </Link>
@@ -129,7 +130,7 @@ const LoginPage = () => {
         </div>
       </div>
       <div className="p-4 text-center">
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-muted-foreground">
           © {new Date().getFullYear()} Tryla. Feito com carinho priorizando seu aprendizado.
         </p>
       </div>

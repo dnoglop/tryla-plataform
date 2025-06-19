@@ -1,61 +1,39 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai";
+import { corsHeaders } from '../_shared/cors.ts';
 
-const GEMINI_API_KEY = Deno.env.get("AIzaSyC2k_wHa44xckc0LmywuO43_MprtaC_ehM");
-if (!GEMINI_API_KEY) {
-  console.error("GEMINI_API_KEY não foi definida nas variáveis de ambiente.");
-}
-
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY!);
-
-// Cabeçalhos CORS que vamos reutilizar
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*", // Permite qualquer origem (ideal para desenvolvimento)
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-serve(async (req) => {
-  // <<< A CORREÇÃO PRINCIPAL ESTÁ AQUI >>>
-  // Lida especificamente com a requisição de verificação (preflight) do CORS
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
-
+serve(async (_req) => {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
+    if (!geminiApiKey) {
+      throw new Error("A configuração do servidor de IA está incompleta.");
+    }
 
-    const prompt = `
-      Gere uma única frase curta e inspiradora para um jovem que está em uma jornada de autoconhecimento e desenvolvimento de habilidades. 
-      A frase deve ser positiva, direta e motivacional. 
-      Use uma linguagem moderna e acessível, como se fosse um mentor gente boa falando. 
-      Não inclua aspas na resposta.
-      A resposta deve ter no máximo 150 caracteres.
-    `;
+    const prompt = "Gere uma única frase curta (máximo 150 caracteres), inspiradora e direta para um(a) jovem estudante na sua jornada de evolução pessoal e profissional. Tom de mentor amigável, diverdito e alto astral. Não use aspas.";
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`;
+    const geminiResponse = await fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+    });
 
-    return new Response(
-      JSON.stringify({ quote: text }),
-      { 
-        headers: { 
-          ...corsHeaders, // Reutiliza os cabeçalhos CORS
-          "Content-Type": "application/json" 
-        } 
-      }
-    );
+    const geminiData = await geminiResponse.json();
+    if (!geminiResponse.ok) {
+        throw new Error(geminiData.error.message || "Falha na comunicação com a IA.");
+    }
+
+    const quote = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!quote) {
+        throw new Error('A IA não conseguiu gerar uma frase.');
+    }
+
+    return new Response(JSON.stringify({ quote }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (error) {
-    console.error("Erro ao gerar citação do Gemini:", error);
-    return new Response(
-      JSON.stringify({ error: "Não foi possível gerar a citação." }),
-      { 
-        status: 500, 
-        headers: { 
-          ...corsHeaders, // Reutiliza os cabeçalhos CORS
-          "Content-Type": "application/json" 
-        } 
-      }
-    );
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });

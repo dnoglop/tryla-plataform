@@ -1,59 +1,69 @@
 
-import React, { useEffect, useState } from 'react';
-import { getProfile } from '@/services/profileService';
+import { Trophy, Star, Zap } from "lucide-react";
 
-export interface UserLevelProps {
-  level?: number;
-  xp?: number;
-  nextLevelXp?: number;
-  userId?: string;  // Added userId as optional prop
-  className?: string;
+interface UserLevelProps {
+  level: number;
+  currentXp: number;
+  nextLevelXp: number;
+  totalXp?: number;
+  showDetails?: boolean;
 }
 
-const UserLevel: React.FC<UserLevelProps> = ({ 
-  level: propLevel, 
-  xp: propXp, 
-  nextLevelXp, 
-  userId,
-  className = ""
-}) => {
-  const [level, setLevel] = useState<number>(propLevel || 1);
-  const [xp, setXp] = useState<number>(propXp || 0);
-  
-  // If userId is provided, fetch the user's level and XP
-  useEffect(() => {
-    if (userId) {
-      const fetchUserLevel = async () => {
-        const profile = await getProfile(userId);
-        if (profile) {
-          setLevel(profile.level || 1);
-          setXp(profile.xp || 0);
-        }
-      };
-      
-      fetchUserLevel();
-    }
-  }, [userId]);
-  
-  // Calculate XP needed for current level and progress to next level (100 XP per level)
-  const currentLevelStartXp = (level - 1) * 100;
-  const nextLevelStartXp = level * 100;
-  const currentLevelXp = xp - currentLevelStartXp;
-  const xpNeededForNextLevel = 100; // Always 100 XP per level
-  
-  const progress = Math.min(Math.floor((currentLevelXp / xpNeededForNextLevel) * 100), 100);
+const UserLevel = ({ level, currentXp, nextLevelXp, totalXp, showDetails = false }: UserLevelProps) => {
+  const progress = (currentXp / nextLevelXp) * 100;
+  const xpToNext = nextLevelXp - currentXp;
+
+  const getLevelIcon = () => {
+    if (level >= 50) return <Trophy className="h-5 w-5 text-amber-500" />;
+    if (level >= 25) return <Star className="h-5 w-5 text-primary" />;
+    return <Zap className="h-5 w-5 text-primary" />;
+  };
+
+  const getLevelTitle = () => {
+    if (level >= 50) return "Mestre";
+    if (level >= 25) return "Especialista";
+    if (level >= 10) return "Avançado";
+    if (level >= 5) return "Intermediário";
+    return "Iniciante";
+  };
 
   return (
-    <div className={`mt-2 ${className}`}>
-      <div className="flex justify-between items-center text-xs text-gray-600">
-        <span>Nível {level}</span>
-        <span>{xp} XP</span>
+    <div className="bg-card p-4 rounded-xl shadow-sm border">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          {getLevelIcon()}
+          <span className="font-bold text-card-foreground">
+            Nível {level}
+          </span>
+          <span className="text-sm text-muted-foreground">
+            • {getLevelTitle()}
+          </span>
+        </div>
+        
+        {showDetails && totalXp && (
+          <div className="text-right">
+            <p className="text-xs text-muted-foreground">Total XP</p>
+            <p className="font-semibold text-card-foreground">{totalXp.toLocaleString()}</p>
+          </div>
+        )}
       </div>
-      <div className="w-full h-2 bg-gray-200 rounded-full mt-1">
-        <div 
-          className="h-full bg-[#9b87f5] rounded-full"
-          style={{ width: `${progress}%` }}
-        />
+      
+      <div className="space-y-2">
+        <div className="flex justify-between items-center text-sm">
+          <span className="text-muted-foreground">
+            {currentXp} / {nextLevelXp} XP
+          </span>
+          <span className="text-primary font-medium">
+            {xpToNext} para próximo nível
+          </span>
+        </div>
+        
+        <div className="w-full bg-muted rounded-full h-2">
+          <div 
+            className="bg-primary h-2 rounded-full transition-all duration-500"
+            style={{ width: `${Math.min(progress, 100)}%` }}
+          />
+        </div>
       </div>
     </div>
   );

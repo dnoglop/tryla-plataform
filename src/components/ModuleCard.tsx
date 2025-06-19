@@ -1,75 +1,84 @@
-import { useNavigate } from "react-router-dom";
-import { Progress } from "@/components/ui/progress";
-import { Lock, CheckCircle } from "lucide-react";
+
+import { Link } from "react-router-dom";
+import { Clock, Play, CheckCircle2, Lock } from "lucide-react";
 
 interface ModuleCardProps {
   id: number;
-  title: string;
-  description?: string | null;
-  emoji?: string | null;
-  type: string;
+  name: string;
+  description: string;
+  emoji?: string;
+  type?: string;
+  estimatedTime?: string;
   progress: number;
-  completed: boolean;
-  locked: boolean;
+  locked?: boolean;
+  completed?: boolean;
 }
 
-const ModuleCard = ({ id, title, description, emoji, type, progress, completed, locked }: ModuleCardProps) => {
-  const navigate = useNavigate();
-
-  const handleCardClick = () => {
-    if (!locked) {
-      navigate(`/modulo/${id}`);
-    }
-  };
-
-  const typeColors: Record<string, string> = {
-    autoconhecimento: "bg-yellow-50",
-    empatia: "bg-red-50",
-    growth: "bg-green-50",
-    comunicacao: "bg-blue-50",
-    futuro: "bg-purple-50",
-    default: "bg-gray-100"
-  };
-  const bgColor = typeColors[type] || typeColors.default;
-
-  return (
-    <div
-      onClick={handleCardClick}
-      className={`relative p-4 rounded-2xl shadow-md h-full flex flex-col justify-between transition-all duration-300 ${
-        locked 
-          ? 'bg-gray-100 cursor-not-allowed' 
-          : `${bgColor} cursor-pointer hover:shadow-xl hover:-translate-y-1`
-      }`}
-    >
-      <div className={`flex flex-col flex-grow ${locked ? 'opacity-40' : ''}`}>
-        <div className="flex justify-between items-start mb-2">
-          <div className="flex-grow">
-            <h3 className="text-lg font-bold text-gray-800">{title}</h3>
-            <p className="text-xs text-gray-500 mt-1">{description}</p>
-          </div>
-          <span className="text-3xl ml-3">{emoji || "✨"}</span>
+const ModuleCard = ({ 
+  id, 
+  name, 
+  description, 
+  emoji,
+  type,
+  estimatedTime, 
+  progress, 
+  locked = false,
+  completed = false
+}: ModuleCardProps) => {
+  const CardContent = () => (
+    <div className={`bg-card p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-sm border transition-all hover:shadow-md ${!locked ? 'hover:scale-[1.02] hover:border-primary cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}>
+      <div className="flex items-center gap-4 mb-4">
+        <div className="flex-shrink-0 h-12 w-12 sm:h-16 sm:w-16 flex items-center justify-center rounded-xl sm:rounded-2xl bg-primary/10 text-2xl sm:text-3xl">
+          {locked ? <Lock className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground" /> : emoji || "📚"}
         </div>
-        <div className="mt-auto pt-4">
+        
+        <div className="flex-1 min-w-0">
+          <h3 className="font-bold text-card-foreground text-base sm:text-lg line-clamp-2">{name}</h3>
+          <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mt-1">{description}</p>
+        </div>
+        
+        <div className="flex-shrink-0">
           {completed ? (
-             <div className="flex items-center gap-2 text-sm font-semibold text-green-600">
-               <CheckCircle size={18} />
-               <span>Concluído</span>
-             </div>
+            <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+          ) : locked ? (
+            <Lock className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
           ) : (
-            <div>
-              <Progress value={progress} className="h-1.5 bg-gray-200 [&>*]:bg-orange-500" />
-              <p className="text-xs text-gray-500 mt-1">{Math.round(progress)}%</p>
-            </div>
+            <Play className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
           )}
         </div>
       </div>
-      {locked && (
-        <div className="absolute inset-0 bg-gray-300/40 backdrop-blur-sm flex flex-col items-center justify-center rounded-2xl">
-          <Lock className="h-5 w-5 text-gray-500" />
-          <span className="text-sm font-semibold text-gray-600 mt-1">Bloqueado</span>
+      
+      <div className="space-y-3">
+        <div className="flex items-center justify-between text-xs sm:text-sm">
+          <span className="text-muted-foreground">Progresso</span>
+          <span className="font-medium text-card-foreground">{Math.round(progress)}%</span>
         </div>
-      )}
+        
+        <div className="w-full bg-muted rounded-full h-2">
+          <div 
+            className="bg-primary h-2 rounded-full transition-all duration-300"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+        
+        {estimatedTime && (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Clock className="h-3 w-3" />
+            <span>{estimatedTime}</span>
+          </div>
+        )}
+      </div>
     </div>
+  );
+
+  if (locked) {
+    return <CardContent />;
+  }
+
+  return (
+    <Link to={`/modulo/${id}`}>
+      <CardContent />
+    </Link>
   );
 };
 

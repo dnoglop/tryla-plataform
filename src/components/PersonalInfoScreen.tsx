@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -18,19 +19,19 @@ export function PersonalInfoScreen({ onSubmit }: PersonalInfoScreenProps) {
   };
 
   return (
-    <div className="bg-white p-6 sm:p-10 rounded-2xl shadow-md border border-slate-200/80 text-center">
-      <h2 className="text-2xl md:text-3xl font-bold text-slate-800 mb-2">O Toque Final!</h2>
-      <p className="text-slate-600 mb-6 max-w-lg mx-auto">
+    <div className="bg-card p-6 sm:p-10 rounded-2xl shadow-md border border-border text-center">
+      <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">O Toque Final!</h2>
+      <p className="text-muted-foreground mb-6 max-w-lg mx-auto">
         Seus talentos são únicos. Agora, conte pra gente: o que te move? Fale sobre seus hobbies, valores ou paixões.
       </p>
       <Textarea
         value={hobbies}
         onChange={(e) => setHobbies(e.target.value)}
         rows={5}
-        className="bg-slate-50 border-slate-200 focus:ring-orange-500"
+        className="bg-background border-border focus:ring-primary"
         placeholder="Ex: Amo games de estratégia, maratonar séries, lutar por um mundo mais justo, desenhar, etc..."
       />
-      <Button onClick={handleSubmit} className="mt-6 bg-orange-500 hover:bg-orange-600 text-lg px-12 py-6 shadow-lg w-full sm:w-auto">
+      <Button onClick={handleSubmit} className="mt-6 bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-12 py-6 shadow-lg w-full sm:w-auto">
         Ver meu Resultado
       </Button>
     </div>

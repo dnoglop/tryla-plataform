@@ -1,9 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
 
-// Ícones e Componentes
 import { ArrowLeft } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StartScreen } from "../components/StartScreen";
@@ -11,33 +11,29 @@ import { QuizScreen } from "../components/QuizScreen";
 import { PersonalInfoScreen } from "../components/PersonalInfoScreen";
 import { LoadingScreen } from "../components/LoadingScreen";
 import { ResultScreen } from "../components/ResultScreen";
-// Dados e Serviços
 import { questions } from "../data/questions";
 import { getFinalAIAnalysis } from "../lib/geminiService";
 import { getProfile, Profile } from "@/services/profileService";
 
-// Esqueleto de carregamento que imita o novo layout
 const VocationalTestSkeleton = () => (
-    <div className="min-h-screen w-full bg-slate-100 animate-pulse">
+    <div className="min-h-screen w-full bg-background animate-pulse">
         <header className="p-4 sm:p-6 lg:p-8">
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-4">
-                    <Skeleton className="h-10 w-10 rounded-full bg-slate-200" />
+                    <Skeleton className="h-10 w-10 rounded-full bg-muted" />
                     <div className="space-y-2">
-                        <Skeleton className="h-7 w-48 bg-slate-200" />
+                        <Skeleton className="h-7 w-48 bg-muted" />
                     </div>
                 </div>
-                <Skeleton className="h-12 w-12 rounded-full bg-slate-200" />
+                <Skeleton className="h-12 w-12 rounded-full bg-muted" />
             </div>
         </header>
         <div className="flex items-center justify-center p-4">
-            <Skeleton className="h-96 w-full max-w-2xl rounded-2xl bg-slate-200" />
+            <Skeleton className="h-96 w-full max-w-2xl rounded-2xl bg-muted" />
         </div>
     </div>
 );
 
-
-// Tipos
 type Screen = "start" | "quiz" | "personal-info" | "loading" | "result";
 type Scores = Record<"R" | "I" | "A" | "S" | "E" | "C", number>;
 
@@ -72,7 +68,6 @@ export function VocationalTestPage() {
   const handleStart = () => setScreen("quiz");
 
   const handleRestart = () => {
-    // Reseta todos os estados para o início
     setScreen("start");
     setCurrentQuestionIndex(0);
     setScores({ R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 });
@@ -119,33 +114,31 @@ export function VocationalTestPage() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-slate-100">
-      {/* O HEADER AGORA FICA FORA DA LÓGICA DE TROCA DE TELA */}
+    <div className="min-h-screen w-full bg-background">
       <header className="p-4 sm:p-6 lg:p-8">
         <div className="flex justify-between items-center">
             <div className="flex items-center gap-4">
                 <button
                     onClick={() => navigate(-1)}
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md transition-transform hover:scale-110 active:scale-95"
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-card shadow-md transition-transform hover:scale-110 active:scale-95"
                     aria-label="Voltar"
                 >
-                    <ArrowLeft className="h-5 w-5 text-gray-600" />
+                    <ArrowLeft className="h-5 w-5 text-muted-foreground" />
                 </button>
                 <div>
-                    <h1 className="text-xl md:text-2xl font-bold text-slate-800">Oráculo Vocacional</h1>
+                    <h1 className="text-xl md:text-2xl font-bold text-foreground">Oráculo Vocacional</h1>
                 </div>
             </div>
             <Link to="/perfil">
                 <img
                     src={profile.avatar_url || ''}
                     alt="Foto do perfil"
-                    className="h-12 w-12 rounded-full object-cover border-2 border-white shadow-md transition-transform hover:scale-110"
+                    className="h-12 w-12 rounded-full object-cover border-2 border-card shadow-md transition-transform hover:scale-110"
                 />
             </Link>
         </div>
       </header>
       
-      {/* Apenas o conteúdo principal é trocado */}
       <main className="flex items-center justify-center p-4">
         <div className="container mx-auto max-w-2xl">
             {renderScreen()}

@@ -78,6 +78,39 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_challenges: {
+        Row: {
+          challenge_text: string
+          completed: boolean
+          created_at: string
+          created_date: string
+          expires_at: string
+          id: string
+          related_phase: string | null
+          user_id: string
+        }
+        Insert: {
+          challenge_text: string
+          completed?: boolean
+          created_at?: string
+          created_date: string
+          expires_at: string
+          id?: string
+          related_phase?: string | null
+          user_id: string
+        }
+        Update: {
+          challenge_text?: string
+          completed?: boolean
+          created_at?: string
+          created_date?: string
+          expires_at?: string
+          id?: string
+          related_phase?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       learning_journals: {
         Row: {
           content: string
@@ -496,6 +529,30 @@ export type Database = {
       add_daily_xp: {
         Args: { user_id_param: string; xp_amount: number }
         Returns: undefined
+      }
+      complete_phase_and_award_xp_atomic: {
+        Args: {
+          p_user_id: string
+          p_phase_id: number
+          p_module_id: number
+          p_is_quiz: boolean
+        }
+        Returns: {
+          xp_from_phase: number
+          xp_from_module: number
+        }[]
+      }
+      get_user_ranking_by_period: {
+        Args: { p_period: string }
+        Returns: {
+          id: string
+          username: string
+          full_name: string
+          avatar_url: string
+          xp: number
+          level: number
+          rank: number
+        }[]
       }
       get_weekly_xp_history: {
         Args: { p_user_id: string }

@@ -1,6 +1,8 @@
+
 import React from "react";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, MoreHorizontal } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 export interface HeaderProps {
   title: string;
@@ -8,6 +10,8 @@ export interface HeaderProps {
   onBackClick?: () => void;
   backButtonTarget?: string;
   rightContent?: React.ReactNode;
+  subtitle?: string;
+  className?: string;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -16,47 +20,60 @@ const Header: React.FC<HeaderProps> = ({
   onBackClick,
   backButtonTarget,
   rightContent,
+  subtitle,
+  className,
 }) => {
   const navigate = useNavigate();
 
-  // Função para lidar com a navegação de volta
   const handleBackNavigation = () => {
-    // Se um callback customizado for fornecido, use-o
     if (onBackClick) {
       onBackClick();
-    // Se um destino específico for fornecido, navegue para lá
     } else if (backButtonTarget) {
       navigate(backButtonTarget);
-    // Senão, use o comportamento padrão de voltar no histórico
     } else {
       navigate(-1);
     }
   };
 
   return (
-    <header className="bg-[#e36322] text-white p-4 relative z-10 shadow-md">
-      <div className="container mx-auto flex items-center justify-between h-10">
-        {/* Espaço para o botão voltar */}
-        <div className="flex items-center w-1/5">
-          {showBackButton && (
-            <button
-              onClick={handleBackNavigation}
-              className="mr-2 p-1 rounded-full hover:bg-white/20 transition-colors"
-              aria-label="Voltar"
-            >
-              <ChevronLeft className="h-6 w-6" />
-            </button>
-          )}
-        </div>
-        
-        {/* Título centralizado e com espaço */}
-        <div className="flex-1 text-center px-2">
-          <h1 className="text-xl font-semibold truncate">{title}</h1>
-        </div>
+    <header className={cn(
+      "bg-gradient-to-r from-primary to-primary/90 text-white relative z-10",
+      "shadow-lg backdrop-blur-sm",
+      className
+    )}>
+      <div className="container mx-auto px-4 py-4">
+        <div className="flex items-center justify-between">
+          {/* Seção esquerda - Botão voltar */}
+          <div className="flex items-center min-w-[40px]">
+            {showBackButton && (
+              <button
+                onClick={handleBackNavigation}
+                className="p-2 rounded-full hover:bg-white/20 transition-colors active:scale-95"
+                aria-label="Voltar"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+            )}
+          </div>
+          
+          {/* Seção central - Título e contexto */}
+          <div className="flex-1 text-center px-4">
+            <h1 className="text-lg font-bold truncate">{title}</h1>
+            {subtitle && (
+              <p className="text-sm text-white/80 truncate mt-0.5">
+                {subtitle}
+              </p>
+            )}
+          </div>
 
-        {/* Espaço para conteúdo à direita */}
-        <div className="flex items-center justify-end w-1/s">
-          {rightContent || <div className="w-10 h-10"></div> /* Placeholder para alinhar */}
+          {/* Seção direita - Conteúdo customizado */}
+          <div className="flex items-center justify-end min-w-[40px]">
+            {rightContent || (
+              <div className="w-10 h-10 flex items-center justify-center">
+                {/* Placeholder para manter alinhamento */}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>

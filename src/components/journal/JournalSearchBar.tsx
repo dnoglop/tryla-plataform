@@ -32,7 +32,7 @@ const JournalSearchBar: React.FC<JournalSearchBarProps> = ({
   return (
     <div className="mb-4 flex gap-2">
       <div className="relative flex-1">
-        <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+        <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Pesquisar anotações..."
           value={searchTerm}
@@ -49,7 +49,7 @@ const JournalSearchBar: React.FC<JournalSearchBarProps> = ({
         <DropdownMenuContent align="end" className="w-56">
           <DropdownMenuGroup>
             <DropdownMenuItem 
-              className={!moduleFilter ? "bg-gray-100" : ""} 
+              className={!moduleFilter ? "bg-accent" : ""} 
               onClick={clearModuleFilter}
             >
               <BookIcon className="mr-2 h-4 w-4" />
@@ -58,7 +58,7 @@ const JournalSearchBar: React.FC<JournalSearchBarProps> = ({
             {modules.map((module: Module) => (
               <DropdownMenuItem 
                 key={module.id}
-                className={moduleFilter === module.id ? "bg-gray-100" : ""}
+                className={moduleFilter === module.id ? "bg-accent" : ""}
                 onClick={() => onModuleFilterChange(module.id)}
               >
                 <span className="mr-2">{module.emoji || '📚'}</span>

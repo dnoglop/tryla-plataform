@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -65,7 +66,7 @@ const SignupPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-slate-50">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
       <div className="w-full max-w-md">
         <div className="w-48 mx-auto mb-4">
           <img
@@ -74,44 +75,44 @@ const SignupPage = () => {
             className="w-full h-auto"
           />
         </div>
-        <p className="text-gray-500 text-center mb-6">
+        <p className="text-muted-foreground text-center mb-6">
           Comece a sua jornada de aprendizado!
         </p>
 
-        <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200/50">
+        <div className="bg-card p-6 md:p-8 rounded-2xl shadow-sm border">
           <form onSubmit={handleSignup} className="space-y-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1">
+              <label htmlFor="name" className="block text-sm font-medium text-foreground mb-1">
                 Nome completo
               </label>
-              <input id="name" type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className="w-full h-11 rounded-lg border border-gray-300 p-3 focus:border-trilha-orange focus:outline-none focus:ring-1 focus:ring-trilha-orange" placeholder="Qual o seu nome?" required disabled={isLoading}/>
+              <input id="name" type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className="w-full h-11 rounded-lg border border-border bg-background text-foreground p-3 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" placeholder="Qual o seu nome?" required disabled={isLoading}/>
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
+              <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1">
                 Email
               </label>
-              <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full h-11 rounded-lg border border-gray-300 p-3 focus:border-trilha-orange focus:outline-none focus:ring-1 focus:ring-trilha-orange" placeholder="seu.email@exemplo.com" required disabled={isLoading}/>
+              <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full h-11 rounded-lg border border-border bg-background text-foreground p-3 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" placeholder="seu.email@exemplo.com" required disabled={isLoading}/>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1">
+                <label htmlFor="password" className="block text-sm font-medium text-foreground mb-1">
                   Senha
                 </label>
-                <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full h-11 rounded-lg border border-gray-300 p-3 focus:border-trilha-orange focus:outline-none focus:ring-1 focus:ring-trilha-orange" placeholder="••••••••" required disabled={isLoading}/>
+                <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full h-11 rounded-lg border border-border bg-background text-foreground p-3 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" placeholder="••••••••" required disabled={isLoading}/>
               </div>
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 mb-1">
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground mb-1">
                   Confirmar senha
                 </label>
-                <input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full h-11 rounded-lg border border-gray-300 p-3 focus:border-trilha-orange focus:outline-none focus:ring-1 focus:ring-trilha-orange" placeholder="••••••••" required disabled={isLoading}/>
+                <input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full h-11 rounded-lg border border-border bg-background text-foreground p-3 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" placeholder="••••••••" required disabled={isLoading}/>
               </div>
             </div>
 
             <Button
               type="submit"
-              className="w-full h-12 bg-trilha-orange text-white hover:bg-trilha-orange/90 font-semibold text-base flex items-center justify-center"
+              className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-base flex items-center justify-center"
               disabled={isLoading}
             >
               {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Criar minha conta"}
@@ -119,11 +120,11 @@ const SignupPage = () => {
           </form>
 
           <div className="mt-6 text-center text-sm">
-            <p className="text-slate-600">
+            <p className="text-muted-foreground">
               Já tem uma conta?{" "}
               <Link
                 to="/login"
-                className="font-semibold text-trilha-orange hover:underline"
+                className="font-semibold text-primary hover:underline"
               >
                 Faça o login
               </Link>
