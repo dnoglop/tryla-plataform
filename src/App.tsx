@@ -29,6 +29,7 @@ import EditProfilePage from "./pages/EditProfilePage";
 import JournalPage from "./pages/JournalPage";
 import NotFound from "./pages/NotFound";
 import OnboardingPage from "./pages/OnboardingPage";
+import PWAPrompt from "./components/PWAPrompt";
 import { RewardModalProvider } from "./components/XpRewardModal/RewardModalContext";
 
 function App() {
@@ -169,6 +170,7 @@ function App() {
                 <Route path="*" element={<Navigate to="/inicio" replace />} />
               </Routes>
               <Toaster />
+              <PWAPrompt />
             </div>
           </Router>
         </RewardModalProvider>
