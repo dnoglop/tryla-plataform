@@ -32,7 +32,7 @@ function PWAPrompt() {
           </span>
         ) : (
           <span className="font-semibold">
-            Ei, temoss uma nova versão disponível!
+            Ei, temos uma nova versão disponível!
           </span>
         )}
       </div>
