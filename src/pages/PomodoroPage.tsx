@@ -1,4 +1,4 @@
-// src/pages/PomodoroPage.tsx
+// src/pages/PomodoroPage.tsx (VERSÃO FINAL E CORRIGIDA)
 
 import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -12,32 +12,59 @@ import {
     AccordionContent,
     AccordionItem,
     AccordionTrigger,
-} from "@/components/ui/accordion";
-
-const FOCUS_TIME = 25 * 60;
-const SHORT_BREAK_TIME = 5 * 60;
-const LONG_BREAK_TIME = 15 * 60;
-const CYCLES_BEFORE_LONG_BREAK = 4;
-type TimerMode = "focus" | "shortBreak" | "longBreak";
+} from "@/components/ui/accordion"; // Usando a versão padrão do shadcn
 
 export default function PomodoroPage() {
     const navigate = useNavigate();
     const [profile, setProfile] = useState<Profile | null>(null);
     const [isLoadingProfile, setIsLoadingProfile] = useState(true);
     const [mode, setMode] = useState<TimerMode>("focus");
-    const [time, setTime] = useState(FOCUS_TIME);
+    const [time, setTime] = useState(25 * 60);
     const [isActive, setIsActive] = useState(false);
     const [cycles, setCycles] = useState(0);
 
+    const totalDuration =
+        mode === "focus" ? 25 * 60 : mode === "shortBreak" ? 5 * 60 : 15 * 60;
+    const progressPercentage = ((totalDuration - time) / totalDuration) * 100;
+
+    const switchMode = useCallback((newMode: TimerMode) => {
+        setMode(newMode);
+        setIsActive(false);
+        switch (newMode) {
+            case "focus":
+                setTime(25 * 60);
+                break;
+            case "shortBreak":
+                setTime(5 * 60);
+                break;
+            case "longBreak":
+                setTime(15 * 60);
+                break;
+        }
+    }, []);
+
+    const handleTimerEnd = useCallback(() => {
+        setIsActive(false);
+        if (mode === "focus") {
+            const newCycles = cycles + 1;
+            setCycles(newCycles);
+            if (newCycles % 4 === 0) {
+                switchMode("longBreak");
+            } else {
+                switchMode("shortBreak");
+            }
+        } else {
+            switchMode("focus");
+        }
+    }, [cycles, mode, switchMode]);
+
     useEffect(() => {
         const fetchUserProfile = async () => {
+            setIsLoadingProfile(true);
             try {
-                setIsLoadingProfile(true);
                 const {
                     data: { user },
-                    error: authError,
                 } = await supabase.auth.getUser();
-                if (authError) throw new Error("Erro de autenticação");
                 if (user) setProfile(await getProfile(user.id));
             } catch (error) {
                 console.error("Erro ao carregar perfil:", error);
@@ -51,62 +78,22 @@ export default function PomodoroPage() {
     useEffect(() => {
         let interval: NodeJS.Timeout | null = null;
         if (isActive && time > 0) {
-            interval = setInterval(
-                () => setTime((prevTime) => prevTime - 1),
-                1000,
-            );
-        } else if (time === 0) handleTimerEnd();
+            interval = setInterval(() => setTime((t) => t - 1), 1000);
+        } else if (time === 0) {
+            handleTimerEnd();
+        }
         return () => {
             if (interval) clearInterval(interval);
         };
-    }, [isActive, time]);
-
-    const switchMode = useCallback((newMode: TimerMode) => {
-        setMode(newMode);
-        setIsActive(false);
-        switch (newMode) {
-            case "focus":
-                setTime(FOCUS_TIME);
-                break;
-            case "shortBreak":
-                setTime(SHORT_BREAK_TIME);
-                break;
-            case "longBreak":
-                setTime(LONG_BREAK_TIME);
-                break;
-        }
-    }, []);
-
-    const handleTimerEnd = () => {
-        setIsActive(false);
-        if (mode === "focus") {
-            const newCycles = cycles + 1;
-            setCycles(newCycles);
-            if (newCycles % CYCLES_BEFORE_LONG_BREAK === 0) {
-                switchMode("longBreak");
-            } else {
-                switchMode("shortBreak");
-            }
-        } else {
-            switchMode("focus");
-        }
-    };
+    }, [isActive, time, handleTimerEnd]);
 
     const toggleTimer = () => setIsActive(!isActive);
     const resetTimer = () => switchMode(mode);
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
-        return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+        return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
     };
-
-    const totalDuration =
-        mode === "focus"
-            ? FOCUS_TIME
-            : mode === "shortBreak"
-              ? SHORT_BREAK_TIME
-              : LONG_BREAK_TIME;
-    const progressPercentage = ((totalDuration - time) / totalDuration) * 100;
 
     if (isLoadingProfile) {
         return (
@@ -153,14 +140,22 @@ export default function PomodoroPage() {
                     <div className="text-sm text-muted-foreground space-y-3">
                         <p>
                             A Técnica Pomodoro é um método de gerenciamento de
-                            tempo que divide o trabalho em intervalos de 25 minutos.
+                            tempo que divide o trabalho em intervalos de 25
+                            minutos.
                         </p>
                         <p>
                             Esta técnica divide o trabalho em intervalos de foco
                             seguidos por pausas curtas.
                         </p>
 
-                        <Accordion type="single" collapsible className="w-full">
+                        {/* ======================================================= */}
+                        {/* ||      ESTA É A ESTRUTURA FINAL E CORRETA           || */}
+                        {/* ======================================================= */}
+                        <Accordion
+                            type="single"
+                            collapsible
+                            className="w-full space-y-2"
+                        >
                             <AccordionItem
                                 value="como-funciona"
                                 className="border-b-0"
@@ -169,16 +164,17 @@ export default function PomodoroPage() {
                                     Como funciona
                                 </AccordionTrigger>
                                 <AccordionContent className="p-4">
-                                    <ul className="text-xs space-y-1 text-muted-foreground">
-                                        <li>• 25 minutos de foco intenso</li>
-                                        <li>• 5 minutos de pausa</li>
-                                        <li>• A cada 4 ciclos, uma pausa longa de 15 minutos</li>
+                                    <ul className="text-xs space-y-1 text-muted-foreground list-disc list-inside">
+                                        <li>25 minutos de foco intenso</li>
+                                        <li>5 minutos de pausa</li>
+                                        <li>
+                                            A cada 4 ciclos, uma pausa longa de
+                                            15 minutos
+                                        </li>
                                     </ul>
                                 </AccordionContent>
                             </AccordionItem>
-                        </Accordion>
 
-                        <Accordion type="single" collapsible className="w-full">
                             <AccordionItem
                                 value="beneficios"
                                 className="border-b-0"
@@ -187,10 +183,10 @@ export default function PomodoroPage() {
                                     Benefícios da técnica
                                 </AccordionTrigger>
                                 <AccordionContent className="p-4">
-                                    <ul className="text-xs space-y-1 text-primary/80">
-                                        <li>• Melhora o foco e concentração</li>
-                                        <li>• Reduz a procrastinação</li>
-                                        <li>• Aumenta a produtividade</li>
+                                    <ul className="text-xs space-y-1 text-primary/80 list-disc list-inside">
+                                        <li>Melhora o foco e concentração</li>
+                                        <li>Reduz a procrastinação</li>
+                                        <li>Aumenta a produtividade</li>
                                     </ul>
                                 </AccordionContent>
                             </AccordionItem>
@@ -200,6 +196,7 @@ export default function PomodoroPage() {
             </div>
 
             <main className="flex flex-col items-center justify-center p-4 text-center">
+                {/* O resto do seu código da página continua aqui... */}
                 <div className="w-full max-w-sm bg-card p-8 rounded-3xl shadow-lg border">
                     <div className="flex justify-center bg-muted p-1 rounded-full mb-8">
                         <button
@@ -233,7 +230,6 @@ export default function PomodoroPage() {
                             Pausa Longa
                         </button>
                     </div>
-
                     <div className="relative w-48 h-48 sm:w-60 sm:h-60 mx-auto mb-8">
                         <svg className="w-full h-full" viewBox="0 0 100 100">
                             <circle
@@ -272,7 +268,6 @@ export default function PomodoroPage() {
                             </span>
                         </div>
                     </div>
-
                     <div className="flex items-center justify-center gap-4">
                         <Button
                             variant="ghost"
@@ -302,11 +297,9 @@ export default function PomodoroPage() {
                         </Button>
                     </div>
                 </div>
-
                 <p className="text-sm text-muted-foreground mt-4 mb-6">
                     Ciclos de foco completados: {cycles}
                 </p>
-
                 <Button
                     onClick={() => navigate("/lab")}
                     variant="outline"
@@ -318,3 +311,6 @@ export default function PomodoroPage() {
         </div>
     );
 }
+
+// Definição de tipo para o modo do timer
+type TimerMode = "focus" | "shortBreak" | "longBreak";
