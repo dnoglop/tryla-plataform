@@ -1,8 +1,8 @@
 {
   "imports": {
-    "std/": "https://deno.land/std@0.177.0/", 
+    "std/": "https://deno.land/std@0.177.0/",
     "@google/generative-ai": "https://esm.sh/@google/generative-ai@0.12.0",
     "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2",
-    "web-push": "https://deno.land/x/webpush@0.2.0/mod.ts" 
+    "web-push": "npm:web-push@3.6.7"
   }
 }
