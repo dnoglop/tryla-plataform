@@ -31,6 +31,8 @@ self.addEventListener("message", (event) => {
   }
 });
 
+console.log("✅ Service Worker principal carregado! Versão 2.0");
+
 // Ouve por eventos de push
 self.addEventListener("push", (event) => {
   console.log("🅿️ Evento de Push recebido!", event);
