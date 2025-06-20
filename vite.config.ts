@@ -26,28 +26,43 @@ export default defineConfig(({ mode }) => ({
 
     // Configuração do PWA usando a estratégia 'injectManifest'
     VitePWA({
-      // 'autoUpdate' irá atualizar o service worker automaticamente no navegador do usuário
-      // assim que uma nova versão for detectada, sem a necessidade de um prompt.
+      // 'autoUpdate' irá atualizar o service worker automaticamente no navegador do usuário.
       registerType: "autoUpdate",
 
       // Especifica que vamos usar nosso próprio service worker como base.
       injectManifest: {
         // Caminho para o nosso arquivo de service worker fonte.
-        // O build do Vite irá processar este arquivo.
         swSrc: "src/sw.js",
 
-        // Nome do arquivo do service worker final na pasta de build (ex: 'dist/sw.js').
+        // Nome do arquivo do service worker final na pasta de build.
         swDest: "dist/sw.js",
+
+        // *************** INÍCIO DA CORREÇÃO PARA O TIMEOUT ***************
+
+        // Define explicitamente quais arquivos devem ser pré-cacheados.
+        // Isso garante que apenas os arquivos essenciais para o app carregar
+        // sejam incluídos, evitando o timeout.
+        globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
+
+        // Ignora arquivos que não são necessários offline ou que são muito grandes.
+        // Source maps (.map) são inúteis para o usuário final.
+        globIgnores: [
+          "**/node_modules/**/*",
+          "**/*.map",
+          // Se você tiver uma imagem muito grande na pasta /public, adicione aqui.
+          // Exemplo: '**/minha-imagem-grande.jpg'
+        ],
+
+        // ******************** FIM DA CORREÇÃO ********************
       },
 
       // Configuração do manifesto do PWA.
-      // Estes dados são usados quando o usuário instala o app no dispositivo.
       manifest: {
         name: "Tryla",
         short_name: "Tryla",
-        description: "A sua plataforma para [descreva o que o app faz].",
-        theme_color: "#ffffff", // Cor da barra de título do app
-        background_color: "#ffffff", // Cor da tela de splash
+        description: "Sua plataforma gamificada de aprendizado.", // Atualize com a sua descrição
+        theme_color: "#ffffff",
+        background_color: "#ffffff",
         display: "standalone",
         start_url: "/",
         scope: "/",
@@ -56,7 +71,7 @@ export default defineConfig(({ mode }) => ({
             src: "icons/icon-192-192.png",
             sizes: "192x192",
             type: "image/png",
-            purpose: "any maskable", // 'maskable' ajuda o ícone a se adaptar melhor em diferentes formatos no Android
+            purpose: "any maskable",
           },
           {
             src: "icons/icon-512-512.png",
@@ -64,7 +79,6 @@ export default defineConfig(({ mode }) => ({
             type: "image/png",
             purpose: "any maskable",
           },
-          // Adicione outros tamanhos se necessário
           {
             src: "icons/icon-96-96.png",
             sizes: "96x96",
@@ -74,7 +88,7 @@ export default defineConfig(({ mode }) => ({
         ],
       },
     }),
-  ].filter(Boolean), // Filtra plugins que possam ser 'false' (como o lovable-tagger em produção)
+  ].filter(Boolean), // Filtra plugins que possam ser 'false'
 
   // Configuração de aliases de caminho
   resolve: {
