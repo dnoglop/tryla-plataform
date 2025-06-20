@@ -1,9 +1,8 @@
 // supabase/functions/send-custom-notification/index.ts
 
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import webpush from "https://deno.land/x/webpush@0.2.0/mod.ts";
-
+import { serve } from "std/http/server.ts"; // Correto, pois "std/" já estava mapeado
+import { createClient } from "@supabase/supabase-js"; // Usando o nome curto
+import webpush from "web-push"; // Usando o nome curto
 // Configurações de VAPID (essencial)
 // Coloque suas chaves VAPID no Vault do Supabase!
 // Nome dos secrets: VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY
