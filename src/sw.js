@@ -1,93 +1,34 @@
-// src/sw.js (VERSÃO CORRIGIDA)
+// src/sw.js - VERSÃO DE TESTE MÍNIMO
 
-// A MUDANÇA ESTÁ AQUI: Importamos o manifesto como um módulo virtual.
-// O @vite-ignore é importante para que o Vite não tente resolver isso de forma literal.
-import { precacheAndRoute } from "workbox-precaching";
+// Log imediato para testar se o script executa.
+console.log(
+  "✅ SW Mínimo INICIADO! Se você vê isso, o build e o registro funcionam.",
+);
 
-// Limpa caches antigos ao ativar
+// Listener de instalação
+self.addEventListener("install", (event) => {
+  console.log("✅ SW Mínimo: Evento de INSTALAÇÃO.");
+  // Força a ativação do novo SW imediatamente.
+  self.skipWaiting();
+});
+
+// Listener de ativação
 self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((cacheName) => {
-            // Defina aqui um prefixo para os seus caches do workbox
-            // para não apagar outros caches importantes.
-            return cacheName.startsWith("workbox-precache");
-          })
-          .map((cacheName) => {
-            return caches.delete(cacheName);
-          }),
-      );
-    }),
-  );
+  console.log("✅ SW Mínimo: Evento de ATIVAÇÃO.");
 });
 
-// A injeção do manifesto agora é tratada pelo build do VitePWA.
-// A linha 'precacheAndRoute(self.__WB_MANIFEST)' não é mais necessária aqui
-// porque a configuração do injectManifest já cuida disso.
-
-// ----------------------------------------------------
-// AQUI COMEÇA A SUA LÓGICA CUSTOMIZADA ORIGINAL
-// ----------------------------------------------------
-
-console.log("✅ Service Worker principal carregado!");
-
-// Ouve por eventos de message do cliente (para o skipWaiting)
-self.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "SKIP_WAITING") {
-    self.skipWaiting();
-  }
-});
-
-// Ouve por eventos de push
+// Listener de push (para nosso teste final)
 self.addEventListener("push", (event) => {
-  console.log("🅿️ Evento de Push recebido!", event);
-  try {
-    const data = event.data.json();
-    console.log("📦 Dados do Push:", data);
-    const title = data.title || "Tryla";
-    const options = {
-      body: data.body,
-      icon: "/icons/icon-192-192.png",
-      badge: "/icons/icon-96-96.png",
-      data: {
-        url: data.url || "/",
-      },
-    };
-    event.waitUntil(self.registration.showNotification(title, options));
-  } catch (e) {
-    console.error("❌ Erro ao processar o push:", e);
-    // Notificação de fallback caso o JSON falhe
-    event.waitUntil(
-      self.registration.showNotification("Nova Notificação", {
-        body: "Você recebeu uma nova atualização.",
-        icon: "/icons/icon-192-192.png",
-      }),
-    );
-  }
+  console.log("🅿️ SW Mínimo: Evento de PUSH recebido!");
+  const title = "Teste do SW Mínimo";
+  const options = {
+    body: "A notificação finalmente funcionou!",
+    icon: "/icons/icon-192-192.png",
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
 });
 
-// Ouve por cliques na notificação
-self.addEventListener("notificationclick", (event) => {
-  console.log(
-    "🖱️ Clique na notificação recebido!",
-    event.notification.data.url,
-  );
-  event.notification.close();
-  const urlToOpen = event.notification.data.url;
-
-  event.waitUntil(
-    clients.matchAll({ type: "window" }).then((windowClients) => {
-      for (let i = 0; i < windowClients.length; i++) {
-        const client = windowClients[i];
-        if (client.url === urlToOpen && "focus" in client) {
-          return client.focus();
-        }
-      }
-      if (clients.openWindow) {
-        return clients.openWindow(urlToOpen);
-      }
-    }),
-  );
+// Adicionamos um listener de fetch vazio para garantir que o PWA continue "instalável"
+self.addEventListener("fetch", (event) => {
+  // Não fazemos nada aqui, apenas respondemos ao evento.
 });
