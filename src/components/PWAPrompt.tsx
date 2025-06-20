@@ -31,7 +31,9 @@ function PWAPrompt() {
             App pronto para funcionar offline!
           </span>
         ) : (
-          <span className="font-semibold">Nova versão disponível!</span>
+          <span className="font-semibold">
+            Ei, temoss uma nova versão disponível!
+          </span>
         )}
       </div>
       <div className="flex gap-2">
