@@ -1,8 +1,13 @@
+// src/pages/SettingsPage.tsx
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Sun, Moon, Laptop } from "lucide-react";
+
+// --- NOVA IMPORTAÇÃO ---
+import NotificationManager from "@/components/NotificationManager";
 
 export default function SettingsPage() {
   const navigate = useNavigate();
@@ -29,7 +34,10 @@ export default function SettingsPage() {
       </header>
 
       <main className="p-4 sm:p-6 max-w-4xl mx-auto">
-        <div className="space-y-6">
+        <div className="space-y-8">
+          {" "}
+          {/* Aumentei o espaço entre as seções */}
+          {/* Seção de Aparência (código original) */}
           <section className="p-6 rounded-2xl bg-card border">
             <h2 className="mb-4 text-lg font-semibold text-card-foreground">
               Aparência
@@ -46,7 +54,7 @@ export default function SettingsPage() {
                   onClick={() =>
                     setTheme(option.value as "light" | "dark" | "system")
                   }
-                  className="w-full justify-center gap-2"
+                  className="w-full sm:w-auto flex-1 justify-center gap-2"
                 >
                   <option.icon className="w-4 h-4" />
                   {option.label}
@@ -54,6 +62,9 @@ export default function SettingsPage() {
               ))}
             </div>
           </section>
+          {/* --- NOVA SEÇÃO DE NOTIFICAÇÕES --- */}
+          <NotificationManager />
+          {/* Você pode adicionar mais seções de configurações aqui no futuro */}
         </div>
       </main>
     </div>

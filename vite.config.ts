@@ -24,7 +24,8 @@ export default defineConfig(({ mode }) => ({
       includeAssets: ["favicon.ico", "apple-touch-icon.png"],
       manifest: false, // Diz ao plugin para não gerar um manifesto, pois já temos o nosso em /public
       workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"], // Estratégia de cache
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
+        importScripts: ["custom-sw.js"],
       },
     }),
   ].filter(Boolean),
