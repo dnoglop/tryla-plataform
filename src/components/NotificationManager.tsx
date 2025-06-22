@@ -26,12 +26,14 @@ const NotificationManager: React.FC = () => {
 
   // --- LÓGICA DE VERIFICAÇÃO INICIAL COM TIMEOUT ---
   const checkCurrentSubscription = useCallback(async () => {
+    setIsLoading(true);
+
+    // Primeiro, verifica se o navegador tem suporte básico.
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
       setIsUnsupported(true);
       setIsLoading(false);
       return;
     }
-
     if (Notification.permission === "denied") {
       setIsPermissionDenied(true);
       setIsLoading(false);
@@ -39,26 +41,39 @@ const NotificationManager: React.FC = () => {
     }
 
     try {
-      // Espera o Service Worker ficar pronto, com um timeout de 5 segundos
-      const registration = await Promise.race([
-        navigator.serviceWorker.ready,
-        new Promise((_, reject) =>
-          setTimeout(
-            () => reject(new Error("Service Worker não ficou pronto a tempo.")),
-            5000,
-          ),
-        ),
-      ]);
+      // 1. Pega o usuário logado
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-      const subscription = await (
-        registration as ServiceWorkerRegistration
-      ).pushManager.getSubscription();
-      setIsSubscribed(!!subscription);
+      // Se não tiver usuário, não está inscrito.
+      if (!user) {
+        setIsSubscribed(false);
+        return;
+      }
+
+      // 2. Procura por uma inscrição para este usuário no BANCO DE DADOS
+      const { data: existingSubscription, error } = await supabase
+        .from("push_subscriptions")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .maybeSingle(); // Pega um único registro ou nulo, é mais eficiente
+
+      if (error) {
+        // Se der erro na consulta, assume que não está inscrito para evitar problemas.
+        console.error("Erro ao verificar inscrição no Supabase:", error);
+        setIsSubscribed(false);
+        return;
+      }
+
+      // 3. Define o estado do toggle com base no resultado do banco
+      // A dupla negação (!!) transforma o objeto (ou null) em um booleano (true/false)
+      setIsSubscribed(!!existingSubscription);
     } catch (error) {
-      console.error("Falha ao verificar inscrição inicial:", error);
-      setIsSubscribed(false);
+      console.error("Falha geral ao verificar inscrição inicial:", error);
+      setIsSubscribed(false); // Em caso de qualquer outro erro, o padrão é 'desligado'
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Garante que o loading sempre termine
     }
   }, []);
 
