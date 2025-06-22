@@ -140,19 +140,27 @@ const NotificationManager: React.FC = () => {
   const unsubscribeUser = async () => {
     setIsLoading(true);
     try {
+      // 1. Pega o usuário autenticado primeiro
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        // Se por algum motivo não encontrar o usuário, não prossegue
+        throw new Error("Usuário não encontrado para desinscrever.");
+      }
+
+      // 2. Deleta a inscrição no banco de dados usando o user_id
+      const { error: dbError } = await supabase
+        .from("push_subscriptions")
+        .delete()
+        .eq("user_id", user.id); // <-- MUDANÇA PRINCIPAL AQUI
+
+      if (dbError) throw dbError;
+
+      // 3. Desinscreve do navegador apenas se o delete no BD deu certo
       const registration = await navigator.serviceWorker.ready;
       const subscription = await registration.pushManager.getSubscription();
-
       if (subscription) {
-        // Deleta do Supabase usando o endpoint como filtro
-        const { error: dbError } = await supabase
-          .from("push_subscriptions")
-          .delete()
-          .match({ "subscription_data->>endpoint": subscription.endpoint });
-
-        if (dbError) throw dbError;
-
-        // Desinscreve do navegador
         await subscription.unsubscribe();
       }
 
