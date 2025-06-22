@@ -8,7 +8,6 @@ channel = "stable-24_05"
 run = ["sh", "-c", "npm run dev"]
 
 [workflows]
-runButton = "Run"
 
 [[workflows.workflow]]
 name = "Run"
@@ -22,7 +21,10 @@ args = "npm run dev"
 [[ports]]
 localPort = 5173
 externalPort = 80
-exposeLocalhost = true
+
+[[ports]]
+localPort = 5174
+externalPort = 3000
 
 [[ports]]
 localPort = 8080

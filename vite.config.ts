@@ -41,6 +41,21 @@ export default defineConfig({
       },
     }),
   ],
+
+  // =======================================================
+  // INÍCIO DA PARTE ADICIONADA PARA CORRIGIR O ERRO REPLIT
+  // =======================================================
+  server: {
+    host: "0.0.0.0",
+    hmr: {
+      clientPort: 443,
+    },
+    allowedHosts: [".replit.dev"],
+  },
+  // =======================================================
+  // FIM DA PARTE ADICIONADA
+  // =======================================================
+
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
