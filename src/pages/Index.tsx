@@ -326,13 +326,11 @@ const Index = () => {
         setIsClaiming(true);
         try {
             const xpAmount = 50;
-            const { error } = await supabase
-                .from("xp_history")
-                .insert({
-                    user_id: userId,
-                    xp_amount: xpAmount,
-                    source: "DAILY_BONUS",
-                });
+            const { error } = await supabase.from("xp_history").insert({
+                user_id: userId,
+                xp_amount: xpAmount,
+                source: "DAILY_BONUS",
+            });
             if (error) throw error;
             setDailyXpClaimed(true);
             queryClient.invalidateQueries({
@@ -426,7 +424,7 @@ const Index = () => {
                     <div className="flex justify-between items-center">
                         <div>
                             <p className="text-muted-foreground">
-                                Bem-vindo(a) de volta,
+                                De volta à ação,
                             </p>
                             <h1 className="text-2xl md:text-3xl font-bold text-foreground">
                                 {profile?.full_name?.split(" ")[0]}!
@@ -462,12 +460,12 @@ const Index = () => {
                                 </div>
                                 <div>
                                     <h2 className="font-bold text-card-foreground">
-                                        Bônus Diário
+                                        Recompensa diária
                                     </h2>
                                     <p className="text-sm text-muted-foreground">
                                         {dailyXpClaimed
                                             ? "Você já pegou sua recompensa hoje. Volte amanhã!"
-                                            : "Pegue os seus 50 XP por voltar hoje!"}
+                                            : "A sua recompensa por manter o foco está aqui, clique!"}
                                     </p>
                                 </div>
                             </div>
@@ -485,12 +483,12 @@ const Index = () => {
                                     ? "Coletado"
                                     : isClaiming
                                       ? "Coletando..."
-                                      : "Coletar 50 XP"}
+                                      : "Pegar meu bônus!"}
                             </button>
                         </div>
                     </div>
                     <h2 className="font-bold text-lg text-foreground">
-                        Sua Atividade Recente
+                        Sua jornada até aqui
                     </h2>
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div className="lg:col-span-2">
@@ -521,42 +519,27 @@ const Index = () => {
                         </div>
                     </div>
 
-                    <div className="flex justify-between items-center">
-                        <h2 className="font-bold text-lg text-foreground">
-                            Desafio do Dia
-                        </h2>
-                    </div>
-                    <DailyChallengeCard
-                        challenge={dailyChallenge.currentChallenge}
-                        timeRemaining={dailyChallenge.timeRemaining}
-                        onComplete={dailyChallenge.completeChallenge}
-                        canComplete={dailyChallenge.canComplete}
-                        isLoading={dailyChallenge.isLoading}
-                    />
-
                     <h2 className="font-bold text-lg text-foreground">
-                        Continue sua Jornada
+                        Sua próxima missão
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {trackData?.nextModule && trackData?.nextPhase ? (
                             <Link
                                 to={`/modulo/${trackData.nextModule.id}`}
-                                className="group relative p-6 bg-primary/10 rounded-2xl shadow-sm border border-primary/20 transition-all duration-300 hover:shadow-lg hover:-translate-y-1.5 flex flex-col justify-between"
+                                className="group relative p-5 bg-primary/10 rounded-2xl shadow-sm border border-primary/20 transition-all duration-300 hover:shadow-lg hover:-translate-y-1.5 flex flex-col justify-between"
                             >
                                 <div>
                                     <div className="flex justify-between items-start">
-                                        <h3 className="text-xl font-bold text-foreground">
-                                            Continuar Trilha
-                                        </h3>
+                                        <h4 className="font-semibold text-primary mt-2">
+                                            {trackData.nextModule.name}
+                                        </h4>
                                         <div className="p-3 bg-primary rounded-lg">
                                             <ArrowRight className="h-5 w-5 text-primary-foreground" />
                                         </div>
                                     </div>
-                                    <p className="font-semibold text-primary mt-2">
-                                        {trackData.nextModule.name}
-                                    </p>
+                                    
                                     <p className="text-sm text-muted-foreground">
-                                        {trackData.nextPhase.name}
+                                        Capítulo: {trackData.nextPhase.name}
                                     </p>
                                 </div>
                             </Link>
@@ -564,7 +547,7 @@ const Index = () => {
                             <div className="p-6 bg-emerald-500/10 border-emerald-500/20 border rounded-2xl text-center flex flex-col justify-center items-center">
                                 <Sparkles className="h-10 w-10 text-emerald-600 mb-2" />
                                 <h3 className="font-bold text-emerald-700 dark:text-emerald-400">
-                                    Parabéns!
+                                    Parabéns, {profile?.full_name?.split(" ")[0]}!
                                 </h3>
                                 <p className="text-sm text-emerald-600 dark:text-emerald-300">
                                     Você concluiu sua trilha personalizada!
@@ -579,13 +562,28 @@ const Index = () => {
                                 <ArrowRight className="h-5 w-5 text-accent-foreground transition-transform group-hover:translate-x-1" />
                             </div>
                             <h3 className="font-bold text-card-foreground">
-                                Ver minha Trilha Completa
+                                Ver o mapa da jornada
                             </h3>
                             <p className="text-sm text-muted-foreground">
-                                Veja todos os módulos recomendados.
+                                Visualize todas as missões da sua saga.
                             </p>
                         </Link>
                     </div>
+                    
+                    <div className="flex justify-between items-center">
+                        <h2 className="font-bold text-lg text-foreground">
+                            Desafio rápido
+                        </h2>
+                    </div>
+                    <DailyChallengeCard
+                        challenge={dailyChallenge.currentChallenge}
+                        timeRemaining={dailyChallenge.timeRemaining}
+                        onComplete={dailyChallenge.completeChallenge}
+                        canComplete={dailyChallenge.canComplete}
+                        isLoading={dailyChallenge.isLoading}
+                    />
+                    
+                    
                     <div className="flex justify-between items-center">
                         <h2 className="font-bold text-lg text-foreground">
                             Últimas na Comunidade
