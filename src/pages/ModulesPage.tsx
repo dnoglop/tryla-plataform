@@ -182,7 +182,7 @@ export default function ModulesPage() {
             />
           
           <div>
-            <h1 className="text-2xl font-bold text-foreground">
+            <h1 className="text-2xl md:text-3xl font-extrabold text-foreground">
               {getGreeting()}, {profile?.full_name?.split(" ")[0] || "Aluno"}!
             </h1>
             <p className="text-sm text-muted-foreground">Pronto para aprender hoje?</p>

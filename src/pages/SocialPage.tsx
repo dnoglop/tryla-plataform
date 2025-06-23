@@ -135,7 +135,7 @@ export default function SocialPage(): JSX.Element {
                     />
 
                   <div>
-                    <h1 className="text-2xl font-bold text-foreground">Espaço Social</h1>
+                    <h1 className="text-2xl md:text-3xl font-extrabold text-foreground">Espaço Social</h1>
                     <p className="text-sm text-muted-foreground">Conecte-se, compita e cresça.</p>
                   </div>
                 </div>

@@ -1,12 +1,11 @@
 /* 
-  Arquivo CSS Global Unificado
-  - Importa o Google Fonts e o Tailwind.
-  - Define as variáveis de cor para o tema claro (light) e escuro (dark).
-  - Define estilos base para a aplicação.
-  - Contém todas as classes de componentes personalizadas, agora adaptadas para o sistema de temas.
+  index.css - Configurações Globais
+  - Importa fontes e Tailwind
+  - Define variáveis de tema (claro/escuro) com ênfase no laranja
+  - Estilos base da aplicação
 */
 
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -17,68 +16,96 @@
 
   /* TEMA CLARO (PADRÃO) */
   :root {
-    --background: 0 0% 98%;
-    /* Cor de fundo principal (quase branco) */
-    --foreground: 0 0% 3.9%;
-    /* Cor do texto principal (quase preto) */
-    --card: 0 0% 100%;
-    /* Cor de fundo de cards e seções (branco) */
-    --card-foreground: 0 0% 3.9%;
+    --background: 0 0% 100%;
+    /* Cor de fundo principal (branco puro) */
+    --foreground: 0 0% 20%;
+    /* Cor do texto principal (cinza escuro) */
+    --card: 0 0% 98%;
+    /* Cor de fundo de cards e seções (cinza muito claro) */
+    --card-foreground: 0 0% 20%;
     /* Cor do texto em cards */
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 21 84% 51%;
-    /* Laranja principal (usado para botões e destaques) */
-    --primary-foreground: 0 0% 98%;
-    /* Texto sobre o laranja */
-    --secondary: 0 0% 96.1%;
-    /* Cor de fundo sutil para elementos secundários */
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
+    --popover-foreground: 0 0% 20%;
+
+    /* --- Paleta Laranja Aprimorada --- */
+    --primary: 14 100% 57%;              /* Laranja Principal (Fox #FF9600) */
+    --primary-foreground: 0 0% 100%;     /* Texto sobre o laranja */
+    --primary-hover: 14 100% 52%;        /* Laranja um pouco mais escuro para hover */
+    --primary-soft-bg: 14 100% 96%;      /* Laranja bem claro para fundos/highlights */
+    --primary-soft-border: 14 100% 90%;  /* Borda laranja suave */
+    --primary-soft-fg: 14 100% 45%;      /* Texto laranja escuro sobre fundos claros */
+
+    --secondary: 0 0% 96%;
+    /* Cinza claro para elementos secundários */
+    --secondary-foreground: 0 0% 30%;
+    --muted: 0 0% 94%;
+    /* Cinza muito claro para áreas silenciadas */
+    --muted-foreground: 0 0% 50%;
     /* Cor para textos silenciados/secundários */
-    --accent: 21 84% 95%;
-    /* Cor de destaque sutil, geralmente um tom claro do primário */
-    --accent-foreground: 21 84% 30%;
-    --destructive: 0 84.2% 60.2%;
+    --accent: 14 100% 95%;
+    /* Laranja muito claro para destaque sutil */
+    --accent-foreground: 14 100% 40%;
+    --destructive: 0 84% 60%;
     /* Vermelho para ações destrutivas */
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 21 84% 51%;
+    --border: 0 0% 90%;
+    /* Bordas em cinza claro */
+    --input: 0 0% 96%;
+    /* Fundo de inputs */
+    --ring: 14 100% 57%;
+    /* Cor do focus ring (laranja) */
     --radius: 1rem;
 
-    /* Variável personalizada para ser usada com @apply bg-trilha-orange etc. */
-    --trilha-orange: 21 84% 51%;
+    /* Cores personalizadas da paleta */
+    --trilha-orange: 14 100% 57%; /* Fox #FF9600 */
+    --trilha-bee: 43 100% 50%; /* Bee #FFC800 */
+    --trilha-green: 95 63% 38%; /* Feather Green #58CC02 */
+    --trilha-gray: 0 0% 75%; /* Eel #4B4B4B em tom mais claro */
+    --trilha-snow: 0 0% 100%; /* Snow #FFFFFF */
+    --trilha-polar: 200 100% 97%; /* Polar #F7F7F7 */
   }
 
   /* TEMA ESCURO */
   .dark {
-    --background: 0 0% 3.9%;
+    --background: 0 0% 8%;
     /* Fundo escuro */
-    --foreground: 0 0% 98%;
+    --foreground: 0 0% 95%;
     /* Texto claro */
-    --card: 0 0% 5.9%;
+    --card: 0 0% 12%;
     /* Cards um pouco mais claros que o fundo */
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 21 84% 51%;
-    /* Laranja se mantém vibrante */
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 21 84% 15%;
-    /* Destaque sutil no tema escuro */
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 72.2% 50.6%;
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 95%;
+
+    /* --- Paleta Laranja Aprimorada (Dark Mode) --- */
+    --primary: 14 100% 57%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 14 100% 62%;        /* Laranja um pouco mais claro para hover */
+    --primary-soft-bg: 14 100% 15%;      /* Laranja bem escuro para fundos */
+    --primary-soft-border: 14 100% 25%;  /* Borda laranja sutil no escuro */
+    --primary-soft-fg: 14 100% 70%;      /* Texto laranja claro sobre fundos escuros */
+
+    --secondary: 0 0% 18%;
+    /* Cinza escuro para elementos secundários */
+    --secondary-foreground: 0 0% 90%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 14 100% 20%;
+    /* Laranja escuro para destaque sutil */
+    --accent-foreground: 0 0% 95%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 21 84% 51%;
-    --trilha-orange: 21 84% 51%;
+    --border: 0 0% 20%;
+    --input: 0 0% 18%;
+    --ring: 14 100% 57%;
+
+    /* Cores personalizadas adaptadas para tema escuro */
+    --trilha-orange: 14 100% 57%;
+    --trilha-bee: 43 100% 50%;
+    --trilha-green: 95 63% 45%;
+    --trilha-gray: 0 0% 25%;
+    --trilha-snow: 0 0% 95%;
+    --trilha-polar: 0 0% 15%;
   }
 }
 
@@ -89,155 +116,29 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground;
+    font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   h1 {
-    @apply text-xl sm:text-2xl font-bold;
+    @apply text-xl sm:text-2xl font-extrabold; /* Alterado de font-bold */
+    font-family: 'Nunito', sans-serif;
   }
 
   h2 {
-    @apply text-lg sm:text-xl font-bold;
+    @apply text-lg sm:text-xl font-extrabold; /* Alterado de font-bold */
+    font-family: 'Nunito', sans-serif;
   }
 
   h3 {
-    @apply text-base sm:text-lg font-semibold;
+    @apply text-base sm:text-lg font-bold; /* Alterado de font-semibold */
+    font-family: 'Nunito', sans-serif;
   }
 
   p {
     @apply text-sm sm:text-base;
+    font-family: 'Nunito', sans-serif;
   }
-}
-
-/* --- CLASSES DE COMPONENTES PERSONALIZADOS --- */
-@layer components {
-
-  /* Cards */
-  .card-trilha {
-    @apply relative overflow-hidden rounded-xl sm:rounded-2xl border bg-card shadow-sm transition-all hover:shadow-md;
-  }
-
-  .card-modulo {
-    @apply card-trilha flex flex-col items-center justify-between p-3 sm:p-4 hover:scale-[1.02] hover:border-primary;
-  }
-
-  /* MELHORIA: Unificado e adaptado para tema */
-  .card-fase {
-    @apply card-trilha p-4 transition-all hover:scale-[1.02] hover:border-primary;
-  }
-
-  .continue-card {
-    @apply bg-amber-50 dark:bg-amber-950/50 rounded-xl sm:rounded-2xl overflow-hidden shadow-md border-none;
-  }
-
-  /* Botões */
-  .btn-trilha {
-    @apply rounded-full bg-primary px-4 py-2 sm:px-6 sm:py-3 font-semibold text-primary-foreground shadow-md hover:bg-primary/90 active:scale-95 transition-all text-sm sm:text-base;
-  }
-
-  .btn-secundario {
-    /* MELHORIA: Adaptado para tema */
-    @apply rounded-full bg-card border-2 border-primary px-4 py-2 sm:px-6 sm:py-3 font-semibold text-primary shadow-sm hover:bg-accent active:scale-95 transition-all text-sm sm:text-base;
-  }
-
-  .btn-icon {
-    @apply rounded-full bg-card p-1.5 sm:p-2 shadow-md hover:scale-110 active:scale-95 transition-all;
-  }
-
-  /* Barras de progresso */
-  .progress-bar {
-    @apply h-1.5 sm:h-2 rounded-full bg-muted overflow-hidden;
-  }
-
-  .progress-value {
-    /* MELHORIA: usa a cor primária do tema */
-    @apply h-full rounded-full bg-primary transition-all duration-500 ease-out;
-  }
-
-  /* Outros Componentes */
-  .badge-trilha {
-    @apply rounded-full bg-primary px-2 py-0.5 sm:px-3 sm:py-1 text-xs font-semibold text-primary-foreground shadow-sm;
-  }
-
-  .stats-bar {
-    /* MELHORIA: Adaptado para tema */
-    @apply flex items-center justify-between py-1 sm:py-2 px-3 sm:px-4 bg-card shadow-sm sticky top-0 z-30;
-  }
-
-  .stats-item {
-    @apply flex items-center gap-1;
-  }
-
-  .section-heading {
-    @apply text-base sm:text-lg font-bold flex items-center justify-between;
-  }
-
-  .section-link {
-    @apply text-xs sm:text-sm font-medium text-primary flex items-center;
-  }
-
-  /* Estilos para conteúdo de Markdown / Chat */
-  .message-content a {
-    @apply text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline;
-  }
-
-  .message-content strong,
-  .message-content b {
-    @apply font-semibold text-foreground;
-  }
-
-  .message-content em,
-  .message-content i {
-    @apply italic;
-  }
-
-  /* Textarea com auto-redimensionamento */
-  textarea.auto-resize {
-    @apply min-h-[24px] max-h-[200px] overflow-y-hidden resize-none;
-  }
-}
-
-/* --- MODIFICAÇÕES E ANIMAÇÕES GLOBAIS --- */
-.progress-bar-container {
-  @apply relative w-full;
-}
-
-.progress-bar-trophy {
-  /* MELHORIA: Adaptado para tema */
-  @apply absolute right-0 -top-0.5 -mr-1.5 sm:-mr-2 bg-card rounded-full border-2 border-primary w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center;
-  font-size: 8px;
-}
-
-@media (min-width: 640px) {
-  .progress-bar-trophy {
-    font-size: 10px;
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes confetti {
-  0% {
-    transform: translateY(0) rotate(0);
-    opacity: 1;
-  }
-
-  100% {
-    transform: translateY(100vh) rotate(720deg);
-    opacity: 0;
-  }
-}
-
-.animate-confetti {
-  animation: confetti 2s ease-out forwards;
 }

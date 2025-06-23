@@ -1,73 +1,269 @@
+/* 
+  app.css - Componentes e Estilos Específicos
+  - Classes de componentes personalizados
+  - Animações e interações
+  - Estilos específicos da aplicação
+*/
 
-/* Existing styles */
+/* --- CLASSES DE COMPONENTES PERSONALIZADOS --- */
+@layer components {
 
-/* Progress bar for user level */
-.progress-bar {
-  width: 100%;
-  height: 8px;
-  background-color: rgba(227, 99, 34, 0.2);
-  border-radius: 4px;
-  overflow: hidden;
+  /* Card com gradiente suave de laranja */
+  .card-gradient-orange {
+    @apply relative overflow-hidden rounded-xl sm:rounded-2xl border shadow-sm transition-all;
+    background-image: linear-gradient(135deg, hsl(var(--primary) / 0.05), hsl(var(--card)) 50%);
+    border-color: hsl(var(--primary) / 0.1);
+  }
+  .card-gradient-orange:hover {
+    border-color: hsl(var(--primary) / 0.3);
+    box-shadow: 0 8px 25px hsl(var(--primary) / 0.1);
+  }
+
+  .dark .card-gradient-orange {
+    background-image: linear-gradient(135deg, hsl(var(--primary) / 0.1), hsl(var(--card)) 60%);
+    border-color: hsl(var(--primary) / 0.2);
+  }
+
+  .dark .card-gradient-orange:hover {
+    border-color: hsl(var(--primary) / 0.4);
+  }
+
+  /* Cards */
+  .card-trilha {
+    @apply relative overflow-hidden rounded-xl sm:rounded-2xl border bg-card shadow-sm transition-all hover:shadow-md;
+    border-color: hsl(var(--border));
+  }
+
+  .card-modulo {
+    @apply card-trilha flex flex-col items-center justify-between p-3 sm:p-4 hover:scale-[1.02];
+    border-color: hsl(var(--trilha-orange) / 0.2);
+  }
+
+  .card-modulo:hover {
+    border-color: hsl(var(--trilha-orange));
+    box-shadow: 0 8px 25px hsl(var(--trilha-orange) / 0.15);
+  }
+
+  .card-fase {
+    @apply card-trilha p-4 transition-all hover:scale-[1.02];
+    background-color: hsl(var(--trilha-snow));
+    border-color: hsl(var(--trilha-polar));
+    font-family: 'Nunito', sans-serif;
+  }
+
+  .card-fase:hover {
+    border-color: hsl(var(--trilha-orange) / 0.5);
+    box-shadow: 0 4px 12px hsl(var(--trilha-orange) / 0.1);
+    transform: translateY(-2px) scale(1.02);
+  }
+
+  .dark .card-fase {
+    background-color: hsl(var(--card));
+    border-color: hsl(var(--border));
+  }
+
+  .continue-card {
+    background: linear-gradient(135deg, hsl(var(--trilha-bee) / 0.1), hsl(var(--trilha-orange) / 0.1));
+    @apply rounded-xl sm:rounded-2xl overflow-hidden shadow-md border;
+    border-color: hsl(var(--trilha-bee) / 0.3);
+  }
+
+  .dark .continue-card {
+    background: linear-gradient(135deg, hsl(var(--trilha-bee) / 0.05), hsl(var(--trilha-orange) / 0.05));
+    border-color: hsl(var(--trilha-bee) / 0.2);
+  }
+
+  /* Botões */
+  .btn-trilha {
+    @apply rounded-full px-4 py-2 sm:px-6 sm:py-3 font-semibold shadow-md hover:shadow-lg active:scale-95 transition-all text-sm sm:text-base;
+    background-color: hsl(var(--trilha-orange));
+    color: hsl(var(--trilha-snow));
+    font-family: 'Nunito', sans-serif;
+  }
+
+  .btn-trilha:hover {
+    background-color: hsl(var(--trilha-orange) / 0.9);
+    transform: translateY(-1px);
+  }
+
+  .btn-secundario {
+    @apply rounded-full px-4 py-2 sm:px-6 sm:py-3 font-semibold shadow-sm hover:shadow-md active:scale-95 transition-all text-sm sm:text-base;
+    background-color: hsl(var(--card));
+    border: 2px solid hsl(var(--trilha-orange));
+    color: hsl(var(--trilha-orange));
+    font-family: 'Nunito', sans-serif;
+  }
+
+  .btn-secundario:hover {
+    background-color: hsl(var(--trilha-orange) / 0.05);
+    transform: translateY(-1px);
+  }
+
+  .btn-icon {
+    @apply rounded-full p-1.5 sm:p-2 shadow-md hover:scale-110 active:scale-95 transition-all;
+    background-color: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+  }
+
+  .btn-icon:hover {
+    background-color: hsl(var(--trilha-orange) / 0.1);
+    border-color: hsl(var(--trilha-orange) / 0.3);
+  }
+
+  /* Barras de progresso */
+  .progress-bar {
+    @apply h-1.5 sm:h-2 rounded-full overflow-hidden;
+    background-color: hsl(var(--trilha-orange) / 0.2);
+  }
+
+  .progress-value {
+    @apply h-full rounded-full transition-all duration-500 ease-out;
+    background-color: hsl(var(--trilha-orange));
+    box-shadow: 0 0 8px hsl(var(--trilha-orange) / 0.3);
+  }
+
+  /* Badges e elementos pequenos */
+  .badge-trilha {
+    @apply rounded-full px-2 py-0.5 sm:px-3 sm:py-1 text-xs font-semibold shadow-sm;
+    background-color: hsl(var(--trilha-orange));
+    color: hsl(var(--trilha-snow));
+    font-family: 'Nunito', sans-serif;
+  }
+
+  .badge-success {
+    @apply rounded-full px-2 py-0.5 sm:px-3 sm:py-1 text-xs font-semibold shadow-sm;
+    background-color: hsl(var(--trilha-green));
+    color: hsl(var(--trilha-snow));
+    font-family: 'Nunito', sans-serif;
+  }
+
+  .badge-warning {
+    @apply rounded-full px-2 py-0.5 sm:px-3 sm:py-1 text-xs font-semibold shadow-sm;
+    background-color: hsl(var(--trilha-bee));
+    color: hsl(0 0% 20%);
+    font-family: 'Nunito', sans-serif;
+  }
+
+  /* Outros Componentes */
+  .stats-bar {
+    @apply flex items-center justify-between py-1 sm:py-2 px-3 sm:px-4 shadow-sm sticky top-0 z-30;
+    background-color: hsl(var(--card));
+    border-bottom: 1px solid hsl(var(--border));
+  }
+
+  .stats-item {
+    @apply flex items-center gap-1;
+    font-family: 'Nunito', sans-serif;
+  }
+
+  .section-heading {
+    @apply text-base sm:text-lg font-bold flex items-center justify-between;
+    font-family: 'Nunito', sans-serif;
+  }
+
+  .section-link {
+    @apply text-xs sm:text-sm font-medium flex items-center;
+    color: hsl(var(--trilha-orange));
+    font-family: 'Nunito', sans-serif;
+  }
+
+  .section-link:hover {
+    color: hsl(var(--trilha-orange) / 0.8);
+  }
+
+  /* Estilos para conteúdo de Markdown / Chat */
+  .message-content a {
+    @apply underline;
+    color: hsl(var(--trilha-orange));
+    font-weight: 500;
+    transition: color 0.2s ease;
+  }
+
+  .message-content a:hover {
+    color: hsl(var(--trilha-orange) / 0.8);
+  }
+
+  .message-content strong,
+  .message-content b {
+    @apply font-semibold;
+    color: hsl(var(--foreground));
+    font-weight: 700;
+  }
+
+  .message-content em,
+  .message-content i {
+    @apply italic;
+    font-weight: 400;
+  }
+
+  /* Textarea com auto-redimensionamento */
+  textarea.auto-resize {
+    @apply min-h-[24px] max-h-[200px] overflow-y-hidden resize-none;
+    font-family: 'Nunito', sans-serif;
+    border: 1px solid hsl(var(--border));
+    border-radius: 8px;
+    padding: 12px;
+    background-color: hsl(var(--input));
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  textarea.auto-resize:focus {
+    outline: none;
+    border-color: hsl(var(--trilha-orange));
+    box-shadow: 0 0 0 3px hsl(var(--trilha-orange) / 0.1);
+  }
 }
 
-.progress-value {
-  height: 100%;
-  background-color: #e36322;
-  border-radius: 4px;
-  transition: width 0.3s ease;
+/* --- MODIFICAÇÕES E ANIMAÇÕES GLOBAIS --- */
+.progress-bar-container {
+  @apply relative w-full;
 }
 
-/* Confetti animation */
+.progress-bar-trophy {
+  @apply absolute right-0 -top-0.5 -mr-1.5 sm:-mr-2 rounded-full border-2 w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center;
+  background-color: hsl(var(--card));
+  border-color: hsl(var(--trilha-orange));
+  font-size: 8px;
+  font-family: 'Nunito', sans-serif;
+}
+
+@media (min-width: 640px) {
+  .progress-bar-trophy {
+    font-size: 10px;
+  }
+}
+
+/* Animações */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 @keyframes confetti {
   0% {
-    transform: translateY(0) rotateZ(0);
+    transform: translateY(0) rotate(0);
     opacity: 1;
   }
   100% {
-    transform: translateY(1000px) rotateZ(720deg);
+    transform: translateY(100vh) rotate(720deg);
     opacity: 0;
   }
 }
 
 .animate-confetti {
-  animation: confetti 3s ease-in-out forwards;
+  animation: confetti 2s ease-out forwards;
 }
 
-/* Card fase styles */
-.card-fase {
-  border: 1px solid #959799;
-  border-radius: 12px;
-  padding: 16px;
-  transition: all 0.2s ease;
-  margin-bottom: 12px;
-  background-color: #FFF;
-}
-
-.card-fase:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
-/* Message formatting styles */
-.message-content a {
-  color: #3b82f6;
-  text-decoration: underline;
-}
-
-.message-content strong, 
-.message-content b {
-  font-weight: 600;
-}
-
-.message-content em,
-.message-content i {
-  font-style: italic;
-}
-
-/* Auto-expanding textarea */
-textarea.auto-resize {
-  min-height: 24px;
-  max-height: 200px;
-  overflow-y: hidden;
-  resize: none;
+/* --- CLASSES UTILITÁRIAS PERSONALIZADAS --- */
+@layer utilities {
+  .text-trilha-orange { color: hsl(var(--trilha-orange)); }
+  .text-trilha-green { color: hsl(var(--trilha-green)); }
+  .text-trilha-bee { color: hsl(var(--trilha-bee)); }
+  .bg-trilha-orange { background-color: hsl(var(--trilha-orange)); }
+  .bg-trilha-green { background-color: hsl(var(--trilha-green)); }
+  .bg-trilha-bee { background-color: hsl(var(--trilha-bee)); }
+  .bg-trilha-polar { background-color: hsl(var(--trilha-polar)); }
+  .bg-trilha-snow { background-color: hsl(var(--trilha-snow)); }
+  .border-trilha-orange { border-color: hsl(var(--trilha-orange)); }
+  .font-nunito { font-family: 'Nunito', sans-serif; }
 }

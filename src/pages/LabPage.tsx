@@ -1,4 +1,3 @@
-
 // src/pages/LabPage.tsx
 
 import { useState, useEffect } from "react";
@@ -218,19 +217,25 @@ export default function LabPage() {
     // MUDANÇA: Cor de fundo adaptada para o tema
     <div className="min-h-screen w-full bg-background">
       <header className="p-4 sm:p-6 lg:p-8">
-          <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4">
+          <img
+            src={
+              profile?.avatar_url ||
+              `https://ui-avatars.com/api/?name=${profile?.full_name?.split(" ")[0] || "A"}&background=random`
+            }
+            alt="Avatar do usuário"
+            className="h-14 w-14 rounded-full object-cover border-2 border-background shadow-md transition-transform hover:scale-110"
+          />
 
-            <img
-                src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.full_name?.split(" ")[0] || "A"}&background=random`}
-                alt="Avatar do usuário"
-                className="h-14 w-14 rounded-full object-cover border-2 border-background shadow-md transition-transform hover:scale-110"
-              />
-
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Oficina de Ferramentas</h1>
-              <p className="text-sm text-muted-foreground">Seu arsenal secreto para conquistar o mundo.</p>
-            </div>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-extrabold text-foreground">
+              Oficina de Ferramentas
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Seu arsenal secreto para conquistar o mundo.
+            </p>
           </div>
+        </div>
       </header>
 
       <main className="p-4 sm:p-6 lg:p-8 pt-0">

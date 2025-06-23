@@ -12,12 +12,21 @@ import { useDailyQuote } from "@/hooks/useDailyQuote";
 import { FeatureTourModal } from "@/components/FeatureTourModal";
 
 // Ícones e Componentes
-import { ArrowRight, Sparkles, X, Gift, CheckCircle } from "lucide-react";
+import {
+    ArrowRight,
+    Sparkles,
+    X,
+    Gift,
+    CheckCircle,
+    Map,
+    BarChart2,
+    BookOpen,
+    MessageSquare,
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WeeklyProgressChart } from "@/components/WeeklyProgressChart";
 import {
     getModuleById,
-    Module,
     getUserNextPhase,
     isModuleCompleted,
 } from "@/services/moduleService";
@@ -38,7 +47,7 @@ const DashboardSkeleton = () => (
                     <Skeleton className="h-14 w-14 rounded-full bg-muted" />
                 </div>
             </header>
-            <main className="p-4 sm:p-6 pt-0 space-y-6">
+            <main className="p-4 sm:p-6 pt-0 space-y-8">
                 <Skeleton className="h-24 rounded-2xl bg-muted" />
                 <div className="flex items-center">
                     <Skeleton className="h-6 w-40 bg-muted" />
@@ -426,8 +435,10 @@ const Index = () => {
                             <p className="text-muted-foreground">
                                 De volta à ação,
                             </p>
-                            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-                                {profile?.full_name?.split(" ")[0]}!
+                            <h1 className="text-2xl md:text-3xl font-extrabold text-foreground">
+                                <span className="text-primary">
+                                    {profile?.full_name?.split(" ")[0]}!
+                                </span>
                             </h1>
                         </div>
                         <Link to="/perfil">
@@ -437,13 +448,13 @@ const Index = () => {
                                     `https://ui-avatars.com/api/?name=${profile.full_name?.replace(/\s/g, "+")}&background=random`
                                 }
                                 alt="Perfil"
-                                className="h-14 w-14 rounded-full border-2 border-background shadow-md transition-transform hover:scale-110"
+                                className="h-14 w-14 rounded-full border-2 border-transparent hover:border-primary transition-all duration-300 shadow-md hover:scale-110"
                             />
                         </Link>
                     </div>
                 </header>
 
-                <main className="p-4 sm:p-6 pt-0 space-y-6">
+                <main className="p-4 sm:p-6 pt-0 space-y-8">
                     <div
                         className={`rounded-2xl p-5 shadow-sm border transition-all duration-300 ${dailyXpClaimed ? "bg-emerald-500/10 border-emerald-500/20" : "bg-primary/10 border-primary/20"}`}
                     >
@@ -475,8 +486,8 @@ const Index = () => {
                                 className={cn(
                                     "w-full sm:w-auto px-6 py-2.5 rounded-xl font-semibold text-primary-foreground shadow-md transition-all duration-200",
                                     dailyXpClaimed
-                                        ? "bg-muted cursor-not-allowed"
-                                        : "bg-primary hover:bg-primary/90 hover:-translate-y-1 active:translate-y-0",
+                                        ? "bg-emerald-600 cursor-not-allowed"
+                                        : "bg-primary hover:bg-[hsl(var(--primary-hover))] hover:-translate-y-1 active:translate-y-0",
                                 )}
                             >
                                 {dailyXpClaimed
@@ -487,11 +498,13 @@ const Index = () => {
                             </button>
                         </div>
                     </div>
-                    <h2 className="font-bold text-lg text-foreground">
+
+                    <h2 className="font-bold text-xl text-foreground flex items-center gap-3 border-l-4 border-primary pl-3">
+                        <BarChart2 className="h-5 w-5 text-primary/80" />
                         Sua jornada até aqui
                     </h2>
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <div className="lg:col-span-2">
+                        <div className="lg:col-span-2 p-4 bg-card rounded-2xl border">
                             {userId && (
                                 <WeeklyProgressChart
                                     streak={profile.streak_days || 0}
@@ -499,46 +512,44 @@ const Index = () => {
                                 />
                             )}
                         </div>
-                        <div className="p-6 bg-card rounded-2xl shadow-sm border flex flex-col justify-around text-center">
-                            <div>
-                                <p className="text-4xl font-bold text-primary">
-                                    {profile.xp || 0}
-                                </p>
-                                <p className="text-sm text-muted-foreground font-medium">
-                                    XP Total
-                                </p>
-                            </div>
-                            <div>
-                                <p className="text-4xl font-bold text-primary">
-                                    {trackData?.completedCount || 0}
-                                </p>
-                                <p className="text-sm text-muted-foreground font-medium">
-                                    Módulos Concluídos
-                                </p>
-                            </div>
+                        <div className="p-6 bg-card rounded-2xl shadow-sm border flex flex-col justify-around text-center space-y-1">
+                            <p className="text-4xl font-bold text-primary">
+                                {profile.xp || 0}
+                            </p>
+                            <p className="text-sm text-muted-foreground font-medium">
+                                XP Total
+                            </p>
+
+                            <p className="text-4xl font-bold text-primary">
+                                {trackData?.completedCount || 0}
+                            </p>
+                            <p className="text-sm text-muted-foreground font-medium">
+                                Módulos Concluídos
+                            </p>
                         </div>
                     </div>
 
-                    <h2 className="font-bold text-lg text-foreground">
+                    <h2 className="font-bold text-xl text-foreground flex items-center gap-3 border-l-4 border-primary pl-3">
+                        <Map className="h-5 w-5 text-primary/80" />
                         Sua próxima missão
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {trackData?.nextModule && trackData?.nextPhase ? (
                             <Link
                                 to={`/modulo/${trackData.nextModule.id}`}
-                                className="group relative p-5 bg-primary/10 rounded-2xl shadow-sm border border-primary/20 transition-all duration-300 hover:shadow-lg hover:-translate-y-1.5 flex flex-col justify-between"
+                                className="group relative p-5 bg-[hsl(var(--primary-soft-bg))] dark:bg-[hsl(var(--primary-soft-bg))] rounded-2xl shadow-sm border border-[hsl(var(--primary-soft-border))] transition-all duration-300 hover:shadow-lg hover:border-primary hover:-translate-y-1.5 flex flex-col justify-between"
                             >
                                 <div>
                                     <div className="flex justify-between items-start">
-                                        <h4 className="font-semibold text-primary mt-2">
+                                        <h4 className="font-bold text-lg text-[hsl(var(--primary-soft-fg))] dark:text-[hsl(var(--primary-soft-fg))] mt-2">
                                             {trackData.nextModule.name}
                                         </h4>
-                                        <div className="p-3 bg-primary rounded-lg">
+                                        <div className="p-3 bg-primary rounded-lg shadow-lg shadow-primary/30">
                                             <ArrowRight className="h-5 w-5 text-primary-foreground" />
                                         </div>
                                     </div>
-                                    
-                                    <p className="text-sm text-muted-foreground">
+
+                                    <p className="text-sm text-muted-foreground mt-2">
                                         Capítulo: {trackData.nextPhase.name}
                                     </p>
                                 </div>
@@ -547,7 +558,8 @@ const Index = () => {
                             <div className="p-6 bg-emerald-500/10 border-emerald-500/20 border rounded-2xl text-center flex flex-col justify-center items-center">
                                 <Sparkles className="h-10 w-10 text-emerald-600 mb-2" />
                                 <h3 className="font-bold text-emerald-700 dark:text-emerald-400">
-                                    Parabéns, {profile?.full_name?.split(" ")[0]}!
+                                    Parabéns,{" "}
+                                    {profile?.full_name?.split(" ")[0]}!
                                 </h3>
                                 <p className="text-sm text-emerald-600 dark:text-emerald-300">
                                     Você concluiu sua trilha personalizada!
@@ -556,12 +568,12 @@ const Index = () => {
                         )}
                         <Link
                             to="/modulos"
-                            className="group p-6 bg-card rounded-2xl shadow-sm border transition-all duration-300 hover:shadow-lg hover:-translate-y-1.5 flex flex-col justify-center items-center text-center"
+                            className="group p-6 bg-card rounded-2xl shadow-sm border transition-all duration-300 hover:shadow-lg hover:border-primary/50 hover:-translate-y-1.5 flex flex-col justify-center items-center text-center"
                         >
-                            <div className="p-3 bg-accent rounded-lg mb-3">
-                                <ArrowRight className="h-5 w-5 text-accent-foreground transition-transform group-hover:translate-x-1" />
+                            <div className="p-3 bg-accent group-hover:bg-primary/10 rounded-lg mb-3 transition-colors">
+                                <BookOpen className="h-5 w-5 text-accent-foreground group-hover:text-primary transition-all group-hover:scale-110" />
                             </div>
-                            <h3 className="font-bold text-card-foreground">
+                            <h3 className="font-bold text-card-foreground group-hover:text-primary transition-colors">
                                 Ver o mapa da jornada
                             </h3>
                             <p className="text-sm text-muted-foreground">
@@ -569,9 +581,10 @@ const Index = () => {
                             </p>
                         </Link>
                     </div>
-                    
-                    <div className="flex justify-between items-center">
-                        <h2 className="font-bold text-lg text-foreground">
+
+                    <div className="flex justify-between items-center pt-4">
+                        <h2 className="font-bold text-xl text-foreground flex items-center gap-3 border-l-4 border-primary pl-3">
+                            <Sparkles className="h-5 w-5 text-primary/80" />
                             Desafio rápido
                         </h2>
                     </div>
@@ -582,15 +595,15 @@ const Index = () => {
                         canComplete={dailyChallenge.canComplete}
                         isLoading={dailyChallenge.isLoading}
                     />
-                    
-                    
-                    <div className="flex justify-between items-center">
-                        <h2 className="font-bold text-lg text-foreground">
+
+                    <div className="flex justify-between items-center pt-4">
+                        <h2 className="font-bold text-xl text-foreground flex items-center gap-3 border-l-4 border-primary pl-3">
+                            <MessageSquare className="h-5 w-5 text-primary/80" />
                             Últimas na Comunidade
                         </h2>
                         <Link
                             to="/social"
-                            className="text-sm font-medium text-primary flex items-center gap-1"
+                            className="text-sm font-medium text-primary hover:text-[hsl(var(--primary-hover))] flex items-center gap-1 transition-colors"
                         >
                             Ver tudo <ArrowRight size={14} />
                         </Link>
