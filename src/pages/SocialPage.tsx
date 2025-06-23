@@ -126,17 +126,18 @@ export default function SocialPage(): JSX.Element {
     return (
         <div className="min-h-screen bg-background">
             <header className="p-4 sm:p-6 lg:p-8">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-2xl md:text-3xl font-bold text-foreground">Espaço Social</h1>
-                        <p className="text-sm text-muted-foreground">Conecte-se, compita e cresça.</p>
-                    </div>
-                    <Link to="/perfil">
-                        <Avatar className="h-14 w-14 border-4 border-card shadow-lg transition-transform hover:scale-110">
-                            <AvatarImage src={profile.avatar_url || ''} alt={`Avatar de ${profile.full_name}`} />
-                            <AvatarFallback>{profile.full_name?.charAt(0) || 'U'}</AvatarFallback>
-                        </Avatar>
-                    </Link>
+                <div className="flex items-center gap-4">
+
+                  <img
+                      src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.full_name?.split(" ")[0] || "A"}&background=random`}
+                      alt="Avatar do usuário"
+                      className="h-14 w-14 rounded-full object-cover border-2 border-background shadow-md transition-transform hover:scale-110"
+                    />
+
+                  <div>
+                    <h1 className="text-2xl font-bold text-foreground">Espaço Social</h1>
+                    <p className="text-sm text-muted-foreground">Conecte-se, compita e cresça.</p>
+                  </div>
                 </div>
             </header>
 

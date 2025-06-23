@@ -71,7 +71,7 @@ const BottomNavigation: React.FC = () => {
                   "flex items-center justify-center rounded-full transition-all duration-300 ease-out",
                   // Estilo para o avatar de perfil
                   isProfileTab
-                    ? `w-7 h-7 border-2 ${isActive ? 'border-primary' : 'border-transparent'}`
+                    ? `w-8 h-8 border-2 ${isActive ? 'border-primary' : 'border-transparent'}`
                     // Estilo para os ícones normais
                     : `w-12 h-8 ${isActive ? 'bg-primary shadow-lg' : ''}`
                 )}

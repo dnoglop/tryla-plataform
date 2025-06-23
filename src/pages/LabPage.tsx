@@ -218,26 +218,19 @@ export default function LabPage() {
     // MUDANÇA: Cor de fundo adaptada para o tema
     <div className="min-h-screen w-full bg-background">
       <header className="p-4 sm:p-6 lg:p-8">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-              Oficina de Ferramentas
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Seu arsenal secreto para conquistar o mundo.
-            </p>
-          </div>
-          <Link to="/perfil" aria-label="Ir para perfil">
+          <div className="flex items-center gap-4">
+
             <img
-              src={profile.avatar_url || "/default-avatar.png"}
-              alt="Foto do perfil"
-              className="h-14 w-14 rounded-full object-cover border-2 border-background shadow-md transition-transform hover:scale-110"
-              onError={(e) => {
-                e.currentTarget.src = "/default-avatar.png";
-              }}
-            />
-          </Link>
-        </div>
+                src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.full_name?.split(" ")[0] || "A"}&background=random`}
+                alt="Avatar do usuário"
+                className="h-14 w-14 rounded-full object-cover border-2 border-background shadow-md transition-transform hover:scale-110"
+              />
+
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Oficina de Ferramentas</h1>
+              <p className="text-sm text-muted-foreground">Seu arsenal secreto para conquistar o mundo.</p>
+            </div>
+          </div>
       </header>
 
       <main className="p-4 sm:p-6 lg:p-8 pt-0">

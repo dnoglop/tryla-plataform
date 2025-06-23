@@ -174,15 +174,15 @@ export default function ModulesPage() {
     <div className="pb-24 min-h-screen bg-background dark:bg-neutral-950">
       <header className="container px-4 pt-8 pb-6 space-y-4">
         <div className="flex items-center gap-4">
-          <Link to="/perfil" aria-label="Ir para o perfil">
-            <img
+
+          <img
               src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.full_name?.split(" ")[0] || "A"}&background=random`}
               alt="Avatar do usuário"
               className="h-14 w-14 rounded-full object-cover border-2 border-background shadow-md transition-transform hover:scale-110"
             />
-          </Link>
+          
           <div>
-            <h1 className="text-xl font-bold text-foreground">
+            <h1 className="text-2xl font-bold text-foreground">
               {getGreeting()}, {profile?.full_name?.split(" ")[0] || "Aluno"}!
             </h1>
             <p className="text-sm text-muted-foreground">Pronto para aprender hoje?</p>
