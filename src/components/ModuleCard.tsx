@@ -1,14 +1,13 @@
+// ARQUIVO: src/components/ModuleCard.tsx (VERSÃO REATORADA)
 
 import { Link } from "react-router-dom";
-import { Clock, Play, CheckCircle2, Lock } from "lucide-react";
+import { Award, ArrowRightCircle, Lock } from 'lucide-react';
 
 interface ModuleCardProps {
   id: number;
   name: string;
   description: string;
   emoji?: string;
-  type?: string;
-  estimatedTime?: string;
   progress: number;
   locked?: boolean;
   completed?: boolean;
@@ -19,64 +18,82 @@ const ModuleCard = ({
   name, 
   description, 
   emoji,
-  type,
-  estimatedTime, 
   progress, 
   locked = false,
   completed = false
 }: ModuleCardProps) => {
+
+  // --- MUDANÇA: Lógica para determinar o ícone de status/ação ---
+  const StatusIcon = () => {
+    if (completed) {
+      return <Award className="h-7 w-7 text-amber-500" aria-label="Missão Concluída"/>;
+    }
+    if (locked) {
+      return <Lock className="h-6 w-6 text-muted-foreground" aria-label="Missão Bloqueada" />;
+    }
+    return <ArrowRightCircle className="h-7 w-7 text-primary opacity-70 group-hover:opacity-100 group-hover:translate-x-1 transition-all" aria-label="Iniciar Missão" />;
+  };
+
   const CardContent = () => (
-    <div className={`bg-card p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-sm border transition-all hover:shadow-md ${!locked ? 'hover:scale-[1.02] hover:border-primary cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}>
-      <div className="flex items-center gap-4 mb-4">
-        <div className="flex-shrink-0 h-12 w-12 sm:h-16 sm:w-16 flex items-center justify-center rounded-xl sm:rounded-2xl bg-primary/10 text-2xl sm:text-3xl">
-          {locked ? <Lock className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground" /> : emoji || "📚"}
+    // --- MUDANÇA: Estrutura e estilo do card ---
+    // Adicionamos transições, `group`, e classes de hover para efeito de "levantar"
+    // O layout agora é flexível e usa `dark:` variants para cores.
+    <div className={`
+      group h-full flex flex-col justify-between bg-card p-5 rounded-2xl 
+      shadow-md border border-transparent 
+      transition-all duration-300 ease-in-out
+      ${!locked 
+        ? 'hover:shadow-xl hover:scale-[1.02] hover:border-primary/30 cursor-pointer' 
+        : 'opacity-70 cursor-not-allowed bg-muted/50'
+      }
+    `}>
+      {/* SEÇÃO SUPERIOR: Ícone, Título e Ícone de Ação */}
+      <div className="flex items-start gap-4">
+        {/* Ícone do Módulo (similar ao SecondaryTool da LabPage) */}
+        <div className="flex-shrink-0 w-16 h-16 rounded-xl flex items-center justify-center bg-background border text-3xl">
+          {locked ? <Lock className="h-7 w-7 text-muted-foreground" /> : emoji || "🗺️"}
         </div>
-        
+
+        {/* Título e Descrição */}
         <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-card-foreground text-base sm:text-lg line-clamp-2">{name}</h3>
-          <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mt-1">{description}</p>
+          <h3 className="font-bold text-card-foreground text-lg leading-tight line-clamp-2">{name}</h3>
+          <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{description}</p>
         </div>
-        
+
+        {/* Ícone de Ação/Status */}
         <div className="flex-shrink-0">
-          {completed ? (
-            <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-          ) : locked ? (
-            <Lock className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
-          ) : (
-            <Play className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-          )}
+          <StatusIcon />
         </div>
       </div>
-      
-      <div className="space-y-3">
-        <div className="flex items-center justify-between text-xs sm:text-sm">
-          <span className="text-muted-foreground">Progresso</span>
-          <span className="font-medium text-card-foreground">{Math.round(progress)}%</span>
+
+      {/* SEÇÃO INFERIOR: Barra de Progresso */}
+      <div className="mt-4">
+        <div className="flex items-center justify-between text-xs mb-1.5">
+          <span className="text-muted-foreground font-medium">
+            {completed ? 'Concluído' : 'Progresso'}
+          </span>
+          <span className={`font-semibold ${completed ? 'text-amber-500' : 'text-card-foreground'}`}>
+            {Math.round(progress)}%
+          </span>
         </div>
-        
+
         <div className="w-full bg-muted rounded-full h-2">
           <div 
-            className="bg-primary h-2 rounded-full transition-all duration-300"
+            className={`h-2 rounded-full transition-all duration-500 ease-out ${completed ? 'bg-amber-400' : 'bg-primary'}`}
             style={{ width: `${progress}%` }}
           />
         </div>
-        
-        {estimatedTime && (
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Clock className="h-3 w-3" />
-            <span>{estimatedTime}</span>
-          </div>
-        )}
       </div>
     </div>
   );
 
+  // Renderiza um Link apenas se o card não estiver bloqueado
   if (locked) {
     return <CardContent />;
   }
 
   return (
-    <Link to={`/modulo/${id}`}>
+    <Link to={`/modulo/${id}`} className="h-full">
       <CardContent />
     </Link>
   );

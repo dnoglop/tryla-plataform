@@ -1,29 +1,26 @@
+// components/ui/progress.tsx
+
 import * as React from "react"
 import * as ProgressPrimitive from "@radix-ui/react-progress"
-
 import { cn } from "@/lib/utils"
 
 const Progress = React.forwardRef<
   React.ElementRef<typeof ProgressPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof ProgressPrimitive.Root>
 >(({ className, value, ...props }, ref) => (
+  // 1. O container da barra (o "fundo")
   <ProgressPrimitive.Root
     ref={ref}
     className={cn(
-      "relative h-4 w-full overflow-hidden rounded-full",
+      "relative h-2.5 w-full overflow-hidden rounded-full bg-[--progress-background]", // Usa a variável de fundo
       className
     )}
-    style={{
-      backgroundColor: 'var(--progress-background, #f0f0f0)'
-    }}
     {...props}
   >
+    {/* 2. O indicador de progresso (a "barra preenchida") */}
     <ProgressPrimitive.Indicator
-      className="h-full w-full flex-1 transition-all"
-      style={{ 
-        transform: `translateX(-${100 - (value || 0)}%)`,
-        backgroundColor: 'var(--progress-foreground, #e36322)'
-      }}
+      className="h-full w-full flex-1 bg-[--progress-foreground] transition-all duration-500 ease-out" // Usa a variável de preenchimento
+      style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
     />
   </ProgressPrimitive.Root>
 ))
