@@ -8,12 +8,93 @@
 /* --- CLASSES DE COMPONENTES PERSONALIZADOS --- */
 @layer components {
 
+  /* EFEITO DE BRILHO (Mirror Effect / Shine) para botões importantes */
+  .btn-shine {
+    @apply relative overflow-hidden;
+  }
+
+  .btn-shine::before {
+    content: '';
+    @apply absolute top-0 -left-full w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent;
+    transition: none;
+    /* A transição é controlada pela animação */
+  }
+
+  .btn-shine:hover::before {
+    animation: shine-effect 1.5s ease-in-out infinite;
+  }
+
+
+  /* Card com gradiente suave do Reino (usado para destaque) */
+  .card-gradient-reino {
+    @apply relative overflow-hidden rounded-2xl sm:rounded-3xl border shadow-lg transition-all duration-300;
+    background-image: linear-gradient(135deg, hsl(var(--primary) / 0.1), hsl(var(--card)) 50%);
+    border-color: hsl(var(--primary) / 0.15);
+  }
+
+  .card-gradient-reino:hover {
+    border-color: hsl(var(--primary) / 0.4);
+    box-shadow: 0 10px 30px hsl(var(--primary) / 0.15);
+    transform: translateY(-4px);
+  }
+
+  .dark .card-gradient-reino {
+    background-image: linear-gradient(135deg, hsl(var(--primary) / 0.15), hsl(var(--card)) 60%);
+    border-color: hsl(var(--primary) / 0.25);
+  }
+
+
+  /* Cards genéricos da Jornada */
+  .card-jornada {
+    @apply relative overflow-hidden rounded-2xl sm:rounded-3xl border bg-card/80 backdrop-blur-sm shadow-md transition-all;
+    border-color: hsl(var(--border) / 0.7);
+  }
+
+
+  /* Botões da Saga */
+  .btn-saga-primario {
+    @apply rounded-xl px-6 py-3 font-bold shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 active:scale-95 transition-all;
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    font-family: 'Nunito', sans-serif;
+  }
+
+  .btn-saga-primario:hover {
+    background-color: hsl(var(--primary) / 0.95);
+    transform: translateY(-2px);
+  }
+
+  .btn-saga-primario:disabled {
+    @apply bg-muted text-muted-foreground cursor-not-allowed shadow-none hover:shadow-none transform-none;
+  }
+
+  /* Barras de Essência (Progresso) */
+  .essencia-bar {
+    @apply h-2 sm:h-2.5 rounded-full overflow-hidden;
+    background-color: hsl(var(--primary) / 0.15);
+  }
+
+  .essencia-valor {
+    @apply h-full rounded-full transition-all duration-700 ease-out;
+    background: linear-gradient(90deg, hsl(var(--primary) / 0.8), hsl(var(--primary)));
+    box-shadow: 0 0 10px hsl(var(--primary) / 0.5);
+  }
+
+  /* Cabeçalho da Seção */
+  .cabecalho-secao {
+    @apply text-xl font-bold flex items-center gap-3 border-l-4 pl-3;
+    border-color: hsl(var(--primary));
+    color: hsl(var(--foreground));
+    font-family: 'Nunito', sans-serif;
+  }
+
   /* Card com gradiente suave de laranja */
   .card-gradient-orange {
     @apply relative overflow-hidden rounded-xl sm:rounded-2xl border shadow-sm transition-all;
     background-image: linear-gradient(135deg, hsl(var(--primary) / 0.05), hsl(var(--card)) 50%);
     border-color: hsl(var(--primary) / 0.1);
   }
+
   .card-gradient-orange:hover {
     border-color: hsl(var(--primary) / 0.3);
     box-shadow: 0 8px 25px hsl(var(--primary) / 0.1);
@@ -196,22 +277,29 @@
     font-weight: 400;
   }
 
-  /* Textarea com auto-redimensionamento */
-  textarea.auto-resize {
-    @apply min-h-[24px] max-h-[200px] overflow-y-hidden resize-none;
-    font-family: 'Nunito', sans-serif;
-    border: 1px solid hsl(var(--border));
-    border-radius: 8px;
-    padding: 12px;
-    background-color: hsl(var(--input));
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  /* Animação de brilho para a borda do marco ativo */
+  .milestone-active-glow {
+    background: conic-gradient(from 180deg at 50% 50%, hsl(var(--primary)/0.8) 0deg, hsl(var(--primary)/0.2) 120deg, hsl(var(--primary)/0.8) 240deg, hsl(var(--primary)/0.8) 360deg);
+    animation: spin 3s linear infinite;
   }
+}
 
-  textarea.auto-resize:focus {
-    outline: none;
-    border-color: hsl(var(--trilha-orange));
-    box-shadow: 0 0 0 3px hsl(var(--trilha-orange) / 0.1);
-  }
+/* Textarea com auto-redimensionamento */
+textarea.auto-resize {
+  @apply min-h-[24px] max-h-[200px] overflow-y-hidden resize-none;
+  font-family: 'Nunito', sans-serif;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  padding: 12px;
+  background-color: hsl(var(--input));
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+textarea.auto-resize:focus {
+  outline: none;
+  border-color: hsl(var(--trilha-orange));
+  box-shadow: 0 0 0 3px hsl(var(--trilha-orange) / 0.1);
+}
 }
 
 /* --- MODIFICAÇÕES E ANIMAÇÕES GLOBAIS --- */
@@ -235,8 +323,15 @@
 
 /* Animações */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes confetti {
@@ -244,9 +339,40 @@
     transform: translateY(0) rotate(0);
     opacity: 1;
   }
+
   100% {
     transform: translateY(100vh) rotate(720deg);
     opacity: 0;
+  }
+}
+
+/* Animação para o fundo de gradiente */
+@keyframes gradient-pan {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Animação para o brilho do botão */
+@keyframes shine-effect {
+  0% {
+    transform: translateX(-100%) skewX(-20deg);
+  }
+
+  10% {
+    transform: translateX(100%) skewX(-20deg);
+  }
+
+  100% {
+    transform: translateX(100%) skewX(-20deg);
   }
 }
 
@@ -254,16 +380,62 @@
   animation: confetti 2s ease-out forwards;
 }
 
+/* Animação para a borda giratória */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* --- CLASSES UTILITÁRIAS PERSONALIZADAS --- */
 @layer utilities {
-  .text-trilha-orange { color: hsl(var(--trilha-orange)); }
-  .text-trilha-green { color: hsl(var(--trilha-green)); }
-  .text-trilha-bee { color: hsl(var(--trilha-bee)); }
-  .bg-trilha-orange { background-color: hsl(var(--trilha-orange)); }
-  .bg-trilha-green { background-color: hsl(var(--trilha-green)); }
-  .bg-trilha-bee { background-color: hsl(var(--trilha-bee)); }
-  .bg-trilha-polar { background-color: hsl(var(--trilha-polar)); }
-  .bg-trilha-snow { background-color: hsl(var(--trilha-snow)); }
-  .border-trilha-orange { border-color: hsl(var(--trilha-orange)); }
-  .font-nunito { font-family: 'Nunito', sans-serif; }
+  .text-trilha-orange {
+    color: hsl(var(--trilha-orange));
+  }
+
+  .text-trilha-green {
+    color: hsl(var(--trilha-green));
+  }
+
+  .text-trilha-bee {
+    color: hsl(var(--trilha-bee));
+  }
+
+  .bg-trilha-orange {
+    background-color: hsl(var(--trilha-orange));
+  }
+
+  .bg-trilha-green {
+    background-color: hsl(var(--trilha-green));
+  }
+
+  .bg-trilha-bee {
+    background-color: hsl(var(--trilha-bee));
+  }
+
+  .bg-trilha-polar {
+    background-color: hsl(var(--trilha-polar));
+  }
+
+  .bg-trilha-snow {
+    background-color: hsl(var(--trilha-snow));
+  }
+
+  .border-trilha-orange {
+    border-color: hsl(var(--trilha-orange));
+  }
+
+  .animated-gradient-bg {
+    background: linear-gradient(-45deg, hsl(var(--primary)/0.1), hsl(var(--background)), hsl(var(--secondary)/0.1), hsl(var(--background)));
+    background-size: 400% 400%;
+    animation: gradient-pan 15s ease infinite;
+  }
+
+  .font-nunito {
+    font-family: 'Nunito', sans-serif;
+  }
 }

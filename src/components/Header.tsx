@@ -1,26 +1,27 @@
+// ARQUIVO: src/components/Header.tsx (VERSÃO FINAL COM GRID LAYOUT)
 
 import React from "react";
-import { ChevronLeft, MoreHorizontal } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { ChevronLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 export interface HeaderProps {
   title: string;
+  subtitle?: string;
   showBackButton?: boolean;
   onBackClick?: () => void;
   backButtonTarget?: string;
   rightContent?: React.ReactNode;
-  subtitle?: string;
   className?: string;
 }
 
 const Header: React.FC<HeaderProps> = ({
   title,
+  subtitle,
   showBackButton = false,
   onBackClick,
   backButtonTarget,
   rightContent,
-  subtitle,
   className,
 }) => {
   const navigate = useNavigate();
@@ -36,43 +37,45 @@ const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className={cn(
-      "bg-gradient-to-r from-primary to-primary/90 text-white relative z-10",
-      "shadow-lg backdrop-blur-sm",
-      className
-    )}>
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          {/* Seção esquerda - Botão voltar */}
-          <div className="flex items-center min-w-[40px]">
+    <header
+      className={cn(
+        "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground relative z-20 shadow-md",
+        "px-2 sm:px-4 py-3", // Padding ajustado
+        className
+      )}
+    >
+      <div className="container mx-auto">
+        {/* Usando Grid para um controle perfeito do layout */}
+        <div className="grid grid-cols-[auto_1fr_auto] items-center w-full gap-2">
+
+          {/* Coluna Esquerda: Botão de Voltar */}
+          <div className="flex justify-start">
             {showBackButton && (
               <button
                 onClick={handleBackNavigation}
-                className="p-2 rounded-full hover:bg-white/20 transition-colors active:scale-95"
+                className="p-2 rounded-full hover:bg-white/10 transition-colors active:scale-95"
                 aria-label="Voltar"
               >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeft className="h-6 w-6" />
               </button>
             )}
           </div>
-          
-          {/* Seção central - Título e contexto */}
-          <div className="flex-1 text-center px-4">
-            <h1 className="text-lg font-bold truncate">{title}</h1>
+
+          {/* Coluna Central: Títulos */}
+          <div className="text-center overflow-hidden">
             {subtitle && (
-              <p className="text-sm text-white/80 truncate mt-0.5">
+              <p className="text-xs sm:text-sm font-semibold text-white/80 truncate">
                 {subtitle}
               </p>
             )}
+            <h1 className="text-base sm:text-lg font-bold leading-tight truncate">
+              {title}
+            </h1>
           </div>
 
-          {/* Seção direita - Conteúdo customizado */}
-          <div className="flex items-center justify-end min-w-[40px]">
-            {rightContent || (
-              <div className="w-10 h-10 flex items-center justify-center">
-                {/* Placeholder para manter alinhamento */}
-              </div>
-            )}
+          {/* Coluna Direita: Conteúdo Extra */}
+          <div className="flex justify-end">
+            {rightContent}
           </div>
         </div>
       </div>
