@@ -219,7 +219,7 @@ export default function PhaseDetailPage() {
                                       <div className="flex flex-col items-center gap-4">
                                           <Button onClick={() => baseHandleReadContent(phase.content)} disabled={isLoadingAudio} className="btn-saga-primario btn-shine h-10 text-lg px-8">
                                               {isPlaying ? <Pause className="mr-2 h-5 w-5" /> : <Play className="mr-2 h-5 w-5" />}
-                                              {isPlaying ? "Pausar Narração" : "Ouvir a narração"}
+                                              {isPlaying ? "Pausar a narração" : "Ouvir a narração"}
                                           </Button>
                                           <div className="flex items-center gap-2">
                                               <Button variant="outline" size="icon" onClick={() => baseHandleSpeedChange(phase.content)}><FastForward className="h-4 w-4" /></Button>

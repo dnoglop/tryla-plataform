@@ -8,6 +8,17 @@
 /* --- CLASSES DE COMPONENTES PERSONALIZADOS --- */
 @layer components {
 
+  /* Adição para o novo design de Login/Cadastro */
+  .shadow-input {
+      /* Sombra interna sutil que dá o efeito de profundidade no card */
+      box-shadow: 0px 1px 0px 0px #ffffff40 inset, 0px -1px 0px 0px #ffffff40 inset;
+  }
+
+  .dark .shadow-input {
+      /* Versão da sombra para o tema escuro */
+      box-shadow: 0px 1px 0px 0px #27272a inset, 0px -1px 0px 0px #27272a inset;
+  }
+  
   /* EFEITO DE BRILHO (Mirror Effect / Shine) para botões importantes */
   .btn-shine {
     @apply relative overflow-hidden;
