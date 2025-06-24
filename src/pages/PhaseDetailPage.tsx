@@ -217,9 +217,9 @@ export default function PhaseDetailPage() {
                               {phase.type === "text" || phase.type === "challenge" ? (
                                   <div className="card-jornada p-4 sm:p-6 space-y-6">
                                       <div className="flex flex-col items-center gap-4">
-                                          <Button onClick={() => baseHandleReadContent(phase.content)} disabled={isLoadingAudio} className="btn-saga-primario btn-shine h-14 text-lg px-8">
+                                          <Button onClick={() => baseHandleReadContent(phase.content)} disabled={isLoadingAudio} className="btn-saga-primario btn-shine h-10 text-lg px-8">
                                               {isPlaying ? <Pause className="mr-2 h-5 w-5" /> : <Play className="mr-2 h-5 w-5" />}
-                                              {isPlaying ? "Pausar Narração" : "Ouvir Narração"}
+                                              {isPlaying ? "Pausar Narração" : "Ouvir a narração"}
                                           </Button>
                                           <div className="flex items-center gap-2">
                                               <Button variant="outline" size="icon" onClick={() => baseHandleSpeedChange(phase.content)}><FastForward className="h-4 w-4" /></Button>
@@ -259,7 +259,7 @@ export default function PhaseDetailPage() {
                                           </Button>
                                       )}
                                       {canComplete && (
-                                          <ActionButton onClick={handleCompletePhase} initialText="Concluir Missão" loadingText="Absorvendo..." className="px-8" />
+                                          <ActionButton onClick={handleCompletePhase} initialText="Concluir essa missão" loadingText="Absorvendo..." className="px-8 h-11" />
                                       )}
                                   </div>
                               </div>

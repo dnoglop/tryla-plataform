@@ -67,7 +67,7 @@ export const ActionButton = ({
       layout
       disabled={status !== "idle"}
       className={cn(
-        "flex min-w-[150px] cursor-pointer items-center justify-center gap-2 rounded-full px-6 py-3 h-14 text-lg font-bold text-primary-foreground ring-offset-2 transition-colors duration-200",
+        "flex min-w-[150px] cursor-pointer items-center justify-center gap-2 rounded-full px-4 py-3 h-12 text-lg font-bold text-primary-foreground ring-offset-2 transition-colors duration-200",
         "bg-primary hover:bg-primary/90",
         status === 'loading' && "bg-primary/70 cursor-wait",
         status === 'success' && "bg-green-500",
