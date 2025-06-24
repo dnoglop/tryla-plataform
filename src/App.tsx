@@ -1,4 +1,4 @@
-// ARQUIVO: src/App.tsx (VERSÃO FINAL COMPLETA)
+// ARQUIVO: src/App.tsx (VERSÃO FINAL COM LAYOUT CORRETO APLICADO)
 
 import React from "react";
 import {
@@ -13,9 +13,9 @@ import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { QueryProvider } from "./providers/QueryProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import Layout from "./components/Layout"; // O nosso Layout simplificado
 import PWAPrompt from "./components/PWAPrompt";
 import { RewardModalProvider } from "./components/XpRewardModal/RewardModalContext";
+import Layout from "./components/Layout"; // Importe o Layout
 
 // Importações de todas as Páginas
 import SplashScreen from "./pages/SplashScreen";
@@ -46,32 +46,37 @@ function App() {
         <RewardModalProvider>
           <Router>
             <Routes>
-              {/* --- ROTAS PÚBLICAS --- */}
-              {/* Estas páginas são de tela cheia e não usam o Layout padrão. */}
+              {/* --- ROTAS PÚBLICAS (sem layout padrão) --- */}
               <Route path="/" element={<SplashScreen />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<SignupPage />} />
               <Route path="/cadastro" element={<SignupPage />} />
-              <Route path="/onboarding" element={<OnboardingPage />} />
-              <Route path="/completar-perfil" element={<CompleteProfilePage />} />
 
-              {/* --- ROTAS PROTEGIDAS --- */}
+              {/* --- ROTAS DE ONBOARDING (sem layout padrão) --- */}
+              <Route
+                path="/onboarding"
+                element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>}
+              />
+              <Route
+                path="/completar-perfil"
+                element={<ProtectedRoute><CompleteProfilePage /></ProtectedRoute>}
+              />
 
-              {/* PÁGINAS QUE USAM O LAYOUT PADRÃO (com BottomNavigation) */}
+              {/* --- ROTAS PROTEGIDAS QUE USAM O LAYOUT PADRÃO --- */}
               <Route path="/inicio" element={<ProtectedRoute><Layout><Index /></Layout></ProtectedRoute>} />
-              <Route path="/modulos" element={<ProtectedRoute><Layout><ModulesPage /></Layout></ProtectedRoute>} />
+              <Route path="/admin" element={<ProtectedRoute><Layout><AdminPage /></Layout></ProtectedRoute>} />
               <Route path="/social" element={<ProtectedRoute><Layout><SocialPage /></Layout></ProtectedRoute>} />
               <Route path="/lab" element={<ProtectedRoute><Layout><LabPage /></Layout></ProtectedRoute>} />
               <Route path="/perfil" element={<ProtectedRoute><Layout><ProfilePage /></Layout></ProtectedRoute>} />
               <Route path="/editar-perfil" element={<ProtectedRoute><Layout><EditProfilePage /></Layout></ProtectedRoute>} />
+              <Route path="/modulos" element={<ProtectedRoute><Layout><ModulesPage /></Layout></ProtectedRoute>} />
               <Route path="/diario" element={<ProtectedRoute><Layout><JournalPage /></Layout></ProtectedRoute>} />
               <Route path="/configuracoes" element={<ProtectedRoute><Layout><SettingsPage /></Layout></ProtectedRoute>} />
               <Route path="/teste-vocacional" element={<ProtectedRoute><Layout><VocationalTestPage /></Layout></ProtectedRoute>} />
               <Route path="/tutor" element={<ProtectedRoute><Layout><TutorPage /></Layout></ProtectedRoute>} />
               <Route path="/pomodoro" element={<ProtectedRoute><Layout><PomodoroPage /></Layout></ProtectedRoute>} />
-              <Route path="/admin" element={<ProtectedRoute><Layout><AdminPage /></Layout></ProtectedRoute>} />
 
-              {/* PÁGINAS DE TELA CHEIA (NÃO usam o componente Layout) */}
+              {/* --- ROTAS DE TELA CHEIA (NÃO usam o Layout) --- */}
               <Route
                 path="/modulo/:id"
                 element={<ProtectedRoute><ModuleDetailPage /></ProtectedRoute>}
@@ -86,7 +91,6 @@ function App() {
               <Route path="*" element={<Navigate to="/inicio" replace />} />
             </Routes>
 
-            {/* Componentes globais que aparecem em todas as páginas */}
             <Toaster />
             <PWAPrompt />
           </Router>
