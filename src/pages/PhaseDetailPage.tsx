@@ -212,16 +212,19 @@
                                         />
                                     </header>
 
-                                    <main ref={mainContentRef} className="flex-1 overflow-y-auto">
-                                        <div className="container px-4 sm:px-6 lg:px-8 py-6 space-y-8 max-w-3xl mx-auto pb-12">
-                                          <AnimatePresence mode="wait">
-                                              <motion.div
-                                                  key={phase.id}
-                                                  initial={{ opacity: 0, y: 20 }}
-                                                  animate={{ opacity: 1, y: 0 }}
-                                                  exit={{ opacity: 0, y: -20 }}
-                                                  transition={{ duration: 0.5 }}
-                                              >
+                                    <main 
+                                      ref={mainContentRef} 
+                                      className="flex-1 overflow-y-auto"
+                                    >
+                                        <div className="container px-4 sm:px-6 lg:px-8 py-8 space-y-8 max-w-3xl mx-auto">
+                                            <AnimatePresence mode="wait">
+                                                <motion.div
+                                                    key={phase.id}
+                                                    initial={{ opacity: 0, y: 20 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    exit={{ opacity: 0, y: -20 }}
+                                                    transition={{ duration: 0.5 }}
+                                                >
                                                   {phase.type === "text" || phase.type === "challenge" ? (
                                                       <div className="card-jornada p-4 sm:p-6 space-y-6">
                                                           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-3 bg-muted/50 rounded-lg">
