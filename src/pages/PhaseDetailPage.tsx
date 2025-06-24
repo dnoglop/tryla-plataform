@@ -33,7 +33,7 @@
                         const queryClient = useQueryClient();
                         const { showRewardModal } = useRewardModal();
                         const mainContentRef = useRef(null);
-                        const { scrollYProgress } = useScroll({ container: mainContentRef, offset: ["start start", "end end"] });
+                        const { scrollYProgress } = useScroll({ container: mainContentRef});
 
                         // 2. DECLARAÇÃO DE ESTADOS
                         const [userId, setUserId] = useState<string | null>(null);

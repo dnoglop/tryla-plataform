@@ -1,45 +1,30 @@
-// ARQUIVO: src/components/Layout.tsx (VERSÃO FINAL E CORRIGIDA)
+// ARQUIVO: src/components/Layout.tsx (VERSÃO FINAL COMPLETA)
 
 import React from "react";
-import { useLocation } from "react-router-dom"; // Importe o hook de localização
 import BottomNavigation from "@/components/BottomNavigation";
 
+// A interface define as props que o componente aceita.
 interface LayoutProps {
-  children: React.ReactNode;
-  className?: string; // Adicionando className para flexibilidade
+  children: React.ReactNode; // 'children' é o conteúdo que será envolvido pelo layout.
+  className?: string;         // 'className' opcional para estilização extra.
 }
 
+// O componente Layout recebe 'children' como prop.
 const Layout: React.FC<LayoutProps> = ({ children, className }) => {
-  const location = useLocation();
-
-  // Lista de rotas que devem ter seu próprio layout de tela cheia
-  // e não devem usar o layout padrão com BottomNavigation.
-  const fullPageRoutes = [
-    '/modulo/', // Corresponde a /modulo/:id e /modulo/:moduleId/fase/:id
-    '/onboarding',
-    '/login',
-    '/register',
-    '/cadastro',
-    '/' // SplashScreen
-  ];
-
-  // Verifica se a rota atual é uma das rotas de tela cheia
-  const isFullPage = fullPageRoutes.some(route => 
-    route === '/' ? location.pathname === '/' : location.pathname.startsWith(route)
-  );
-
-  // Se for uma rota de tela cheia, renderiza apenas o conteúdo (children),
-  // permitindo que a própria página controle 100% do seu layout.
-  if (isFullPage) {
-    return <>{children}</>;
-  }
-
-  // Para todas as outras páginas (Dashboard, Perfil, etc.), aplica o layout padrão.
   return (
-    <div className="relative min-h-screen bg-background">
+    // O div principal que envolve todo o layout padrão.
+    // 'relative' é importante para o posicionamento de elementos filhos.
+    // 'min-h-screen' garante que o layout ocupe pelo menos a altura total da tela.
+    <div className={`relative min-h-screen bg-background ${className || ''}`}>
+
+      {/* O 'main' é onde o conteúdo da página (children) será renderizado. */}
+      {/* 'pb-24' (padding-bottom) cria um espaço no final da página para que
+          o conteúdo não fique escondido atrás da BottomNavigation. */}
       <main className="pb-24">
         {children}
       </main>
+
+      {/* A navegação inferior é um componente fixo em todas as páginas que usam este layout. */}
       <BottomNavigation />
     </div>
   );

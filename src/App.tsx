@@ -1,3 +1,5 @@
+// ARQUIVO: src/App.tsx (VERSÃO FINAL COMPLETA)
+
 import React from "react";
 import {
   BrowserRouter as Router,
@@ -5,10 +7,17 @@ import {
   Routes,
   Navigate,
 } from "react-router-dom";
+
+// Providers e Componentes Globais
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { QueryProvider } from "./providers/QueryProvider";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@/components/ui/sonner";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import Layout from "./components/Layout"; // O nosso Layout simplificado
+import PWAPrompt from "./components/PWAPrompt";
+import { RewardModalProvider } from "./components/XpRewardModal/RewardModalContext";
+
+// Importações de todas as Páginas
 import SplashScreen from "./pages/SplashScreen";
 import Index from "./pages/Index";
 import LoginPage from "./pages/LoginPage";
@@ -29,8 +38,6 @@ import EditProfilePage from "./pages/EditProfilePage";
 import JournalPage from "./pages/JournalPage";
 import NotFound from "./pages/NotFound";
 import OnboardingPage from "./pages/OnboardingPage";
-import PWAPrompt from "./components/PWAPrompt";
-import { RewardModalProvider } from "./components/XpRewardModal/RewardModalContext";
 
 function App() {
   return (
@@ -38,140 +45,50 @@ function App() {
       <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
         <RewardModalProvider>
           <Router>
-            <div className="min-h-screen bg-background">
-              <Routes>
-                {/* rotas publicas do app */}
-                <Route path="/" element={<SplashScreen />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<SignupPage />} />
-                <Route path="/cadastro" element={<SignupPage />} />
-                <Route path="/onboarding" element={<OnboardingPage />} />
-                <Route
-                  path="/completar-perfil"
-                  element={<CompleteProfilePage />}
-                />
+            <Routes>
+              {/* --- ROTAS PÚBLICAS --- */}
+              {/* Estas páginas são de tela cheia e não usam o Layout padrão. */}
+              <Route path="/" element={<SplashScreen />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<SignupPage />} />
+              <Route path="/cadastro" element={<SignupPage />} />
+              <Route path="/onboarding" element={<OnboardingPage />} />
+              <Route path="/completar-perfil" element={<CompleteProfilePage />} />
 
-                {/* rotas fechadas dentro do app */}
-                <Route
-                  path="/inicio"
-                  element={
-                    <ProtectedRoute>
-                      <Index />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin"
-                  element={
-                    <ProtectedRoute>
-                      <AdminPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/social"
-                  element={
-                    <ProtectedRoute>
-                      <SocialPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/lab"
-                  element={
-                    <ProtectedRoute>
-                      <LabPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/perfil"
-                  element={
-                    <ProtectedRoute>
-                      <ProfilePage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/editar-perfil"
-                  element={
-                    <ProtectedRoute>
-                      <EditProfilePage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/modulos"
-                  element={
-                    <ProtectedRoute>
-                      <ModulesPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/modulo/:id"
-                  element={
-                    <ProtectedRoute>
-                      <ModuleDetailPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/modulo/:moduleId/fase/:id"
-                  element={
-                    <ProtectedRoute>
-                      <PhaseDetailPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/diario"
-                  element={
-                    <ProtectedRoute>
-                      <JournalPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/configuracoes"
-                  element={
-                    <ProtectedRoute>
-                      <SettingsPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/teste-vocacional"
-                  element={
-                    <ProtectedRoute>
-                      <VocationalTestPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/tutor"
-                  element={
-                    <ProtectedRoute>
-                      <TutorPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/pomodoro"
-                  element={
-                    <ProtectedRoute>
-                      <PomodoroPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="/404" element={<NotFound />} />
+              {/* --- ROTAS PROTEGIDAS --- */}
 
-                {/* Redirect any unknown routes to home */}
-                <Route path="*" element={<Navigate to="/inicio" replace />} />
-              </Routes>
-              <Toaster />
-              <PWAPrompt />
-            </div>
+              {/* PÁGINAS QUE USAM O LAYOUT PADRÃO (com BottomNavigation) */}
+              <Route path="/inicio" element={<ProtectedRoute><Layout><Index /></Layout></ProtectedRoute>} />
+              <Route path="/modulos" element={<ProtectedRoute><Layout><ModulesPage /></Layout></ProtectedRoute>} />
+              <Route path="/social" element={<ProtectedRoute><Layout><SocialPage /></Layout></ProtectedRoute>} />
+              <Route path="/lab" element={<ProtectedRoute><Layout><LabPage /></Layout></ProtectedRoute>} />
+              <Route path="/perfil" element={<ProtectedRoute><Layout><ProfilePage /></Layout></ProtectedRoute>} />
+              <Route path="/editar-perfil" element={<ProtectedRoute><Layout><EditProfilePage /></Layout></ProtectedRoute>} />
+              <Route path="/diario" element={<ProtectedRoute><Layout><JournalPage /></Layout></ProtectedRoute>} />
+              <Route path="/configuracoes" element={<ProtectedRoute><Layout><SettingsPage /></Layout></ProtectedRoute>} />
+              <Route path="/teste-vocacional" element={<ProtectedRoute><Layout><VocationalTestPage /></Layout></ProtectedRoute>} />
+              <Route path="/tutor" element={<ProtectedRoute><Layout><TutorPage /></Layout></ProtectedRoute>} />
+              <Route path="/pomodoro" element={<ProtectedRoute><Layout><PomodoroPage /></Layout></ProtectedRoute>} />
+              <Route path="/admin" element={<ProtectedRoute><Layout><AdminPage /></Layout></ProtectedRoute>} />
+
+              {/* PÁGINAS DE TELA CHEIA (NÃO usam o componente Layout) */}
+              <Route
+                path="/modulo/:id"
+                element={<ProtectedRoute><ModuleDetailPage /></ProtectedRoute>}
+              />
+              <Route
+                path="/modulo/:moduleId/fase/:id"
+                element={<ProtectedRoute><PhaseDetailPage /></ProtectedRoute>}
+              />
+
+              {/* --- ROTAS DE FALLBACK --- */}
+              <Route path="/404" element={<NotFound />} />
+              <Route path="*" element={<Navigate to="/inicio" replace />} />
+            </Routes>
+
+            {/* Componentes globais que aparecem em todas as páginas */}
+            <Toaster />
+            <PWAPrompt />
           </Router>
         </RewardModalProvider>
       </ThemeProvider>
