@@ -204,7 +204,7 @@ const PhaseContent = ({
             <div className="container px-4 sm:px-6 lg:px-8 py-8 max-w-3xl mx-auto space-y-8">
 
                 {/* NOVO HEADER DE CONTEÚDO */}
-                <div className="text-center card-trilha p-6 -mt-2">
+                <div className="text-center card-trilha">
                     <p className="text-sm font-semibold text-primary mb-2">
                       Missão {currentPhaseIndex + 1} de {allPhases.length}
                     </p>
@@ -212,7 +212,7 @@ const PhaseContent = ({
                       {phase.name}
                     </h1>
                     <p className="text-muted-foreground mt-1">
-                      no Reino de {module.name}
+                     {module.name}
                     </p>
                     <div className="inline-flex items-center gap-2 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 font-semibold px-3 py-1.5 rounded-full mt-4 text-sm">
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -222,7 +222,7 @@ const PhaseContent = ({
 
                 <MotionCard delay={0}>
                   {(phase.type === "text" || phase.type === "challenge") && (
-                    <div className="card-trilha p-4 sm:p-6">
+                    <div className="card-trilha p-2 sm:p-6">
                       <div className="flex justify-between items-center mb-6 pb-4 border-b border-border">
                           <Button onClick={() => handleReadContent(phase.content)} disabled={isLoadingAudio} variant="outline" className="font-semibold">
                             {isPlaying ? <Pause className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
@@ -256,10 +256,20 @@ const PhaseContent = ({
 
                 {phase.video_url && (
                     <MotionCard delay={1}>
-                        <div className="card-gradient-orange rounded-2xl overflow-hidden">
-                            <h2 className="cabecalho-secao p-4 pb-2 sm:p-6 sm:pb-4 flex items-center gap-2"><Video className="w-5 h-5" />Recurso em Vídeo</h2>
-                            <YoutubeEmbed videoId={phase.video_url} />
-                        </div>
+                      <div className="bg-gradient-to-r from-primary to-primary/80 rounded-2xl p-6 shadow-lg">
+                          {/* Cabeçalho */}
+                          <div className="flex items-center gap-3 mb-4">
+                              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2">
+                                  <Video className="w-6 h-6 text-white" />
+                              </div>
+                              <h2 className="text-xl font-bold text-white">Recurso em Vídeo</h2>
+                          </div>
+
+                          {/* Moldura do Vídeo */}
+                          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2 overflow-hidden">
+                              <YoutubeEmbed videoId={phase.video_url} />
+                          </div>
+                      </div>
                     </MotionCard>
                 )}
 
@@ -281,34 +291,34 @@ const PhaseContent = ({
                 )}
 
                 <MotionCard delay={3}>
-                  <div className="bg-card rounded-2xl p-6 border border-border/10 shadow-sm">
-                    <div className="flex items-center justify-between mb-4"><h3 className="text-lg font-bold text-foreground flex items-center"><PenTool className="w-5 h-5 mr-2 text-primary" />Crônicas da Jornada</h3><div className="text-sm text-primary bg-primary/10 px-3 py-1 rounded-full font-semibold">Suas Descobertas</div></div>
+                  <div className="bg-card rounded-2xl p-4 border border-border/10 shadow-sm">
+                    <div className="flex items-center justify-between mb-2"><h3 className="text-lg font-bold text-foreground flex items-center"><PenTool className="w-5 h-5 mr-2 text-primary" />Crônicas da Jornada</h3><div className="text-sm text-primary bg-primary/10 px-3 py-1 rounded-full font-semibold">Suas Descobertas</div></div>
                     <p className="text-muted-foreground text-sm mb-4">Registre aqui seus insights e reflexões. Este é o seu mapa do tesouro pessoal, documentando sua evolução.</p>
                     <Textarea value={journalNotes} onChange={(e) => setJournalNotes(e.target.value)} placeholder="O que mais chamou sua atenção? Como isso se aplica a você? Qual seu próximo passo prático?..." className="w-full min-h-[120px] p-4 bg-input rounded-xl border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none resize-none" rows={5}/>
                     <div className="flex justify-end mt-4">
                       <Button onClick={handleSaveJournal} disabled={journalMutation.isPending || !journalNotes.trim()} className={cn("transition-all", isJournalSaved ? 'bg-green-500 hover:bg-green-600' : 'btn-saga-primario')}>
-                        {journalMutation.isPending ? "Gravando..." : isJournalSaved ? (<><Check className="mr-2 h-4 w-4"/>Gravado!</>) : (<><CheckCircle className="mr-2 h-4 w-4"/>Gravar na Crônica</>)}
+                        {journalMutation.isPending ? "Gravando..." : isJournalSaved ? (<><Check className="h-4 w-4"/>Gravado!</>) : (<><CheckCircle className="mr-2 h-4 w-4"/>Gravar na Crônica</>)}
                       </Button>
                     </div>
                   </div>
                 </MotionCard>
 
-                <div ref={actionButtonsRef} className="pt-8">
+                <div ref={actionButtonsRef} className="pt-2">
                    <motion.div 
                       key={phase.id} 
-                      className="flex items-center justify-center gap-4" 
+                      className="flex items-center justify-center gap-6" 
                       initial={{ opacity: 0, y: 50 }} 
                       animate={areButtonsInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }} 
                       transition={{ duration: 0.7, ease: "easeOut" }}
                    >
                       {previousPhase && (
-                         <Button variant="outline" onClick={() => navigate(`/modulo/${module.id}/fase/${previousPhase.id}`)} className="h-14 px-6 flex items-center shadow-sm">
+                         <Button variant="outline" onClick={() => navigate(`/modulo/${module.id}/fase/${previousPhase.id}`)} className="h-10 px-4 flex items-center shadow-sm">
                             <ArrowLeft className="mr-2 h-5 w-5" />
                             Missão Anterior
                          </Button>
                       )}
                       {canComplete && (
-                         <Button onClick={handleCompletePhase} disabled={isSubmitting} className="btn-saga-primario h-14 text-lg px-8 shadow-lg">
+                         <Button onClick={handleCompletePhase} disabled={isSubmitting} className="btn-saga-primario h-11 text-lg px-4 shadow-lg">
                             {isSubmitting ? <Trophy className="w-6 h-6 animate-pulse" /> : <Award className="w-6 h-6" />}
                             <span className="ml-2">{isSubmitting ? 'Concluindo...' : 'Concluir Missão'}</span>
                          </Button>
