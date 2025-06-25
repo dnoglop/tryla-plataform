@@ -20,8 +20,6 @@ import Layout from "./components/Layout"; // Importe o Layout
 // Importações de todas as Páginas
 import SplashScreen from "./pages/SplashScreen";
 import Index from "./pages/Index";
-import LoginPage from "./pages/LoginPage";
-import SignupPage from "./pages/SignupPage";
 import ProfilePage from "./pages/ProfilePage";
 import ModulesPage from "./pages/ModulesPage";
 import ModuleDetailPage from "./pages/ModuleDetailPage";
@@ -33,7 +31,6 @@ import { VocationalTestPage } from "./pages/VocationalTestPage";
 import TutorPage from "./pages/TutorPage";
 import PomodoroPage from "./pages/PomodoroPage";
 import AdminPage from "./pages/AdminPage";
-import CompleteProfilePage from "./pages/CompleteProfilePage";
 import EditProfilePage from "./pages/EditProfilePage";
 import JournalPage from "./pages/JournalPage";
 import NotFound from "./pages/NotFound";
@@ -58,10 +55,6 @@ function App() {
               <Route
                 path="/onboarding"
                 element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>}
-              />
-              <Route
-                path="/completar-perfil"
-                element={<ProtectedRoute><CompleteProfilePage /></ProtectedRoute>}
               />
 
               {/* --- ROTAS PROTEGIDAS QUE USAM O LAYOUT PADRÃO --- */}
