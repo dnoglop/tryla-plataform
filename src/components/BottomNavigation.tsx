@@ -99,11 +99,10 @@ const BottomNavigation: React.FC = () => {
 
               {/* Label */}
               <div className="h-4 flex items-center justify-center mt-1.5">
-                {isActive && (
-                  <span className="text-xs font-medium text-primary animate-fade-in">
+                  <span className="text-xs font-medium text---secondary animate-fade-in">
                     {item.label}
                   </span>
-                )}
+               
               </div>
             </Link>
           );
