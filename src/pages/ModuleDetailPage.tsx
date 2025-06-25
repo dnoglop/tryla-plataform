@@ -211,7 +211,7 @@ export default function ModuleDetailPage() {
                                   key={phase.id} 
                                   className={cn(
                                       "absolute",
-                                      "left-[4rem] right-0", 
+                                      "left-[3rem] right-0", 
                                       "sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-[380px]" 
                                   )}
                                   style={{top: phase.position.y}}
