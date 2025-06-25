@@ -20,7 +20,7 @@ const Layout: React.FC<LayoutProps> = ({ children, className }) => {
       {/* O 'main' é onde o conteúdo da página (children) será renderizado. */}
       {/* 'pb-24' (padding-bottom) cria um espaço no final da página para que
           o conteúdo não fique escondido atrás da BottomNavigation. */}
-      <main className="pb-24">
+      <main className="pb-12">
         {children}
       </main>
 

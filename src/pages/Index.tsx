@@ -21,7 +21,6 @@ import { updateUserStreak } from "@/services/profileService";
 
 // --- HELPERS E SUB-COMPONENTES ---
 
-// 1. Definição dos Níveis Temáticos
 const LEVELS = [
     { name: 'Semente', minXp: 0 }, { name: 'Eco', minXp: 100 },
     { name: 'Pulso', minXp: 200 }, { name: 'Chave', minXp: 300 },
@@ -42,22 +41,14 @@ const LEVELS = [
 
 const calculateLevelInfo = (xp: number) => {
     if (typeof xp !== 'number' || xp < 0) xp = 0;
-
-    // Encontra o nível atual buscando de trás para frente
     const currentLevel = [...LEVELS].reverse().find(level => xp >= level.minXp) || LEVELS[0];
     const currentLevelIndex = LEVELS.findIndex(level => level.name === currentLevel.name);
-
-    // Encontra o próximo nível
     const nextLevel = currentLevelIndex < LEVELS.length - 1 ? LEVELS[currentLevelIndex + 1] : null;
 
-    if (!nextLevel) { // Usuário atingiu o nível máximo
+    if (!nextLevel) {
         return {
-            currentLevel,
-            nextLevel: null,
-            progressPercent: 100,
-            xpFaltante: 0,
-            currentXp: xp,
-            nextLevelXp: xp,
+            currentLevel, nextLevel: null, progressPercent: 100, xpFaltante: 0,
+            currentXp: xp, nextLevelXp: xp,
         };
     }
 
@@ -67,15 +58,10 @@ const calculateLevelInfo = (xp: number) => {
     const xpFaltante = nextLevel.minXp - xp;
 
     return {
-        currentLevel,
-        nextLevel,
-        progressPercent,
-        xpFaltante,
-        currentXp: xp,
-        nextLevelXp: nextLevel.minXp,
+        currentLevel, nextLevel, progressPercent, xpFaltante,
+        currentXp: xp, nextLevelXp: nextLevel.minXp,
     };
 };
-
 
 const DashboardSkeleton = () => (
     <div className="bg-background min-h-screen">
@@ -167,7 +153,7 @@ const StyledDailyChallengeCard = ({ challenge, timeRemaining, onComplete, canCom
         <motion.div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-6 text-white relative overflow-hidden" whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}>
             <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-12 translate-x-12"></div>
             <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full translate-y-8 -translate-x-8"></div>
-            <div className="relative z-10">
+            <div className="relative z-5">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-2">
                         <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center"><Award className="w-5 h-5 text-white" /></div>
@@ -213,7 +199,7 @@ const Index = () => {
             const [profileResult, onboardingResult, completedPhasesResult] = await Promise.all([
                 supabase.from("profiles").select("*, has_seen_product_tour, xp, streak_days").eq("id", userId).single(),
                 supabase.from("user_onboarding").select("user_id").eq("user_id", userId).maybeSingle(),
-                supabase.from("user_phases").select("id", { count: "exact" }).eq("user_id", userId).eq("status", "completed"),
+                supabase.from("user_phase_statuses").select("id", { count: "exact" }).eq("user_id", userId).eq("status", "completed"),
             ]);
             if (profileResult.error) throw profileResult.error;
             const profile = profileResult.data;
@@ -295,6 +281,7 @@ const Index = () => {
                 <WelcomeModal open={showWelcomeModal} onOpenChange={setShowWelcomeModal} username={profile?.full_name?.split(" ")[0] || "Jovem"} quote={dailyQuote} isLoadingQuote={isLoadingQuote} />
                 <ComeBackTomorrowModal open={showComeBackModal} onOpenChange={setShowComeBackModal} />
 
+                {/* **CORREÇÃO APLICADA AQUI** Adicionado padding-bottom */}
                 <motion.div className="max-w-4xl mx-auto" initial="hidden" animate="visible" variants={containerVariants}>
                     <motion.header variants={itemVariants} className="p-4 sm:p-6 lg:p-8">
                         <div className="flex justify-between items-center">
@@ -356,7 +343,7 @@ const Index = () => {
                                 <div className="bg-card rounded-2xl p-6 border h-full flex flex-col justify-center">
                                     <div className="flex items-center justify-between mb-2">
                                         <h3 className="font-semibold text-foreground">Suba para o próximo nível</h3>
-                                        {levelInfo?.currentLevel && <span className="text-sm font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">Nível {levelInfo.currentLevel.name}</span>}
+                                        {levelInfo?.currentLevel && <span className="text-sm font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">{levelInfo.currentLevel.name}</span>}
                                     </div>
                                     <p className="text-muted-foreground text-sm">Continue assim para alcançar o próximo nível e desbloquear novas recompensas!</p>
                                     {levelInfo && (
@@ -366,15 +353,8 @@ const Index = () => {
                                                     Meta de hoje: consiga mais {levelInfo.xpFaltante} XP para o nível {levelInfo.nextLevel.name}!
                                                 </p>
                                             }
-                                            {/* O container da barra */}
                                             <div className="w-full bg-muted rounded-full h-2.5 my-1">
-                                                {/* A barra de progresso em si, com a classe correta */}
-                                                <motion.div 
-                                                    className="essencia-valor h-2.5 rounded-full" 
-                                                    initial={{ width: 0 }} 
-                                                    animate={{ width: `${levelInfo.progressPercent}%` }} 
-                                                    transition={{ duration: 1, ease: "easeOut" }} 
-                                                />
+                                                <motion.div className="essencia-valor h-2.5 rounded-full" initial={{ width: 0 }} animate={{ width: `${levelInfo.progressPercent}%` }} transition={{ duration: 1, ease: "easeOut" }} />
                                             </div>
                                             <div className="flex justify-between text-xs text-muted-foreground mt-1.5"><span>{levelInfo.currentXp} XP</span><span>{levelInfo.nextLevel ? levelInfo.nextLevel.minXp : levelInfo.currentXp} XP</span></div>
                                         </>
@@ -389,6 +369,7 @@ const Index = () => {
                             </div>
                             <StyledDailyChallengeCard challenge={dailyChallenge.currentChallenge} timeRemaining={dailyChallenge.timeRemaining} onComplete={dailyChallenge.completeChallenge} canComplete={dailyChallenge.canComplete} isLoading={dailyChallenge.isLoading} />
                         </motion.div>
+
                     </main>
                 </motion.div>
             </div>
