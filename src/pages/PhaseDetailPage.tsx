@@ -12,8 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import YoutubeEmbed from "@/components/YoutubeEmbed";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
-// Importe o CSS do Quill aqui para garantir que a formatação seja aplicada
-import 'react-quill/dist/quill.snow.css';
+import 'react-quill/dist/quill.snow.css'; // Importa o CSS do Quill para formatação
 import { motion, AnimatePresence, useScroll, useInView } from "framer-motion";
 import confetti from "canvas-confetti";
 import { cn } from "@/lib/utils";
@@ -28,7 +27,6 @@ import { usePhaseAudio } from "@/hooks/usePhaseAudio";
 import { PhaseDetailSkeleton } from "@/components/phase-detail/PhaseDetailSkeleton";
 import { QuizContent } from "@/components/phase-detail/QuizContent";
 import Header from "@/components/Header";
-
 
 const MotionCard = ({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) => (
   <motion.div
@@ -146,19 +144,34 @@ const PhaseContent = ({
     setLikedQuotes(prev => prev.includes(quoteId) ? prev.filter(id => id !== quoteId) : [...prev, quoteId]);
   };
 
+  // **LÓGICA RESTAURADA AQUI**
   const handleCompletePhase = async () => {
     if (isSubmitting || !userId) return;
     setIsSubmitting(true);
     try {
       if (journalNotes.trim() && !isJournalSaved) await handleSaveJournal();
-      const result = await completePhaseAndAwardXp(userId, phase.id, module.id, phase?.type === 'quiz');
-      const totalXp = (result.xpFromPhase || 0) + (result.xpFromModule || 0);
 
-      if (totalXp > 0) {
+      // 1. Pega o XP do usuário ANTES de qualquer alteração
+      const { data: profileBefore } = await supabase.from("profiles").select("xp").eq("id", userId).single();
+      const userXpBefore = profileBefore?.xp || 0;
+
+      // 2. Roda a função que completa a fase e dá o XP
+      const result = await completePhaseAndAwardXp(userId, phase.id, module.id, phase?.type === 'quiz');
+
+      // 3. Pega o XP do usuário DEPOIS da alteração
+      const { data: profileAfter } = await supabase.from("profiles").select("xp").eq("id", userId).single();
+      const userXpAfter = profileAfter?.xp || 0;
+
+      // 4. Calcula a diferença para saber exatamente quanto foi ganho
+      const totalXpGained = userXpAfter - userXpBefore;
+
+      // 5. Mostra o modal apenas se o XP aumentou
+      if (totalXpGained > 0) {
         confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 }, zIndex: 9999 });
         const modalTitle = result.xpFromModule > 0 ? "Reino Conquistado!" : "Missão Concluída!";
-        await showRewardModal({ xpAmount: totalXp, title: modalTitle });
+        await showRewardModal({ xpAmount: totalXpGained, title: modalTitle });
       }
+
       queryClient.invalidateQueries({ queryKey: ["modulesPageInitialData", "moduleDetailData", "userProfile"] });
       navigateToNext();
     } catch (err) {
@@ -232,9 +245,6 @@ const PhaseContent = ({
                           </div>
                       </div>
 
-                      {/* **CORREÇÃO APLICADA AQUI** */}
-                      {/* A classe 'ql-editor' simula o editor do Quill, aplicando os estilos corretos */}
-                      {/* As classes de texto do Tailwind ajustam o tamanho e a cor da fonte base */}
                       <div className="ql-snow">
                         <div
                           ref={contentRef}
@@ -261,7 +271,7 @@ const PhaseContent = ({
 
                 {phase.video_url && (
                     <MotionCard delay={2}>
-                      <div className="bg-gradient-to-r from-primary to-primary/80 rounded-2xl p-4 shadow-lg">
+                      <div className="bg-gradient-to-r from-primary to-primary/80 rounded-2xl p-6 shadow-lg">
                           <div className="flex items-center gap-3 mb-4">
                               <div className="bg-white/20 backdrop-blur-sm rounded-full p-2"><Video className="w-6 h-6 text-white" /></div>
                               <h2 className="text-xl font-bold text-white">Recurso em Vídeo</h2>

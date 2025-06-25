@@ -40,13 +40,13 @@ const Header: React.FC<HeaderProps> = ({
     <header
       className={cn(
         "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground relative z-20 shadow-md",
-        "px-2 sm:px-4 py-3", // Padding ajustado
+        "sm:px-2 py-3", // Padding ajustado
         className
       )}
     >
       <div className="container mx-auto">
         {/* Usando Grid para um controle perfeito do layout */}
-        <div className="grid grid-cols-[auto_1fr_auto] items-center w-full gap-2">
+        <div className="grid grid-cols-[auto_1fr_auto] items-center w-full gap-4">
 
           {/* Coluna Esquerda: Botão de Voltar */}
           <div className="flex justify-start">
