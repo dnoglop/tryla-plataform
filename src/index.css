@@ -1,8 +1,6 @@
 /* 
-  index.css - Configurações Globais
-  - Importa fontes e Tailwind
-  - Define variáveis de tema (claro/escuro) com ênfase no laranja
-  - Estilos base da aplicação
+  index.css - Configurações Globais Corrigidas
+  - Adicionada a definição da variável --primary para compatibilidade
 */
 
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&display=swap');
@@ -17,45 +15,13 @@
   /* TEMA CLARO (PADRÃO) */
   :root {
     --background: 0 0% 100%;
-    /* Cor de fundo principal (branco puro) */
     --foreground: 0 0% 20%;
-    /* Cor do texto principal (cinza escuro) */
     --card: 0 0% 98%;
-    /* Cor de fundo de cards e seções (cinza muito claro) */
     --card-foreground: 0 0% 20%;
-    /* Cor do texto em cards */
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 20%;
 
     /* --- Paleta Laranja Aprimorada --- */
-    --primary: 14 100% 57%;              /* Laranja Principal (Fox #FF9600) */
-    --primary-foreground: 0 0% 100%;     /* Texto sobre o laranja */
-    --primary-hover: 14 100% 52%;        /* Laranja um pouco mais escuro para hover */
-    --primary-soft-bg: 14 100% 96%;      /* Laranja bem claro para fundos/highlights */
-    --primary-soft-border: 14 100% 90%;  /* Borda laranja suave */
-    --primary-soft-fg: 14 100% 45%;      /* Texto laranja escuro sobre fundos claros */
-
-    --secondary: 0 0% 96%;
-    /* Cinza claro para elementos secundários */
-    --secondary-foreground: 0 0% 30%;
-    --muted: 0 0% 94%;
-    /* Cinza muito claro para áreas silenciadas */
-    --muted-foreground: 0 0% 50%;
-    /* Cor para textos silenciados/secundários */
-    --accent: 14 100% 95%;
-    /* Laranja muito claro para destaque sutil */
-    --accent-foreground: 14 100% 40%;
-    --destructive: 0 84% 60%;
-    /* Vermelho para ações destrutivas */
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 90%;
-    /* Bordas em cinza claro */
-    --input: 0 0% 96%;
-    /* Fundo de inputs */
-    --ring: 14 100% 57%;
-    /* Cor do focus ring (laranja) */
-    --radius: 1rem;
-
     /* Cores personalizadas da paleta */
     --trilha-orange: 14 100% 57%; /* Fox #FF9600 */
     --trilha-bee: 43 100% 50%; /* Bee #FFC800 */
@@ -63,41 +29,34 @@
     --trilha-gray: 0 0% 75%; /* Eel #4B4B4B em tom mais claro */
     --trilha-snow: 0 0% 100%; /* Snow #FFFFFF */
     --trilha-polar: 200 100% 97%; /* Polar #F7F7F7 */
+
+    /* ** CORREÇÃO APLICADA AQUI ** */
+    /* Variáveis do Shadcn UI/template mapeadas para sua paleta */
+    --primary: var(--trilha-orange);     /* <<-- ADICIONADO */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 30%;
+    --muted: 0 0% 94%;
+    --muted-foreground: 0 0% 50%;
+    --accent: 14 100% 95%;
+    --accent-foreground: 14 100% 40%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 90%;
+    --input: 0 0% 96%;
+    --ring: var(--primary); /* <<-- Alterado para usar a nova variável primária */
+    --radius: 1rem;
   }
 
   /* TEMA ESCURO */
   .dark {
     --background: 0 0% 8%;
-    /* Fundo escuro */
     --foreground: 0 0% 95%;
-    /* Texto claro */
     --card: 0 0% 12%;
-    /* Cards um pouco mais claros que o fundo */
     --card-foreground: 0 0% 95%;
     --popover: 0 0% 8%;
     --popover-foreground: 0 0% 95%;
-
-    /* --- Paleta Laranja Aprimorada (Dark Mode) --- */
-    --primary: 14 100% 57%;
-    --primary-foreground: 0 0% 100%;
-    --primary-hover: 14 100% 62%;        /* Laranja um pouco mais claro para hover */
-    --primary-soft-bg: 14 100% 15%;      /* Laranja bem escuro para fundos */
-    --primary-soft-border: 14 100% 25%;  /* Borda laranja sutil no escuro */
-    --primary-soft-fg: 14 100% 70%;      /* Texto laranja claro sobre fundos escuros */
-
-    --secondary: 0 0% 18%;
-    /* Cinza escuro para elementos secundários */
-    --secondary-foreground: 0 0% 90%;
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 65%;
-    --accent: 14 100% 20%;
-    /* Laranja escuro para destaque sutil */
-    --accent-foreground: 0 0% 95%;
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 20%;
-    --input: 0 0% 18%;
-    --ring: 14 100% 57%;
 
     /* Cores personalizadas adaptadas para tema escuro */
     --trilha-orange: 14 100% 57%;
@@ -106,6 +65,23 @@
     --trilha-gray: 0 0% 25%;
     --trilha-snow: 0 0% 95%;
     --trilha-polar: 0 0% 15%;
+
+    /* ** CORREÇÃO APLICADA AQUI ** */
+    /* Variáveis do Shadcn UI/template mapeadas para sua paleta */
+    --primary: var(--trilha-orange);    /* <<-- ADICIONADO */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 0 0% 90%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 14 100% 20%;
+    --accent-foreground: 0 0% 95%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 20%;
+    --input: 0 0% 18%;
+    --ring: var(--primary);
   }
 }
 
@@ -121,24 +97,91 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+}
 
-  h1 {
-    @apply text-xl sm:text-2xl font-extrabold; /* Alterado de font-bold */
+/* --- COMPONENTES PERSONALIZADOS --- */
+@layer components {
+  /* Botão Principal */
+  .btn-saga-primario {
+    @apply h-11 px-8 rounded-xl inline-flex items-center justify-center text-sm font-bold shadow-lg shadow-primary/30 active:scale-95 transition-all;
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
     font-family: 'Nunito', sans-serif;
   }
 
-  h2 {
-    @apply text-lg sm:text-xl font-extrabold; /* Alterado de font-bold */
+  .btn-saga-primario:hover {
+    background-color: hsl(var(--primary) / 0.95);
+    transform: translateY(-2px);
+  }
+
+  .btn-saga-primario:disabled {
+    @apply bg-muted text-muted-foreground cursor-not-allowed shadow-none hover:shadow-none transform-none;
+  }
+
+  /* Barras de Essência (Progresso) */
+  .essencia-bar {
+    @apply h-2 sm:h-2.5 rounded-full overflow-hidden;
+    background-color: hsl(var(--primary) / 0.15);
+  }
+
+  .essencia-valor {
+    @apply h-full rounded-full transition-all duration-700 ease-out;
+    background: linear-gradient(90deg, hsl(var(--primary) / 0.8), hsl(var(--primary)));
+    box-shadow: 0 0 10px hsl(var(--primary) / 0.5);
+  }
+
+  /* Cabeçalho da Seção */
+  .cabecalho-secao {
+    @apply text-xl font-bold flex items-center gap-3 border-l-4 pl-3;
+    border-color: hsl(var(--primary));
+    color: hsl(var(--foreground));
     font-family: 'Nunito', sans-serif;
   }
 
-  h3 {
-    @apply text-base sm:text-lg font-bold; /* Alterado de font-semibold */
-    font-family: 'Nunito', sans-serif;
+  /* Card com gradiente suave de laranja */
+  .card-gradient-orange {
+    @apply relative overflow-hidden rounded-xl sm:rounded-2xl border shadow-sm transition-all;
+    background-image: linear-gradient(135deg, hsl(var(--primary) / 0.05), hsl(var(--card)) 50%);
+    border-color: hsl(var(--primary) / 0.1);
   }
 
-  p {
-    @apply text-sm sm:text-base;
+  .card-gradient-orange:hover {
+    border-color: hsl(var(--primary) / 0.3);
+    box-shadow: 0 8px 25px hsl(var(--primary) / 0.1);
+  }
+
+  .dark .card-gradient-orange {
+    background-image: linear-gradient(135deg, hsl(var(--primary) / 0.1), hsl(var(--card)) 60%);
+    border-color: hsl(var(--primary) / 0.2);
+  }
+
+  .dark .card-gradient-orange:hover {
+    border-color: hsl(var(--primary) / 0.4);
+  }
+
+  /* Cards */
+  .card-trilha {
+    @apply relative overflow-hidden rounded-xl sm:rounded-2xl border bg-card shadow-sm transition-all hover:shadow-md;
+    border-color: hsl(var(--border));
+  }
+}
+
+/* --- CLASSES UTILITÁRIAS PERSONALIZADAS --- */
+@layer utilities {
+  .animated-gradient-bg {
+    background: linear-gradient(-45deg, hsl(var(--primary)/0.1), hsl(var(--background)), hsl(var(--secondary)/0.1), hsl(var(--background)));
+    background-size: 400% 400%;
+    animation: gradient-pan 15s ease infinite;
+  }
+
+  .font-nunito {
     font-family: 'Nunito', sans-serif;
   }
+}
+
+/* --- ANIMAÇÕES --- */
+@keyframes gradient-pan {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }

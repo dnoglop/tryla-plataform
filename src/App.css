@@ -1,4 +1,4 @@
-dow-primary/30 active:scale-95 transition-all;
+    dow-primary/30 active:scale-95 transition-all;
     background-color: hsl(var(--primary));
     color: hsl(var(--primary-foreground));
     font-family: 'Nunito', sans-serif;
@@ -229,6 +229,20 @@ dow-primary/30 active:scale-95 transition-all;
   }
 }
 
+/* Barras de Essência (Progresso) - CORRIGIDO */
+.essencia-bar {
+  @apply h-2 sm:h-2.5 rounded-full overflow-hidden;
+  /* Usando uma cor de fundo suave com base na cor principal */
+  background-color: hsl(var(--trilha-orange) / 0.15);
+}
+
+.essencia-valor {
+  @apply h-full rounded-full transition-all duration-700 ease-out;
+  /* CORREÇÃO: Usando a variável --trilha-orange que já existe */
+  background-color: hsl(var(--trilha-orange));
+  box-shadow: 0 0 10px hsl(var(--trilha-orange) / 0.5);
+}
+
 /* Textarea com auto-redimensionamento */
 textarea.auto-resize {
   @apply min-h-[24px] max-h-[200px] overflow-y-hidden resize-none;
@@ -373,6 +387,7 @@ textarea.auto-resize:focus {
   .border-trilha-orange {
     border-color: hsl(var(--trilha-orange));
   }
+
 
   .animated-gradient-bg {
     background: linear-gradient(-45deg, hsl(var(--primary)/0.1), hsl(var(--background)), hsl(var(--secondary)/0.1), hsl(var(--background)));

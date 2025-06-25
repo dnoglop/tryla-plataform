@@ -212,7 +212,7 @@ export default function ModuleDetailPage() {
                                   className={cn(
                                       "absolute",
                                       "left-[3rem] right-0", 
-                                      "sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-[380px]" 
+                                      "sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-[390px]" 
                                   )}
                                   style={{top: phase.position.y}}
                                 >
