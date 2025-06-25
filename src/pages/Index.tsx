@@ -199,7 +199,7 @@ const Index = () => {
             const [profileResult, onboardingResult, completedPhasesResult] = await Promise.all([
                 supabase.from("profiles").select("*, has_seen_product_tour, xp, streak_days").eq("id", userId).single(),
                 supabase.from("user_onboarding").select("user_id").eq("user_id", userId).maybeSingle(),
-                supabase.from("user_phase_statuses").select("id", { count: "exact" }).eq("user_id", userId).eq("status", "completed"),
+                supabase.from("user_phases").select("id", { count: "exact" }).eq("user_id", userId).eq("status", "completed"),
             ]);
             if (profileResult.error) throw profileResult.error;
             const profile = profileResult.data;
