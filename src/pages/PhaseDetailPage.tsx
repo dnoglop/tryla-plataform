@@ -1,5 +1,3 @@
-// ARQUIVO: src/pages/PhaseDetailPage.tsx (VERSÃO FINAL COM NOVO HEADER DE CONTEÚDO)
-
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
@@ -14,6 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import YoutubeEmbed from "@/components/YoutubeEmbed";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
+// Importe o CSS do Quill aqui para garantir que a formatação seja aplicada
+import 'react-quill/dist/quill.snow.css';
 import { motion, AnimatePresence, useScroll, useInView } from "framer-motion";
 import confetti from "canvas-confetti";
 import { cn } from "@/lib/utils";
@@ -28,6 +28,7 @@ import { usePhaseAudio } from "@/hooks/usePhaseAudio";
 import { PhaseDetailSkeleton } from "@/components/phase-detail/PhaseDetailSkeleton";
 import { QuizContent } from "@/components/phase-detail/QuizContent";
 import Header from "@/components/Header";
+
 
 const MotionCard = ({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) => (
   <motion.div
@@ -63,7 +64,7 @@ const PhaseContent = ({
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [imagesInContent, setImagesInContent] = useState<{ src: string }[]>([]);
-  const [activeStudents] = useState(Math.floor(Math.random() * (75 - 20 + 1)) + 20); // Número aleatório entre 20 e 75
+  const [activeStudents] = useState(Math.floor(Math.random() * (75 - 20 + 1)) + 20);
 
   const [quizStartTime, setQuizStartTime] = useState<number | null>(null);
   const [quizElapsedTime, setQuizElapsedTime] = useState<number | null>(null);
@@ -80,9 +81,9 @@ const PhaseContent = ({
   });
 
   useEffect(() => {
-      if (phase?.type === 'quiz' && questions.length > 0 && !quizCompleted && !quizStartTime) {
-          setQuizStartTime(Date.now());
-      }
+    if (phase?.type === 'quiz' && questions.length > 0 && !quizCompleted && !quizStartTime) {
+        setQuizStartTime(Date.now());
+    }
   }, [phase?.type, questions.length, quizCompleted, quizStartTime]);
 
   useEffect(() => {
@@ -150,15 +151,8 @@ const PhaseContent = ({
     setIsSubmitting(true);
     try {
       if (journalNotes.trim() && !isJournalSaved) await handleSaveJournal();
-
-      const { data: profileBefore } = await supabase.from("profiles").select("xp").eq("id", userId).single();
-      const userXpBefore = profileBefore?.xp || 0;
-
       const result = await completePhaseAndAwardXp(userId, phase.id, module.id, phase?.type === 'quiz');
-
-      const { data: profileAfter } = await supabase.from("profiles").select("xp").eq("id", userId).single();
-      const userXpAfter = profileAfter?.xp || 0;
-      const totalXp = userXpAfter - userXpBefore;
+      const totalXp = (result.xpFromPhase || 0) + (result.xpFromModule || 0);
 
       if (totalXp > 0) {
         confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 }, zIndex: 9999 });
@@ -184,14 +178,16 @@ const PhaseContent = ({
   };
 
   return (
-    <div className="flex flex-col h-screen bg-background font-nunito">
+    <div className="flex flex-col h-screen bg-muted/50 dark:bg-background font-nunito">
         <Header 
+            title={phase.name}
+            subtitle={module.name}
             showBackButton={true}
             onBackClick={() => navigate(`/modulo/${module.id}`)}
             rightContent={ 
               <div className="flex items-center gap-1">
                 <Button variant="ghost" size="icon" className="text-white hover:bg-white/20"><Bookmark /></Button>
-                <Button variant="ghost" size="icon" className="text-white hover:bg-white/20"><Home /></Button>
+                <Button variant="ghost" size="icon" className="text-white hover:bg-white/20" onClick={() => navigate('/modulos')}><Home /></Button>
               </div>
             }
         />
@@ -201,28 +197,29 @@ const PhaseContent = ({
         />
         <main ref={mainContentRef} className="flex-1 overflow-y-auto">
           <AnimatePresence>
-            <div className="container px-4 sm:px-6 lg:px-8 py-8 max-w-3xl mx-auto space-y-8">
+            <div className="container px-4 sm:px-6 lg:px-8 py-8 max-w-3xl mx-auto space-y-6">
 
-                {/* NOVO HEADER DE CONTEÚDO */}
-                <div className="text-center card-trilha">
-                    <p className="text-sm font-semibold text-primary mb-2">
-                      Missão {currentPhaseIndex + 1} de {allPhases.length}
-                    </p>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-                      {phase.name}
-                    </h1>
-                    <p className="text-muted-foreground mt-1">
-                     {module.name}
-                    </p>
-                    <div className="inline-flex items-center gap-2 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 font-semibold px-3 py-1.5 rounded-full mt-4 text-sm">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      {activeStudents} pessoas nesta jornada
-                    </div>
-                </div>
+                <MotionCard>
+                  <div className="card-trilha p-6 text-center">
+                      <p className="text-sm font-semibold text-primary mb-2">
+                        Missão {currentPhaseIndex + 1} de {allPhases.length}
+                      </p>
+                      <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+                        {phase.name}
+                      </h1>
+                      <p className="text-muted-foreground mt-1">
+                       {module.name}
+                      </p>
+                      <div className="inline-flex items-center gap-2 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 font-semibold px-3 py-1.5 rounded-full mt-4 text-sm">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        {activeStudents} pessoas nesta jornada
+                      </div>
+                  </div>
+                </MotionCard>
 
-                <MotionCard delay={0}>
+                <MotionCard delay={1}>
                   {(phase.type === "text" || phase.type === "challenge") && (
-                    <div className="card-trilha p-2 sm:p-6">
+                    <div className="card-trilha p-4 sm:p-6">
                       <div className="flex justify-between items-center mb-6 pb-4 border-b border-border">
                           <Button onClick={() => handleReadContent(phase.content)} disabled={isLoadingAudio} variant="outline" className="font-semibold">
                             {isPlaying ? <Pause className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
@@ -235,8 +232,16 @@ const PhaseContent = ({
                           </div>
                       </div>
 
-                      <h2 className="cabecalho-secao mb-4 flex items-center gap-2"><BookOpen className="w-5 h-5" />Narrativa da Missão</h2>
-                      <div ref={contentRef} className="prose max-w-none prose-slate dark:prose-invert" dangerouslySetInnerHTML={{ __html: phase.content || "" }} />
+                      {/* **CORREÇÃO APLICADA AQUI** */}
+                      {/* A classe 'ql-editor' simula o editor do Quill, aplicando os estilos corretos */}
+                      {/* As classes de texto do Tailwind ajustam o tamanho e a cor da fonte base */}
+                      <div className="ql-snow">
+                        <div
+                          ref={contentRef}
+                          className="ql-editor text-foreground dark:text-gray-300"
+                          dangerouslySetInnerHTML={{ __html: phase.content || "" }} 
+                        />
+                      </div>
                     </div>
                   )}
                   {phase.type === 'quiz' && (
@@ -255,26 +260,19 @@ const PhaseContent = ({
                 </MotionCard>
 
                 {phase.video_url && (
-                    <MotionCard delay={1}>
-                      <div className="bg-gradient-to-r from-primary to-primary/80 rounded-2xl p-6 shadow-lg">
-                          {/* Cabeçalho */}
+                    <MotionCard delay={2}>
+                      <div className="bg-gradient-to-r from-primary to-primary/80 rounded-2xl p-4 shadow-lg">
                           <div className="flex items-center gap-3 mb-4">
-                              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2">
-                                  <Video className="w-6 h-6 text-white" />
-                              </div>
+                              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2"><Video className="w-6 h-6 text-white" /></div>
                               <h2 className="text-xl font-bold text-white">Recurso em Vídeo</h2>
                           </div>
-
-                          {/* Moldura do Vídeo */}
-                          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2 overflow-hidden">
-                              <YoutubeEmbed videoId={phase.video_url} />
-                          </div>
+                          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2 overflow-hidden"><YoutubeEmbed videoId={phase.video_url} /></div>
                       </div>
                     </MotionCard>
                 )}
 
                 {phase.quote && (
-                  <MotionCard delay={2}>
+                  <MotionCard delay={3}>
                     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl p-6 border border-blue-100 dark:border-blue-800/30">
                       <div className="flex items-start justify-between">
                         <div className="flex-1 pr-4">
@@ -290,8 +288,8 @@ const PhaseContent = ({
                   </MotionCard>
                 )}
 
-                <MotionCard delay={3}>
-                  <div className="bg-card rounded-2xl p-4 border border-border/10 shadow-sm">
+                <MotionCard delay={4}>
+                  <div className="card-trilha p-6">
                     <div className="flex items-center justify-between mb-2"><h3 className="text-lg font-bold text-foreground flex items-center"><PenTool className="w-5 h-5 mr-2 text-primary" />Crônicas da Jornada</h3><div className="text-sm text-primary bg-primary/10 px-3 py-1 rounded-full font-semibold">Suas Descobertas</div></div>
                     <p className="text-muted-foreground text-sm mb-4">Registre aqui seus insights e reflexões. Este é o seu mapa do tesouro pessoal, documentando sua evolução.</p>
                     <Textarea value={journalNotes} onChange={(e) => setJournalNotes(e.target.value)} placeholder="O que mais chamou sua atenção? Como isso se aplica a você? Qual seu próximo passo prático?..." className="w-full min-h-[120px] p-4 bg-input rounded-xl border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none resize-none" rows={5}/>
@@ -303,7 +301,7 @@ const PhaseContent = ({
                   </div>
                 </MotionCard>
 
-                <div ref={actionButtonsRef} className="pt-2">
+                <div ref={actionButtonsRef} className="pt-4 pb-8">
                    <motion.div 
                       key={phase.id} 
                       className="flex items-center justify-center gap-6" 
