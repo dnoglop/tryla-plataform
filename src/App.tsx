@@ -38,6 +38,8 @@ import EditProfilePage from "./pages/EditProfilePage";
 import JournalPage from "./pages/JournalPage";
 import NotFound from "./pages/NotFound";
 import OnboardingPage from "./pages/OnboardingPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage"
+import AuthPage from "./pages/AuthPage";
 
 function App() {
   return (
@@ -48,9 +50,9 @@ function App() {
             <Routes>
               {/* --- ROTAS PÚBLICAS (sem layout padrão) --- */}
               <Route path="/" element={<SplashScreen />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<SignupPage />} />
-              <Route path="/cadastro" element={<SignupPage />} />
+              <Route path="/login" element={<AuthPage />} />
+              <Route path="/cadastro" element={<AuthPage />} />
+              <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
 
               {/* --- ROTAS DE ONBOARDING (sem layout padrão) --- */}
               <Route
