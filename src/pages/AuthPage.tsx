@@ -109,26 +109,23 @@ const AuthPage = () => {
     const handleGoogleLogin = async () => {
         setLoading(true);
         try {
+            // **ALTERAÇÃO APLICADA AQUI**
+            // Em vez de window.location.origin, usamos a variável de ambiente
+            const redirectURL = import.meta.env.VITE_SITE_URL ? `${import.meta.env.VITE_SITE_URL}/inicio` : `${window.location.origin}/inicio`;
+
             const { error } = await supabase.auth.signInWithOAuth({
-                provider: "google",
+                provider: 'google',
                 options: {
-                    // Opcional: para onde o usuário será redirecionado após o login do Google.
-                    // Certifique-se de que esta URL está na lista de "Redirect URLs" do seu provedor OAuth no Supabase.
-                    redirectTo: `${window.location.origin}/inicio`,
+                    redirectTo: redirectURL,
                 },
             });
 
             if (error) throw error;
-            // O redirecionamento é tratado pelo Supabase, então não precisamos navegar aqui.
-            // O usuário será enviado para a página de login do Google.
+
         } catch (error: any) {
-            toast.error("Erro ao fazer login com o Google.", {
-                description: error.message,
-            });
+            toast.error("Erro ao fazer login com o Google.", { description: error.message });
             setLoading(false);
         }
-        // O `setLoading(false)` não é chamado aqui no caso de sucesso,
-        // pois a página será redirecionada.
     };
 
     return (
