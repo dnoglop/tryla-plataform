@@ -1,3 +1,5 @@
+// src/hooks/useJournal.ts
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,11 +8,12 @@ import {
   getJournalEntries,
   createJournalEntry,
   updateJournalEntry,
-  toggleFavoriteJournalEntry,
+  toggleFavoriteJournalEntry, // Vamos usar esta
   deleteJournalEntry
 } from '@/services/journalService';
 import { useQuery } from '@tanstack/react-query';
 import { getModules, Module } from '@/services/moduleService';
+import { toast } from 'sonner'; // Importar o toast para feedback de erro
 
 export const useJournal = (moduleIdParam: string | null) => {
   const navigate = useNavigate();
@@ -26,7 +29,6 @@ export const useJournal = (moduleIdParam: string | null) => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [moduleFilter, setModuleFilter] = useState<number | null>(moduleIdParam ? parseInt(moduleIdParam) : null);
 
-  // Buscar módulos para o filtro
   const { data: modules = [] } = useQuery({
     queryKey: ['modules'],
     queryFn: getModules
@@ -41,121 +43,108 @@ export const useJournal = (moduleIdParam: string | null) => {
   useEffect(() => {
     const fetchUserAndEntries = async () => {
       setIsLoading(true);
-
       try {
-        // Obter usuário atual
         const { data: { user } } = await supabase.auth.getUser();
-
         if (!user) {
           navigate('/login');
           return;
         }
-
         setUserId(user.id);
-
-        // Buscar entradas do diário
         const journalEntries = await getJournalEntries(user.id);
+        // Ordena por data de criação, mais recentes primeiro
+        journalEntries.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         setEntries(journalEntries);
-        setFilteredEntries(journalEntries);
       } catch (error) {
         console.error('Erro ao carregar diário:', error);
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchUserAndEntries();
   }, [navigate]);
 
-  // Filtrar entradas quando o termo de busca, a tab ativa ou o filtro de módulo mudar
   useEffect(() => {
-    if (entries.length === 0) {
-      setFilteredEntries([]);
-      return;
-    }
-
     let filtered = [...entries];
-
-    // Filtrar por tab
     if (activeTab === 'favorites') {
       filtered = filtered.filter(entry => entry.is_favorite);
     }
-
-    // Filtrar por módulo
     if (moduleFilter !== null) {
       filtered = filtered.filter(entry => entry.module_id === moduleFilter);
     }
-
-    // Filtrar por termo de busca
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase().trim();
       filtered = filtered.filter(entry => 
-        entry.title.toLowerCase().includes(term) || 
-        entry.content.toLowerCase().includes(term)
+        (entry.title && entry.title.toLowerCase().includes(term)) || 
+        (entry.content && entry.content.toLowerCase().includes(term))
       );
     }
-
     setFilteredEntries(filtered);
   }, [entries, searchTerm, activeTab, moduleFilter]);
 
-  const handleCreateEntry = async (entry: JournalEntry) => {
+  const handleCreateEntry = async (entry: Omit<JournalEntry, 'id' | 'created_at' | 'updated_at'>) => {
     if (!userId) return;
-
     try {
-      const newEntry = await createJournalEntry(entry);
-
+      const newEntry = await createJournalEntry({ ...entry, user_id: userId });
       if (newEntry) {
         setEntries(prev => [newEntry, ...prev]);
         setIsCreating(false);
+        setEditingEntry(null); // Garante que o modo de edição também seja fechado
       }
     } catch (error) {
       console.error('Erro ao criar entrada:', error);
+      toast.error('Não foi possível criar a anotação.');
     }
   };
 
   const handleUpdateEntry = async (entry: JournalEntry) => {
     if (!userId || !entry.id) return;
-
     try {
-      const success = await updateJournalEntry(entry);
-
-      if (success) {
-        setEntries(prev => prev.map(e => 
-          e.id === entry.id ? entry : e
-        ));
+      const updatedEntry = await updateJournalEntry(entry);
+      if (updatedEntry) {
+        setEntries(prev => prev.map(e => e.id === updatedEntry.id ? updatedEntry : e));
         setEditingEntry(null);
       }
     } catch (error) {
       console.error('Erro ao atualizar entrada:', error);
+      toast.error('Não foi possível salvar as alterações.');
     }
   };
 
-  const handleToggleFavorite = async (id: string, isFavorite: boolean) => {
-    try {
-      const success = await toggleFavoriteJournalEntry(id, isFavorite);
+  // --- FUNÇÃO CORRIGIDA E OTIMIZADA ---
+  const handleToggleFavorite = async (entryId: string) => {
+    const originalEntries = [...entries];
+    const entry = originalEntries.find((e) => e.id === entryId);
+    if (!entry) return;
 
-      if (success) {
-        setEntries(prev => prev.map(entry => 
-          entry.id === id ? { ...entry, is_favorite: isFavorite } : entry
-        ));
-      }
+    const newFavoriteStatus = !entry.is_favorite;
+
+    // Atualização Otimista da UI
+    setEntries(currentEntries =>
+      currentEntries.map(e =>
+        e.id === entryId ? { ...e, is_favorite: newFavoriteStatus } : e
+      )
+    );
+
+    // Chamada ao serviço de backend
+    try {
+      await toggleFavoriteJournalEntry(entryId, newFavoriteStatus);
     } catch (error) {
       console.error('Erro ao atualizar favorito:', error);
+      toast.error("Não foi possível atualizar o favorito.");
+      // Reverte a mudança na UI em caso de erro
+      setEntries(originalEntries);
     }
   };
 
   const handleConfirmDelete = async () => {
     if (!deleteId) return;
-
     try {
-      const success = await deleteJournalEntry(deleteId);
-
-      if (success) {
-        setEntries(prev => prev.filter(entry => entry.id !== deleteId));
-        setDeleteId(null);
-      }
+      await deleteJournalEntry(deleteId);
+      setEntries(prev => prev.filter(entry => entry.id !== deleteId));
+      setDeleteId(null);
     } catch (error) {
       console.error('Erro ao excluir entrada:', error);
+      toast.error("Não foi possível apagar a anotação.");
     }
   };
 
@@ -164,10 +153,11 @@ export const useJournal = (moduleIdParam: string | null) => {
     navigate('/diario');
   };
 
-  const getModuleNameById = (id: number | null | undefined) => {
-    if (!id) return null;
+  const getModuleNameById = (id: number | null | undefined): string | null => {
+    if (id === null || id === undefined) return null;
     const module = modules.find((m: Module) => m.id === id);
-    return module ? `${module.emoji || '📚'} ${module.name}` : null;
+    // Retorna apenas o nome para o card, o emoji pode ser adicionado na UI se necessário
+    return module ? module.name : 'Módulo Desconhecido';
   };
 
   return {
