@@ -1,7 +1,7 @@
-// ARQUIVO: src/pages/UpdatePasswordPage.tsx
+// ARQUIVO: src/pages/UpdatePasswordPage.tsx (VERSÃO FINAL E CORRIGIDA)
 
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -9,7 +9,7 @@ import { Loader2, ArrowRight, CheckCircle } from "lucide-react";
 import { AuthLayout } from "@/components/AuthLayout";
 
 const UpdatePasswordPage = () => {
-    const navigate = useNavigate();
+    // Seus estados existentes...
     const [loading, setLoading] = useState(false);
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -17,19 +17,35 @@ const UpdatePasswordPage = () => {
     const [isSessionReady, setIsSessionReady] = useState(false);
 
     useEffect(() => {
+        // --- INÍCIO DA CORREÇÃO ---
+
+        // 1. Verifica o estado ATUAL da sessão assim que a página carrega.
+        const checkCurrentSession = async () => {
+            const { data } = await supabase.auth.getSession();
+            // Se já existe uma sessão, o link foi processado com sucesso.
+            if (data.session) {
+                setIsSessionReady(true);
+            }
+        };
+
+        checkCurrentSession();
+
+        // 2. Ouve por eventos FUTUROS, como uma garantia.
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((event, session) => {
-            // Este evento é disparado quando o Supabase processa o token da URL
             if (event === "PASSWORD_RECOVERY" && session) {
                 setIsSessionReady(true);
             }
         });
 
+        // --- FIM DA CORREÇÃO ---
+
+        // Limpa o listener ao sair da página
         return () => {
             subscription.unsubscribe();
         };
-    }, []);
+    }, []); // O array vazio [] garante que isso só rode uma vez.
 
     const handlePasswordUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -45,9 +61,7 @@ const UpdatePasswordPage = () => {
 
         try {
             const { error } = await supabase.auth.updateUser({ password });
-
             if (error) throw error;
-
             toast.success("Senha alterada com sucesso!");
             setSuccess(true);
         } catch (error: any) {
@@ -98,7 +112,7 @@ const UpdatePasswordPage = () => {
                         to="/login"
                         className="w-full inline-flex items-center justify-center py-3 bg-primary text-primary-foreground rounded-xl font-semibold text-lg shadow-lg shadow-primary/20 hover:bg-primary/90"
                     >
-                        Seguir para o Login
+                        Prosseguir para o Login
                         <ArrowRight className="w-5 h-5 ml-2" />
                     </Link>
                 </motion.div>
@@ -127,7 +141,6 @@ const UpdatePasswordPage = () => {
                             disabled={loading}
                         />
                     </div>
-
                     <div>
                         <label
                             htmlFor="confirm-password"
@@ -146,7 +159,6 @@ const UpdatePasswordPage = () => {
                             disabled={loading}
                         />
                     </div>
-
                     <button
                         type="submit"
                         disabled={loading}
