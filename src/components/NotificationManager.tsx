@@ -222,13 +222,13 @@ const NotificationManager: React.FC = () => {
   }
 
   return (
-    <section className="p-6 rounded-2xl bg-card border">
+    <section className="p-6 rounded-2xl bg-trilha-orange border">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-card-foreground">
+          <h2 className="text-lg font-semibold text-white">
             Notificações e Lembretes
           </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-white/80">
             Receba novidades e avisos importantes do Tryla.
           </p>
         </div>
