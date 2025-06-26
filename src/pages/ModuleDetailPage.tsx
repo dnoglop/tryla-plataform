@@ -220,75 +220,34 @@ const SocialProof = () => (
     </motion.div>
 );
 
-const PhaseCard = ({
-    phase,
-    onPhaseClick,
-    isLast,
-}: {
-    phase: TrailPhase;
-    onPhaseClick: (phase: TrailPhase) => void;
-    isLast: boolean;
-}) => {
+const PhaseCard = ({ phase, onPhaseClick, isLast }: { phase: TrailPhase, onPhaseClick: (phase: TrailPhase) => void, isLast: boolean }) => {
     const ref = useRef(null);
     const isInView = useInView(ref, { once: true, margin: "-200px 0px" });
 
-    const getIconForType = (type: string) =>
-        ({ video: Video, quiz: Gamepad2 })[type] || FileText;
+    const getIconForType = (type: string) => ({ video: Video, quiz: Gamepad2 }[type] || FileText);
     const Icon = getIconForType(phase.type);
 
-    let variant = "locked";
-    if (phase.status === "completed") variant = "completed";
-    else if (phase.isCurrent) variant = "current";
-    else if (!phase.isLocked) variant = "next";
+    let variant = 'locked';
+    if (phase.status === 'completed') variant = 'completed';
+    else if (phase.isCurrent) variant = 'current';
+    else if (!phase.isLocked) variant = 'next';
 
-    const isClickable = variant !== "locked";
+    const isClickable = variant !== 'locked';
 
     const CardContent = () => (
-        <div className="flex items-start space-x-4">
-            <div
-                className={cn(
-                    "w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-white shadow-md",
-                    {
-                        "bg-gradient-to-br from-green-500 to-emerald-600":
-                            variant === "completed",
-                        "bg-gradient-to-br from-primary to-orange-400":
-                            variant === "current" || variant === "next",
-                        "bg-muted": variant === "locked",
-                    },
-                )}
-            >
-                {variant === "completed" ? (
-                    <CheckCircle2 className="w-6 h-6" />
-                ) : variant === "locked" ? (
-                    <Lock className="w-6 h-6 text-muted-foreground" />
-                ) : (
-                    <Icon className="w-6 h-6" />
-                )}
+         <div className="flex items-start space-x-4">
+            <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-white shadow-md", { "bg-gradient-to-br from-green-500 to-emerald-600": variant === 'completed', "bg-gradient-to-br from-primary to-orange-400": variant === 'current' || variant === 'next', "bg-muted": variant === 'locked' })}>
+                {variant === 'completed' ? <CheckCircle2 className="w-6 h-6" /> : variant === 'locked' ? <Lock className="w-6 h-6 text-muted-foreground" /> : <Icon className="w-6 h-6" />}
             </div>
             <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-foreground text-lg break-words">
-                    {phase.name}
-                </h3>
-                <p className="text-muted-foreground text-sm mt-1">
-                    {phase.description}
-                </p>
+                <h3 className="font-bold text-foreground text-lg break-words">{phase.name}</h3>
+                <p className="text-muted-foreground text-sm mt-1">{phase.description}</p>
                 <div className="flex items-center justify-between mt-3">
                     <div className="flex items-center space-x-4 text-xs">
-                        <div className="flex items-center gap-1.5 text-muted-foreground">
-                            <FileText className="w-3 h-3" />
-                            <span>{phase.type}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-primary font-semibold">
-                            <Star className="w-3 h-3" />
-                            <span>+5XP</span>
-                        </div>
+                        <div className="flex items-center gap-1.5 text-muted-foreground"><FileText className="w-3 h-3" /><span>{phase.type}</span></div>
+                        <div className="flex items-center gap-1.5 text-primary font-semibold"><Star className="w-3 h-3" /><span>+5XP</span></div>
                     </div>
-                    {variant === "completed" && (
-                        <div className="flex items-center gap-1 text-xs text-green-600 font-medium">
-                            <ThumbsUp className="w-3 h-3" />
-                            <span>98% Útil</span>
-                        </div>
-                    )}
+                    {variant === 'completed' && (<div className="flex items-center gap-1 text-xs text-green-600 font-medium"><ThumbsUp className="w-3 h-3" /><span>98% Útil</span></div>)}
                 </div>
             </div>
         </div>
@@ -296,77 +255,52 @@ const PhaseCard = ({
 
     return (
         <div ref={ref} className="flex items-stretch gap-4">
-            {" "}
-            {/* MUDANÇA: items-stretch */}
-            {/* Coluna da Timeline */}
+            {/* Coluna da Timeline com Correção */}
             <div className="flex flex-col items-center">
                 <motion.div
                     initial={{ scale: 0 }}
                     animate={isInView ? { scale: 1 } : {}}
-                    transition={{ duration: 0.5, type: "spring" }}
-                    className={cn(
-                        "w-5 h-5 rounded-full flex-shrink-0 z-10 flex items-center justify-center",
-                        variant === "completed"
-                            ? "bg-green-500"
-                            : variant === "current"
-                              ? "bg-primary"
-                              : "bg-muted-foreground/30",
+                    transition={{ duration: 0.5, type: 'spring' }}
+                    className={cn("w-5 h-5 rounded-full flex-shrink-0 z-10 flex items-center justify-center", 
+                        variant === 'completed' ? 'bg-green-500' : variant === 'current' ? 'bg-primary' : 'bg-muted-foreground/30'
                     )}
                 >
                     <div className="h-2 w-2 rounded-full bg-background" />
                 </motion.div>
                 {!isLast && (
-                    // A linha cinza agora é o contêiner relativo
                     <div className="w-0.5 flex-grow bg-muted relative">
-                        {/* A linha laranja animada fica absoluta dentro da cinza */}
+                        {/* Linha Laranja (para a fase atual) */}
                         <motion.div
                             className="absolute inset-0 w-full origin-top bg-primary"
                             initial={{ scaleY: 0 }}
-                            animate={
-                                isInView &&
-                                (variant === "completed" ||
-                                    variant === "current")
-                                    ? { scaleY: 1 }
-                                    : { scaleY: 0 }
-                            }
+                            animate={isInView && variant === 'current' ? { scaleY: 1 } : { scaleY: 0 }}
+                            transition={{ duration: 0.8, delay: 0.3 }}
+                        />
+                        {/* Linha Verde (para fases completas) */}
+                        <motion.div
+                            className="absolute inset-0 w-full origin-top bg-green-500"
+                            initial={{ scaleY: 0 }}
+                            animate={isInView && variant === 'completed' ? { scaleY: 1 } : { scaleY: 0 }}
                             transition={{ duration: 0.8, delay: 0.3 }}
                         />
                     </div>
                 )}
             </div>
+
             {/* Coluna do Card de Conteúdo */}
             <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={isInView ? { opacity: 1, x: 0 } : {}}
                 transition={{ duration: 0.5, delay: 0.1 }}
                 onClick={() => isClickable && onPhaseClick(phase)}
-                className={cn("w-full transition-all pb-8", {
-                    "cursor-pointer": isClickable,
-                })} // Adicionado padding-bottom
+                className={cn("w-full transition-all pb-8", { "cursor-pointer": isClickable })}
             >
-                {variant === "current" ? (
-                    <ContinuousMovingBorder
-                        containerClassName="rounded-2xl"
-                        as="div"
-                        className="p-5"
-                    >
+                {variant === 'current' ? (
+                    <ContinuousMovingBorder containerClassName="rounded-2xl" as="div" className="p-5">
                         <CardContent />
                     </ContinuousMovingBorder>
                 ) : (
-                    <div
-                        className={cn(
-                            "bg-card rounded-2xl p-5 shadow-sm border",
-                            {
-                                "border-green-500/30": variant === "completed",
-                                "border-border hover:border-primary/50":
-                                    variant === "next",
-                                "border-dashed opacity-70":
-                                    variant === "locked",
-                            },
-                        )}
-                    >
-                        <CardContent />
-                    </div>
+                    <div className={cn("bg-card rounded-2xl p-5 shadow-sm border", { "border-green-500/30": variant === 'completed', "border-border hover:border-primary/50": variant === 'next', "border-dashed opacity-70": variant === 'locked' })}><CardContent /></div>
                 )}
             </motion.div>
         </div>

@@ -53,24 +53,24 @@ const toolCategories: ToolCategory[] = [
     name: "Pra Começar: Se Liga em Você",
     tools: [
       { id: "meu-match-carreira", path: "/teste-vocacional", icon: BrainCircuit, title: "Meu Match de Carreira", description: "Descubra as profissões que dão 'match' com o seu perfil. Swipe right na sua futura carreira!" },
-      { id: "reset-mental", path: "/meditacao", icon: Heart, title: "Reset Mental", description: "Dê um 'reboot' no estresse e na ansiedade. Uma pausa rápida para recarregar a mente." },
       { id: "meu-bloco-ideias", path: "/diario", icon: BookOpen, title: "Meu Bloco de Ideias", description: "Seu espaço seguro para anotar tudo: de ideias geniais a memes para não esquecer." },
+      { id: "reset-mental", path: "/meditacao", icon: Heart, title: "Reset Mental", description: "Dê um 'reboot' no estresse e na ansiedade. Uma pausa rápida para recarregar a mente.", locked: true, unlockLevel: 2 },
     ],
   },
   {
     name: "Kit de Produtividade",
     tools: [
-       { id: "minhas-quests", path: "/metas", icon: CheckCircle2, title: "Minhas Quests", description: "Transforme seus objetivos em missões de video-game. Suba de nível na vida real!" },
-       { id: "modo-foco", path: "/modo-foco", icon: Zap, title: "Modo Foco (Hyperfocus)", description: "Ative o modo 'não perturbe' da vida real e detone suas tarefas sem distrações." },
        { id: "timer-sprint", path: "/pomodoro", icon: Timer, title: "Timer de Sprint", description: "Use ciclos de produtividade para farmar XP e evitar o 'burnout'." },
-       { id: "start-dia", path: "/ritual-matinal", icon: Coffee, title: "Start do Dia", description: "Aperte o 'start' da sua manhã com um ritual que te deixa pronto pra qualquer desafio." },
+       { id: "minhas-quests", path: "/metas", icon: CheckCircle2, title: "Minhas Quests", description: "Transforme seus objetivos em missões de video-game. Suba de nível na vida real!", locked: true, unlockLevel: 6 },
+       { id: "modo-foco", path: "/modo-foco", icon: Zap, title: "Modo Foco (Hyperfocus)", description: "Ative o modo 'não perturbe' da vida real e detone suas tarefas sem distrações.", locked: true, unlockLevel: 7 },
+       { id: "start-dia", path: "/ritual-matinal", icon: Coffee, title: "Start do Dia", description: "Aperte o 'start' da sua manhã com um ritual que te deixa pronto pra qualquer desafio.", locked: true, unlockLevel: 9 },
     ],
   },
   {
     name: "Level Up na Carreira",
     tools: [
       { id: "zap-futuro-ia", path: "/tutor", icon: MessageCircle, title: "Zap do Futuro (IA)", description: "Mande um 'zap' para nossa IA e tire qualquer dúvida sobre carreira, estudos e mais." },
-      { id: "meu-roadmap-carreira", path: "/mapeador-carreira", icon: Map, title: "Meu Roadmap de Carreira", description: "Crie o mapa do seu futuro profissional, com os próximos passos e skills para desbloquear." },
+      { id: "meu-roadmap-carreira", path: "/mapeador-carreira", icon: Map, title: "Meu Roadmap de Carreira", description: "Crie o mapa do seu futuro profissional, com os próximos passos e skills para desbloquear.", locked: true, unlockLevel: 3 },
       { id: "modo-treino-entrevista", path: "/simulador-entrevista", icon: Shield, title: "Modo Treino: Entrevista", description: "Encare o 'boss' da entrevista sem medo. Pratique aqui e chegue preparado.", locked: true, unlockLevel: 5 },
     ],
   },
@@ -141,7 +141,7 @@ const ToolCard = ({ tool, userLevel }: { tool: Tool, userLevel: number }) => {
       <div className="flex-1 min-w-0">
         <h3 className="font-bold text-foreground text-base truncate">{tool.title}</h3>
         <p className="text-muted-foreground text-sm leading-tight">{tool.description}</p>
-        {isLocked && <span className="text-xs text-primary font-semibold mt-1 block">Requer Nível {tool.unlockLevel}</span>}
+        {isLocked && <span className="text-xs text-primary font-semibold mt-1 block">Desbloqueie no nível {tool.unlockLevel}</span>}
       </div>
       {!isLocked && <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-transform" />}
     </>

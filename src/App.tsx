@@ -15,7 +15,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import PWAPrompt from "./components/PWAPrompt";
 import { RewardModalProvider } from "./components/XpRewardModal/RewardModalContext";
-import Layout from "./components/Layout"; // Importe o Layout
+import Layout from "./components/Layout";
+import ScrollToTop from './components/ScrollToTop';
 
 // Importações de todas as Páginas
 import SplashScreen from "./pages/SplashScreen";
@@ -44,6 +45,7 @@ function App() {
       <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
         <RewardModalProvider>
           <Router>
+            <ScrollToTop />
             <Routes>
               {/* --- ROTAS PÚBLICAS (sem layout padrão) --- */}
               <Route path="/" element={<SplashScreen />} />
