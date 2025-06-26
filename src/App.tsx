@@ -49,7 +49,7 @@ const AuthEventHandler = () => {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
-        navigate('/update-password');
+        navigate('/atualizar-senha');
       }
     });
 
