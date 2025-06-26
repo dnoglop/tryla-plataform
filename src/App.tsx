@@ -75,7 +75,7 @@ function App() {
               <Route path="/login" element={<AuthPage />} />
               <Route path="/cadastro" element={<AuthPage />} />
               <Route path="/esqueci-senha" element={<ForgotPasswordPage />} /> {/* <-- CORRIGIDO */}
-              <Route path="/update-password" element={<UpdatePasswordPage />} /> {/* <-- CORRIGIDO */}
+              <Route path="/atualizar-senha" element={<UpdatePasswordPage />} /> {/* <-- CORRIGIDO */}
 
               {/* --- ROTAS DE ONBOARDING (sem layout padrão) --- */}
               <Route
