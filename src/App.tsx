@@ -38,6 +38,7 @@ import NotFound from "./pages/NotFound";
 import OnboardingPage from "./pages/OnboardingPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage"
 import AuthPage from "./pages/AuthPage";
+import UpdatePasswordPage from "./pages/UpdatePasswordPage";
 
 function App() {
   return (
@@ -51,7 +52,8 @@ function App() {
               <Route path="/" element={<SplashScreen />} />
               <Route path="/login" element={<AuthPage />} />
               <Route path="/cadastro" element={<AuthPage />} />
-              <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
+              <Route path="/esqueci-senha" element={<ForgotPasswordPage />}
+              <Route path="/atualizar-senha" element={<UpdatePasswordPage />} />
 
               {/* --- ROTAS DE ONBOARDING (sem layout padrão) --- */}
               <Route

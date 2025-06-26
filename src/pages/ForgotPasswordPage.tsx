@@ -22,7 +22,7 @@ const ForgotPasswordPage = () => {
             // URL para onde o usuário será redirecionado após clicar no link do e-mail.
             // Esta página (geralmente chamada de 'update-password' ou 'reset-password')
             // é onde o usuário definirá a nova senha.
-            const redirectTo = `${window.location.origin}/update-password`;
+            const redirectTo = `${window.location.origin}/atualizar-senha`;
 
             const { error } = await supabase.auth.resetPasswordForEmail(email, {
                 redirectTo: redirectTo,
