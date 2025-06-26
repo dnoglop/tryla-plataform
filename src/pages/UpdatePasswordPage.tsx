@@ -1,6 +1,6 @@
 // ARQUIVO: src/pages/UpdatePasswordPage.tsx
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -13,7 +13,23 @@ const UpdatePasswordPage = () => {
     const [loading, setLoading] = useState(false);
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
-    const [success, setSuccess] = useState(false); // Estado para mostrar a mensagem de sucesso
+    const [success, setSuccess] = useState(false);
+    const [isSessionReady, setIsSessionReady] = useState(false);
+
+    useEffect(() => {
+        const {
+            data: { subscription },
+        } = supabase.auth.onAuthStateChange((event, session) => {
+            // Este evento é disparado quando o Supabase processa o token da URL
+            if (event === "PASSWORD_RECOVERY" && session) {
+                setIsSessionReady(true);
+            }
+        });
+
+        return () => {
+            subscription.unsubscribe();
+        };
+    }, []);
 
     const handlePasswordUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -28,8 +44,6 @@ const UpdatePasswordPage = () => {
         setLoading(true);
 
         try {
-            // O Supabase já sabe quem é o usuário por causa do token no URL
-            // que o onAuthStateChange já processou.
             const { error } = await supabase.auth.updateUser({ password });
 
             if (error) throw error;
@@ -50,15 +64,26 @@ const UpdatePasswordPage = () => {
 
     return (
         <AuthLayout
-            title={!success ? "Crie sua nova senha" : "Tudo pronto!"}
+            title={
+                !isSessionReady
+                    ? "Aguarde um momento"
+                    : !success 
+                    ? "Crie sua nova senha" 
+                    : "Tudo pronto!"
+            }
             description={
-                !success
+                !isSessionReady
+                    ? "Verificando seu link de recuperação..."
+                    : !success
                     ? "Insira uma nova senha forte e segura para sua conta."
                     : "Sua senha foi atualizada com sucesso."
             }
         >
-            {success ? (
-                // --- Tela de Sucesso após a atualização ---
+            {!isSessionReady ? (
+                <div className="text-center py-8">
+                    <Loader2 className="w-10 h-10 animate-spin mx-auto text-primary" />
+                </div>
+            ) : success ? (
                 <motion.div
                     className="text-center"
                     initial={{ opacity: 0, scale: 0.95 }}
@@ -73,12 +98,11 @@ const UpdatePasswordPage = () => {
                         to="/login"
                         className="w-full inline-flex items-center justify-center py-3 bg-primary text-primary-foreground rounded-xl font-semibold text-lg shadow-lg shadow-primary/20 hover:bg-primary/90"
                     >
-                        Prosseguir para o Login
+                        Seguir para o Login
                         <ArrowRight className="w-5 h-5 ml-2" />
                     </Link>
                 </motion.div>
             ) : (
-                // --- Formulário para definir a nova senha ---
                 <motion.form
                     onSubmit={handlePasswordUpdate}
                     className="space-y-6"

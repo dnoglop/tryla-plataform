@@ -1,14 +1,12 @@
-// ARQUIVO: src/App.tsx (VERSÃO FINAL E CORRIGIDA)
+// ARQUIVO: src/App.tsx
 
-import React, { useEffect } from "react";
+import React from "react";
 import {
   BrowserRouter as Router,
   Route,
   Routes,
   Navigate,
-  useNavigate,
 } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 
 // Providers e Componentes Globais
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
@@ -42,40 +40,20 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage"
 import AuthPage from "./pages/AuthPage";
 import UpdatePasswordPage from "./pages/UpdatePasswordPage";
 
-// Componente para lidar com eventos de autenticação
-const AuthEventHandler = () => {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        navigate('/atualizar-senha');
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [navigate]);
-
-  return null;
-};
-
 function App() {
   return (
     <QueryProvider>
       <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
         <RewardModalProvider>
           <Router>
-            <AuthEventHandler />
             <ScrollToTop />
             <Routes>
               {/* --- ROTAS PÚBLICAS (sem layout padrão) --- */}
               <Route path="/" element={<SplashScreen />} />
               <Route path="/login" element={<AuthPage />} />
               <Route path="/cadastro" element={<AuthPage />} />
-              <Route path="/esqueci-senha" element={<ForgotPasswordPage />} /> {/* <-- CORRIGIDO */}
-              <Route path="/atualizar-senha" element={<UpdatePasswordPage />} /> {/* <-- CORRIGIDO */}
+              <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
+              <Route path="/atualizar-senha" element={<UpdatePasswordPage />} />
 
               {/* --- ROTAS DE ONBOARDING (sem layout padrão) --- */}
               <Route
