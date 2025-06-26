@@ -108,22 +108,30 @@ const AuthPage = () => {
     // **CORREÇÃO APLICADA AQUI**
     const handleGoogleLogin = async () => {
         setLoading(true);
-        try {
-            // **ALTERAÇÃO APLICADA AQUI**
-            // Em vez de window.location.origin, usamos a variável de ambiente
-            const redirectURL = import.meta.env.VITE_SITE_URL ? `${import.meta.env.VITE_SITE_URL}/inicio` : `${window.location.origin}/inicio`;
 
+        let redirectURL = "";
+
+        // Força a URL de produção se o hostname for o da Vercel
+        if (window.location.hostname === "tryla.vercel.app") {
+            redirectURL = "https://tryla.vercel.app/inicio";
+        } else {
+            // Usa a origem atual para outros ambientes (como o Replit)
+            redirectURL = `${window.location.origin}/inicio`;
+        }
+
+        try {
             const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
+                provider: "google",
                 options: {
                     redirectTo: redirectURL,
                 },
             });
 
             if (error) throw error;
-
         } catch (error: any) {
-            toast.error("Erro ao fazer login com o Google.", { description: error.message });
+            toast.error("Erro ao fazer login com o Google.", {
+                description: error.message,
+            });
             setLoading(false);
         }
     };
