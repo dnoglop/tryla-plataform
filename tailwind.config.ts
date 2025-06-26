@@ -101,7 +101,11 @@ export default {
 						opacity: "0",
 					},
 				},
+				"spin": { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } },
+
 			},
+
+			
 			animation: {
 				"accordion-down": "accordion-down 0.2s ease-out",
 				"accordion-up": "accordion-up 0.2s ease-out",
@@ -110,6 +114,7 @@ export default {
 				"slide-up": "slide-up 0.5s ease-out forwards",
 				"scale-in": "scale-in 0.5s ease-out forwards",
 				confetti: "confetti 2s ease-out forwards",
+				"spin-slow": "spin 3s linear infinite",
 			},
 		},
 	},
