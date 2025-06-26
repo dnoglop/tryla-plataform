@@ -1,6 +1,6 @@
-// src/hooks/useJournal.ts
+// ARQUIVO: src/hooks/useJournal.ts (CORRIGIDO)
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react'; // Adicionado useMemo
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -8,20 +8,22 @@ import {
   getJournalEntries,
   createJournalEntry,
   updateJournalEntry,
-  toggleFavoriteJournalEntry, // Vamos usar esta
+  toggleFavoriteJournalEntry,
   deleteJournalEntry
 } from '@/services/journalService';
 import { useQuery } from '@tanstack/react-query';
 import { getModules, Module } from '@/services/moduleService';
-import { toast } from 'sonner'; // Importar o toast para feedback de erro
+import { toast } from 'sonner';
 
 export const useJournal = (moduleIdParam: string | null) => {
   const navigate = useNavigate();
 
+  // --- ESTADO PRINCIPAL ---
   const [entries, setEntries] = useState<JournalEntry[]>([]);
-  const [filteredEntries, setFilteredEntries] = useState<JournalEntry[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // --- ESTADO DOS MODAIS E FILTROS ---
   const [isCreating, setIsCreating] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
@@ -29,17 +31,14 @@ export const useJournal = (moduleIdParam: string | null) => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [moduleFilter, setModuleFilter] = useState<number | null>(moduleIdParam ? parseInt(moduleIdParam) : null);
 
+  // O estado `filteredEntries` foi REMOVIDO.
+
   const { data: modules = [] } = useQuery({
     queryKey: ['modules'],
     queryFn: getModules
   });
 
-  useEffect(() => {
-    if (moduleIdParam) {
-      setModuleFilter(parseInt(moduleIdParam));
-    }
-  }, [moduleIdParam]);
-
+  // Busca inicial de dados (sem alterações)
   useEffect(() => {
     const fetchUserAndEntries = async () => {
       setIsLoading(true);
@@ -51,7 +50,6 @@ export const useJournal = (moduleIdParam: string | null) => {
         }
         setUserId(user.id);
         const journalEntries = await getJournalEntries(user.id);
-        // Ordena por data de criação, mais recentes primeiro
         journalEntries.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         setEntries(journalEntries);
       } catch (error) {
@@ -63,8 +61,14 @@ export const useJournal = (moduleIdParam: string | null) => {
     fetchUserAndEntries();
   }, [navigate]);
 
-  useEffect(() => {
+  // O `useEffect` para filtrar as anotações foi REMOVIDO.
+
+  // --- CÁLCULO DO ESTADO DERIVADO ---
+  // A lista filtrada agora é calculada diretamente em cada render.
+  // Usamos `useMemo` para otimizar e evitar recálculos desnecessários.
+  const filteredEntries = useMemo(() => {
     let filtered = [...entries];
+
     if (activeTab === 'favorites') {
       filtered = filtered.filter(entry => entry.is_favorite);
     }
@@ -78,8 +82,11 @@ export const useJournal = (moduleIdParam: string | null) => {
         (entry.content && entry.content.toLowerCase().includes(term))
       );
     }
-    setFilteredEntries(filtered);
+    return filtered;
   }, [entries, searchTerm, activeTab, moduleFilter]);
+
+
+  // --- FUNÇÕES DE MANIPULAÇÃO (sem grandes alterações) ---
 
   const handleCreateEntry = async (entry: Omit<JournalEntry, 'id' | 'created_at' | 'updated_at'>) => {
     if (!userId) return;
@@ -88,7 +95,7 @@ export const useJournal = (moduleIdParam: string | null) => {
       if (newEntry) {
         setEntries(prev => [newEntry, ...prev]);
         setIsCreating(false);
-        setEditingEntry(null); // Garante que o modo de edição também seja fechado
+        setEditingEntry(null);
       }
     } catch (error) {
       console.error('Erro ao criar entrada:', error);
@@ -110,7 +117,6 @@ export const useJournal = (moduleIdParam: string | null) => {
     }
   };
 
-  // --- FUNÇÃO CORRIGIDA E OTIMIZADA ---
   const handleToggleFavorite = async (entryId: string) => {
     const originalEntries = [...entries];
     const entry = originalEntries.find((e) => e.id === entryId);
@@ -118,20 +124,17 @@ export const useJournal = (moduleIdParam: string | null) => {
 
     const newFavoriteStatus = !entry.is_favorite;
 
-    // Atualização Otimista da UI
     setEntries(currentEntries =>
       currentEntries.map(e =>
         e.id === entryId ? { ...e, is_favorite: newFavoriteStatus } : e
       )
     );
 
-    // Chamada ao serviço de backend
     try {
       await toggleFavoriteJournalEntry(entryId, newFavoriteStatus);
     } catch (error) {
       console.error('Erro ao atualizar favorito:', error);
       toast.error("Não foi possível atualizar o favorito.");
-      // Reverte a mudança na UI em caso de erro
       setEntries(originalEntries);
     }
   };
@@ -148,6 +151,7 @@ export const useJournal = (moduleIdParam: string | null) => {
     }
   };
 
+  // Funções auxiliares (sem alterações)
   const clearModuleFilter = () => {
     setModuleFilter(null);
     navigate('/diario');
@@ -156,14 +160,14 @@ export const useJournal = (moduleIdParam: string | null) => {
   const getModuleNameById = (id: number | null | undefined): string | null => {
     if (id === null || id === undefined) return null;
     const module = modules.find((m: Module) => m.id === id);
-    // Retorna apenas o nome para o card, o emoji pode ser adicionado na UI se necessário
     return module ? module.name : 'Módulo Desconhecido';
   };
 
+  // O hook agora retorna o `filteredEntries` calculado.
   return {
     userId,
     entries,
-    filteredEntries,
+    filteredEntries, // Este agora é um valor calculado, não um estado.
     isLoading,
     isCreating,
     setIsCreating,

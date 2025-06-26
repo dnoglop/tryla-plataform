@@ -7,6 +7,7 @@ import { getProfile, Profile } from "@/services/profileService";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 // Componentes
 import BottomNavigation from "@/components/BottomNavigation";
@@ -26,23 +27,34 @@ import {
   PenSquare,
   Lightbulb,
   Sparkles,
+  ArrowLeft,
   X,
 } from "lucide-react";
 
 // --- SUBCOMPONENTES DA PÁGINA ---
 
-const JournalHeader = ({ onNewEntryClick }) => (
+const JournalHeader = ({ onNewEntryClick, onBackClick }) => ( // Adicionado onBackClick
   <motion.div
     variants={{ hidden: { y: -20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}
     className="bg-gradient-to-br from-neutral-900 to-neutral-800 p-6 text-white"
   >
     <div className="flex justify-between items-center">
-      <div>
-        <h1 className="text-3xl font-extrabold text-white">Diário de Bordo</h1>
+      {/* Botão de Voltar Adicionado */}
+      <motion.button
+        onClick={onBackClick}
+        className="text-white/70 hover:text-white transition-colors -ml-2 p-2"
+        aria-label="Voltar"
+      >
+        <ArrowLeft className="h-6 w-6" />
+      </motion.button>
+
+      <div className="text-center"> {/* Centralizando o título */}
+        <h1 className="text-2xl font-extrabold text-white">Diário de Bordo</h1>
         <p className="text-white/70 text-sm mt-1">
-          Onde suas ideias, reflexões e 'eurekas' ganham vida.
+          Suas ideias e 'eurekas'.
         </p>
       </div>
+
       <motion.button
         onClick={onNewEntryClick}
         className="bg-primary h-12 w-12 rounded-full flex items-center justify-center shadow-lg"
@@ -211,6 +223,7 @@ const JournalDetailModal = ({ entry, moduleName, moduleTags, isOpen, onClose, on
 // --- COMPONENTE PRINCIPAL ---
 const JournalPage: React.FC = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
+  const navigate = useNavigate();
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const {
     entries,
@@ -289,6 +302,7 @@ const JournalPage: React.FC = () => {
         }}
       >
         <JournalHeader
+          onBackClick={() => navigate(-1)}
           onNewEntryClick={() => {
             setEditingEntry(null);
             setIsCreating(true);
@@ -367,7 +381,7 @@ const JournalPage: React.FC = () => {
 
       {/* CORREÇÃO APLICADA AQUI */}
       <JournalFormModal
-        isOpen={isCreating || !!editingEntry}
+        isOpen={isCreating || editingEntry !== null}
         onCancel={() => {
           setIsCreating(false);
           setEditingEntry(null);
