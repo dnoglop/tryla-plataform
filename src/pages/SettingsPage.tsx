@@ -1,6 +1,6 @@
 // ARQUIVO: src/pages/SettingsPage.tsx
 
-import React from "react";
+import React from "react"; // --- MODIFICADO: useState não é mais necessário aqui
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { Button } from "@/components/ui/button";
@@ -8,10 +8,15 @@ import { toast } from "sonner";
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
 
+// --- ADICIONADO: Importe seu componente completo ---
+import NotificationManager from "@/components/NotificationManager"; 
+
 // Ícones necessários para a página
-import { ArrowLeft, User, Palette, Moon, Sun, Laptop, ChevronRight, Key, HelpCircle, Info, LogOut } from "lucide-react";
+// --- MODIFICADO: Bell, Switch e Label não são mais necessários aqui ---
+import { ArrowLeft, User, Moon, Sun, Laptop, ChevronRight, Key, HelpCircle, Info, LogOut } from "lucide-react";
 
 // --- COMPONENTES AUXILIARES ESTILIZADOS ---
+// SettingCard e SettingItem continuam os mesmos, sem alterações.
 const SettingCard: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className }) => (
   <div className={`bg-card/80 dark:bg-black/20 backdrop-blur-md border border-border dark:border-white/10 rounded-2xl p-4 sm:p-6 shadow-lg ${className}`}>
     {children}
@@ -33,11 +38,16 @@ const SettingItem: React.FC<{ icon: React.ComponentType<{ className?: string }>;
   </div>
 );
 
+
 // --- COMPONENTE PRINCIPAL ---
 export const SettingsPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { theme, setTheme } = useTheme();
+
+  // --- REMOVIDO: A lógica de notificações agora está no NotificationManager ---
+  // const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  // const handleNotificationToggle = (enabled: boolean) => { ... };
 
   const themeOptions = [
     { value: "light", label: "Claro", icon: Sun },
@@ -99,11 +109,15 @@ export const SettingsPage = () => {
             </div>
         </SettingCard>
 
+        {/* --- SEÇÃO DE NOTIFICAÇÕES MODIFICADA --- */}
+        {/* Aqui usamos seu componente completo. Ele renderizará seu próprio card/seção */}
+        <NotificationManager />
+        {/* --- FIM DA MODIFICAÇÃO --- */}
+
         {/* Seção Conta */}
         <SettingCard>
           <h2 className="text-lg font-bold text-foreground px-3 mb-2">Conta</h2>
           <SettingItem icon={Key} title="Alterar Senha" onClick={() => navigate('/alterar-senha')} />
-          {/* Adicione mais itens de conta aqui, se necessário */}
         </SettingCard>
 
         {/* Seção Suporte */}
