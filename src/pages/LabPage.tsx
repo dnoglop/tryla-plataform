@@ -71,7 +71,7 @@ const toolCategories: ToolCategory[] = [
     tools: [
       { id: "zap-futuro-ia", path: "/tutor", icon: MessageCircle, title: "Zap do Futuro (IA)", description: "Mande um 'zap' para nossa IA e tire qualquer dúvida sobre carreira, estudos e mais." },
       { id: "meu-roadmap-carreira", path: "/mapeador-carreira", icon: Map, title: "Meu Roadmap de Carreira", description: "Crie o mapa do seu futuro profissional, com os próximos passos e skills para desbloquear.", locked: true, unlockLevel: 3 },
-      { id: "modo-treino-entrevista", path: "/simulador-entrevista", icon: Shield, title: "Modo Treino: Entrevista", description: "Encare o 'boss' da entrevista sem medo. Pratique aqui e chegue preparado.", locked: true, unlockLevel: 5 },
+      { id: "modo-treino-entrevista", path: "/simulador-entrevista", icon: Shield, title: "Modo Treino: Entrevista", description: "Encare o 'boss' da entrevista sem medo. Pratique aqui e chegue preparado."},
     ],
   },
 ];

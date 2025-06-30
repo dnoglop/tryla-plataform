@@ -39,6 +39,7 @@ import OnboardingPage from "./pages/OnboardingPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage"
 import AuthPage from "./pages/AuthPage";
 import UpdatePasswordPage from "./pages/UpdatePasswordPage";
+import InterviewSimulatorPage from './pages/InterviewSimulatorPage';
 
 function App() {
   return (
@@ -74,6 +75,7 @@ function App() {
               <Route path="/teste-vocacional" element={<ProtectedRoute><Layout><VocationalTestPage /></Layout></ProtectedRoute>} />
               <Route path="/tutor" element={<ProtectedRoute><Layout><TutorPage /></Layout></ProtectedRoute>} />
               <Route path="/pomodoro" element={<ProtectedRoute><Layout><PomodoroPage /></Layout></ProtectedRoute>} />
+              <Route path="/simulador-entrevista" element={<ProtectedRoute><Layout><InterviewSimulatorPage /></Layout></ProtectedRoute>} />
 
               {/* --- ROTAS DE TELA CHEIA (NÃO usam o Layout) --- */}
               <Route
