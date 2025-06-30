@@ -278,7 +278,7 @@ export default function InterviewSimulatorPage() {
                     setCurrentMessageIndex(
                         (prev) => (prev + 1) % loadingMessages.length,
                     ),
-                1500,
+                2000,
             );
         }
         return () => clearInterval(interval);
@@ -308,7 +308,7 @@ export default function InterviewSimulatorPage() {
                                 >
                                     <div className="text-center">
                                         <h2 className="text-2xl font-bold text-foreground">
-                                            Prepare sua Simulação
+                                            Simulando a sua entrevista
                                         </h2>
                                         <p className="text-muted-foreground mt-1">
                                             Preencha os dados e anexe seu
@@ -334,7 +334,7 @@ export default function InterviewSimulatorPage() {
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="level">
-                                                Nível da Vaga
+                                                Título da vaga
                                             </Label>
                                             <Input
                                                 id="level"
@@ -364,12 +364,12 @@ export default function InterviewSimulatorPage() {
                                                 })
                                             }
                                             required
-                                            rows={6}
+                                            rows={7}
                                         />
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="resume-upload">
-                                            Seu Currículo (PDF)
+                                            Seu currículo aqui (PDF)
                                         </Label>
                                         <div className="mt-2 flex justify-center rounded-lg border border-dashed border-border px-6 py-10">
                                             <div className="text-center">
@@ -455,7 +455,7 @@ export default function InterviewSimulatorPage() {
                                         )}
                                         {isUploading
                                             ? "Processando Currículo..."
-                                            : "Iniciar Simulação com IA"}
+                                            : "Iniciar a sua simulação com IA"}
                                     </Button>
                                 </form>
                             </motion.div>
