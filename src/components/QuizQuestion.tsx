@@ -78,14 +78,14 @@ const QuizQuestion = ({
   const getFeedbackGif = (isCorrect: boolean) => {
     if (isCorrect) {
       const correctGifs = [
-        "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNmNlNjI2M2NkNzZkNTQ3ZWMyMDYxMmNjNDFmYzYxYzM4MTIyMjAyYiZjdD1n/jsGnoQK22wKlkKaFoU/giphy.gif",
-        "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOWI3NWE5NTgyZTcxZTYyMGU0MjYzMTk5ZTA3MTlkYjA4YzZkNDI0YiZjdD1n/ynRrAHj5UP7Qmt2wDB/giphy.gif",
+        "https://53.fs1.hubspotusercontent-na1.net/hub/53/hubfs/Brazil/Blog Images PT/O Facebook finalmente aceita GIFs 10 formas de comemorar/giph-brazil.gif?width=645&name=giph-brazil.gif",
+        "https://i.gifer.com/E7Od.gif",
       ];
       return correctGifs[Math.floor(Math.random() * correctGifs.length)];
     } else {
       const incorrectGifs = [
-        "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZTk0ZDk1MzE3MmVhNGYwMGMyOGU4MThlMjQ2OTIyNzdhMzBjZDlkMyZjdD1n/3oEjI4sFlp73fvEYgw/giphy.gif",
-        "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExYTE0NjBiNGI3YjE3OWI4YTcyY2Q0M2JlMTkwNjY1ZTI0YWMzYzFiZiZjdD1n/l1J9FvIfnSUUUY9mo/giphy.gif",
+        "https://pa1.aminoapps.com/6355/d569f1ffdf532c609a811f6fd415c947ac57cc08_00.gif",
+        "https://i.imgflip.com/1a3qul.gif",
       ];
       return incorrectGifs[Math.floor(Math.random() * incorrectGifs.length)];
     }
@@ -140,8 +140,8 @@ const QuizQuestion = ({
             </div>
             <p className="mt-2 text-lg font-bold">
               {selectedOption === correctAnswer
-                ? "Acertou! 🔥 Você é fera!"
-                : "Opa, não foi dessa vez. Tente de novo! 😅"}
+                ? "Acertou 🎉 Vamos para a próxima!"
+                : "Vish, não foi dessa vez. Tente de novo! 😅"}
             </p>
           </div>
         )}
@@ -152,7 +152,7 @@ const QuizQuestion = ({
             className="inline-flex items-center gap-2 rounded-full bg-yellow-100 px-4 py-2 text-sm font-semibold text-yellow-800 transition hover:bg-yellow-200"
           >
             <Lightbulb className="h-4 w-4" />
-            Quer uma dica?
+            Quer uma dica? 👀
           </button>
         )}
 

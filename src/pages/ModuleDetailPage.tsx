@@ -76,9 +76,11 @@ export function ContinuousMovingBorder({
 
 // --- LÓGICA DE NÍVEIS ---
 const LEVELS = [
-    { name: "Semente", minXp: 0 },
-    { name: "Eco", minXp: 100 } /* ... etc ... */,
+  { name: "Semente", minXp: 0 }, { name: "Eco", minXp: 100 }, { name: "Pulso", minXp: 200 },
+  { name: "Chave", minXp: 300 }, { name: "Rastro", minXp: 400 }, { name: "Brilho", minXp: 500 },
+  { name: "Voo", minXp: 600 }, { name: "Passo", minXp: 700 },
 ];
+
 const calculateLevelInfo = (xp: number) => {
     if (typeof xp !== "number" || xp < 0) xp = 0;
     const currentLevel =
@@ -133,16 +135,16 @@ const ModuleHeader = ({ module, userProfile, totalCompleted, totalPhases }) => {
                             {userProfile.xp || 0} XP
                         </p>
                         <p className="text-sm text-white/70">
-                            Nível {levelInfo.level.name}
+                            Você é nível {levelInfo.level.name}
                         </p>
                     </div>
-                    <Link to="/perfil">
+                    
                         <img
                             src={userProfile?.avatar_url || ""}
                             alt="Perfil"
                             className="h-12 w-12 rounded-full border-2 border-white/20 shadow-md"
                         />
-                    </Link>
+                    
                 </div>
             </div>
             <h1 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight">
@@ -160,7 +162,7 @@ const ModuleHeader = ({ module, userProfile, totalCompleted, totalPhases }) => {
             </div>
             <div className="space-y-2">
                 <div className="flex justify-between text-sm font-medium text-white/80">
-                    <span>Progresso da Jornada</span>
+                    <span>Sua evolução no módulo</span>
                     <span>
                         {totalCompleted} / {totalPhases}
                     </span>
@@ -208,14 +210,13 @@ const SocialProof = () => (
             <p className="text-sm font-medium text-muted-foreground leading-tight">
                 Junte-se a{" "}
                 <span className="text-foreground font-bold">
-                    +127 exploradores
+                    +127 exploradores!
                 </span>
-                !
             </p>
         </div>
         <div className="flex items-center gap-1.5 text-primary font-bold text-sm">
             <Sparkles className="w-5 h-5 opacity-80" />
-            <span>Popular</span>
+            <span>Muito popular</span>
         </div>
     </motion.div>
 );
@@ -274,14 +275,14 @@ const PhaseCard = ({ phase, onPhaseClick, isLast }: { phase: TrailPhase, onPhase
                             className="absolute inset-0 w-full origin-top bg-primary"
                             initial={{ scaleY: 0 }}
                             animate={isInView && variant === 'current' ? { scaleY: 1 } : { scaleY: 0 }}
-                            transition={{ duration: 0.8, delay: 0.3 }}
+                            transition={{ duration: 0.7, delay: 0.2 }}
                         />
                         {/* Linha Verde (para fases completas) */}
                         <motion.div
                             className="absolute inset-0 w-full origin-top bg-green-500"
                             initial={{ scaleY: 0 }}
                             animate={isInView && variant === 'completed' ? { scaleY: 1 } : { scaleY: 0 }}
-                            transition={{ duration: 0.8, delay: 0.3 }}
+                            transition={{ duration: 0.7, delay: 0.2 }}
                         />
                     </div>
                 )}
@@ -321,7 +322,7 @@ const CompletionCard = ({ moduleName }) => (
             Parabéns por dominar o módulo "{moduleName}"!
         </p>
         <Button className="bg-white text-green-600 hover:bg-white/90">
-            Ver minhas conquistas
+            Ver as minhas conquistas
         </Button>
     </motion.div>
 );

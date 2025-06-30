@@ -69,7 +69,7 @@ const ModulesHeader = ({ profile, levelInfo }) => (
                     <h1 className="text-2xl font-extrabold text-white">Suas Trilhas</h1>
                     {levelInfo && (
                         <p className="text-white/70">
-                            Nível {levelInfo.name}, continue evoluindo!
+                            Você é nível {levelInfo.name}, continue evoluindo!
                         </p>
                     )}
                 </div>
@@ -106,15 +106,15 @@ const FeaturedModuleCard = ({ module, progress }: { module: Module; progress: nu
         <div className="flex flex-wrap gap-2 pt-1">{module.tags?.map((tag) => (<span key={tag} className="text-xs font-semibold text-muted-foreground border px-2 py-0.5 rounded-full">{tag}</span>))}</div>
       </div>
       <div className="mb-6">
-        <div className="flex justify-between items-center mb-2"><span className="text-sm font-medium text-muted-foreground">Progresso</span><span className="text-sm font-bold text-primary">{Math.round(progress)}%</span></div>
+        <div className="flex justify-between items-center mb-2"><span className="text-sm font-medium text-muted-foreground">Sua evolução</span><span className="text-sm font-bold text-primary">{Math.round(progress)}%</span></div>
         <div className="w-full bg-muted rounded-full h-2.5"><motion.div className="essencia-valor h-2.5 rounded-full" initial={{ width: 0 }} animate={{ width: `${progress}%` }} transition={{ duration: 1, ease: "easeOut" }} /></div>
       </div>
       <motion.button className="w-full btn-saga-primario py-4 text-base font-bold flex items-center justify-center gap-2" onClick={handleLaunch} disabled={isLaunching}>
         <AnimatePresence mode="wait">
           {isLaunching ? (
-            <motion.span key="loading" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="flex items-center justify-center gap-2"><Rocket className="w-5 h-5 animate-pulse" /> Preparando para decolar...</motion.span>
+            <motion.span key="loading" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="flex items-center justify-center gap-2"><Rocket className="w-5 h-5 animate-pulse" /> Preparando sua decolagem...</motion.span>
           ) : (
-            <motion.span key="ready" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="flex items-center justify-center gap-2">Continuar Jornada <ArrowRight className="w-4 h-4" /></motion.span>
+            <motion.span key="ready" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="flex items-center justify-center gap-2">Continuar a jornada <ArrowRight className="w-4 h-4" /></motion.span>
           )}
         </AnimatePresence>
       </motion.button>
@@ -176,7 +176,7 @@ export default function ModulesPage() {
             let modules: Module[] = (modulesResponse.data || []).map((m) => {
                 const total_lessons = m.phases.length;
                 const total_duration = m.phases.reduce((sum, p) => sum + (p.duration || 0), 0);
-                const total_xp = 5 * total_lessons + 20;
+                const total_xp = 5 * total_lessons + 15;
                 return { ...m, total_lessons, total_duration, total_xp };
             });
             if (userTrack && userTrack.module_ids?.length > 0) {

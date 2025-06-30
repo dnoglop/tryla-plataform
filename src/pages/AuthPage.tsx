@@ -61,7 +61,6 @@ const AuthPage = () => {
                 password,
             });
             if (error) throw error;
-            toast.success("Login realizado com sucesso!");
             navigate("/inicio");
         } catch (error: any) {
             toast.error("E-mail ou senha incorretos.");
@@ -88,9 +87,6 @@ const AuthPage = () => {
                 options: { data: { full_name: fullName.trim() } },
             });
             if (error) throw error;
-            toast.success("Verifique seu e-mail!", {
-                description: "Enviamos um link de confirmação para você.",
-            });
             navigate("/login");
         } catch (error: any) {
             if (error.message.includes("User already registered")) {

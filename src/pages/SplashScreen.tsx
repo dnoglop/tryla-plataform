@@ -8,7 +8,7 @@ import { Sparkles, Bot, Gamepad2, Users } from 'lucide-react';
 import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
 
 // --- Componente FlipWords (sem alterações) ---
-const FlipWords = ({ words, duration = 3500 }: { words: string[], duration?: number }) => {
+const FlipWords = ({ words, duration = 3000 }: { words: string[], duration?: number }) => {
   const [currentWord, setCurrentWord] = useState(words[0]);
 
   useEffect(() => {

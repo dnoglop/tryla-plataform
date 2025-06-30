@@ -257,7 +257,7 @@ const PhaseContent = ({
           zIndex: 9999,
         });
         const modalTitle =
-          result.xpFromModule > 0 ? "Reino Conquistado!" : "Missão Concluída!";
+          result.xpFromModule > 0 ? "+1 Lição Concluída!" : "Missão Concluída!";
         await showRewardModal({ xpAmount: totalXpGained, title: modalTitle });
       }
 
@@ -346,7 +346,7 @@ const PhaseContent = ({
                       ) : (
                         <Play className="mr-2 h-4 w-4" />
                       )}
-                      {isPlaying ? "Pausar" : "Ouvir Narração"}
+                      {isPlaying ? "Pausar" : "Ouvir o conteúdo"}
                     </Button>
                     <div className="flex items-center gap-2">
                       <Button
@@ -403,8 +403,7 @@ const PhaseContent = ({
                       <Video className="w-6 h-6 text-white" />
                     </div>
                     <h2 className="text-xl font-bold text-white">
-                      Recurso em Vídeo
-                    </h2>
+      Assista esse vídeo:                   </h2>
                   </div>
                   <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2 overflow-hidden">
                     <YoutubeEmbed videoId={phase.video_url} />
@@ -420,8 +419,7 @@ const PhaseContent = ({
                     <div className="flex-1 pr-4">
                       <h3 className="text-lg font-bold text-foreground mb-3 flex items-center">
                         <QuoteIcon className="w-5 h-5 mr-2 text-primary" />
-                        Palavras do Sábio
-                      </h3>
+  Reflita sobre:                      </h3>
                       <blockquote className="text-muted-foreground italic border-l-4 border-primary pl-4 py-1">
                         "{phase.quote}"
                       </blockquote>
@@ -461,20 +459,20 @@ const PhaseContent = ({
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-lg font-bold text-foreground flex items-center">
                     <PenTool className="w-5 h-5 mr-2 text-primary" />
-                    Crônicas da Jornada
+                    Aprendizado da Jornada
                   </h3>
-                  <div className="text-sm text-primary bg-primary/10 px-3 py-1 rounded-full font-semibold">
-                    Suas Descobertas
+                  <div className="text-sm text-primary bg-primary/10 px-4 py-1 rounded-full font-semibold">
+                    Seus pensamentos
                   </div>
                 </div>
                 <p className="text-muted-foreground text-sm mb-4">
-                  Registre aqui seus insights e reflexões. Este é o seu mapa do
+                  Registre os seus insights e reflexões. Este é o seu mapa do
                   tesouro pessoal, documentando sua evolução.
                 </p>
                 <Textarea
                   value={journalNotes}
                   onChange={(e) => setJournalNotes(e.target.value)}
-                  placeholder="O que mais chamou sua atenção? Como isso se aplica a você? Qual seu próximo passo prático?..."
+                  placeholder="O que mais chamou sua atenção? Como isso se aplica a você? Qual seu próximo passo prático?"
                   className="w-full min-h-[120px] p-4 bg-input rounded-xl border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none resize-none"
                   rows={5}
                 />
@@ -505,7 +503,7 @@ const PhaseContent = ({
                     className="h-10 px-4 flex items-center shadow-sm"
                   >
                     <ArrowLeft className="mr-2 h-5 w-5" />
-                    Missão Anterior
+                    Voltar
                   </Button>
                 )}
                 {canComplete && (
@@ -520,7 +518,7 @@ const PhaseContent = ({
                       <Award className="w-6 h-6" />
                     )}
                     <span className="ml-2">
-                      {isSubmitting ? "Concluindo..." : "Concluir Missão"}
+                      {isSubmitting ? "Concluindo..." : "Concluir lição"}
                     </span>
                   </Button>
                 )}

@@ -3,7 +3,6 @@
 import React from 'react';
 import { CheckCircle } from 'lucide-react';
 import QuizQuestion from '../QuizQuestion'; 
-// CORREÇÃO: Importando a função que acabamos de criar.
 import { formatTime } from '@/lib/formatters';
 
 interface QuizContentProps {
@@ -33,7 +32,7 @@ export const QuizContent: React.FC<QuizContentProps> = ({
         
         {/* CORREÇÃO: Usando a função formatTime no quizElapsedTime */}
         <p className="mt-2 text-lg text-muted-foreground">
-          Tempo final: <span className="font-bold text-orange-600">{formatTime(quizElapsedTime || 0)}</span>
+          Seu tempo final: <span className="font-bold text-orange-600">{formatTime(quizElapsedTime || 0)}</span>
         </p>
 
         <p className="mt-4 text-sm text-muted-foreground">

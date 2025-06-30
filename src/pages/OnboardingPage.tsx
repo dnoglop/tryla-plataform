@@ -57,11 +57,11 @@ import {
 
 // -- Estrutura de Dados e Constantes --
 const onboardingSteps = [
-  { number: 1, title: "Boas-vindas", subtitle: "Sua jornada começa agora" },
+  { number: 1, title: "Boas-vindas", subtitle: "A sua grande jornada começa agora" },
   { number: 2, title: "Perfil Básico", subtitle: "Conte-nos sobre você" },
-  { number: 3, title: "Seus Objetivos", subtitle: "Defina suas metas" },
-  { number: 4, title: "Personalização", subtitle: "Ajuste sua experiência" },
-  { number: 5, title: "Confirmação", subtitle: "Pronto para decolar!" },
+  { number: 3, title: "Seus Objetivos", subtitle: "Defina suas principais metas" },
+  { number: 4, title: "Queremos conhecer você", subtitle: "Criando uma experiência única" },
+  { number: 5, title: "Confirmação", subtitle: "Hora de decolar!" },
 ];
 
 const developmentAreas = [
@@ -176,7 +176,7 @@ const OnboardingPage = () => {
       await queryClient.invalidateQueries({ queryKey: ["userProfile"] });
       trackMutation.mutate(profileData);
     } catch (error) {
-      toast.error("Houve um erro ao salvar seu perfil.");
+      toast.error("Ops, tivemos um erro ao salvar seu perfil.");
     }
   };
 
@@ -188,9 +188,7 @@ const OnboardingPage = () => {
         setUserId(user.id);
         const existingProfile = await getProfile(user.id);
 
-        // **CORREÇÃO APLICADA AQUI**
-        // Garantimos que todos os campos do estado recebam uma string,
-        // usando `|| ""` para converter `null` ou `undefined` em string vazia.
+      
         setProfileData((prev) => ({
           ...prev,
           full_name: existingProfile?.full_name || user.user_metadata?.full_name || "",
@@ -286,11 +284,11 @@ const OnboardingPage = () => {
                     <div><Label htmlFor="state" className="text-sm font-semibold flex items-center gap-2 mb-1"><MapPin className="w-4 h-4" />Estado</Label><Input id="state" name="state" value={profileData.state} onChange={handleInputChange} placeholder="Ex: SP" /></div>
                   </div>
                   <div><Label htmlFor="linkedin_url" className="text-sm font-semibold flex items-center gap-2 mb-1"><Linkedin className="w-4 h-4" />LinkedIn (opcional)</Label><Input id="linkedin_url" name="linkedin_url" type="url" value={profileData.linkedin_url} onChange={handleInputChange} placeholder="https://linkedin.com/in/seu-perfil" /></div>
-                  <div><Label htmlFor="bio" className="text-sm font-semibold flex items-center gap-2 mb-1"><FileText className="w-4 h-4" />Sobre mim (opcional)</Label><Textarea id="bio" name="bio" value={profileData.bio} onChange={handleInputChange} placeholder="Fale um pouco sobre você, suas paixões e objetivos..." className="min-h-[100px]" /></div>
+                  <div><Label htmlFor="bio" className="text-sm font-semibold flex items-center gap-2 mb-1"><FileText className="w-4 h-4" />Sobre mim (opcional)</Label><Textarea id="bio" name="bio" value={profileData.bio} onChange={handleInputChange} placeholder="Fale um pouco sobre você, suas paixões, hobbies e objetivos..." className="min-h-[100px]" /></div>
                 </div>
               )}
 
-              {currentStep === 3 && (<div className="space-y-6 max-w-md mx-auto"><div><Label htmlFor="career_goal" className="text-sm font-semibold mb-2 block">Qual é o seu grande sonho de carreira? *</Label><Textarea id="career_goal" name="career_goal" value={profileData.career_goal} onChange={handleInputChange} placeholder="Ex: Ser um líder em uma empresa de tecnologia, abrir meu próprio negócio de design..." required className="min-h-[100px]" /></div><div><Label htmlFor="current_challenge" className="text-sm font-semibold mb-2 block">E qual o seu maior desafio hoje para chegar lá? *</Label><Textarea id="current_challenge" name="current_challenge" value={profileData.current_challenge} onChange={handleInputChange} placeholder="Ex: Não sei por onde começar, falta de confiança, dificuldade em me organizar..." required className="min-h-[100px]" /></div><div><Label htmlFor="hobbies" className="text-sm font-semibold mb-2 block">O que você ama fazer no seu tempo livre?</Label><Textarea id="hobbies" name="hobbies" value={profileData.hobbies} onChange={handleInputChange} placeholder="Ex: Jogar, ler, praticar esportes..." className="min-h-[100px]" /></div></div>)}
+              {currentStep === 3 && (<div className="space-y-6 max-w-md mx-auto"><div><Label htmlFor="career_goal" className="text-sm font-semibold mb-2 block">Qual é o seu grande sonho de carreira? *</Label><Textarea id="career_goal" name="career_goal" value={profileData.career_goal} onChange={handleInputChange} placeholder="Ex: Ser líder em uma empresa de tecnologia, abrir meu próprio negócio de design..." required className="min-h-[100px]" /></div><div><Label htmlFor="current_challenge" className="text-sm font-semibold mb-2 block">E qual o seu maior desafio hoje para chegar lá? *</Label><Textarea id="current_challenge" name="current_challenge" value={profileData.current_challenge} onChange={handleInputChange} placeholder="Ex: Não sei por onde começar, falta de confiança, dificuldade em me organizar..." required className="min-h-[100px]" /></div><div><Label htmlFor="hobbies" className="text-sm font-semibold mb-2 block">O que você ama fazer no seu tempo livre?</Label><Textarea id="hobbies" name="hobbies" value={profileData.hobbies} onChange={handleInputChange} placeholder="Ex: Jogar, ler, praticar esportes..." className="min-h-[100px]" /></div></div>)}
 
               {currentStep === 4 && (<div className="space-y-6"><div><Label className="text-sm font-semibold mb-3 block">Quais áreas você mais quer desenvolver? *</Label><div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{developmentAreas.map((area) => (<button key={area.id} onClick={() => handleMultiSelectToggle("development_areas", area.label)} className={`p-3 rounded-xl border-2 text-left transition-all ${profileData.development_areas.includes(area.label) ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"}`}><div className="flex items-center gap-2"><area.icon className={`w-4 h-4 ${profileData.development_areas.includes(area.label) ? "text-primary" : "text-muted-foreground"}`} /><span className="text-sm font-medium">{area.label}</span></div></button>))}</div></div><div><Label className="text-sm font-semibold mb-3 block">Quais temas mais te interessam? *</Label><div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{interestsList.map((item) => (<button key={item.id} onClick={() => handleMultiSelectToggle("interests", item.label)} className={`p-3 rounded-xl border-2 text-left transition-all ${profileData.interests.includes(item.label) ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"}`}><div className="flex items-center gap-2"><item.icon className={`w-4 h-4 ${profileData.interests.includes(item.label) ? "text-primary" : "text-muted-foreground"}`} /><span className="text-sm font-medium">{item.label}</span></div></button>))}</div></div><div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><div><Label className="text-sm font-semibold mb-2 block">Como você prefere aprender? *</Label><Select name="learning_style" onValueChange={(v) => handleSelectChange("learning_style", v)} value={profileData.learning_style}><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger><SelectContent>{learningStyles.map((s) => (<SelectItem key={s} value={s}>{s}</SelectItem>))}</SelectContent></Select></div><div><Label className="text-sm font-semibold mb-2 block">Quanto tempo pode dedicar por semana? *</Label><Select name="weekly_time" onValueChange={(v) => handleSelectChange("weekly_time", v)} value={profileData.weekly_time}><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger><SelectContent>{weeklyTimes.map((t) => (<SelectItem key={t} value={t}>{t}</SelectItem>))}</SelectContent></Select></div><div><Label className="text-sm font-semibold mb-2 block">Qual seu nível de experiência? *</Label><Select name="experience_level" onValueChange={(v) => handleSelectChange("experience_level", v)} value={profileData.experience_level}><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger><SelectContent>{experienceLevels.map((e) => (<SelectItem key={e.value} value={e.label}>{e.label}</SelectItem>))}</SelectContent></Select></div></div></div>)}
 
@@ -309,7 +307,7 @@ const OnboardingPage = () => {
         <DialogContent className="sm:max-w-md bg-card"><DialogHeader><DialogTitle className="text-foreground">Ajustar foto do perfil</DialogTitle></DialogHeader>{imageSrc && (<div className="space-y-4"><div className="relative h-64 w-full bg-muted rounded-lg overflow-hidden"><Cropper image={imageSrc} crop={crop} zoom={zoom} aspect={1} onCropChange={setCrop} onZoomChange={setZoom} onCropComplete={onCropComplete} /></div><div className="space-y-2"><Label className="text-sm font-medium text-foreground">Zoom:</Label><Slider value={[zoom]} onValueChange={(v) => setZoom(v[0])} min={1} max={3} step={0.1} /></div></div>)}<DialogFooter className="flex gap-2"><Button variant="outline" onClick={() => setImageSrc(null)}>Cancelar</Button><Button onClick={handleCropSave} className="bg-primary hover:bg-primary/90" disabled={isCropping}>{isCropping ? (<Loader2 className="w-4 h-4 animate-spin" />) : ("Salvar")}</Button></DialogFooter></DialogContent>
       </Dialog>
       <Dialog open={isAiModalOpen} onOpenChange={setIsAiModalOpen}>
-        <DialogContent className="sm:max-w-lg bg-card"><DialogHeader><DialogTitle className="text-2xl text-center font-bold flex items-center justify-center gap-2"><Sparkles className="w-6 h-6 text-primary" />Sua Trilha Personalizada!</DialogTitle><DialogDescription className="text-center pt-2">Com base em suas respostas, preparei um caminho especial para você.</DialogDescription></DialogHeader><div className="py-4 px-2 max-h-[60vh] overflow-y-auto pr-4"><div className="prose prose-sm dark:prose-invert max-w-none prose-h3:text-foreground prose-h3:uppercase prose-h3:mb-2 prose-h3:mt-6 first-of-type:prose-h3:mt-2"><ReactMarkdown>{aiJustification}</ReactMarkdown></div></div><DialogFooter><Button onClick={handleCloseAiModal} className="w-full bg-primary hover:bg-primary/90"><ThumbsUp className="w-4 h-4 mr-2" />Entendi, vamos começar!</Button></DialogFooter></DialogContent>
+        <DialogContent className="sm:max-w-lg bg-card"><DialogHeader><DialogTitle className="text-2xl text-center font-bold flex items-center justify-center gap-2"><Sparkles className="w-6 h-6 text-primary" />Sua Trilha Personalizada!</DialogTitle><DialogDescription className="text-center pt-2">Com base em suas respostas, preparei um caminho especial para você.</DialogDescription></DialogHeader><div className="py-4 px-2 max-h-[60vh] overflow-y-auto pr-4"><div className="prose prose-sm dark:prose-invert max-w-none prose-h3:text-foreground prose-h3:uppercase prose-h3:mb-2 prose-h3:mt-6 first-of-type:prose-h3:mt-2"><ReactMarkdown>{aiJustification}</ReactMarkdown></div></div><DialogFooter><Button onClick={handleCloseAiModal} className="w-full bg-primary hover:bg-primary/90"><ThumbsUp className="w-4 h-4 mr-2" />Beleza, vamos começar!</Button></DialogFooter></DialogContent>
       </Dialog>
     </div>
   );

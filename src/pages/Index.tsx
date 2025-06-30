@@ -205,13 +205,12 @@ const ComeBackTomorrowModal = ({
                         Recompensa Coletada!
                     </Dialog.Title>
                     <Dialog.Description className="text-muted-foreground mt-2 text-base">
-                        Você ganhou +50 XP pela sua dedicação. Volte amanhã para
-                        mais!
+                        Show, você ganhou +50 XP pela sua dedicação. Volte amanhã para receber novamente!
                     </Dialog.Description>
                 </div>
                 <Dialog.Close asChild>
                     <button className="mt-8 w-full btn-saga-primario py-3 text-base">
-                        Entendido!
+                        Combinado!
                     </button>
                 </Dialog.Close>
             </Dialog.Content>
@@ -748,7 +747,7 @@ const Index = () => {
                                     </p>
                                     <div className="bg-white text-primary px-5 py-2.5 rounded-full font-bold flex items-center justify-center space-x-2 shadow-lg w-fit transition-transform group-hover:scale-105">
                                         <Play className="w-4 h-4" />
-                                        <span>Começar Missão</span>
+                                        <span>Começar a missão</span>
                                     </div>
                                 </motion.div>
                             </Link>
@@ -789,8 +788,7 @@ const Index = () => {
                                     )}
                                 </div>
                                 <p className="text-muted-foreground text-sm">
-                                    Continue assim para desbloquear novas
-                                    recompensas!
+                                    Continue assim para desbloquear novas recompensas!
                                 </p>
                                 {levelInfo && levelInfo.nextLevel && (
                                     <>
