@@ -1,6 +1,7 @@
 /* 
   index.css - Configurações Globais Corrigidas
   - Adicionada a definição da variável --primary para compatibilidade
+  - Adicionados estilos de fallback para a geração de PDF
 */
 
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&display=swap');
@@ -23,16 +24,21 @@
 
     /* --- Paleta Laranja Aprimorada --- */
     /* Cores personalizadas da paleta */
-    --trilha-orange: 14 100% 57%; /* Fox #FF9600 */
-    --trilha-bee: 43 100% 50%; /* Bee #FFC800 */
-    --trilha-green: 95 63% 38%; /* Feather Green #58CC02 */
-    --trilha-gray: 0 0% 75%; /* Eel #4B4B4B em tom mais claro */
-    --trilha-snow: 0 0% 100%; /* Snow #FFFFFF */
-    --trilha-polar: 200 100% 97%; /* Polar #F7F7F7 */
+    --trilha-orange: 14 100% 57%;
+    /* Fox #FF9600 */
+    --trilha-bee: 43 100% 50%;
+    /* Bee #FFC800 */
+    --trilha-green: 95 63% 38%;
+    /* Feather Green #58CC02 */
+    --trilha-gray: 0 0% 75%;
+    /* Eel #4B4B4B em tom mais claro */
+    --trilha-snow: 0 0% 100%;
+    /* Snow #FFFFFF */
+    --trilha-polar: 200 100% 97%;
+    /* Polar #F7F7F7 */
 
-    /* ** CORREÇÃO APLICADA AQUI ** */
     /* Variáveis do Shadcn UI/template mapeadas para sua paleta */
-    --primary: var(--trilha-orange);     /* <<-- ADICIONADO */
+    --primary: var(--trilha-orange);
     --primary-foreground: 0 0% 100%;
 
     --secondary: 0 0% 96%;
@@ -45,7 +51,7 @@
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 90%;
     --input: 0 0% 96%;
-    --ring: var(--primary); /* <<-- Alterado para usar a nova variável primária */
+    --ring: var(--primary);
     --radius: 1rem;
   }
 
@@ -66,9 +72,8 @@
     --trilha-snow: 0 0% 95%;
     --trilha-polar: 0 0% 15%;
 
-    /* ** CORREÇÃO APLICADA AQUI ** */
     /* Variáveis do Shadcn UI/template mapeadas para sua paleta */
-    --primary: var(--trilha-orange);    /* <<-- ADICIONADO */
+    --primary: var(--trilha-orange);
     --primary-foreground: 0 0% 100%;
 
     --secondary: 0 0% 18%;
@@ -101,6 +106,7 @@
 
 /* --- COMPONENTES PERSONALIZADOS --- */
 @layer components {
+
   /* Botão Principal */
   .btn-saga-primario {
     @apply h-11 px-8 rounded-xl inline-flex items-center justify-center text-sm font-bold shadow-lg shadow-primary/30 active:scale-95 transition-all;
@@ -181,7 +187,15 @@
 
 /* --- ANIMAÇÕES --- */
 @keyframes gradient-pan {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }
