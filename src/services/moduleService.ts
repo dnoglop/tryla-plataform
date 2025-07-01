@@ -70,7 +70,7 @@ export const getModules = async (): Promise<Module[]> => {
       .from("modules")
       .select('*') // Busca todas as colunas
       .order("order_index", { ascending: true });
-      
+
     if (error) {
         console.error("Error fetching modules:", error);
         throw error;
@@ -338,9 +338,9 @@ export const completePhaseAndAwardXp = async (
   phaseId: number, 
   moduleId: number, 
   isQuiz: boolean = false
-): Promise<{ xpFromPhase: number; xpFromModule: number }> => {
+): Promise<{ xpFromPhase: number; xpFromModule: number; moduleCompleted: boolean }> => {
   console.log('🚀 completePhaseAndAwardXp chamado:', { userId, phaseId, moduleId, isQuiz });
-  
+
   try {
     // Chamar a função RPC do Supabase
     const { data, error } = await supabase.rpc('complete_phase_and_award_xp_atomic', {
@@ -360,7 +360,7 @@ export const completePhaseAndAwardXp = async (
     // Verificar se temos dados válidos
     if (!data || data.length === 0) {
       console.warn('⚠️ Nenhum dado retornado da RPC');
-      return { xpFromPhase: 0, xpFromModule: 0 };
+      return { xpFromPhase: 0, xpFromModule: 0, moduleCompleted: false };
     }
 
     // A RPC retorna um array com um objeto contendo os campos
@@ -371,12 +371,14 @@ export const completePhaseAndAwardXp = async (
     // Possíveis nomes: v_xp_from_phase, xp_from_phase, etc.
     const xpFromPhase = result.xp_ganho_fase || 0;
     const xpFromModule = result.xp_ganho_modulo || 0;
+    const moduleCompleted = result.modulo_concluido || false; // <<< INCLUSÃO DA LÓGICA AQUI
 
-    console.log('✅ XP calculado:', { xpFromPhase, xpFromModule });
+    console.log('✅ XP calculado:', { xpFromPhase, xpFromModule, moduleCompleted });
 
     return {
       xpFromPhase: Number(xpFromPhase) || 0,
-      xpFromModule: Number(xpFromModule) || 0
+      xpFromModule: Number(xpFromModule) || 0,
+      moduleCompleted: Boolean(moduleCompleted) // <<< E AQUI
     };
 
   } catch (error) {
@@ -391,9 +393,9 @@ export const completePhaseAndAwardXpAlternative = async (
   phaseId: number, 
   moduleId: number, 
   isQuiz: boolean = false
-): Promise<{ xpFromPhase: number; xpFromModule: number }> => {
+): Promise<{ xpFromPhase: number; xpFromModule: number; moduleCompleted: boolean }> => {
   console.log('🔄 Usando método alternativo para XP');
-  
+
   let xpFromPhase = 0;
   let xpFromModule = 0;
 
@@ -422,7 +424,7 @@ export const completePhaseAndAwardXpAlternative = async (
         .eq('user_id', userId)
         .eq('source', 'PHASE_COMPLETION')
         .eq('source_id', phaseId.toString())
-        .single();
+        .maybeSingle();
 
       if (!existingXp) {
         const { error: xpError } = await supabase
@@ -441,29 +443,37 @@ export const completePhaseAndAwardXpAlternative = async (
     }
 
     // 3. Verificar se módulo foi completado
-    const { data: totalPhases } = await supabase
+    const { data: totalPhasesResult, error: totalPhasesError } = await supabase
       .from('phases')
-      .select('id')
+      .select('id', { count: 'exact' })
       .eq('module_id', moduleId);
 
-    const { data: completedPhases } = await supabase
+    if(totalPhasesError) throw totalPhasesError;
+
+    const totalPhasesCount = totalPhasesResult?.length || 0;
+
+    const { data: completedPhasesResult, error: completedPhasesError } = await supabase
       .from('user_phases')
-      .select('phase_id')
+      .select('phase_id', { count: 'exact' })
       .eq('user_id', userId)
       .eq('status', 'completed')
-      .in('phase_id', totalPhases?.map(p => p.id) || []);
+      .in('phase_id', totalPhasesResult?.map(p => p.id) || []);
 
-    const isModuleCompleted = completedPhases?.length === totalPhases?.length;
+    if(completedPhasesError) throw completedPhasesError;
+
+    const completedPhasesCount = completedPhasesResult?.length || 0;
+
+    const moduleCompleted = totalPhasesCount > 0 && completedPhasesCount === totalPhasesCount;
 
     // 4. Dar XP do módulo se foi completado
-    if (isModuleCompleted) {
+    if (moduleCompleted) {
       const { data: existingModuleXp } = await supabase
         .from('xp_history')
         .select('id')
         .eq('user_id', userId)
         .eq('source', 'MODULE_COMPLETION')
         .eq('source_id', moduleId.toString())
-        .single();
+        .maybeSingle();
 
       if (!existingModuleXp) {
         const { error: moduleXpError } = await supabase
@@ -481,10 +491,10 @@ export const completePhaseAndAwardXpAlternative = async (
       }
     }
 
-    // 5. Atualizar XP total no perfil
+    // 5. Atualizar XP total no perfil (Esta parte parece redundante se você tiver o trigger, mas mantendo como no original)
     if (xpFromPhase > 0 || xpFromModule > 0) {
       const totalNewXp = xpFromPhase + xpFromModule;
-      
+
       const { error: profileError } = await supabase.rpc('complete_phase_and_award_xp_atomic', {
         user_id: userId,
         xp_amount: totalNewXp
@@ -495,8 +505,8 @@ export const completePhaseAndAwardXpAlternative = async (
       }
     }
 
-    console.log('✅ XP alternativo calculado:', { xpFromPhase, xpFromModule });
-    return { xpFromPhase, xpFromModule };
+    console.log('✅ XP alternativo calculado:', { xpFromPhase, xpFromModule, moduleCompleted });
+    return { xpFromPhase, xpFromModule, moduleCompleted }; // <<< INCLUSÃO DA LÓGICA AQUI
 
   } catch (error) {
     console.error('❌ Erro no método alternativo:', error);

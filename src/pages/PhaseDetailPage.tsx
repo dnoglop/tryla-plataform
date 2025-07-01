@@ -277,10 +277,9 @@ const PhaseContent = ({
             origin: { y: 0.6 },
             zIndex: 9999,
           });
-          const modalTitle =
-            result.xpFromModule > 0
-              ? "+1 Lição Concluída!"
-              : "Missão Concluída!";
+          const modalTitle = result.moduleCompleted
+          ? "Módulo Concluído!"
+          : "+1 Lição Concluída!";
           // O AWAIT AQUI É IMPORTANTE para esperar o modal fechar antes de navegar
           await showRewardModal({ xpAmount: totalXpGained, title: modalTitle });
         }
