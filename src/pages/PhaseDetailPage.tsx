@@ -92,6 +92,14 @@ const PhaseContent = ({
     amount: 0.5,
   });
 
+  const [isCompleting, setIsCompleting] = useState(false); // Novo estado para o processo completo
+  const [loadingMessage, setLoadingMessage] = useState(""); // Estado para a mensagem atual
+  const loadingMessages = [
+    "Validando sua jornada...",
+    "Carregando próxima etapa...",
+    "Quase lá!",
+  ];
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [journalNotes, setJournalNotes] = useState("");
   const [isJournalSaved, setIsJournalSaved] = useState(false);
@@ -173,6 +181,11 @@ const PhaseContent = ({
     };
   }, [phase.content]);
 
+  useEffect(() => {
+    setIsCompleting(false);
+    setLoadingMessage("");
+  }, [phase.id]);
+
   const currentPhaseIndex = allPhases.findIndex((p) => p.id === phase.id);
   const previousPhase =
     currentPhaseIndex > 0 ? allPhases[currentPhaseIndex - 1] : null;
@@ -215,61 +228,79 @@ const PhaseContent = ({
   };
 
   // **LÓGICA RESTAURADA AQUI**
-  const handleCompletePhase = async () => {
-    if (isSubmitting || !userId) return;
-    setIsSubmitting(true);
-    try {
-      if (journalNotes.trim() && !isJournalSaved) await handleSaveJournal();
+  const handleCompletePhase = () => {
+    if (isCompleting || !userId) return;
 
-      // 1. Pega o XP do usuário ANTES de qualquer alteração
-      const { data: profileBefore } = await supabase
-        .from("profiles")
-        .select("xp")
-        .eq("id", userId)
-        .single();
-      const userXpBefore = profileBefore?.xp || 0;
+    // 1. Inicia o estado de UI e a animação do botão
+    setIsCompleting(true);
 
-      // 2. Roda a função que completa a fase e dá o XP
-      const result = await completePhaseAndAwardXp(
-        userId,
-        phase.id,
-        module.id,
-        phase?.type === "quiz",
-      );
+    let messageIndex = 0;
+    setLoadingMessage(loadingMessages[messageIndex]);
 
-      // 3. Pega o XP do usuário DEPOIS da alteração
-      const { data: profileAfter } = await supabase
-        .from("profiles")
-        .select("xp")
-        .eq("id", userId)
-        .single();
-      const userXpAfter = profileAfter?.xp || 0;
+    const intervalId = setInterval(() => {
+      messageIndex = (messageIndex + 1) % loadingMessages.length; // Faz o loop pelas mensagens
+      setLoadingMessage(loadingMessages[messageIndex]);
+    }, 1300); // Troca a mensagem a cada 1.5 segundos
 
-      // 4. Calcula a diferença para saber exatamente quanto foi ganho
-      const totalXpGained = userXpAfter - userXpBefore;
+    // 2. Agenda a lógica de backend e navegação para daqui a 3 segundos
+    setTimeout(async () => {
+      clearInterval(intervalId); // Para o loop de mensagens
 
-      // 5. Mostra o modal apenas se o XP aumentou
-      if (totalXpGained > 0) {
-        confetti({
-          particleCount: 150,
-          spread: 90,
-          origin: { y: 0.6 },
-          zIndex: 9999,
+      try {
+        if (journalNotes.trim() && !isJournalSaved) await handleSaveJournal();
+
+        // Lógica de XP (sem alterações)
+        const { data: profileBefore } = await supabase
+          .from("profiles")
+          .select("xp")
+          .eq("id", userId)
+          .single();
+        const userXpBefore = profileBefore?.xp || 0;
+        const result = await completePhaseAndAwardXp(
+          userId,
+          phase.id,
+          module.id,
+          phase?.type === "quiz",
+        );
+        const { data: profileAfter } = await supabase
+          .from("profiles")
+          .select("xp")
+          .eq("id", userId)
+          .single();
+        const userXpAfter = profileAfter?.xp || 0;
+        const totalXpGained = userXpAfter - userXpBefore;
+
+        if (totalXpGained > 0) {
+          confetti({
+            particleCount: 150,
+            spread: 90,
+            origin: { y: 0.6 },
+            zIndex: 9999,
+          });
+          const modalTitle =
+            result.xpFromModule > 0
+              ? "+1 Lição Concluída!"
+              : "Missão Concluída!";
+          // O AWAIT AQUI É IMPORTANTE para esperar o modal fechar antes de navegar
+          await showRewardModal({ xpAmount: totalXpGained, title: modalTitle });
+        }
+
+        queryClient.invalidateQueries({
+          queryKey: [
+            "modulesPageInitialData",
+            "moduleDetailData",
+            "userProfile",
+          ],
         });
-        const modalTitle =
-          result.xpFromModule > 0 ? "+1 Lição Concluída!" : "Missão Concluída!";
-        await showRewardModal({ xpAmount: totalXpGained, title: modalTitle });
-      }
 
-      queryClient.invalidateQueries({
-        queryKey: ["modulesPageInitialData", "moduleDetailData", "userProfile"],
-      });
-      navigateToNext();
-    } catch (err) {
-      console.error("Erro crítico ao completar fase:", err);
-    } finally {
-      setIsSubmitting(false);
-    }
+        // Navega para a próxima tela
+        navigateToNext();
+      } catch (err) {
+        console.error("Erro crítico ao completar fase:", err);
+        // Em caso de erro, reseta o botão para o estado normal
+        setIsCompleting(false);
+      }
+    }, 3500);
   };
 
   const handleCorrectAnswer = () => {
@@ -330,7 +361,6 @@ const PhaseContent = ({
                 </div>
               </div>
             </MotionCard>
-
             <MotionCard delay={1}>
               {(phase.type === "text" || phase.type === "challenge") && (
                 <div className="card-trilha p-4 sm:p-6">
@@ -394,7 +424,6 @@ const PhaseContent = ({
                 </div>
               )}
             </MotionCard>
-
             {phase.video_url && (
               <MotionCard delay={2}>
                 <div className="bg-gradient-to-r from-primary to-primary/80 rounded-2xl p-6 shadow-lg">
@@ -403,7 +432,8 @@ const PhaseContent = ({
                       <Video className="w-6 h-6 text-white" />
                     </div>
                     <h2 className="text-xl font-bold text-white">
-      Assista esse vídeo:                   </h2>
+                      Assista esse vídeo:{" "}
+                    </h2>
                   </div>
                   <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2 overflow-hidden">
                     <YoutubeEmbed videoId={phase.video_url} />
@@ -411,7 +441,6 @@ const PhaseContent = ({
                 </div>
               </MotionCard>
             )}
-
             {phase.quote && (
               <MotionCard delay={3}>
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl p-6 border border-blue-100 dark:border-blue-800/30">
@@ -419,7 +448,8 @@ const PhaseContent = ({
                     <div className="flex-1 pr-4">
                       <h3 className="text-lg font-bold text-foreground mb-3 flex items-center">
                         <QuoteIcon className="w-5 h-5 mr-2 text-primary" />
-  Reflita sobre:                      </h3>
+                        Reflita sobre:{" "}
+                      </h3>
                       <blockquote className="text-muted-foreground italic border-l-4 border-primary pl-4 py-1">
                         "{phase.quote}"
                       </blockquote>
@@ -453,7 +483,6 @@ const PhaseContent = ({
                 </div>
               </MotionCard>
             )}
-
             <MotionCard delay={4}>
               <div className="card-trilha p-6">
                 <div className="flex items-center justify-between mb-2">
@@ -461,9 +490,6 @@ const PhaseContent = ({
                     <PenTool className="w-5 h-5 mr-2 text-primary" />
                     Aprendizado da Jornada
                   </h3>
-                  <div className="text-sm text-primary bg-primary/10 px-4 py-1 rounded-full font-semibold">
-                    Seus pensamentos
-                  </div>
                 </div>
                 <p className="text-muted-foreground text-sm mb-4">
                   Registre os seus insights e reflexões. Este é o seu mapa do
@@ -476,12 +502,9 @@ const PhaseContent = ({
                   className="w-full min-h-[120px] p-4 bg-input rounded-xl border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none resize-none"
                   rows={5}
                 />
-                <div className="flex justify-end mt-4">
-                  
-                </div>
+                <div className="flex justify-end mt-4"></div>
               </div>
             </MotionCard>
-
             <div ref={actionButtonsRef} className="pt-4 pb-8">
               <motion.div
                 key={phase.id}
@@ -509,24 +532,51 @@ const PhaseContent = ({
                 {canComplete && (
                   <Button
                     onClick={handleCompletePhase}
-                    disabled={isSubmitting}
-                    className="btn-saga-primario h-11 text-lg px-4 shadow-lg"
+                    disabled={isCompleting} // Usa o estado 'isCompleting'
+                    className="btn-saga-primario h-11 text-lg px-6 shadow-lg min-w-[240px] transition-all duration-300" // Largura mínima para estabilidade
                   >
-                    {isSubmitting ? (
-                      <Trophy className="w-6 h-6 animate-pulse" />
-                    ) : (
-                      <Award className="w-6 h-6" />
-                    )}
-                    <span className="ml-2">
-                      {isSubmitting ? "Concluindo..." : "Concluir lição"}
-                    </span>
+                    <AnimatePresence mode="wait">
+                      {isCompleting ? (
+                        // Estado de carregamento
+                        <motion.span
+                          key={loadingMessage} // Animação dispara a cada mudança de mensagem
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 10 }}
+                          transition={{ duration: 0.4 }}
+                          className="flex items-center justify-center gap-2"
+                        >
+                          <Trophy className="w-5 h-5 animate-pulse" />
+                          <span className="text-base font-semibold">
+                            {loadingMessage}
+                          </span>
+                        </motion.span>
+                      ) : (
+                        // Estado normal
+                        <motion.span
+                          key="ready"
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 10 }}
+                          className="flex items-center justify-center gap-2"
+                        >
+                          <Award className="w-6 h-6" />
+                          <span className="font-bold">Concluir lição</span>
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
                   </Button>
                 )}
-              </motion.div>
-            </div>
-          </div>
-        </AnimatePresence>
-      </main>
+              </motion.div>{" "}
+              {/* Fecha a motion.div dos botões */}
+            </div>{" "}
+            {/* Fecha o div com actionButtonsRef */}
+          </div>{" "}
+          {/* Fecha o div com a class "container" */}
+        </AnimatePresence>{" "}
+        {/* Fecha a AnimatePresence */}
+      </main>{" "}
+      {/* <-- TAG </main> NO LUGAR CORRETO AGORA! */}
       <Lightbox
         open={lightboxOpen}
         close={() => setLightboxOpen(false)}

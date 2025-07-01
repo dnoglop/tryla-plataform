@@ -7,7 +7,7 @@ import { getModuleProgress, isModuleCompleted, Module as BaseModule } from "@/se
 import { getProfile } from "@/services/profileService";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, CheckCircle2, Star, Target, Bell, ArrowRight, Flame, Trophy, Users, Rocket } from "lucide-react";
+import { CheckCircle2, Star, Target, ArrowRight, Flame, Trophy, Users, Rocket } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import BottomNavigation from "@/components/BottomNavigation";
