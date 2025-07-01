@@ -61,8 +61,6 @@ const toolCategories: ToolCategory[] = [
     name: "Kit de Produtividade",
     tools: [
        { id: "timer-sprint", path: "/pomodoro", icon: Timer, title: "Timer de Sprint", description: "Use ciclos de produtividade para farmar XP e evitar o 'burnout'." },
-       { id: "minhas-quests", path: "/metas", icon: CheckCircle2, title: "Minhas Quests", description: "Transforme seus objetivos em missões de video-game. Suba de nível na vida real!", locked: true, unlockLevel: 6 },
-       { id: "modo-foco", path: "/modo-foco", icon: Zap, title: "Modo Foco (Hyperfocus)", description: "Ative o modo 'não perturbe' da vida real e detone suas tarefas sem distrações.", locked: true, unlockLevel: 7 },
        { id: "start-dia", path: "/ritual-matinal", icon: Coffee, title: "Start do Dia", description: "Aperte o 'start' da sua manhã com um ritual que te deixa pronto pra qualquer desafio.", locked: true, unlockLevel: 9 },
     ],
   },

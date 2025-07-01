@@ -9,6 +9,10 @@ export default defineConfig({
     VitePWA({
       // A atualização será automática, sem pop-up para o usuário.
       registerType: "autoUpdate",
+      workbox: {
+        // Aumenta o limite para 5MB, por exemplo.
+        // O valor é em bytes: 5 * 1024 * 1024 = 5242880
+        maximumFileSizeToCacheInBytes: 5242880, 
 
       // Gera o manifesto automaticamente. Não precisa ter um na pasta /public.
       manifest: {
