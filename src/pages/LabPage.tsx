@@ -61,7 +61,7 @@ const toolCategories: ToolCategory[] = [
     name: "Kit de Produtividade",
     tools: [
        { id: "timer-sprint", path: "/pomodoro", icon: Timer, title: "Timer de Sprint", description: "Use ciclos de produtividade para farmar XP e evitar o 'burnout'." },
-       { id: "start-dia", path: "/ritual-matinal", icon: Coffee, title: "Start do Dia", description: "Aperte o 'start' da sua manhã com um ritual que te deixa pronto pra qualquer desafio.", locked: true, unlockLevel: 9 },
+       { id: "anti-procrastinacao", path: "/anti-procrastinacao", icon: Target, title: "Foco na Missão", description: "Para quando o 'depois eu faço' vira 'socorro, é pra amanhã!'. Transforme o pânico em um plano de ação."},
     ],
   },
   {

@@ -16,7 +16,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import PWAPrompt from "./components/PWAPrompt";
 import { RewardModalProvider } from "./components/XpRewardModal/RewardModalContext";
 import Layout from "./components/Layout";
-import ScrollToTop from './components/ScrollToTop';
+import ScrollToTop from "./components/ScrollToTop";
 
 // Importações de todas as Páginas
 import SplashScreen from "./pages/SplashScreen";
@@ -36,11 +36,12 @@ import EditProfilePage from "./pages/EditProfilePage";
 import JournalPage from "./pages/JournalPage";
 import NotFound from "./pages/NotFound";
 import OnboardingPage from "./pages/OnboardingPage";
-import ForgotPasswordPage from "./pages/ForgotPasswordPage"
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import AuthPage from "./pages/AuthPage";
 import UpdatePasswordPage from "./pages/UpdatePasswordPage";
-import InterviewSimulatorPage from './pages/InterviewSimulatorPage';
-import ResetMentalPage from './pages/ResetMentalPage'
+import InterviewSimulatorPage from "./pages/InterviewSimulatorPage";
+import ResetMentalPage from "./pages/ResetMentalPage";
+import AntiProcrastinationPage from "./pages/AntiProcrastinationPage";
 
 function App() {
   return (
@@ -60,36 +61,179 @@ function App() {
               {/* --- ROTAS DE ONBOARDING (sem layout padrão) --- */}
               <Route
                 path="/onboarding"
-                element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>}
+                element={
+                  <ProtectedRoute>
+                    <OnboardingPage />
+                  </ProtectedRoute>
+                }
               />
 
               {/* --- ROTAS PROTEGIDAS QUE USAM O LAYOUT PADRÃO --- */}
-              <Route path="/inicio" element={<ProtectedRoute><Layout><Index /></Layout></ProtectedRoute>} />
-              <Route path="/admin" element={<ProtectedRoute><Layout><AdminPage /></Layout></ProtectedRoute>} />
-              <Route path="/social" element={<ProtectedRoute><Layout><SocialPage /></Layout></ProtectedRoute>} />
-              <Route path="/lab" element={<ProtectedRoute><Layout><LabPage /></Layout></ProtectedRoute>} />
-              <Route path="/perfil" element={<ProtectedRoute><Layout><ProfilePage /></Layout></ProtectedRoute>} />
-              <Route path="/editar-perfil" element={<ProtectedRoute><Layout><EditProfilePage /></Layout></ProtectedRoute>} />
-              <Route path="/modulos" element={<ProtectedRoute><Layout><ModulesPage /></Layout></ProtectedRoute>} />
-              <Route path="/diario" element={<ProtectedRoute><Layout><JournalPage /></Layout></ProtectedRoute>} />
-              <Route path="/configuracoes" element={<ProtectedRoute><Layout><SettingsPage /></Layout></ProtectedRoute>} />
-              <Route path="/teste-vocacional" element={<ProtectedRoute><Layout><VocationalTestPage /></Layout></ProtectedRoute>} />
-              <Route path="/tutor" element={<ProtectedRoute><Layout><TutorPage /></Layout></ProtectedRoute>} />
-              <Route path="/pomodoro" element={<ProtectedRoute><Layout><PomodoroPage /></Layout></ProtectedRoute>} />
-              <Route path="/simulador-entrevista" element={<ProtectedRoute><Layout><InterviewSimulatorPage /></Layout></ProtectedRoute>} />
-              
+              <Route
+                path="/inicio"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Index />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <AdminPage />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/social"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <SocialPage />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/lab"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <LabPage />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/perfil"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <ProfilePage />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/editar-perfil"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <EditProfilePage />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/modulos"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <ModulesPage />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/diario"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <JournalPage />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/configuracoes"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <SettingsPage />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/teste-vocacional"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <VocationalTestPage />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/tutor"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <TutorPage />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/pomodoro"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <PomodoroPage />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/simulador-entrevista"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <InterviewSimulatorPage />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/anti-procrastinacao"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <AntiProcrastinationPage />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
 
               {/* --- ROTAS DE TELA CHEIA (NÃO usam o Layout) --- */}
               <Route
                 path="/reset-mental"
-                element={<ProtectedRoute><ResetMentalPage /></ProtectedRoute>} />
+                element={
+                  <ProtectedRoute>
+                    <ResetMentalPage />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/modulo/:id"
-                element={<ProtectedRoute><ModuleDetailPage /></ProtectedRoute>}
+                element={
+                  <ProtectedRoute>
+                    <ModuleDetailPage />
+                  </ProtectedRoute>
+                }
               />
               <Route
                 path="/modulo/:moduleId/fase/:id"
-                element={<ProtectedRoute><PhaseDetailPage /></ProtectedRoute>}
+                element={
+                  <ProtectedRoute>
+                    <PhaseDetailPage />
+                  </ProtectedRoute>
+                }
               />
 
               {/* --- ROTAS DE FALLBACK --- */}
