@@ -40,6 +40,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage"
 import AuthPage from "./pages/AuthPage";
 import UpdatePasswordPage from "./pages/UpdatePasswordPage";
 import InterviewSimulatorPage from './pages/InterviewSimulatorPage';
+import ResetMentalPage from './pages/ResetMentalPage'
 
 function App() {
   return (
@@ -76,8 +77,12 @@ function App() {
               <Route path="/tutor" element={<ProtectedRoute><Layout><TutorPage /></Layout></ProtectedRoute>} />
               <Route path="/pomodoro" element={<ProtectedRoute><Layout><PomodoroPage /></Layout></ProtectedRoute>} />
               <Route path="/simulador-entrevista" element={<ProtectedRoute><Layout><InterviewSimulatorPage /></Layout></ProtectedRoute>} />
+              
 
               {/* --- ROTAS DE TELA CHEIA (NÃO usam o Layout) --- */}
+              <Route
+                path="/reset-mental"
+                element={<ProtectedRoute><ResetMentalPage /></ProtectedRoute>} />
               <Route
                 path="/modulo/:id"
                 element={<ProtectedRoute><ModuleDetailPage /></ProtectedRoute>}

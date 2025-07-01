@@ -54,7 +54,7 @@ const toolCategories: ToolCategory[] = [
     tools: [
       { id: "meu-match-carreira", path: "/teste-vocacional", icon: BrainCircuit, title: "Meu Match de Carreira", description: "Descubra as profissões que dão 'match' com o seu perfil. Swipe right na sua futura carreira!" },
       { id: "meu-bloco-ideias", path: "/diario", icon: BookOpen, title: "Meu Bloco de Ideias", description: "Seu espaço seguro para anotar tudo: de ideias geniais a memes para não esquecer." },
-      { id: "reset-mental", path: "/meditacao", icon: Heart, title: "Reset Mental", description: "Dê um 'reboot' no estresse e na ansiedade. Uma pausa rápida para recarregar a mente.", locked: true, unlockLevel: 2 },
+      { id: "reset-mental", path: "/reset-mental", icon: Heart, title: "Reset Mental", description: "Dê um 'reboot' no estresse e na ansiedade. Uma pausa rápida para recarregar a mente."},
     ],
   },
   {
