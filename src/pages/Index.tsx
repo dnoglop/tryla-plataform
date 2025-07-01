@@ -269,28 +269,65 @@ const WelcomeModal = ({
 );
 
 const CalendarWidget = ({ streak }: { streak: number }) => {
+    // A lógica de geração de dados continua a mesma e está correta.
     const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
-    const monthName = today.toLocaleString("pt-BR", { month: "long" });
-    const calendarDays = Array.from({ length: daysInMonth }, (_, i) => {
-        const day = i + 1;
-        const date = new Date(currentYear, currentMonth, day);
-        const isToday = day === today.getDate();
-        const streakEndDate = new Date(today);
+    const calendarData = React.useMemo(() => {
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
         const streakStartDate = new Date(today);
-        streakStartDate.setDate(today.getDate() - streak + 1);
-        const isActive = date >= streakStartDate && date <= streakEndDate;
-        return { day, isToday, isActive };
-    });
-    const emptySlots = Array.from({ length: firstDayOfMonth });
+        streakStartDate.setDate(today.getDate() - (streak > 0 ? streak - 1 : 0));
+        streakStartDate.setHours(0, 0, 0, 0);
+        const todayNormalized = new Date(today);
+        todayNormalized.setHours(0, 0, 0, 0);
+        const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        const calendarDays = [];
+        const daysInPrevMonth = new Date(currentYear, currentMonth, 0).getDate();
+        for (let i = firstDayOfMonth; i > 0; i--) {
+            const day = daysInPrevMonth - i + 1;
+            const fullDate = new Date(currentYear, currentMonth - 1, day);
+            fullDate.setHours(0, 0, 0, 0);
+            calendarDays.push({
+                day,
+                isCurrentMonth: false,
+                isToday: false,
+                isActive: fullDate >= streakStartDate && fullDate <= todayNormalized,
+            });
+        }
+        for (let i = 1; i <= daysInMonth; i++) {
+            const fullDate = new Date(currentYear, currentMonth, i);
+            fullDate.setHours(0, 0, 0, 0);
+            calendarDays.push({
+                day: i,
+                isCurrentMonth: true,
+                isToday: fullDate.getTime() === todayNormalized.getTime(),
+                isActive: fullDate >= streakStartDate && fullDate <= todayNormalized,
+            });
+        }
+        const remainingSlots = 42 - calendarDays.length;
+        for (let i = 1; i <= remainingSlots; i++) {
+            const fullDate = new Date(currentYear, currentMonth + 1, i);
+            fullDate.setHours(0, 0, 0, 0);
+            calendarDays.push({
+                day: i,
+                isCurrentMonth: false,
+                isToday: false,
+                isActive: fullDate >= streakStartDate && fullDate <= todayNormalized,
+            });
+        }
+        return {
+             monthName: today.toLocaleString("pt-BR", { month: "long" }),
+             year: currentYear,
+             days: calendarDays,
+        };
+    }, [today, streak]);
+
+    // --- Renderização (Com a estrutura do Grid CORRIGIDA) ---
     return (
         <div className="bg-card rounded-2xl p-4 border shadow-sm">
             <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-foreground font-nunito capitalize">
-                    {monthName} {currentYear}
+                    {calendarData.monthName} {calendarData.year}
                 </h3>
                 <div className="flex items-center space-x-1 text-primary">
                     <span className="text-sm font-medium font-nunito">
@@ -299,36 +336,37 @@ const CalendarWidget = ({ streak }: { streak: number }) => {
                     <Flame className="w-4 h-4" />
                 </div>
             </div>
-            <div className="grid grid-cols-7 gap-1 text-center">
+
+            {/* <<< MUDANÇA ESTRUTURAL AQUI >>> */}
+            {/* Agora usamos um ÚNICO grid para cabeçalhos e dias */}
+            <div className="grid grid-cols-7 gap-y-1 text-center">
+                {/* 1. Renderiza os cabeçalhos */}
                 {["D", "S", "T", "Q", "Q", "S", "S"].map((day, i) => (
                     <div
-                        key={i}
-                        className="text-xs text-muted-foreground font-nunito py-1"
+                        key={`header-${i}`}
+                        className="text-xs text-muted-foreground font-nunito py-1 mb-1"
                     >
                         {day}
                     </div>
                 ))}
-                {emptySlots.map((_, i) => (
-                    <div key={`empty-${i}`}></div>
-                ))}
-                {calendarDays.map(({ day, isToday, isActive }) => (
+
+                {/* 2. Renderiza os 42 dias logo em seguida, no mesmo grid */}
+                {calendarData.days.map(({ day, isToday, isActive, isCurrentMonth }, index) => (
                     <motion.div
-                        key={day}
+                        key={`day-${index}`}
                         className={cn(
-                            "h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium font-nunito relative",
+                            "h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium font-nunito relative mx-auto",
                             {
-                                "bg-primary text-primary-foreground shadow-md":
-                                    isToday,
-                                "bg-primary/10 text-primary":
-                                    isActive && !isToday,
-                                "text-muted-foreground hover:bg-muted":
-                                    !isActive && !isToday,
+                                "bg-primary text-primary-foreground shadow-md": isToday,
+                                "bg-primary/10 text-primary": isActive && !isToday,
+                                "text-card-foreground": !isActive && isCurrentMonth,
+                                "text-muted-foreground/50": !isActive && !isCurrentMonth,
                             },
                         )}
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         transition={{
-                            delay: day * 0.02,
+                            delay: index * 0.015,
                             type: "spring",
                             stiffness: 200,
                             damping: 20,
