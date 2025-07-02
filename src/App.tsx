@@ -42,6 +42,7 @@ import UpdatePasswordPage from "./pages/UpdatePasswordPage";
 import InterviewSimulatorPage from "./pages/InterviewSimulatorPage";
 import ResetMentalPage from "./pages/ResetMentalPage";
 import AntiProcrastinationPage from "./pages/AntiProcrastinationPage";
+import ModuleCompletePage from "./pages/ModuleCompletePage";
 
 function App() {
   return (
@@ -235,7 +236,15 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-
+              <Route
+                path="/modulo/:moduleId/completo"
+                element={
+                  <ProtectedRoute>
+                    <ModuleCompletePage />
+                  </ProtectedRoute>
+                }
+              />
+              
               {/* --- ROTAS DE FALLBACK --- */}
               <Route path="/404" element={<NotFound />} />
               <Route path="*" element={<Navigate to="/inicio" replace />} />

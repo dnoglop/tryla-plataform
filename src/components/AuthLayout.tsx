@@ -38,7 +38,7 @@ export const AuthLayout = ({ children, title, description }: AuthLayoutProps) =>
           {/* A logo agora é um link para a página inicial */}
           <Link to="/" className="inline-block">
             <motion.img 
-              src="https://i.imgur.com/sxJhyH8.gif" 
+              src="https://ruofpmmujppmbkzwmpqd.supabase.co/storage/v1/object/public/imagens//Logo%20Tryla.gif" 
               alt="Logo Tryla" 
               className="w-22 h-14 mx-auto"
               whileHover={{ scale: 1.05 }}

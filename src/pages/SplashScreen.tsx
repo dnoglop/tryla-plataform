@@ -2,13 +2,19 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { checkOnboardingStatus } from "@/services/onboardingService";
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from "framer-motion";
 // --- Ícones para os destaques ---
-import { Sparkles, Bot, Gamepad2, Users } from 'lucide-react';
+import { Sparkles, Bot, Gamepad2, Users } from "lucide-react";
 import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
 
 // --- Componente FlipWords (sem alterações) ---
-const FlipWords = ({ words, duration = 3000 }: { words: string[], duration?: number }) => {
+const FlipWords = ({
+  words,
+  duration = 3000,
+}: {
+  words: string[];
+  duration?: number;
+}) => {
   const [currentWord, setCurrentWord] = useState(words[0]);
 
   useEffect(() => {
@@ -25,7 +31,13 @@ const FlipWords = ({ words, duration = 3000 }: { words: string[], duration?: num
         key={currentWord}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -40, filter: "blur(8px)", scale: 1.5, position: "absolute" }}
+        exit={{
+          opacity: 0,
+          y: -40,
+          filter: "blur(8px)",
+          scale: 1.5,
+          position: "absolute",
+        }}
         transition={{ type: "spring", stiffness: 100, damping: 10 }}
         className="z-10 inline-block relative text-center px-2"
       >
@@ -45,7 +57,6 @@ const FlipWords = ({ words, duration = 3000 }: { words: string[], duration?: num
   );
 };
 
-
 const SplashScreen = () => {
   const navigate = useNavigate();
   const [fadeOut, setFadeOut] = useState(false);
@@ -53,9 +64,13 @@ const SplashScreen = () => {
   useEffect(() => {
     // ... (lógica de autenticação sem alterações)
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (session?.user) {
-        const onboardingCompleted = await checkOnboardingStatus(session.user.id);
+        const onboardingCompleted = await checkOnboardingStatus(
+          session.user.id,
+        );
         if (onboardingCompleted) {
           navigate("/inicio", { replace: true });
         }
@@ -68,9 +83,13 @@ const SplashScreen = () => {
     // ... (lógica do clique sem alterações)
     setFadeOut(true);
     setTimeout(async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (session?.user) {
-        const onboardingCompleted = await checkOnboardingStatus(session.user.id);
+        const onboardingCompleted = await checkOnboardingStatus(
+          session.user.id,
+        );
         navigate(onboardingCompleted ? "/inicio" : "/onboarding");
       } else {
         navigate("/login");
@@ -101,7 +120,7 @@ const SplashScreen = () => {
 
   const featureItemVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { type: 'spring' } },
+    visible: { opacity: 1, y: 0, transition: { type: "spring" } },
   };
 
   return (
@@ -113,29 +132,69 @@ const SplashScreen = () => {
       </div>
       <div className="absolute inset-0 z-0 animated-gradient-bg"></div>
 
-      <div className={`relative z-10 flex flex-col items-center justify-center p-4 w-full h-full transition-opacity duration-500 ${fadeOut ? 'opacity-0' : 'opacity-100'}`}>
+      <div
+        className={`relative z-10 flex flex-col items-center justify-center p-4 w-full h-full transition-opacity duration-500 ${fadeOut ? "opacity-0" : "opacity-100"}`}
+      >
         <div className="flex-grow flex flex-col items-center justify-center text-center max-w-2xl mx-auto">
           {/* Logo */}
-          <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 100, damping: 15, delay: 0.2 }} className="w-40 h-40 sm:w-52 sm:h-40">
-            <img src="https://i.imgur.com/sxJhyH8.gif" alt="Logo Tryla" className="w-full h-auto" />
+          <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{
+              type: "spring",
+              stiffness: 100,
+              damping: 15,
+              delay: 0.2,
+            }}
+            className="w-40 h-40 sm:w-52 sm:h-40"
+          >
+            <img
+              src="https://ruofpmmujppmbkzwmpqd.supabase.co/storage/v1/object/public/imagens//Logo%20Tryla.gif"
+              alt="Logo Tryla"
+              className="w-full h-auto"
+            />
           </motion.div>
           {/* Frase de Impacto */}
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mb-1">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="mb-1"
+          >
             <h1 className="text-3xl md:text-4xl font-light text-foreground/80 leading-tight">
               Desperte sua melhor versão com
             </h1>
           </motion.div>
           {/* FlipWords */}
-          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.7, type: "spring", stiffness: 100 }} className="mb-4 h-20 flex justify-center items-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.7, type: "spring", stiffness: 100 }}
+            className="mb-4 h-20 flex justify-center items-center"
+          >
             <FlipWords words={words} />
           </motion.div>
           {/* Descrição */}
-          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }} className="text-muted-foreground text-base sm:text-lg max-w-md mb-10">
-            Sua jornada de autoconhecimento e desenvolvimento pessoal começa agora.
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.9 }}
+            className="text-muted-foreground text-base sm:text-lg max-w-md mb-10"
+          >
+            Sua jornada de autoconhecimento e desenvolvimento pessoal começa
+            agora.
           </motion.p>
           {/* Botão de Ação (CTA) */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.1 }}>
-            <HoverBorderGradient onClick={handleStart} containerClassName="rounded-full" className="font-bold text-lg sm:text-xl px-6 py-3">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.1 }}
+          >
+            <HoverBorderGradient
+              onClick={handleStart}
+              containerClassName="rounded-full"
+              className="font-bold text-lg sm:text-xl px-6 py-3"
+            >
               <span className="flex items-center gap-4">
                 <Sparkles className="w-6 h-6" />
                 Começar minha jornada
@@ -162,11 +221,15 @@ const SplashScreen = () => {
               >
                 <div className="flex items-center gap-2">
                   <feature.icon className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground font-medium">{feature.text}</span>
+                  <span className="text-sm text-muted-foreground font-medium">
+                    {feature.text}
+                  </span>
                 </div>
                 {/* Adiciona um separador, exceto no último item em telas maiores */}
                 {index < features.length - 1 && (
-                   <span className="hidden sm:inline-block mx-4 text-muted-foreground/30">|</span>
+                  <span className="hidden sm:inline-block mx-4 text-muted-foreground/30">
+                    |
+                  </span>
                 )}
               </motion.div>
             ))}
