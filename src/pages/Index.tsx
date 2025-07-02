@@ -1,4 +1,4 @@
-// ARQUIVO: src/pages/Index.tsx (VERSÃO 100% COMPLETA E REVISADA)
+// ARQUIVO: src/pages/Index.tsx (VERSÃO COM NÍVEIS DINÂMICOS DO BANCO)
 
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
@@ -19,17 +19,15 @@ import {
     Sparkles,
     X,
     Gift,
-    CheckCircle,
     Target,
     Flame,
     Play,
-    Users,
     Trophy,
     Award,
     BookCheck,
-    BarChart3,
     Zap,
     Bell,
+    Coins,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -38,52 +36,25 @@ import {
     isModuleCompleted,
 } from "@/services/moduleService";
 import { updateUserStreak } from "@/services/profileService";
+import { getLevels, Level } from "@/services/levelService"; 
 
 // --- HELPERS E SUB-COMPONENTES ---
-
-const LEVELS = [
-    { name: "Semente", minXp: 0 },
-    { name: "Eco", minXp: 100 },
-    { name: "Pulso", minXp: 200 },
-    { name: "Chave", minXp: 300 },
-    { name: "Rastro", minXp: 400 },
-    { name: "Brilho", minXp: 500 },
-    { name: "Voo", minXp: 600 },
-    { name: "Passo", minXp: 700 },
-    { name: "Laço", minXp: 800 },
-    { name: "Base", minXp: 900 },
-    { name: "Foco", minXp: 1000 },
-    { name: "Ritmo", minXp: 1100 },
-    { name: "Faísca", minXp: 1200 },
-    { name: "Forja", minXp: 1300 },
-    { name: "Escudo", minXp: 1400 },
-    { name: "Mestre", minXp: 1500 },
-    { name: "Ponte", minXp: 1600 },
-    { name: "Visão", minXp: 1700 },
-    { name: "Código", minXp: 1800 },
-    { name: "Raiz", minXp: 1900 },
-    { name: "Mapa", minXp: 2000 },
-    { name: "Farol", minXp: 2100 },
-    { name: "Missão", minXp: 2200 },
-    { name: "Caminho", minXp: 2300 },
-    { name: "Alvo", minXp: 2400 },
-    { name: "Despertar", minXp: 2500 },
-    { name: "Impacto", minXp: 2600 },
-    { name: "Liderança", minXp: 2700 },
-    { name: "Legado", minXp: 2800 },
-    { name: "Transforma", minXp: 2900 },
-];
-
-const calculateLevelInfo = (xp: number) => {
+const calculateLevelInfo = (xp: number, levels: Level[]) => {
     if (typeof xp !== "number" || xp < 0) xp = 0;
+    // Garante que não quebre se a lista de níveis estiver vazia durante o carregamento
+    if (!levels || levels.length === 0) {
+        return { level: { name: "Carregando...", minXp: 0 } };
+    }
+
+    // A lógica interna agora usa o parâmetro 'levels' em vez da constante global
     const currentLevel =
-        [...LEVELS].reverse().find((level) => xp >= level.minXp) || LEVELS[0];
-    const currentLevelIndex = LEVELS.findIndex(
+        [...levels].reverse().find((level) => xp >= level.min_xp) || levels[0];
+    const currentLevelIndex = levels.findIndex(
         (level) => level.name === currentLevel.name,
     );
     const nextLevel =
-        currentLevelIndex < LEVELS.length - 1
-            ? LEVELS[currentLevelIndex + 1]
+        currentLevelIndex < levels.length - 1
+            ? levels[currentLevelIndex + 1]
             : null;
     if (!nextLevel)
         return {
@@ -95,22 +66,23 @@ const calculateLevelInfo = (xp: number) => {
             nextLevelXp: xp,
             level: currentLevel,
         };
-    const xpForThisLevel = nextLevel.minXp - currentLevel.minXp;
-    const progressInLevel = xp - currentLevel.minXp;
+    const xpForThisLevel = nextLevel.min_xp - currentLevel.min_xp;
+    const progressInLevel = xp - currentLevel.min_xp;
     const progressPercent = (progressInLevel / xpForThisLevel) * 100;
-    const xpFaltante = nextLevel.minXp - xp;
+    const xpFaltante = nextLevel.min_xp - xp;
     return {
         currentLevel,
         nextLevel,
         progressPercent,
         xpFaltante,
         currentXp: xp,
-        nextLevelXp: nextLevel.minXp,
+        nextLevelXp: nextLevel.min_xp,
         level: currentLevel,
     };
 };
 
-const DashboardHeader = ({ profile, levelInfo }) => {
+// ... (Todos os outros sub-componentes como DashboardHeader, DashboardSkeleton, etc., permanecem iguais)
+const DashboardHeader = ({ profile }) => {
     const getDayGreeting = () => {
         const hour = new Date().getHours();
         if (hour < 12) return "Bom dia";
@@ -124,51 +96,75 @@ const DashboardHeader = ({ profile, levelInfo }) => {
                 hidden: { y: 20, opacity: 0 },
                 visible: { y: 0, opacity: 1 },
             }}
-            className="bg-gradient-to-br from-neutral-900 to-neutral-800 rounded-3xl p-6 text-white relative overflow-hidden"
+            className="bg-gradient-to-br from-neutral-900 to-neutral-800 rounded-3xl p-6 text-white relative overflow-hidden flex flex-col gap-4"
         >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-16 translate-x-16"></div>
-            <div className="flex justify-between items-start mb-4">
-                <div className="flex-1">
-                    <h1 className="text-2xl md:text-3xl font-bold text-white">
-                        {getDayGreeting()},{" "}
-                        <span className="font-extrabold text-primary">
-                            {profile?.full_name?.split(" ")[0]}!
-                        </span>
-                    </h1>
-                    <p className="text-white/70 text-sm mt-1">
-                        Sua jornada de hoje começa agora.
-                    </p>
+            {/* --- Linha Superior: Avatar, Saudação e Notificações --- */}
+            <div className="flex justify-between items-center">
+                <div className="flex items-center gap-4">
+                    <img
+                        src={
+                            profile.avatar_url ||
+                            `https://ui-avatars.com/api/?name=${profile.full_name?.replace(/\s/g, "+")}&background=random`
+                        }
+                        alt="Foto de perfil"
+                        className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-4 border-white/20 shadow-lg"
+                    />
+                    <div>
+                        <h1 className="text-2xl md:text-3xl font-bold text-white">
+                            {getDayGreeting()},{" "}
+                            <span className="font-extrabold text-primary">
+                                {profile?.full_name?.split(" ")[0]}!
+                            </span>
+                        </h1>
+                        <p className="text-white/70 text-sm mt-1">
+                            Sua jornada de hoje começa agora.
+                        </p>
+                    </div>
                 </div>
+
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-11 w-11 rounded-full bg-white/10 flex-shrink-0"
+                    className="h-12 w-12 rounded-full bg-white/10 flex-shrink-0"
                 >
                     <Bell className="w-5 h-5 text-white" />
                 </Button>
             </div>
-            <Link
-                to="/perfil"
-                className="flex items-center gap-3 bg-white/10 p-2 rounded-full w-fit mt-4 hover:bg-white/20 transition-colors"
-            >
-                <img
-                    src={
-                        profile.avatar_url ||
-                        `https://ui-avatars.com/api/?name=${profile.full_name?.replace(/\s/g, "+")}&background=random`
-                    }
-                    alt="Foto de perfil"
-                    className="w-10 h-10 rounded-full object-cover border-2 border-white/20"
-                />
-                <div className="text-sm">
-                    <p className="font-bold text-white">
-                        Nível {levelInfo?.level?.name || "Iniciante"}
-                    </p>
-                    <p className="text-xs text-white/70">
-                        {profile.xp || 0} XP
-                    </p>
+
+            {/* --- Separador Visual (Opcional, mas elegante) --- */}
+            <div className="border-t border-white/10"></div>
+
+            {/* --- Linha Inferior: Status e Link para o Perfil --- */}
+            <div className="flex justify-between items-center">
+                {/* Grupo de Status (XP e Moedas) */}
+                <div className="flex items-center gap-4 sm:gap-6">
+                    {/* Status de XP */}
+                    <div className="flex items-center gap-2">
+                        <Zap className="w-5 h-5 text-primary" />
+                        <div className="text-sm">
+                            <span className="font-bold text-white">{profile.xp || 0}</span>
+                            <span className="text-white/70"> XP</span>
+                        </div>
+                    </div>
+                    {/* Status de Moedas */}
+                    <div className="flex items-center gap-2">
+                        <Coins className="w-5 h-5 text-amber-400" />
+                        <div className="text-sm">
+                            <span className="font-bold text-white">{profile.coins || 0}</span>
+                            <span className="text-white/70"> Moedas</span>
+                        </div>
+                    </div>
                 </div>
-                <ArrowRight className="w-4 h-4 text-white/70 mr-2" />
-            </Link>
+
+                {/* Botão para Acessar o Perfil */}
+                <Link
+                    to="/perfil"
+                    className="bg-white/10 hover:bg-white/20 transition-colors px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2"
+                >
+                    <span>Meu perfil</span>
+                    <ArrowRight className="w-4 h-4" />
+                </Link>
+            </div>
         </motion.div>
     );
 };
@@ -188,6 +184,7 @@ const DashboardSkeleton = () => (
     </div>
 );
 
+
 const ComeBackTomorrowModal = ({
     open,
     onOpenChange,
@@ -200,12 +197,12 @@ const ComeBackTomorrowModal = ({
             <Dialog.Overlay className="fixed inset-0 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out" />
             <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-sm bg-card p-8 rounded-2xl shadow-xl data-[state=open]:animate-in data-[state=closed]:animate-out border">
                 <div className="text-center">
-                    <CheckCircle className="mx-auto h-10 w-10 text-primary mb-4" />
+                    <Coins className="mx-auto h-10 w-10 text-primary mb-4" />
                     <Dialog.Title className="text-2xl font-bold text-card-foreground">
                         Recompensa Coletada!
                     </Dialog.Title>
                     <Dialog.Description className="text-muted-foreground mt-2 text-base">
-                        Show, você ganhou +50 XP pela sua dedicação. Volte amanhã para receber novamente!
+                        Show, você ganhou <strong>+10 Moedas</strong> pela sua dedicação. Volte amanhã para receber novamente!
                     </Dialog.Description>
                 </div>
                 <Dialog.Close asChild>
@@ -337,10 +334,7 @@ const CalendarWidget = ({ streak }: { streak: number }) => {
                 </div>
             </div>
 
-            {/* <<< MUDANÇA ESTRUTURAL AQUI >>> */}
-            {/* Agora usamos um ÚNICO grid para cabeçalhos e dias */}
             <div className="grid grid-cols-7 gap-y-1 text-center">
-                {/* 1. Renderiza os cabeçalhos */}
                 {["D", "S", "T", "Q", "Q", "S", "S"].map((day, i) => (
                     <div
                         key={`header-${i}`}
@@ -349,8 +343,6 @@ const CalendarWidget = ({ streak }: { streak: number }) => {
                         {day}
                     </div>
                 ))}
-
-                {/* 2. Renderiza os 42 dias logo em seguida, no mesmo grid */}
                 {calendarData.days.map(({ day, isToday, isActive, isCurrentMonth }, index) => (
                     <motion.div
                         key={`day-${index}`}
@@ -449,13 +441,14 @@ const StyledDailyChallengeCard = ({
     );
 };
 
+
 // --- COMPONENTE PRINCIPAL ---
 const Index = () => {
     const queryClient = useQueryClient();
     const [userId, setUserId] = useState<string | null>(null);
     const [showFeatureTour, setShowFeatureTour] = useState(false);
     const [showWelcomeModal, setShowWelcomeModal] = useState(false);
-    const [dailyXpClaimed, setDailyXpClaimed] = useState(false);
+    const [dailyBonusClaimed, setDailyBonusClaimed] = useState(false);
     const [isClaiming, setIsClaiming] = useState(false);
     const [showComeBackModal, setShowComeBackModal] = useState(false);
 
@@ -473,7 +466,9 @@ const Index = () => {
         queryKey: ["dashboardData", userId],
         queryFn: async () => {
             if (!userId) return null;
-            const [profileResult, onboardingResult, completedPhasesResult] =
+
+            // <<< MUDANÇA AQUI >>> Adicionamos getLevels() ao Promise.all
+            const [profileResult, onboardingResult, completedPhasesResult, levels] =
                 await Promise.all([
                     supabase
                         .from("profiles")
@@ -490,7 +485,9 @@ const Index = () => {
                         .select("id", { count: "exact" })
                         .eq("user_id", userId)
                         .eq("status", "completed"),
+                    getLevels(), // Buscando os níveis do banco
                 ]);
+
             if (profileResult.error) throw profileResult.error;
             const profile = profileResult.data;
             const onboardingCompleted = !!onboardingResult.data;
@@ -544,16 +541,21 @@ const Index = () => {
                     };
                 }
             }
-            return { profile: profileWithOnboarding, trackData };
+            // <<< MUDANÇA AQUI >>> Retornamos os níveis junto com os outros dados
+            return { profile: profileWithOnboarding, trackData, levels };
         },
         enabled: !!userId,
     });
 
     const profile = pageData?.profile;
     const trackData = pageData?.trackData;
+    // <<< MUDANÇA AQUI >>> Pegamos a lista de níveis dos dados da query
+    const levels = pageData?.levels || [];
+
+    // <<< MUDANÇA AQUI >>> Passamos a lista de 'levels' para a função
     const levelInfo =
-        profile?.xp !== null && profile?.xp !== undefined
-            ? calculateLevelInfo(profile.xp)
+        profile?.xp !== null && profile?.xp !== undefined && levels.length > 0
+            ? calculateLevelInfo(profile.xp, levels)
             : null;
 
     useEffect(() => {
@@ -587,16 +589,21 @@ const Index = () => {
                 queryClient.invalidateQueries({
                     queryKey: ["dashboardData", userId],
                 });
+
             const todayStr = new Date().toISOString().split("T")[0];
             const { count } = await supabase
-                .from("xp_history")
+                .from("coin_history") 
                 .select("id", { count: "exact" })
                 .eq("user_id", userId)
                 .eq("source", "DAILY_BONUS")
                 .gte("created_at", `${todayStr}T00:00:00.000Z`);
-            if (count && count > 0) setDailyXpClaimed(true);
+
+            if (count && count > 0) {
+                setDailyBonusClaimed(true); 
+            }
         };
         handleDailyTasks();
+
         const todayStr = new Date().toISOString().split("T")[0];
         const storageKey = `lastWelcomeModalShow_${userId}`;
         const lastModalShowDate = localStorage.getItem(storageKey);
@@ -609,24 +616,24 @@ const Index = () => {
     const { data: dailyQuote, isLoading: isLoadingQuote } = useDailyQuote();
     const dailyChallenge = useDailyChallenge(userId || "");
 
-    const handleClaimDailyXp = async () => {
-        if (!userId || isClaiming || dailyXpClaimed) return;
+    const handleClaimDailyBonus = async () => {
+        if (!userId || isClaiming || dailyBonusClaimed) return;
         setIsClaiming(true);
         try {
             await supabase
-                .from("xp_history")
+                .from("coin_history")
                 .insert({
                     user_id: userId,
-                    xp_amount: 50,
+                    amount: 10,
                     source: "DAILY_BONUS",
                 });
-            setDailyXpClaimed(true);
+            setDailyBonusClaimed(true);
             setShowComeBackModal(true);
             queryClient.invalidateQueries({
                 queryKey: ["dashboardData", userId],
             });
         } catch (error) {
-            console.error("Erro ao pegar o XP diário:", error);
+            console.error("Erro ao pegar o bônus diário de moedas:", error);
         } finally {
             setIsClaiming(false);
         }
@@ -653,6 +660,7 @@ const Index = () => {
         },
     };
 
+    // O resto do JSX continua exatamente igual, pois ele já consome 'levelInfo' que agora é dinâmico.
     return (
         <Layout>
             <div className="min-h-screen bg-background font-nunito">
@@ -678,10 +686,10 @@ const Index = () => {
                     animate="visible"
                     variants={containerVariants}
                 >
-                    <DashboardHeader profile={profile} levelInfo={levelInfo} />
+                    <DashboardHeader profile={profile} />
 
                     <AnimatePresence>
-                        {!dailyXpClaimed && (
+                        {!dailyBonusClaimed && (
                             <motion.div
                                 variants={itemVariants}
                                 initial={{ opacity: 0, scale: 0.9 }}
@@ -702,15 +710,15 @@ const Index = () => {
                                             </p>
                                         </div>
                                         <motion.button
-                                            onClick={handleClaimDailyXp}
+                                            onClick={handleClaimDailyBonus}
                                             disabled={isClaiming}
-                                            className="w-full sm:w-auto px-6 py-3 rounded-2xl font-semibold text-primary-foreground shadow-lg btn-saga-primario"
+                                            className="w-full sm:w-auto px-6 py-3 rounded-2xl font-semibold text-primary-foreground shadow-lg btn-saga-primario flex items-center justify-center gap-2"
                                             whileHover={{ scale: 1.05 }}
                                             whileTap={{ scale: 0.95 }}
                                         >
                                             {isClaiming
                                                 ? "Coletando..."
-                                                : "Pegar meu prêmio (+50XP)"}
+                                                : <>Pegar prêmio <Coins className="w-4 h-4" /> +10</>}
                                         </motion.button>
                                     </div>
                                 </div>

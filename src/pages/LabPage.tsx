@@ -1,11 +1,11 @@
-// src/pages/LabPage.tsx
-
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { getProfile, Profile } from "@/services/profileService";
-import { motion, AnimatePresence } from "framer-motion";
+import { Profile } from "@/services/profileService";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import * as Dialog from "@radix-ui/react-dialog";
 
 // Componentes
 import { Button } from "@/components/ui/button";
@@ -15,67 +15,70 @@ import BottomNavigation from "@/components/BottomNavigation";
 // Ícones
 import {
   BrainCircuit, BookOpen, Timer, MessageCircle, ArrowRight, Target,
-  CheckCircle2, Zap, Map, Heart, Coffee, Shield, Sparkles, Lock, Crown, Flame
+  CheckCircle2, Zap, Map, Heart, Coffee, Shield, Sparkles, Lock, Crown, Flame, X, CircleDollarSign
 } from "lucide-react";
 
-// --- LÓGICA DE NÍVEIS (IMPORTANTE PARA O HEADER) ---
-const LEVELS = [
-    { name: 'Semente', minXp: 0 }, { name: 'Eco', minXp: 100 },
-    { name: 'Pulso', minXp: 200 }, { name: 'Chave', minXp: 300 },
-    // Adicione todos os seus níveis aqui...
-];
-
-const calculateLevelInfo = (xp: number) => {
-    if (typeof xp !== 'number' || xp < 0) xp = 0;
-    const currentLevel = [...LEVELS].reverse().find(level => xp >= level.minXp) || LEVELS[0];
-    return { level: currentLevel };
+// Mapa de ícones para renderização dinâmica
+const iconMap: { [key: string]: React.ComponentType<any> } = {
+  BrainCircuit, BookOpen, Timer, MessageCircle, Target, Heart, Map, Shield, Sparkles
 };
 
-// --- INTERFACES E TIPOS ---
+// Interfaces atualizadas para corresponder ao banco de dados
+interface Level {
+  id: number;
+  name: string;
+  min_xp: number;
+}
+
 interface Tool {
   id: string;
-  path: string;
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   title: string;
   description: string;
-  locked?: boolean;
-  unlockLevel?: number;
+  path: string;
+  icon_name: string;
+  unlock_level: number | null;
+  coin_cost: number;
+  is_featured: boolean;
 }
 
 interface ToolCategory {
+  id: number;
   name: string;
   tools: Tool[];
 }
 
-// --- ESTRUTURA DE DADOS DAS FERRAMENTAS ---
-const toolCategories: ToolCategory[] = [
-  {
-    name: "Pra Começar: Se Liga em Você",
-    tools: [
-      { id: "meu-match-carreira", path: "/teste-vocacional", icon: BrainCircuit, title: "Meu Match de Carreira", description: "Descubra as profissões que dão 'match' com o seu perfil. Swipe right na sua futura carreira!" },
-      { id: "meu-bloco-ideias", path: "/diario", icon: BookOpen, title: "Meu Bloco de Ideias", description: "Seu espaço seguro para anotar tudo: de ideias geniais a memes para não esquecer." },
-      { id: "reset-mental", path: "/reset-mental", icon: Heart, title: "Reset Mental", description: "Dê um 'reboot' no estresse e na ansiedade. Uma pausa rápida para recarregar a mente."},
-    ],
-  },
-  {
-    name: "Kit de Produtividade",
-    tools: [
-       { id: "timer-sprint", path: "/pomodoro", icon: Timer, title: "Timer de Sprint", description: "Use ciclos de produtividade para farmar XP e evitar o 'burnout'." },
-       { id: "anti-procrastinacao", path: "/anti-procrastinacao", icon: Target, title: "Foco na Missão", description: "Para quando o 'depois eu faço' vira 'socorro, é pra amanhã!'. Transforme o pânico em um plano de ação."},
-    ],
-  },
-  {
-    name: "Level Up na Carreira",
-    tools: [
-      { id: "zap-futuro-ia", path: "/tutor", icon: MessageCircle, title: "Zap do Futuro (IA)", description: "Mande um 'zap' para nossa IA e tire qualquer dúvida sobre carreira, estudos e mais." },
-      { id: "meu-roadmap-carreira", path: "/mapeador-carreira", icon: Map, title: "Meu Roadmap de Carreira", description: "Crie o mapa do seu futuro profissional, com os próximos passos e skills para desbloquear.", locked: true, unlockLevel: 3 },
-      { id: "modo-treino-entrevista", path: "/simulador-entrevista", icon: Shield, title: "Modo Treino: Entrevista", description: "Encare o 'boss' da entrevista sem medo. Pratique aqui e chegue preparado."},
-    ],
-  },
-];
-const featuredToolId = 'meu-match-carreira';
+// Função de cálculo de nível agora recebe os níveis dinamicamente
+const calculateLevelInfo = (xp: number, levels: Level[]) => {
+    if (!levels || levels.length === 0) return { level: { name: "...", id: 0 } };
+    if (typeof xp !== 'number' || xp < 0) xp = 0;
+    const currentLevel = [...levels].reverse().find(level => xp >= level.min_xp) || levels[0];
+    return { level: currentLevel };
+};
 
-// --- COMPONENTE DE SKELETON ---
+// Função para buscar todos os dados necessários da página
+const fetchLabPageData = async (userId: string) => {
+    const [profileData, levelsData, categoriesData, unlockedToolsData] = await Promise.all([
+        supabase.from('profiles').select('*, coins').eq('id', userId).single(),
+        supabase.from('levels').select('*').order('min_xp', { ascending: true }),
+        supabase.from('tool_categories').select('*, tools(*)').order('order_index', { ascending: true }).order('order_index', { foreignTable: 'tools', ascending: true }),
+        supabase.from('user_unlocked_tools').select('tool_id').eq('user_id', userId)
+    ]);
+
+    if (profileData.error) throw new Error(profileData.error.message);
+    if (levelsData.error) throw new Error(levelsData.error.message);
+    if (categoriesData.error) throw new Error(categoriesData.error.message);
+    if (unlockedToolsData.error) throw new Error(unlockedToolsData.error.message);
+
+    return {
+        profile: profileData.data as Profile & { coins: number },
+        levels: levelsData.data as Level[],
+        toolCategories: categoriesData.data as ToolCategory[],
+        unlockedToolIds: new Set(unlockedToolsData.data.map(t => t.tool_id))
+    };
+};
+
+// --- COMPONENTES DA PÁGINA ---
+
 const LabPageSkeleton = () => (
   <div className="min-h-screen p-4 sm:p-6 lg:p-8 space-y-6 animate-pulse bg-background">
     <Skeleton className="h-40 rounded-3xl bg-muted" />
@@ -93,144 +96,294 @@ const LabPageSkeleton = () => (
   </div>
 );
 
-// --- COMPONENTE DO HEADER (NOVO) ---
-const LabHeader = ({ profile }: { profile: Profile }) => {
-    const levelInfo = calculateLevelInfo(profile.xp || 0);
-
+const LabHeader = ({ profile, levels }: { profile: Profile & { coins: number }, levels: Level[] }) => {
+    const levelInfo = calculateLevelInfo(profile.xp || 0, levels);
     return (
         <motion.div
-            variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 100 } } }}
+            variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }}
             className="bg-gradient-to-br from-neutral-900 to-neutral-800 dark:from-neutral-950 dark:to-neutral-900 m-0 mb-8 rounded-3xl p-6 text-white relative overflow-hidden"
         >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-16 translate-x-16"></div>
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-primary/5 rounded-full translate-y-12 -translate-x-12"></div>
-
-            <div className="relative z-10 flex items-center space-x-4">
-                <div className="relative flex-shrink-0">
-                    <motion.img
-                        src={profile.avatar_url || `https://ui-avatars.com/api/?name=${profile.full_name?.replace(/\s/g, "+")}&background=random`}
-                        alt="Foto de perfil"
-                        className="w-20 h-20 rounded-full object-cover border-4 border-white/20 shadow-lg"
+            <div className="flex items-center justify-between">
+                {/* Grupo da Esquerda: Avatar, Título e agora o Nível */}
+                <div className="flex items-center gap-4">
+                    {/* <<< MUDANÇA AQUI >>> Removemos o div com 'relative' em volta da imagem */}
+                    <img 
+                        src={profile.avatar_url || `https://ui-avatars.com/api/?name=${profile.full_name?.replace(/\s/g, "+")}`} 
+                        alt="Foto de perfil" 
+                        className="w-16 h-16 rounded-full object-cover border-4 border-white/20 shadow-lg"
                     />
-                    <motion.div
-                        initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', delay: 0.5 }}
-                        className="absolute -top-1 -right-1 w-8 h-8 bg-gradient-to-r from-primary to-orange-400 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-lg border-2 border-neutral-800">
-                        {levelInfo.level.name.substring(0, 1)}
-                    </motion.div>
+
+                    {/* Bloco de texto */}
+                    <div>
+                        <h1 className="text-2xl md:text-3xl font-extrabold text-white">Arsenal de Skills</h1>
+                        <p className="text-white/70 text-sm mt-1">Ferramentas pra 'upar' suas habilidades.</p>
+
+                        {/* <<< MUDANÇA AQUI >>> Novo elemento para mostrar o nível com ícone */}
+                        <div className="flex items-center gap-2 mt-2">
+                           <Crown className="w-4 h-4 text-primary" />
+                           <span className="text-sm font-semibold text-white/90">
+                               Nível {levelInfo.level.name}
+                           </span>
+                        </div>
+                    </div>
                 </div>
-                <div className="flex-1">
-                    <h1 className="text-2xl md:text-3xl font-extrabold text-white">Arsenal de Skills</h1>
-                    <p className="text-white/70 text-sm mt-1">Ferramentas pra você 'upar' suas habilidades e destravar seu potencial.</p>
+
+                {/* Grupo da Direita: Contador de Moedas (permanece igual) */}
+                <div className="flex items-center gap-2 bg-white/10 px-4 py-2.5 rounded-full">
+                    <CircleDollarSign className="w-5 h-5 text-amber-400" />
+                    <span className="font-bold text-white text-lg">{profile.coins || 0}</span>
                 </div>
             </div>
         </motion.div>
     );
 };
 
+const PurchaseToolModal = ({ tool, isOpen, onClose, userCoins, onConfirmPurchase, isPurchasing }) => {
+    if (!tool) return null;
 
-// --- COMPONENTES DE CARD ---
-const ToolCard = ({ tool, userLevel }: { tool: Tool, userLevel: number }) => {
-  const isLocked = tool.locked && userLevel < (tool.unlockLevel || 999);
-  const cardContent = (
-    <>
-      <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center transition-colors", isLocked ? "bg-muted" : "bg-primary/10")}>
-        {isLocked ? <Lock className="w-7 h-7 text-muted-foreground" /> : <tool.icon className="w-7 h-7 text-primary" />}
-      </div>
-      <div className="flex-1 min-w-0">
-        <h3 className="font-bold text-foreground text-base truncate">{tool.title}</h3>
-        <p className="text-muted-foreground text-sm leading-tight">{tool.description}</p>
-        {isLocked && <span className="text-xs text-primary font-semibold mt-1 block">Desbloqueie no nível {tool.unlockLevel}</span>}
-      </div>
-      {!isLocked && <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-transform" />}
-    </>
-  );
+    const hasEnoughCoins = userCoins >= tool.coin_cost;
 
-  if (isLocked) {
-    return <div className="bg-card border rounded-2xl p-4 flex items-center space-x-4 h-full opacity-70">{cardContent}</div>;
-  }
+    return (
+        <Dialog.Root open={isOpen} onOpenChange={onClose}>
+            <Dialog.Portal>
+                <Dialog.Overlay className="fixed inset-0 bg-black/60 data-[state=open]:animate-in data-[state=closed]:animate-out" />
+                <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-md bg-card p-6 rounded-2xl shadow-xl data-[state=open]:animate-in data-[state=closed]:animate-out border">
+                    <div className="flex flex-col items-center text-center">
+                        <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-primary/10 mb-4">
+                            <Sparkles className="w-8 h-8 text-primary" />
+                        </div>
+                        <Dialog.Title className="text-2xl font-bold text-card-foreground">{tool.title}</Dialog.Title>
+                        <Dialog.Description className="text-muted-foreground mt-2 mb-6">{tool.description}</Dialog.Description>
 
-  return (
-    <Link to={tool.path} className="group">
-      <motion.div className="bg-card border rounded-2xl p-4 flex items-center space-x-4 h-full shadow-sm hover:shadow-lg hover:border-primary/50 transition-all" whileHover={{ y: -4 }}>{cardContent}</motion.div>
-    </Link>
-  );
+                        <div className="w-full bg-muted p-4 rounded-lg mb-6">
+                            <div className="flex justify-between items-center text-lg">
+                                <span className="text-muted-foreground">Custo:</span>
+                                <div className="flex items-center gap-2 font-bold text-primary">
+                                    <CircleDollarSign className="w-5 h-5"/>
+                                    <span>{tool.coin_cost}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <Button
+                            onClick={() => onConfirmPurchase(tool)}
+                            disabled={!hasEnoughCoins || isPurchasing}
+                            className="w-full btn-saga-primario py-3 text-base"
+                        >
+                            {isPurchasing ? "Desbloqueando..." :
+                             !hasEnoughCoins ? "Moedas insuficientes" : `Desbloquear por ${tool.coin_cost} moedas`}
+                        </Button>
+                        <Button variant="ghost" onClick={onClose} className="w-full mt-2">
+                            Agora não
+                        </Button>
+                    </div>
+                </Dialog.Content>
+            </Dialog.Portal>
+        </Dialog.Root>
+    );
 };
 
-const FeaturedToolCard = ({ tool }: { tool: Tool }) => (
-    <Link to={tool.path} className="group">
-        <motion.div className="bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/10 rounded-3xl p-6 relative overflow-hidden border border-primary/20" whileHover={{ scale: 1.02, y: -5, transition: { type: 'spring', stiffness: 200 } }}>
-            <Sparkles className="w-10 h-10 text-primary/30 absolute -top-2 -right-2" />
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-                <div className="bg-primary rounded-2xl w-20 h-20 flex items-center justify-center flex-shrink-0"><tool.icon className="w-10 h-10 text-primary-foreground" /></div>
-                <div className="flex-1">
-                    <h2 className="text-2xl font-extrabold text-foreground">{tool.title}</h2>
-                    <p className="text-muted-foreground mt-1 max-w-md">{tool.description}</p>
-                </div>
-                <div className="bg-primary text-primary-foreground px-5 py-3 rounded-full font-semibold flex items-center gap-2 self-start sm:self-center mt-4 sm:mt-0 transition-transform group-hover:scale-105">
-                    <span>Começar</span>
-                    <ArrowRight className="w-4 h-4" />
-                </div>
-            </div>
-        </motion.div>
-    </Link>
-);
+const ToolCard = ({ tool, userLevel, isUnlocked, onCardClick }) => {
+    const navigate = useNavigate();
+    const ToolIcon = iconMap[tool.icon_name] || Lock;
+    const isLockedByLevel = tool.unlock_level && userLevel < tool.unlock_level;
+    const isPurchasable = tool.coin_cost > 0;
 
-
-// --- COMPONENTE PRINCIPAL ---
-export default function LabPage() {
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) setProfile(await getProfile(user.id));
-      } catch (error) { console.error("Erro ao carregar perfil para o Lab:", error); }
-      finally { setIsLoading(false); }
+    const handleClick = () => {
+        if (isUnlocked) {
+            navigate(tool.path);
+        } else {
+            onCardClick(tool);
+        }
     };
-    fetchUserProfile();
-  }, []);
 
-  const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
-  const itemVariants = { hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 100 } } };
+    const cardContent = (
+        <>
+            <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center transition-colors", isUnlocked ? "bg-primary/10" : "bg-muted")}>
+                {isUnlocked ? <ToolIcon className="w-7 h-7 text-primary" /> : <Lock className="w-7 h-7 text-muted-foreground" />}
+            </div>
+            <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-foreground text-base truncate">{tool.title}</h3>
+                {!isUnlocked && isLockedByLevel && (
+                    <span className="text-xs text-primary font-semibold mt-1 block">
+                        Nível {tool.unlock_level} necessário
+                    </span>
+                )}
+                {!isUnlocked && !isLockedByLevel && isPurchasable && (
+                    <div className="flex items-center gap-1 text-xs text-amber-500 font-semibold mt-1">
+                        <CircleDollarSign className="w-3 h-3"/> {tool.coin_cost} para desbloquear
+                    </div>
+                )}
+            </div>
+            {isUnlocked && <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-transform" />}
+        </>
+    );
 
-  if (isLoading || !profile) {
-    return <LabPageSkeleton />;
-  }
+    return (
+        <motion.div
+            onClick={handleClick}
+            className={cn(
+                "group bg-card border rounded-2xl p-4 flex items-center space-x-4 h-full shadow-sm transition-all cursor-pointer",
+                isUnlocked ? "hover:shadow-lg hover:border-primary/50" : "opacity-80 hover:bg-muted"
+            )}
+            whileHover={{ y: -4 }}
+        >
+            {cardContent}
+        </motion.div>
+    );
+};
 
-  const userLevel = profile.level || 1;
-  const featuredTool = toolCategories.flatMap(c => c.tools).find(t => t.id === featuredToolId);
+const FeaturedToolCard = ({ tool, isUnlocked, onCardClick }) => {
+    const ToolIcon = iconMap[tool.icon_name] || Sparkles;
+    const navigate = useNavigate();
 
-  return (
-    <div className="min-h-screen w-full bg-background font-nunito">
-      <motion.div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8" variants={containerVariants} initial="hidden" animate="visible">
+    const handleClick = (e: React.MouseEvent) => {
+        if (!isUnlocked) {
+            e.preventDefault();
+            onCardClick(tool);
+        }
+    };
 
-        {/* HEADER CORRIGIDO AQUI */}
-        <LabHeader profile={profile} />
-
-        <main className="space-y-10">
-          {featuredTool && (
-            <motion.div variants={itemVariants}>
-              <FeaturedToolCard tool={featuredTool} />
+    return (
+        <Link to={isUnlocked ? tool.path : "#"} onClick={handleClick} className="group block">
+            <motion.div className="bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/10 rounded-3xl p-6 relative overflow-hidden border border-primary/20" whileHover={{ scale: 1.02, y: -5, transition: { type: 'spring', stiffness: 200 } }}>
+                <Sparkles className="w-10 h-10 text-primary/30 absolute -top-2 -right-2" />
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                    <div className="bg-primary rounded-2xl w-20 h-20 flex items-center justify-center flex-shrink-0"><ToolIcon className="w-10 h-10 text-primary-foreground" /></div>
+                    <div className="flex-1">
+                        <h2 className="text-2xl font-extrabold text-foreground">{tool.title}</h2>
+                        <p className="text-muted-foreground mt-1 max-w-md">{tool.description}</p>
+                    </div>
+                    <div className="bg-primary text-primary-foreground px-5 py-3 rounded-full font-semibold flex items-center gap-2 self-start sm:self-center mt-4 sm:mt-0 transition-transform group-hover:scale-105">
+                        <span>{isUnlocked ? "Começar" : "Desbloquear"}</span>
+                        <ArrowRight className="w-4 h-4" />
+                    </div>
+                </div>
             </motion.div>
-          )}
+        </Link>
+    );
+};
 
-          {toolCategories.map((category) => (
-            <motion.div key={category.name} variants={itemVariants} className="space-y-4">
-              <h2 className="text-xl font-bold text-foreground pl-1">{category.name}</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {category.tools.filter(tool => tool.id !== featuredToolId).map((tool) => (
-                    <ToolCard key={tool.id} tool={tool} userLevel={userLevel} />
-                ))}
-              </div>
+export default function LabPage() {
+    const queryClient = useQueryClient();
+    const [toolToBuy, setToolToBuy] = useState<Tool | null>(null);
+    const [isPurchasing, setIsPurchasing] = useState(false);
+
+    const { data: authUser } = useQuery({
+        queryKey: ['user'],
+        queryFn: async () => (await supabase.auth.getUser()).data.user
+    });
+
+    const { data, isLoading, error } = useQuery({
+        queryKey: ["labPageData", authUser?.id],
+        queryFn: () => fetchLabPageData(authUser!.id),
+        enabled: !!authUser?.id
+    });
+
+    const handlePurchaseClick = (tool: Tool) => {
+        setToolToBuy(tool);
+    };
+
+    const handleConfirmPurchase = async (tool: Tool) => {
+        if (!data?.profile || !tool) return;
+        if (data.profile.coins < tool.coin_cost) {
+            console.error("Moedas insuficientes!");
+            return;
+        }
+
+        setIsPurchasing(true);
+        try {
+            const { error: coinError } = await supabase.from('coin_history').insert({
+                user_id: authUser!.id,
+                amount: -tool.coin_cost,
+                source: 'TOOL_PURCHASE',
+                source_id: tool.id
+            });
+            if (coinError) throw coinError;
+
+            const { error: unlockError } = await supabase.from('user_unlocked_tools').insert({
+                user_id: authUser!.id,
+                tool_id: tool.id,
+                unlock_method: 'purchase'
+            });
+            if (unlockError) throw unlockError;
+
+            queryClient.invalidateQueries({ queryKey: ["labPageData", authUser?.id] });
+            setToolToBuy(null);
+
+        } catch (err) {
+            console.error("Erro ao comprar ferramenta:", err);
+        } finally {
+            setIsPurchasing(false);
+        }
+    };
+
+    if (isLoading) return <LabPageSkeleton />;
+    if (error || !data) return <div>Ocorreu um erro ao carregar os dados.</div>;
+
+    const { profile, levels, toolCategories, unlockedToolIds } = data;
+    const userLevel = calculateLevelInfo(profile.xp, levels).level.id;
+    const featuredTool = toolCategories.flatMap(c => c.tools).find(t => t.is_featured);
+
+    const isFeaturedToolUnlocked = featuredTool ? (
+        (featuredTool.unlock_level ? userLevel >= featuredTool.unlock_level : false) ||
+        unlockedToolIds.has(featuredTool.id) ||
+        (!featuredTool.unlock_level && featuredTool.coin_cost === 0)
+    ) : false;
+
+    return (
+        <div className="min-h-screen w-full bg-background font-nunito">
+             <PurchaseToolModal
+                isOpen={!!toolToBuy}
+                onClose={() => setToolToBuy(null)}
+                tool={toolToBuy}
+                userCoins={profile.coins}
+                onConfirmPurchase={handleConfirmPurchase}
+                isPurchasing={isPurchasing}
+            />
+
+            <motion.div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8" initial="hidden" animate="visible">
+                <LabHeader profile={profile} levels={levels}/>
+                <main className="space-y-10">
+                    {featuredTool && (
+                        <motion.div>
+                           <FeaturedToolCard
+                                tool={featuredTool}
+                                isUnlocked={isFeaturedToolUnlocked}
+                                onCardClick={handlePurchaseClick}
+                           />
+                        </motion.div>
+                    )}
+
+                    {toolCategories.map((category) => (
+                        <motion.div key={category.name} className="space-y-4">
+                            <h2 className="text-xl font-bold text-foreground pl-1">{category.name}</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {category.tools
+                                    .filter(tool => !tool.is_featured)
+                                    .map((tool) => {
+                                        const isUnlockedByLevel = tool.unlock_level ? userLevel >= tool.unlock_level : false;
+                                        const isUnlockedByPurchase = unlockedToolIds.has(tool.id);
+                                        const isFree = !tool.unlock_level && tool.coin_cost === 0;
+                                        const isEffectivelyUnlocked = isUnlockedByLevel || isUnlockedByPurchase || isFree;
+
+                                        return (
+                                            <ToolCard
+                                                key={tool.id}
+                                                tool={tool}
+                                                userLevel={userLevel}
+                                                isUnlocked={isEffectivelyUnlocked}
+                                                onCardClick={handlePurchaseClick}
+                                            />
+                                        )
+                                    })}
+                            </div>
+                        </motion.div>
+                    ))}
+                </main>
             </motion.div>
-          ))}
-        </main>
-      </motion.div>
-
-      <div className="h-10" />
-      <BottomNavigation />
-    </div>
-  );
+            <div className="h-20" />
+            <BottomNavigation />
+        </div>
+    );
 }

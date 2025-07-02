@@ -15,20 +15,13 @@ import {
     Settings,
     ChevronRight,
     Flame,
-    Award,
-    Lock,
     Share2,
     Linkedin,
-    Heart,
     Shield,
     Crown,
     BarChart3,
-    Edit3,
-    Bell,
     Target,
-    Users,
-    Calendar,
-    Lightbulb,
+    Coins,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -39,52 +32,22 @@ import { WeeklyProgressChart } from "@/components/WeeklyProgressChart";
 import { updateUserStreak, Profile } from "@/services/profileService";
 import { getModules, isModuleCompleted } from "@/services/moduleService";
 import { getUserRanking, RankingUser } from "@/services/rankingService";
+import { getLevels, Level } from "@/services/levelService";
 
-// --- LÓGICA DE NÍVEIS ---
-const LEVELS = [
-    { name: "Semente", minXp: 0 },
-    { name: "Eco", minXp: 100 },
-    { name: "Pulso", minXp: 200 },
-    { name: "Chave", minXp: 300 },
-    { name: "Rastro", minXp: 400 },
-    { name: "Brilho", minXp: 500 },
-    { name: "Voo", minXp: 600 },
-    { name: "Passo", minXp: 700 },
-    { name: "Laço", minXp: 800 },
-    { name: "Base", minXp: 900 },
-    { name: "Foco", minXp: 1000 },
-    { name: "Ritmo", minXp: 1100 },
-    { name: "Faísca", minXp: 1200 },
-    { name: "Forja", minXp: 1300 },
-    { name: "Escudo", minXp: 1400 },
-    { name: "Mestre", minXp: 1500 },
-    { name: "Ponte", minXp: 1600 },
-    { name: "Visão", minXp: 1700 },
-    { name: "Código", minXp: 1800 },
-    { name: "Raiz", minXp: 1900 },
-    { name: "Mapa", minXp: 2000 },
-    { name: "Farol", minXp: 2100 },
-    { name: "Missão", minXp: 2200 },
-    { name: "Caminho", minXp: 2300 },
-    { name: "Alvo", minXp: 2400 },
-    { name: "Despertar", minXp: 2500 },
-    { name: "Impacto", minXp: 2600 },
-    { name: "Liderança", minXp: 2700 },
-    { name: "Legado", minXp: 2800 },
-    { name: "Transforma", minXp: 2900 },
-];
-
-const calculateLevelInfo = (xp: number) => {
+// --- LÓGICA DE NÍVEIS DINÂMICA ---
+const calculateLevelInfo = (xp: number, levels: Level[]) => {
     if (typeof xp !== "number" || xp < 0) xp = 0;
-    const currentLevel =
-        [...LEVELS].reverse().find((level) => xp >= level.minXp) || LEVELS[0];
-    const currentLevelIndex = LEVELS.findIndex(
-        (level) => level.name === currentLevel.name,
-    );
-    const nextLevel =
-        currentLevelIndex < LEVELS.length - 1
-            ? LEVELS[currentLevelIndex + 1]
-            : null;
+    if (!levels || levels.length === 0) {
+        return {
+            level: { name: "Iniciante", min_xp: 0, id: 0 },
+            progressPercent: 0,
+            xpToNext: 0,
+            isMaxLevel: true,
+        };
+    }
+    const currentLevel = [...levels].reverse().find((level) => xp >= level.min_xp) || levels[0];
+    const currentLevelIndex = levels.findIndex((level) => level.id === currentLevel.id);
+    const nextLevel = currentLevelIndex < levels.length - 1 ? levels[currentLevelIndex + 1] : null;
 
     if (!nextLevel) {
         return {
@@ -95,13 +58,10 @@ const calculateLevelInfo = (xp: number) => {
         };
     }
 
-    const xpForThisLevel = nextLevel.minXp - currentLevel.minXp;
-    const progressInLevel = xp - currentLevel.minXp;
-    const progressPercent = Math.min(
-        (progressInLevel / xpForThisLevel) * 100,
-        100,
-    );
-    const xpToNext = nextLevel.minXp - xp;
+    const xpForThisLevel = nextLevel.min_xp - currentLevel.min_xp;
+    const progressInLevel = xp - currentLevel.min_xp;
+    const progressPercent = Math.min((progressInLevel / xpForThisLevel) * 100, 100);
+    const xpToNext = nextLevel.min_xp - xp;
 
     return {
         level: currentLevel,
@@ -120,6 +80,7 @@ interface Achievement {
     icon: string;
     rarity: "comum" | "raro" | "épico" | "lendário";
     xp_reward: number;
+    coin_reward: number;
 }
 interface UserBadge {
     id: string;
@@ -128,11 +89,12 @@ interface UserBadge {
     reward_claimed_at: string | null;
 }
 interface ProfilePageData {
-    userProfile: Profile;
+    userProfile: Profile & { coins: number };
     completedModuleCount: number;
     userRank: number;
     userBadges: UserBadge[];
     allAchievements: Achievement[];
+    levels: Level[];
 }
 
 // --- SKELETON ---
@@ -158,7 +120,68 @@ const ProfileSkeleton: React.FC = () => (
     </div>
 );
 
-// --- MODAL DE CONQUISTA (ATUALIZADO) ---
+// --- HEADER DO PERFIL (ATUALIZADO) ---
+const ProfileHeader = ({ profile, levelInfo, userRank }) => (
+    <motion.div
+        variants={itemVariants}
+        className="bg-gradient-to-br from-neutral-900 to-neutral-800 dark:from-neutral-950 dark:to-neutral-900 m-2 sm:m-4 rounded-3xl p-6 text-white relative overflow-hidden flex flex-col gap-5"
+    >
+        <div className="flex items-start gap-5">
+            <motion.img
+                src={profile.avatar_url || `https://ui-avatars.com/api/?name=${profile.full_name?.replace(/\s/g, "+")}`}
+                alt="Foto de perfil"
+                className="w-24 h-24 rounded-full object-cover border-4 border-white/20 shadow-lg shrink-0"
+                whileHover={{ scale: 1.05 }}
+            />
+            <div className="flex-grow">
+                <h1 className="text-2xl sm:text-3xl font-extrabold">{profile.full_name}</h1>
+                <p className="text-white/80 text-sm mt-1 italic leading-relaxed">"{profile.bio || "Edite seu perfil para adicionar uma bio."}"</p>
+            </div>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+            <div className="bg-white/5 rounded-lg p-2">
+                <Crown className="w-5 h-5 mx-auto text-primary mb-1" />
+                <p className="text-sm font-bold">{levelInfo.level.name}</p>
+                <p className="text-xs text-white/60">Nível</p>
+            </div>
+            <div className="bg-white/5 rounded-lg p-2">
+                <Flame className="w-5 h-5 mx-auto text-orange-400 mb-1" />
+                <p className="text-sm font-bold">{profile.streak_days || 0} dias</p>
+                <p className="text-xs text-white/60">Sequência</p>
+            </div>
+            <div className="bg-white/5 rounded-lg p-2">
+                <Trophy className="w-5 h-5 mx-auto text-yellow-400 mb-1" />
+                <p className="text-sm font-bold">#{userRank > 0 ? userRank : "N/A"}</p>
+                <p className="text-xs text-white/60">Ranking</p>
+            </div>
+            <div className="bg-white/5 rounded-lg p-2">
+                <Coins className="w-5 h-5 mx-auto text-amber-400 mb-1" />
+                <p className="text-sm font-bold">{profile.coins || 0}</p>
+                <p className="text-xs text-white/60">Moedas</p>
+            </div>
+        </div>
+
+        <div>
+            <div className="flex justify-between text-xs font-medium text-white/60 mb-1">
+                <span>Progresso do Nível</span>
+                <span>
+                    {levelInfo.xpToNext > 0 ? `${levelInfo.xpToNext} XP para o próximo` : "Nível Máximo!"}
+                </span>
+            </div>
+            <div className="w-full bg-white/20 rounded-full h-2">
+                <motion.div
+                    className="h-full bg-primary rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${levelInfo.progressPercent}%` }}
+                    transition={{ duration: 1, ease: "easeOut", delay: 0.2 }}
+                />
+            </div>
+        </div>
+    </motion.div>
+);
+
+// --- MODAL DE CONQUISTA (ATUALIZADO PARA MOEDAS) ---
 const AchievementModal = ({
     achievement,
     userBadge,
@@ -173,41 +196,15 @@ const AchievementModal = ({
     onClaimReward: (userBadgeId: string) => void;
 }) => {
     const unlockedAt = userBadge?.unlocked_at || null;
-    const isClaimable =
-        userBadge && !userBadge.reward_claimed_at && achievement.xp_reward > 0;
+    const isClaimable = userBadge && !userBadge.reward_claimed_at && achievement.coin_reward > 0;
 
     const getRarityStyle = (rarity: string) => {
         switch (rarity) {
-            case "comum":
-                return {
-                    gradient: "from-gray-400 to-gray-500",
-                    text: "text-gray-600",
-                    bg: "bg-gray-100",
-                };
-            case "raro":
-                return {
-                    gradient: "from-blue-400 to-blue-500",
-                    text: "text-blue-600",
-                    bg: "bg-blue-100",
-                };
-            case "épico":
-                return {
-                    gradient: "from-purple-500 to-purple-600",
-                    text: "text-purple-600",
-                    bg: "bg-purple-100",
-                };
-            case "lendário":
-                return {
-                    gradient: "from-yellow-400 to-orange-500",
-                    text: "text-yellow-600",
-                    bg: "bg-yellow-100",
-                };
-            default:
-                return {
-                    gradient: "from-gray-400 to-gray-500",
-                    text: "text-gray-600",
-                    bg: "bg-gray-100",
-                };
+            case "comum": return { gradient: "from-gray-400 to-gray-500", text: "text-gray-600" };
+            case "raro": return { gradient: "from-blue-400 to-blue-500", text: "text-blue-600" };
+            case "épico": return { gradient: "from-purple-500 to-purple-600", text: "text-purple-600" };
+            case "lendário": return { gradient: "from-yellow-400 to-orange-500", text: "text-yellow-600" };
+            default: return { gradient: "from-gray-400 to-gray-500", text: "text-gray-600" };
         }
     };
     const style = getRarityStyle(achievement.rarity);
@@ -215,53 +212,29 @@ const AchievementModal = ({
     return (
         <motion.div
             className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={onClose}
         >
             <motion.div
                 className="bg-card rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center border"
-                initial={{ scale: 0.8, y: 50 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.8, y: 50 }}
+                initial={{ scale: 0.8, y: 50 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.8, y: 50 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 onClick={(e) => e.stopPropagation()}
             >
-                <div
-                    className={cn(
-                        "w-24 h-24 mx-auto rounded-3xl flex items-center justify-center text-4xl mb-6 shadow-lg",
-                        unlockedAt
-                            ? `bg-gradient-to-br ${style.gradient}`
-                            : "bg-muted",
-                    )}
-                >
-                    <span className={!unlockedAt ? "grayscale opacity-50" : ""}>
-                        {achievement.icon}
-                    </span>
+                <div className={cn("w-24 h-24 mx-auto rounded-3xl flex items-center justify-center text-4xl mb-6 shadow-lg", unlockedAt ? `bg-gradient-to-br ${style.gradient}` : "bg-muted")}>
+                    <span className={!unlockedAt ? "grayscale opacity-50" : ""}>{achievement.icon}</span>
                 </div>
-                <h3 className="text-2xl font-bold text-foreground mb-2">
-                    {achievement.name}
-                </h3>
-                <p className="text-muted-foreground mb-6">
-                    {achievement.description}
-                </p>
+                <h3 className="text-2xl font-bold text-foreground mb-2">{achievement.name}</h3>
+                <p className="text-muted-foreground mb-6">{achievement.description}</p>
                 <div className="bg-muted/50 rounded-2xl p-4 mb-6">
                     <div className="text-center">
-                        <div
-                            className={`text-xl font-bold capitalize ${unlockedAt ? style.text : "text-muted-foreground"}`}
-                        >
-                            {achievement.rarity}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                            Raridade
-                        </div>
+                        <div className={`text-xl font-bold capitalize ${unlockedAt ? style.text : "text-muted-foreground"}`}>{achievement.rarity}</div>
+                        <div className="text-xs text-muted-foreground">Raridade</div>
                     </div>
                 </div>
                 {unlockedAt ? (
                     <div className="text-green-600 dark:text-green-400 font-medium mb-4 text-sm">
-                        ✓ Conquistado em{" "}
-                        {new Date(unlockedAt).toLocaleDateString("pt-BR")}
+                        ✓ Conquistado em {new Date(unlockedAt).toLocaleDateString("pt-BR")}
                     </div>
                 ) : (
                     <div className="text-amber-600 dark:text-amber-400 font-medium mb-4 text-sm">
@@ -269,35 +242,19 @@ const AchievementModal = ({
                     </div>
                 )}
                 <div className="flex gap-3">
-                    <Button
-                        onClick={onClose}
-                        variant="outline"
-                        className="w-full py-3 text-base"
-                    >
-                        Fechar
-                    </Button>
-
+                    <Button onClick={onClose} variant="outline" className="w-full py-3 text-base">Fechar</Button>
                     {isClaimable && (
                         <Button
                             onClick={() => onClaimReward(userBadge.id)}
                             disabled={isClaiming}
-                            className="w-full essencia-valor py-3 text-base"
+                            className="w-full essencia-valor py-3 text-base flex items-center gap-2"
                         >
-                            {isClaiming
-                                ? "Coletando..."
-                                : `Coletar ${achievement.xp_reward} XP`}
+                            <Coins className="w-4 h-4" />
+                            {isClaiming ? "Coletando..." : `Coletar ${achievement.coin_reward} Moedas`}
                         </Button>
                     )}
-
                     {unlockedAt && !isClaimable && (
-                        <Button
-                            className="w-full btn-saga-primario py-3 text-base"
-                            onClick={() =>
-                                toast.info(
-                                    "Funcionalidade de compartilhar em breve!",
-                                )
-                            }
-                        >
+                        <Button className="w-full btn-saga-primario py-3 text-base" onClick={() => toast.info("Funcionalidade de compartilhar em breve!")}>
                             <Share2 className="w-4 h-4 mr-2" /> Compartilhar
                         </Button>
                     )}
@@ -314,22 +271,7 @@ const useProfileData = (userId: string | null) => {
         queryFn: async (): Promise<ProfilePageData> => {
             if (!userId) throw new Error("ID do usuário não fornecido.");
 
-            await updateUserStreak(userId).catch((err) =>
-                console.error("Falha ao atualizar streak:", err),
-            );
-
-            const profileQuery = supabase
-                .from("profiles")
-                .select("*")
-                .eq("id", userId)
-                .single();
-            const modulesQuery = getModules();
-            const rankingQuery = getUserRanking("all");
-            const badgesQuery = supabase
-                .from("user_badges")
-                .select("id, badge_id, unlocked_at, reward_claimed_at")
-                .eq("user_id", userId);
-            const achievementsQuery = supabase.from("achievements").select("*");
+            await updateUserStreak(userId).catch((err) => console.error("Falha ao atualizar streak:", err));
 
             const [
                 profileResult,
@@ -337,31 +279,26 @@ const useProfileData = (userId: string | null) => {
                 rankingData,
                 badgesResult,
                 achievementsResult,
+                levelsResult,
             ] = await Promise.all([
-                profileQuery,
-                modulesQuery,
-                rankingQuery,
-                badgesQuery,
-                achievementsQuery,
+                supabase.from("profiles").select("*, coins").eq("id", userId).single(),
+                getModules(),
+                getUserRanking("all"),
+                supabase.from("user_badges").select("id, badge_id, unlocked_at, reward_claimed_at").eq("user_id", userId),
+                supabase.from("achievements").select("*, coin_reward"),
+                getLevels(),
             ]);
 
             if (profileResult.error) throw profileResult.error;
-            const userProfileData = profileResult.data;
-            if (!userProfileData)
-                throw new Error("Perfil do usuário não encontrado.");
             if (badgesResult.error) throw badgesResult.error;
             if (achievementsResult.error) throw achievementsResult.error;
 
-            const completionResults = await Promise.all(
-                (modulesData || []).map((module) =>
-                    isModuleCompleted(userId, module.id),
-                ),
-            );
-            const completedModuleCount =
-                completionResults.filter(Boolean).length;
-            const userPosition = (rankingData || []).findIndex(
-                (user: RankingUser) => user.id === userId,
-            );
+            const userProfileData = profileResult.data;
+            if (!userProfileData) throw new Error("Perfil do usuário não encontrado.");
+
+            const completionResults = await Promise.all((modulesData || []).map((module) => isModuleCompleted(userId, module.id)));
+            const completedModuleCount = completionResults.filter(Boolean).length;
+            const userPosition = (rankingData || []).findIndex((user: RankingUser) => user.id === userId);
             const userRank = userPosition !== -1 ? userPosition + 1 : 0;
 
             return {
@@ -369,12 +306,12 @@ const useProfileData = (userId: string | null) => {
                 completedModuleCount,
                 userRank,
                 userBadges: (badgesResult.data as UserBadge[] | null) || [],
-                allAchievements:
-                    (achievementsResult.data as Achievement[] | null) || [],
+                allAchievements: (achievementsResult.data as Achievement[] | null) || [],
+                levels: levelsResult || [],
             };
         },
         enabled: !!userId,
-        staleTime: 1000 * 60 * 5, // 5 minutos
+        staleTime: 1000 * 60 * 5,
     });
 };
 
@@ -385,11 +322,7 @@ const containerVariants = {
 };
 const itemVariants = {
     hidden: { y: 20, opacity: 0 },
-    visible: {
-        y: 0,
-        opacity: 1,
-        transition: { type: "spring", stiffness: 100 },
-    },
+    visible: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 100 } },
 };
 
 // --- COMPONENTE PRINCIPAL ---
@@ -397,21 +330,14 @@ export default function ProfilePage(): JSX.Element {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
 
-    // Estados do componente
     const [userId, setUserId] = useState<string | null>(null);
-    const [selectedAchievement, setSelectedAchievement] = useState<{
-        achievement: Achievement;
-        userBadge: UserBadge | null;
-    } | null>(null);
+    const [selectedAchievement, setSelectedAchievement] = useState<{ achievement: Achievement; userBadge: UserBadge | null; } | null>(null);
     const [activeTab, setActiveTab] = useState("overview");
     const [isClaiming, setIsClaiming] = useState(false);
 
-    // Efeito para buscar o ID do usuário ao carregar a página
     useEffect(() => {
         const getCurrentUserId = async () => {
-            const {
-                data: { session },
-            } = await supabase.auth.getSession();
+            const { data: { session } } = await supabase.auth.getSession();
             if (session?.user) {
                 setUserId(session.user.id);
             } else {
@@ -421,18 +347,14 @@ export default function ProfilePage(): JSX.Element {
         getCurrentUserId();
     }, [navigate]);
 
-    // Hook para buscar todos os dados da página
     const { data, isLoading, isError } = useProfileData(userId);
 
-    // Função para coletar a recompensa de uma conquista
     const handleClaimReward = async (userBadgeId: string) => {
-        if (isClaiming) return;
+        if (isClaiming || !selectedAchievement) return;
         setIsClaiming(true);
 
         try {
-            const { error } = await supabase.rpc("claim_achievement_reward", {
-                p_user_badge_id: userBadgeId,
-            });
+            const { error } = await supabase.rpc("claim_achievement_reward", { p_user_badge_id: userBadgeId });
 
             if (error) {
                 console.error("Erro na RPC ao coletar recompensa:", error);
@@ -440,12 +362,8 @@ export default function ProfilePage(): JSX.Element {
                 return;
             }
 
-            toast.success("Recompensa coletada com sucesso!");
-            queryClient.invalidateQueries({
-                queryKey: ["profilePageData", userId],
-            });
-
-            // Fecha o modal após coletar
+            toast.success(`+${selectedAchievement.achievement.coin_reward} moedas adicionadas!`);
+            queryClient.invalidateQueries({ queryKey: ["profilePageData", userId] });
             setSelectedAchievement(null);
         } catch (error) {
             console.error("Erro inesperado ao coletar recompensa:", error);
@@ -455,7 +373,6 @@ export default function ProfilePage(): JSX.Element {
         }
     };
 
-    // Função para fazer logout
     const handleSignOut = async (): Promise<void> => {
         const { error } = await supabase.auth.signOut();
         queryClient.clear();
@@ -467,12 +384,10 @@ export default function ProfilePage(): JSX.Element {
         }
     };
 
-    // Memoiza a lista de conquistas ordenadas
     const sortedAchievements = useMemo(() => {
         if (!data) return [];
         const { allAchievements, userBadges } = data;
         const unlockedIds = new Set(userBadges.map((b) => b.badge_id));
-
         return [...allAchievements].sort((a, b) => {
             const aUnlocked = unlockedIds.has(a.id);
             const bUnlocked = unlockedIds.has(b.id);
@@ -482,18 +397,12 @@ export default function ProfilePage(): JSX.Element {
         });
     }, [data]);
 
-    // Estados de renderização
     if (isLoading || !userId) return <ProfileSkeleton />;
-    if (isError)
-        return (
-            <div className="flex items-center justify-center h-screen text-red-500">
-                Erro ao carregar o perfil. Tente novamente.
-            </div>
-        );
+    if (isError) return <div className="flex items-center justify-center h-screen text-red-500">Erro ao carregar o perfil.</div>;
     if (!data) return <ProfileSkeleton />;
 
-    const { userProfile, completedModuleCount, userRank, userBadges } = data;
-    const levelInfo = calculateLevelInfo(userProfile.xp || 0);
+    const { userProfile, completedModuleCount, userRank, userBadges, levels } = data;
+    const levelInfo = calculateLevelInfo(userProfile.xp || 0, levels);
     const isAdmin = userProfile.role === "admin";
 
     const TABS = [
@@ -517,206 +426,59 @@ export default function ProfilePage(): JSX.Element {
             </AnimatePresence>
 
             <main className="pb-24 max-w-4xl mx-auto">
-                <motion.div
-                    initial="hidden"
-                    animate="visible"
-                    variants={containerVariants}
-                >
-                    <motion.div
-                        variants={itemVariants}
-                        className="bg-gradient-to-br from-neutral-900 to-neutral-800 dark:from-neutral-950 dark:to-neutral-900 m-2 sm:m-4 rounded-3xl p-6 text-white relative overflow-hidden"
-                    >
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-16 translate-x-16"></div>
-                        <div className="absolute bottom-0 left-0 w-24 h-24 bg-primary/5 rounded-full translate-y-12 -translate-x-12"></div>
-                        <div className="relative z-10">
-                            <div className="flex items-center space-x-4 mb-5">
-                                <div className="relative">
-                                    <motion.img
-                                        src={
-                                            userProfile.avatar_url ||
-                                            `https://ui-avatars.com/api/?name=${userProfile.full_name?.replace(/\s/g, "+")}&background=random`
-                                        }
-                                        alt="Foto de perfil"
-                                        className="w-20 h-20 rounded-full object-cover border-4 border-white/20 shadow-lg"
-                                        whileHover={{ scale: 1.05 }}
-                                    />
-                                    <motion.div
-                                        initial={{ scale: 0 }}
-                                        animate={{ scale: 1 }}
-                                        transition={{
-                                            type: "spring",
-                                            delay: 0.5,
-                                        }}
-                                        className="absolute -top-1 -right-1 w-8 h-8 bg-gradient-to-r from-primary to-orange-400 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-lg border-2 border-neutral-800"
-                                    >
-                                        {levelInfo.level.name.substring(0, 1)}
-                                    </motion.div>
-                                </div>
-                                <div className="flex-1">
-                                    <h1 className="text-xl sm:text-2xl font-bold">
-                                        {userProfile.full_name}
-                                    </h1>
-                                    <p className="text-white/70 text-sm">
-                                        Nível: {levelInfo.level.name}
-                                    </p>
-                                    <div className="flex items-center space-x-4 mt-2 text-sm">
-                                        <div className="flex items-center gap-1.5">
-                                            <Crown className="w-4 h-4 text-yellow-400" />
-                                            <span className="font-semibold">
-                                                #
-                                                {userRank > 0
-                                                    ? userRank
-                                                    : "N/A"}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center gap-1.5">
-                                            <Flame className="w-4 h-4 text-orange-400" />
-                                            <span className="font-semibold">
-                                                {userProfile.streak_days || 0}d
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            {userProfile.bio && (
-                                <div className="mb-6">
-                                    <h3 className="text-sm font-semibold mb-2 flex items-center gap-2 text-white/80">
-                                        <Heart className="w-4 h-4 text-primary" />
-                                        <span>Sobre mim</span>
-                                    </h3>
-                                    <p className="text-sm text-white/90 leading-relaxed">
-                                        {userProfile.bio}
-                                    </p>
-                                </div>
-                            )}
-                            <div className="space-y-2">
-                                <div className="flex justify-between text-xs font-medium text-white/60">
-                                    <span>Progresso do Nível</span>
-                                    <span>
-                                        {levelInfo.xpToNext > 0
-                                            ? `${levelInfo.xpToNext} XP para o próximo`
-                                            : "Nível Máximo!"}
-                                    </span>
-                                </div>
-                                <div className="w-full bg-white/20 rounded-full h-2">
-                                    <motion.div
-                                        className="h-full essencia-valor rounded-full"
-                                        initial={{ width: 0 }}
-                                        animate={{
-                                            width: `${levelInfo.progressPercent}%`,
-                                        }}
-                                        transition={{
-                                            duration: 1,
-                                            ease: "easeOut",
-                                            delay: 0.2,
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </motion.div>
-                    <motion.div
-                        variants={itemVariants}
-                        className="px-2 sm:px-4 pt-4"
-                    >
+                <motion.div initial="hidden" animate="visible" variants={containerVariants}>
+                    <ProfileHeader profile={userProfile} levelInfo={levelInfo} userRank={userRank} />
+
+                    <motion.div variants={itemVariants} className="px-2 sm:px-4 pt-4">
                         <div className="p-1.5 bg-muted rounded-xl flex items-center gap-1 relative">
                             {TABS.map((tab) => (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={cn(
-                                        "flex-1 py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-colors relative z-10",
-                                        activeTab === tab.id
-                                            ? "text-primary-foreground"
-                                            : "text-muted-foreground hover:text-foreground",
-                                    )}
-                                >
-                                    <tab.icon className="w-4 h-4" />
-                                    {tab.name}
+                                <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                                    className={cn("flex-1 py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-colors relative z-10",
+                                        activeTab === tab.id ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground")}>
+                                    <tab.icon className="w-4 h-4" />{tab.name}
                                 </button>
                             ))}
-                            <motion.div
-                                layoutId="active-tab-indicator"
+                            <motion.div layoutId="active-tab-indicator"
                                 className="absolute h-[calc(100%-0.75rem)] bg-primary rounded-lg -z-0"
                                 style={{
                                     width: `calc(${100 / TABS.length}% - 0.5rem)`,
                                     left: `calc(${TABS.findIndex((t) => t.id === activeTab) * (100 / TABS.length)}% + 0.25rem)`,
                                 }}
-                                transition={{
-                                    type: "spring",
-                                    stiffness: 200,
-                                    damping: 25,
-                                }}
-                            />
+                                transition={{ type: "spring", stiffness: 200, damping: 25 }} />
                         </div>
                     </motion.div>
+
                     <div className="p-4 sm:p-6 space-y-6">
                         <AnimatePresence mode="wait">
                             <motion.div
                                 key={activeTab}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
+                                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
                                 transition={{ duration: 0.2 }}
                             >
                                 {activeTab === "overview" && (
                                     <div className="space-y-6">
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="card-gradient-orange rounded-2xl p-4 flex flex-col justify-center text-center">
-                                                <Star className="w-6 h-6 mx-auto mb-2 text-primary" />
-                                                <span className="text-3xl font-bold text-primary">
-                                                    {userProfile.xp || 0}
-                                                </span>
-                                                <span className="text-xs text-muted-foreground font-medium">
-                                                    XP TOTAL
-                                                </span>
+                                                <Star className="w-6 h-6 mx-auto mb-2 text-primary" /><span className="text-3xl font-bold text-primary">{userProfile.xp || 0}</span><span className="text-xs text-muted-foreground font-medium">XP TOTAL</span>
                                             </div>
                                             <div className="card-gradient-orange rounded-2xl p-4 flex flex-col justify-center text-center">
-                                                <BookCheck className="w-6 h-6 mx-auto mb-2 text-foreground" />
-                                                <span className="text-3xl font-bold text-foreground">
-                                                    {completedModuleCount}
-                                                </span>
-                                                <span className="text-xs text-muted-foreground font-medium">
-                                                    MÓDULOS
-                                                </span>
+                                                <BookCheck className="w-6 h-6 mx-auto mb-2 text-foreground" /><span className="text-3xl font-bold text-foreground">{completedModuleCount}</span><span className="text-xs text-muted-foreground font-medium">MÓDULOS</span>
                                             </div>
                                         </div>
                                         <div className="rounded-2xl bg-card p-4 sm:p-6 shadow-sm border">
-                                            <WeeklyProgressChart
-                                                streak={
-                                                    userProfile.streak_days || 0
-                                                }
-                                                userId={userId}
-                                            />
+                                            <WeeklyProgressChart streak={userProfile.streak_days || 0} userId={userId} />
                                         </div>
                                         <div className="rounded-2xl bg-card p-4 sm:p-6 shadow-sm border">
                                             <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-                                                <Target className="w-5 h-5 text-primary" />
-                                                Suas Próximas Metas
+                                                <Target className="w-5 h-5 text-primary" />Suas Próximas Metas
                                             </h3>
                                             <div className="space-y-3">
                                                 <div className="bg-muted/50 p-3 rounded-lg flex items-center justify-between">
-                                                    <div>
-                                                        <p className="font-semibold text-sm text-foreground">
-                                                            Complete 1 novo
-                                                            módulo
-                                                        </p>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            +100 XP
-                                                        </p>
-                                                    </div>
+                                                    <div><p className="font-semibold text-sm text-foreground">Complete 1 novo módulo</p><p className="text-xs text-muted-foreground">+100 XP</p></div>
                                                     <ChevronRight className="w-5 h-5 text-muted-foreground" />
                                                 </div>
                                                 <div className="bg-muted/50 p-3 rounded-lg flex items-center justify-between">
-                                                    <div>
-                                                        <p className="font-semibold text-sm text-foreground">
-                                                            Mantenha sua
-                                                            sequência por 7 dias
-                                                        </p>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            +250 XP
-                                                        </p>
-                                                    </div>
+                                                    <div><p className="font-semibold text-sm text-foreground">Mantenha sua sequência por 7 dias</p><p className="text-xs text-muted-foreground">+250 XP</p></div>
                                                     <ChevronRight className="w-5 h-5 text-muted-foreground" />
                                                 </div>
                                             </div>
@@ -726,156 +488,53 @@ export default function ProfilePage(): JSX.Element {
                                 {activeTab === "achievements" && (
                                     <div>
                                         <div className="flex items-center justify-between mb-4">
-                                            <h2 className="font-bold text-xl text-foreground">
-                                                Minhas Conquistas
-                                            </h2>
-                                            <span className="font-semibold text-primary">
-                                                {userBadges.length}/
-                                                {sortedAchievements.length}
-                                            </span>
+                                            <h2 className="font-bold text-xl text-foreground">Minhas Conquistas</h2>
+                                            <span className="font-semibold text-primary">{userBadges.length}/{sortedAchievements.length}</span>
                                         </div>
                                         {sortedAchievements.length > 0 ? (
                                             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                                {sortedAchievements.map(
-                                                    (achievement) => {
-                                                        const userBadge =
-                                                            userBadges.find(
-                                                                (b) =>
-                                                                    b.badge_id ===
-                                                                    achievement.id,
-                                                            ) || null;
-                                                        const isUnlocked =
-                                                            !!userBadge;
-
-                                                        return (
-                                                            <div
-                                                                key={
-                                                                    achievement.id
-                                                                }
-                                                                className="bg-card border rounded-2xl p-4 text-center flex flex-col justify-between transition-all hover:shadow-lg"
-                                                            >
-                                                                <motion.div
-                                                                    className="cursor-pointer flex-grow flex flex-col justify-center"
-                                                                    whileHover={{
-                                                                        y: -5,
-                                                                    }}
-                                                                    onClick={() =>
-                                                                        setSelectedAchievement(
-                                                                            {
-                                                                                achievement,
-                                                                                userBadge,
-                                                                            },
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <div
-                                                                        className={cn(
-                                                                            "w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-2xl flex items-center justify-center text-3xl sm:text-4xl transition-all",
-                                                                            isUnlocked
-                                                                                ? "bg-primary/10"
-                                                                                : "bg-muted",
-                                                                        )}
-                                                                    >
-                                                                        <span
-                                                                            className={
-                                                                                !isUnlocked
-                                                                                    ? "grayscale opacity-50"
-                                                                                    : ""
-                                                                            }
-                                                                        >
-                                                                            {
-                                                                                achievement.icon
-                                                                            }
-                                                                        </span>
-                                                                    </div>
-                                                                    <p className="text-sm font-semibold mt-3 text-foreground truncate">
-                                                                        {
-                                                                            achievement.name
-                                                                        }
-                                                                    </p>
-                                                                    <p
-                                                                        className={cn(
-                                                                            "text-xs font-medium capitalize",
-                                                                            isUnlocked
-                                                                                ? "text-primary"
-                                                                                : "text-muted-foreground",
-                                                                        )}
-                                                                    >
-                                                                        {achievement.rarity ||
-                                                                            "Comum"}
-                                                                    </p>
-                                                                </motion.div>
-                                                            </div>
-                                                        );
-                                                    },
-                                                )}
+                                                {sortedAchievements.map((achievement) => {
+                                                    const userBadge = userBadges.find((b) => b.badge_id === achievement.id) || null;
+                                                    const isUnlocked = !!userBadge;
+                                                    return (
+                                                        <div key={achievement.id} className="bg-card border rounded-2xl p-4 text-center flex flex-col justify-between transition-all hover:shadow-lg">
+                                                            <motion.div className="cursor-pointer flex-grow flex flex-col justify-center" whileHover={{ y: -5 }} onClick={() => setSelectedAchievement({ achievement, userBadge })}>
+                                                                <div className={cn("w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-2xl flex items-center justify-center text-3xl sm:text-4xl transition-all", isUnlocked ? "bg-primary/10" : "bg-muted")}>
+                                                                    <span className={!isUnlocked ? "grayscale opacity-50" : ""}>{achievement.icon}</span>
+                                                                </div>
+                                                                <p className="text-sm font-semibold mt-3 text-foreground truncate">{achievement.name}</p>
+                                                                <p className={cn("text-xs font-medium capitalize", isUnlocked ? "text-primary" : "text-muted-foreground")}>{achievement.rarity || "Comum"}</p>
+                                                            </motion.div>
+                                                        </div>
+                                                    );
+                                                })}
                                             </div>
                                         ) : (
-                                            <div className="text-center py-10 bg-muted rounded-lg">
-                                                <p className="text-muted-foreground">
-                                                    Nenhuma conquista definida
-                                                    ainda.
-                                                </p>
-                                            </div>
+                                            <div className="text-center py-10 bg-muted rounded-lg"><p className="text-muted-foreground">Nenhuma conquista definida ainda.</p></div>
                                         )}
                                     </div>
                                 )}
                                 {activeTab === "settings" && (
                                     <div className="space-y-4">
-                                        <h2 className="font-bold text-xl text-foreground">
-                                            Configurações e Ações
-                                        </h2>
-                                        <Link
-                                            to="/configuracoes"
-                                            className="group flex items-center justify-between rounded-xl bg-card p-4 shadow-sm transition-all hover:bg-muted/50 border"
-                                        >
-                                            <div className="flex items-center gap-4">
-                                                <Settings className="h-5 w-5 text-primary" />
-                                                <span className="font-semibold text-card-foreground">
-                                                    Editar Perfil e Conta
-                                                </span>
-                                            </div>
+                                        <h2 className="font-bold text-xl text-foreground">Configurações e Ações</h2>
+                                        <Link to="/configuracoes" className="group flex items-center justify-between rounded-xl bg-card p-4 shadow-sm transition-all hover:bg-muted/50 border">
+                                            <div className="flex items-center gap-4"><Settings className="h-5 w-5 text-primary" /><span className="font-semibold text-card-foreground">Editar Perfil e Conta</span></div>
                                             <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
                                         </Link>
                                         {userProfile.linkedin_url && (
-                                            <a
-                                                href={userProfile.linkedin_url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="group flex items-center justify-between rounded-xl bg-card p-4 shadow-sm transition-all hover:bg-muted/50 border"
-                                            >
-                                                <div className="flex items-center gap-4">
-                                                    <Linkedin className="h-5 w-5 text-primary" />
-                                                    <span className="font-semibold text-card-foreground">
-                                                        Ver no LinkedIn
-                                                    </span>
-                                                </div>
+                                            <a href={userProfile.linkedin_url} target="_blank" rel="noopener noreferrer" className="group flex items-center justify-between rounded-xl bg-card p-4 shadow-sm transition-all hover:bg-muted/50 border">
+                                                <div className="flex items-center gap-4"><Linkedin className="h-5 w-5 text-primary" /><span className="font-semibold text-card-foreground">Ver no LinkedIn</span></div>
                                                 <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
                                             </a>
                                         )}
                                         {isAdmin && (
-                                            <Link
-                                                to="/admin"
-                                                className="group flex items-center justify-between rounded-xl bg-card p-4 shadow-sm transition-all hover:bg-muted/50 border"
-                                            >
-                                                <div className="flex items-center gap-4">
-                                                    <Shield className="h-5 w-5 text-primary" />
-                                                    <span className="font-semibold text-card-foreground">
-                                                        Painel de Controle
-                                                    </span>
-                                                </div>
+                                            <Link to="/admin" className="group flex items-center justify-between rounded-xl bg-card p-4 shadow-sm transition-all hover:bg-muted/50 border">
+                                                <div className="flex items-center gap-4"><Shield className="h-5 w-5 text-primary" /><span className="font-semibold text-card-foreground">Painel de Controle</span></div>
                                                 <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
                                             </Link>
                                         )}
                                         <div className="pt-8">
-                                            <Button
-                                                onClick={handleSignOut}
-                                                variant="destructive"
-                                                className="w-full"
-                                            >
-                                                <LogOut className="w-4 h-4 mr-2" />{" "}
-                                                Sair da Conta
-                                            </Button>
+                                            <Button onClick={handleSignOut} variant="destructive" className="w-full"><LogOut className="w-4 h-4 mr-2" /> Sair da Conta</Button>
                                         </div>
                                     </div>
                                 )}
