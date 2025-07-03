@@ -85,34 +85,35 @@ const ModulesHeader = ({ profile, levelInfo }: { profile: Profile | null; levelI
         <div className="relative z-10 flex items-center justify-between">
             {/* Coluna da Esquerda: Foto e Textos */}
             <div className="flex items-center gap-4">
-                <Link to="/perfil">
-                    {/* A FOTO AGORA É CIRCULAR */}
+                <Link to="/perfil" className="flex-shrink-0">
+                    {/* FOTO CIRCULAR COM TAMANHO FIXO ABSOLUTO */}
                     <img
                         src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.full_name?.replace(/\s/g, "+")}&background=random`}
                         alt="Avatar do usuário"
-                        className="w-16 h-16 rounded-full object-cover border-4 border-white/10 shadow-lg"
+                        className="w-14 h-14 min-w-[56px] min-h-[56px] rounded-full object-cover border-3 border-white/10 shadow-lg"
+                        style={{ width: '56px', height: '56px' }}
                     />
                 </Link>
                 <div>
                     {/* O TÍTULO AGORA É PERSONALIZADO */}
-                    <h1 className="text-2xl sm:text-2xl font-extrabold text-white tracking-tight">
+                    <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
                         Sua trilha, <span className="text-primary">{profile?.full_name?.split(" ")[0]}!</span>
                     </h1>
                     {levelInfo && (
-                        <p className="text-white/70 mt-1">
+                        <p className="text-white/70 mt-1 text-sm">
                             Você é nível <span className="font-bold text-white">{levelInfo.name}</span>, continue evoluindo!
                         </p>
                     )}
                 </div>
             </div>
 
-            {/* Coluna da Direita: Total de XP (O layout foi inspirado na sua imagem) */}
-            <div className="flex-shrink-0 flex items-center gap-3 bg-neutral-700/50 p-2 pr-4 rounded-full backdrop-blur-sm border border-white/10">
-                <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center">
-                    <Star className="w-5 h-5 text-black" />
+            {/* Coluna da Direita: Total de XP em layout vertical */}
+            <div className="flex-shrink-0 flex flex-col items-center gap-1 bg-neutral-700/50 p-3 rounded-2xl backdrop-blur-sm border border-white/10">
+                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                    <Star className="w-4 h-4 text-black" />
                 </div>
-                <span className="font-bold text-white text-lg">{profile?.xp || 0}</span>
-                <span className="text-white/70 text-sm -ml-2">XP</span>
+                <span className="font-bold text-white text-base leading-none">{profile?.xp || 0}</span>
+                <span className="text-white/70 text-xs leading-none">XP</span>
             </div>
         </div>
     </motion.div>

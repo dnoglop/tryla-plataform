@@ -21,7 +21,7 @@ import {
     Crown,
     BarChart3,
     Target,
-    Coins,
+    Gem,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -156,9 +156,9 @@ const ProfileHeader = ({ profile, levelInfo, userRank }) => (
                 <p className="text-xs text-white/60">Ranking</p>
             </div>
             <div className="bg-white/5 rounded-lg p-2">
-                <Coins className="w-5 h-5 mx-auto text-amber-400 mb-1" />
+                <Gem className="w-5 h-5 mx-auto text-amber-400 mb-1" />
                 <p className="text-sm font-bold">{profile.coins || 0}</p>
-                <p className="text-xs text-white/60">Moedas</p>
+                <p className="text-xs text-white/60">Cristais</p>
             </div>
         </div>
 
@@ -249,8 +249,8 @@ const AchievementModal = ({
                             disabled={isClaiming}
                             className="w-full essencia-valor py-3 text-base flex items-center gap-2"
                         >
-                            <Coins className="w-4 h-4" />
-                            {isClaiming ? "Coletando..." : `Coletar ${achievement.coin_reward} Moedas`}
+                            <Gem className="w-4 h-4" />
+                            {isClaiming ? "Coletando..." : `Coletar ${achievement.coin_reward} Cristais`}
                         </Button>
                     )}
                     {unlockedAt && !isClaimable && (
@@ -362,7 +362,7 @@ export default function ProfilePage(): JSX.Element {
                 return;
             }
 
-            toast.success(`+${selectedAchievement.achievement.coin_reward} moedas adicionadas!`);
+            toast.success(`+${selectedAchievement.achievement.coin_reward} cristais adicionados!`);
             queryClient.invalidateQueries({ queryKey: ["profilePageData", userId] });
             setSelectedAchievement(null);
         } catch (error) {

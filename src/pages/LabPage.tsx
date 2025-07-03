@@ -14,8 +14,7 @@ import BottomNavigation from "@/components/BottomNavigation";
 
 // Ícones
 import {
-  BrainCircuit, BookOpen, Timer, MessageCircle, ArrowRight, Target,
-  CheckCircle2, Zap, Map, Heart, Coffee, Shield, Sparkles, Lock, Crown, Flame, X, CircleDollarSign
+  BrainCircuit, BookOpen, Timer, MessageCircle, ArrowRight, Target,  Map, Heart, Shield, Sparkles, Lock, Crown, Gem,
 } from "lucide-react";
 
 // Mapa de ícones para renderização dinâmica
@@ -130,7 +129,7 @@ const LabHeader = ({ profile, levels }: { profile: Profile & { coins: number }, 
 
                 {/* Grupo da Direita: Contador de Moedas (permanece igual) */}
                 <div className="flex items-center gap-2 bg-white/10 px-4 py-2.5 rounded-full">
-                    <CircleDollarSign className="w-5 h-5 text-amber-400" />
+                    <Gem className="w-5 h-5 text-amber-400" />
                     <span className="font-bold text-white text-lg">{profile.coins || 0}</span>
                 </div>
             </div>
@@ -159,7 +158,7 @@ const PurchaseToolModal = ({ tool, isOpen, onClose, userCoins, onConfirmPurchase
                             <div className="flex justify-between items-center text-lg">
                                 <span className="text-muted-foreground">Custo:</span>
                                 <div className="flex items-center gap-2 font-bold text-primary">
-                                    <CircleDollarSign className="w-5 h-5"/>
+                                    <Gem className="w-5 h-5"/>
                                     <span>{tool.coin_cost}</span>
                                 </div>
                             </div>
@@ -171,7 +170,7 @@ const PurchaseToolModal = ({ tool, isOpen, onClose, userCoins, onConfirmPurchase
                             className="w-full btn-saga-primario py-3 text-base"
                         >
                             {isPurchasing ? "Desbloqueando..." :
-                             !hasEnoughCoins ? "Moedas insuficientes" : `Desbloquear por ${tool.coin_cost} moedas`}
+                             !hasEnoughCoins ? "Cristais insuficientes" : `Desbloquear por ${tool.coin_cost} cristais`}
                         </Button>
                         <Button variant="ghost" onClick={onClose} className="w-full mt-2">
                             Agora não
@@ -211,7 +210,7 @@ const ToolCard = ({ tool, userLevel, isUnlocked, onCardClick }) => {
                 )}
                 {!isUnlocked && !isLockedByLevel && isPurchasable && (
                     <div className="flex items-center gap-1 text-xs text-amber-500 font-semibold mt-1">
-                        <CircleDollarSign className="w-3 h-3"/> {tool.coin_cost} para desbloquear
+                        <Gem className="w-3 h-3"/> {tool.coin_cost} para desbloquear
                     </div>
                 )}
             </div>
@@ -287,7 +286,7 @@ export default function LabPage() {
     const handleConfirmPurchase = async (tool: Tool) => {
         if (!data?.profile || !tool) return;
         if (data.profile.coins < tool.coin_cost) {
-            console.error("Moedas insuficientes!");
+            console.error("Cristais insuficientes!");
             return;
         }
 

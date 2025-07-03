@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Check, Coins, Home, Rocket, Star, Trophy } from "lucide-react";
+import { ArrowRight, Check, Home, Gem, Rocket, Star, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -158,7 +158,7 @@ export default function ModuleCompletePage() {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuário não encontrado para coletar moedas.");
+      if (!user) throw new Error("Usuário não encontrado para coletar cristais.");
 
       console.log("➡️ Enviando para recordCoinGain:", {
         userId: user.id,
@@ -169,7 +169,7 @@ export default function ModuleCompletePage() {
       // A chamada que pode estar falhando
       await recordCoinGain(user.id, rewardDetails.coins, Number(moduleId));
 
-      console.log("✅ Moedas coletadas com sucesso!");
+      console.log("✅ Cristais coletadas com sucesso!");
       setCoinsCollected(true);
       queryClient.invalidateQueries({ queryKey: ["userProfile", "dashboardData"] });
       setTimeout(() => setStep("summary"), 1200);
@@ -239,8 +239,8 @@ export default function ModuleCompletePage() {
                 {step === "coins" && (
                     <motion.div key="coins" variants={stepVariants} initial="hidden" animate="visible" exit="exit">
                         <RewardCard
-                            icon={<Coins className="w-12 h-12 text-amber-900" />}
-                            title="Moedas do Módulo"
+                            icon={<Gem className="w-12 h-12 text-amber-900" />}
+                            title="Cristais do Módulo"
                             value={rewardDetails.coins}
                             colorClass="bg-amber-400"
                             onCollect={handleCollectCoins}

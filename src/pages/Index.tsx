@@ -27,7 +27,7 @@ import {
     BookCheck,
     Zap,
     Bell,
-    Coins,
+    Gem,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -148,10 +148,10 @@ const DashboardHeader = ({ profile }) => {
                     </div>
                     {/* Status de Moedas */}
                     <div className="flex items-center gap-2">
-                        <Coins className="w-5 h-5 text-amber-400" />
+                        <Gem className="w-5 h-5 text-amber-400" />
                         <div className="text-sm">
                             <span className="font-bold text-white">{profile.coins || 0}</span>
-                            <span className="text-white/70"> Moedas</span>
+                            <span className="text-white/70"> Cristais</span>
                         </div>
                     </div>
                 </div>
@@ -197,12 +197,12 @@ const ComeBackTomorrowModal = ({
             <Dialog.Overlay className="fixed inset-0 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out" />
             <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-sm bg-card p-8 rounded-2xl shadow-xl data-[state=open]:animate-in data-[state=closed]:animate-out border">
                 <div className="text-center">
-                    <Coins className="mx-auto h-10 w-10 text-primary mb-4" />
+                    <Gem className="mx-auto h-10 w-10 text-primary mb-4" />
                     <Dialog.Title className="text-2xl font-bold text-card-foreground">
                         Recompensa Coletada!
                     </Dialog.Title>
                     <Dialog.Description className="text-muted-foreground mt-2 text-base">
-                        Show, você ganhou <strong>+10 Moedas</strong> pela sua dedicação. Volte amanhã para receber novamente!
+                        Show, você ganhou <strong>+10 Cristais</strong> pela sua dedicação. Volte amanhã para receber novamente!
                     </Dialog.Description>
                 </div>
                 <Dialog.Close asChild>
@@ -718,7 +718,7 @@ const Index = () => {
                                         >
                                             {isClaiming
                                                 ? "Coletando..."
-                                                : <>Pegar prêmio <Coins className="w-4 h-4" /> +10</>}
+                                                : <>Pegar prêmio <Gem className="w-4 h-4" /> +10</>}
                                         </motion.button>
                                     </div>
                                 </div>
